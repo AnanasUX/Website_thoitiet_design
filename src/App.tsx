@@ -6,6 +6,16 @@
 import { useState, useEffect, useRef } from "react";
 
 const assetPathPrefix = "/assets";
+
+function useCurrentTime() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
+}
+
 const imgMoreHorizontal = `${assetPathPrefix}/eff74.svg`;
 const imgSearch = `${assetPathPrefix}/ad518.svg`;
 const imgNews1 = `${assetPathPrefix}/c0fcf.png`;
