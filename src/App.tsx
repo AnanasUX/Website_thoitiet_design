@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const assetPathPrefix = "/assets";
+const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
 
 function useCurrentTime() {
   const [now, setNow] = useState(new Date());
@@ -340,7 +340,7 @@ function MobileLayout({
               className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <img alt="" className="rounded-full shrink-0 size-11 object-cover" src={item.img} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <img alt="" className="rounded-full shrink-0 size-11 object-cover" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-1">{item.author}</p>
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
@@ -351,7 +351,7 @@ function MobileLayout({
               </div>
               <p className="font-['Inter:Regular'] font-normal leading-[21px] text-[#182033] text-[14px]">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
               </div>
             </a>
           ))}
@@ -413,7 +413,7 @@ function TabletLayout({
               className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-['Inter:Bold'] font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
@@ -445,7 +445,7 @@ function TabletLayout({
               className="bg-white flex gap-3 items-center overflow-hidden p-3 rounded-[10px] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
@@ -536,7 +536,7 @@ function DesktopLayout({
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
               </div>
               {featured.body && (
                 <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[13px] line-clamp-2">{featured.body}</p>
@@ -555,7 +555,7 @@ function DesktopLayout({
                 className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-[calc(50%-6px)] no-underline"
               >
                 <div className="h-[140px] relative w-full overflow-hidden">
-                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
                 </div>
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
                   <div className="flex gap-2 items-center">
@@ -711,6 +711,7 @@ export default function App() {
         const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
         const mapped: LiveNewsItem[] = newsArr.slice(0, 5).map((item, i) => ({
           img:    item.thumbnail || images[i % images.length],
+          fallbackImg: images[i % images.length],
           author: item.title       ?? "Tin tức",
           src:    item.source      ?? "Tin tức",
           body:   item.description ?? "",
@@ -785,11 +786,7 @@ export default function App() {
           ⚠️ Không thể tải dữ liệu – hiển thị dữ liệu mẫu
         </div>
       )}
-      {apiStatus === "ok" && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-green-600/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm animate-fade-out">
-          ✅ Dữ liệu thực tế đã cập nhật
-        </div>
-      )}
+
 
       {/* Hidden floating trigger — bottom-right corner, blends in */}
       <button
