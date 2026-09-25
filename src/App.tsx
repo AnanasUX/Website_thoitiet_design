@@ -191,24 +191,41 @@ function pm25Icon(val: number): string {
 
 // ── Shared weather section ────────────────────────────────────────────────────
 
+interface LiveOverrides {
+  warningText?: string;
+  suggestionItems?: string[];
+  floodItems?: string[];
+  routeItems?: string[];
+}
+
 function WeatherSection({
   compact = false,
   condKey,
   liveData,
+  liveOverrides,
 }: {
   compact?: boolean;
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
+  liveOverrides?: LiveOverrides;
 }) {
-  const theme = WEATHER_THEMES[condKey];
+  const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
+
+  // Use live data if available, otherwise fall back to theme defaults
+  const warningText = liveOverrides?.warningText ?? baseTheme.warningText;
+  const suggestionItems = liveOverrides?.suggestionItems ?? baseTheme.suggestionItems;
+  const floodItems = liveOverrides?.floodItems ?? baseTheme.floodItems;
+  const routeItems = liveOverrides?.routeItems ?? baseTheme.routeItems;
+  const showFlood = liveOverrides ? (liveOverrides.floodItems != null && liveOverrides.floodItems.length > 0) : baseTheme.showFlood;
+  const showRouteAdvisory = liveOverrides ? (liveOverrides.routeItems != null && liveOverrides.routeItems.length > 0) : baseTheme.showRouteAdvisory;
 
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full"
-        style={{ background: theme.gradient }}
+        style={{ background: baseTheme.gradient }}
       >
         <p className="font-['Inter:Semi_Bold'] font-semibold text-[13px] text-white whitespace-nowrap">
           📍 {compact ? WEATHER.location : WEATHER.locationFull} · {WEATHER.time}
@@ -218,7 +235,7 @@ function WeatherSection({
             {WEATHER.temp}
           </p>
           <p className="font-['Inter:Semi_Bold'] font-semibold text-[18px] text-white whitespace-nowrap">
-            {theme.emoji} {theme.label}
+            {baseTheme.emoji} {baseTheme.label}
           </p>
           <p className="font-['Inter:Regular'] font-normal text-[14px] text-[rgba(255,255,255,0.8)] whitespace-nowrap">
             Cảm nhận {WEATHER.feelsLike}
@@ -242,42 +259,46 @@ function WeatherSection({
         <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
       </div>
 
-      {/* Warning */}
-      <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">⚠️ CẢNH BÁO TRỌNG TÂM</p>
-        <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{theme.warningText}</p>
-      </div>
-
-      {/* Suggestion */}
-      <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
-        <div className="flex flex-col gap-0 w-full">
-          {theme.suggestionItems.map((line, i) => (
-            <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
-          ))}
+      {/* Warning – only show when we have real warning text */}
+      {warningText && (
+        <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
+          <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{warningText}</p>
         </div>
-      </div>
+      )}
 
-      {/* Flood blackspots — Mưa nhỏ & Mưa dông */}
-      {theme.showFlood && theme.floodItems && (
-        <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">
-            BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
-          </p>
+      {/* Suggestion – only show when we have items */}
+      {suggestionItems && suggestionItems.length > 0 && (
+        <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
           <div className="flex flex-col gap-0 w-full">
-            {theme.floodItems.map((line, i) => (
+            {suggestionItems.map((line, i) => (
               <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
             ))}
           </div>
         </div>
       )}
 
-      {/* Route advisory — Mưa dông only */}
-      {theme.showRouteAdvisory && theme.routeItems && (
+      {/* Flood blackspots */}
+      {showFlood && floodItems && floodItems.length > 0 && (
+        <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">
+            BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
+          </p>
+          <div className="flex flex-col gap-0 w-full">
+            {floodItems.map((line, i) => (
+              <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Route advisory */}
+      {showRouteAdvisory && routeItems && routeItems.length > 0 && (
         <div className="bg-[#eff6ff] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
           <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">KHUYẾN CÁO LỘ TRÌNH</p>
           <div className="flex flex-col gap-0 w-full">
-            {theme.routeItems.map((line, i) => (
+            {routeItems.map((line, i) => (
               <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
             ))}
           </div>
@@ -288,7 +309,7 @@ function WeatherSection({
 }
 
 // ── Live news item type ───────────────────────────────────────────────────────
-type LiveNewsItem = { img: string; author: string; src: string; body: string; link?: string };
+type LiveNewsItem = { img: string; fallbackImg?: string; author: string; src: string; body: string; link?: string };
 
 // ── Default mock news articles ────────────────────────────────────────────────
 const DEFAULT_NEWS_FEED: LiveNewsItem[] = [
@@ -305,10 +326,12 @@ function MobileLayout({
   condKey,
   liveData,
   liveNews,
+  liveOverrides,
 }: {
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
+  liveOverrides?: LiveOverrides;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -324,7 +347,7 @@ function MobileLayout({
       <div className="flex flex-col gap-5 items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-3 items-start w-full">
           <p className="font-['Inter:Semi_Bold'] font-semibold leading-[26px] text-[#182033] text-[20px]">Thời tiết</p>
-          <WeatherSection condKey={condKey} liveData={liveData} />
+          <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         <div className="flex flex-col gap-3 items-start w-full">
@@ -340,7 +363,7 @@ function MobileLayout({
               className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <img alt="" className="rounded-full shrink-0 size-11 object-cover" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
+                <img alt="" className="rounded-full shrink-0 size-11 object-cover" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-1">{item.author}</p>
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
@@ -351,7 +374,7 @@ function MobileLayout({
               </div>
               <p className="font-['Inter:Regular'] font-normal leading-[21px] text-[#182033] text-[14px]">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
               </div>
             </a>
           ))}
@@ -367,10 +390,12 @@ function TabletLayout({
   condKey,
   liveData,
   liveNews,
+  liveOverrides,
 }: {
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
+  liveOverrides?: LiveOverrides;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -392,7 +417,7 @@ function TabletLayout({
       <div className="flex gap-5 items-start p-5 w-full">
         {/* Weather column */}
         <div className="flex flex-col gap-3 items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} />
+          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         {/* News panel – dữ liệu động từ bot */}
@@ -413,7 +438,7 @@ function TabletLayout({
               className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-['Inter:Bold'] font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
@@ -445,7 +470,7 @@ function TabletLayout({
               className="bg-white flex gap-3 items-center overflow-hidden p-3 rounded-[10px] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
@@ -468,10 +493,12 @@ function DesktopLayout({
   condKey,
   liveData,
   liveNews,
+  liveOverrides,
 }: {
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
+  liveOverrides?: LiveOverrides;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -496,7 +523,7 @@ function DesktopLayout({
       <div className="flex gap-6 items-start p-6 w-full">
         {/* Weather column */}
         <div className="flex flex-col gap-4 items-start shrink-0 w-[420px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} />
+          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         {/* News column – dữ liệu động từ bot */}
@@ -536,7 +563,7 @@ function DesktopLayout({
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
               </div>
               {featured.body && (
                 <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[13px] line-clamp-2">{featured.body}</p>
@@ -555,7 +582,7 @@ function DesktopLayout({
                 className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-[calc(50%-6px)] no-underline"
               >
                 <div className="h-[140px] relative w-full overflow-hidden">
-                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} onError={(e) => { const fallback = (typeof item !== 'undefined' ? item.fallbackImg : undefined) || (typeof featured !== 'undefined' ? featured.fallbackImg : undefined); if (fallback && e.currentTarget.src !== fallback) { e.currentTarget.src = fallback; } else { e.currentTarget.style.display = 'none'; } }} />
+                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
                 </div>
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
                   <div className="flex gap-2 items-center">
@@ -661,6 +688,7 @@ export default function App() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
   const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
+  const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
 
   const tapCount = useRef(0);
@@ -720,15 +748,13 @@ export default function App() {
         setLiveNews(mapped);
       }
 
-      // Xóa dữ liệu mẫu (mock data) của cảnh báo, ngập úng, gọi ý nếu backend không trả về dữ liệu thực tế
-      const theme = WEATHER_THEMES[key];
-      theme.warningText = (json.warningText as string) || "";
-      theme.suggestionItems = (json.suggestionItems as string[]) || [];
-      theme.showFlood = Array.isArray(json.floodItems) && json.floodItems.length > 0;
-      theme.floodItems = (json.floodItems as string[]) || [];
-      theme.showRouteAdvisory = Array.isArray(json.routeItems) && json.routeItems.length > 0;
-      theme.routeItems = (json.routeItems as string[]) || [];
-      theme.video = json.video as { title: string, link: string } | undefined;
+      // Store dynamic overrides in React state (not mutating WEATHER_THEMES)
+      setLiveOverrides({
+        warningText: (json.warningText as string) || "",
+        suggestionItems: (json.suggestionItems as string[]) || [],
+        floodItems: (json.floodItems as string[]) || [],
+        routeItems: (json.routeItems as string[]) || [],
+      });
 
       setApiStatus("ok");
     }
@@ -807,13 +833,13 @@ export default function App() {
       )}
 
       <div className="md:hidden">
-        <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} />
+        <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <div className="hidden md:block xl:hidden">
-        <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} />
+        <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <div className="hidden xl:block">
-        <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} />
+        <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
     </div>
   );
