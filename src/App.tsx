@@ -35,6 +35,7 @@ interface WeatherTheme {
   floodItems?: string[];
   showRouteAdvisory: boolean;
   routeItems?: string[];
+  video?: { title: string, link: string };
 }
 
 const WEATHER_THEMES: Record<ConditionKey, WeatherTheme> = {
@@ -465,8 +466,9 @@ function DesktopLayout({
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...grid] = newsFeed;
-  const now = new Date();
+  const now = useCurrentTime();
   const dateStr = now.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" });
+  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
@@ -474,18 +476,11 @@ function DesktopLayout({
           <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[18px] whitespace-nowrap">Dashboard</p>
           <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
             <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
-              {dateStr} · {WEATHER.time}
+              {dateStr} · {timeStr}
             </p>
           </div>
         </div>
-        <div className="bg-[#f4f6fa] border border-[#e3e7ef] flex gap-[10px] h-12 items-center overflow-hidden px-[14px] rounded-[10px] w-[300px]">
-          <div className="relative shrink-0 size-[18px]">
-            <img alt="" className="absolute inset-0 size-full" src={imgSearch} />
-          </div>
-          <p className="font-['Inter:Regular'] font-normal leading-[21px] text-[#5f687b] text-[14px] whitespace-nowrap">
-            Tìm kiếm thời tiết, tin tức...
-          </p>
-        </div>
+
       </div>
 
       <div className="flex gap-6 items-start p-6 w-full">
@@ -519,7 +514,7 @@ function DesktopLayout({
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
                   <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[15.84px]">
-                    {(featured.src?.[0] ?? "T").toUpperCase()}
+                    📰
                   </p>
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
@@ -722,6 +717,7 @@ export default function App() {
       theme.floodItems = (json.floodItems as string[]) || [];
       theme.showRouteAdvisory = Array.isArray(json.routeItems) && json.routeItems.length > 0;
       theme.routeItems = (json.routeItems as string[]) || [];
+      theme.video = json.video as { title: string, link: string } | undefined;
 
       setApiStatus("ok");
     }
