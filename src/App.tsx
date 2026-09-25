@@ -723,7 +723,10 @@ export default function App() {
         setApiStatus("loading");
         // base64url → base64 chuẩn rồi decode
         const b64 = rawData.replace(/-/g, "+").replace(/_/g, "/");
-        const json = JSON.parse(atob(b64)) as Record<string, unknown>;
+        const binaryStr = atob(b64);
+        const bytes = new Uint8Array([...binaryStr].map((char) => char.charCodeAt(0)));
+        const decodedStr = new TextDecoder("utf-8").decode(bytes);
+        const json = JSON.parse(decodedStr) as Record<string, unknown>;
         processJson(json);
       } catch {
         setApiStatus("error");
