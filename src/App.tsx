@@ -698,6 +698,7 @@ export default function App() {
   useEffect(() => {
     const params  = new URLSearchParams(window.location.search);
     const rawData = params.get("data");   // base64 JSON từ bot
+    const cData   = params.get("cdata");  // zlib compressed base64 JSON từ bot
     const apiUrl  = params.get("api");    // URL API fallback
 
     function processJson(json: Record<string, unknown>) {
