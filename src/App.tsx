@@ -352,7 +352,7 @@ function MobileLayout({
 
         <div className="flex flex-col gap-3 items-start w-full">
           <p className="font-['Inter:Semi_Bold'] font-semibold leading-[26px] text-[#182033] text-[20px]">
-            Tin Tức Mới Nhất · 5 bài
+            Tin Tức Mới Nhất • {newsFeed.length} bài
           </p>
           {newsFeed.map((item, i) => (
             <a
@@ -738,7 +738,7 @@ export default function App() {
       const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, thumbnail?: string }>;
       if (Array.isArray(newsArr) && newsArr.length > 0) {
         const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
-        const mapped: LiveNewsItem[] = newsArr.slice(0, 5).map((item, i) => ({
+        const mapped: LiveNewsItem[] = newsArr.slice(0, 10).map((item, i) => ({
           img:    item.thumbnail || images[i % images.length],
           fallbackImg: images[i % images.length],
           author: item.title       ?? "Tin tức",
