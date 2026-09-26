@@ -842,18 +842,12 @@ function App() {
         const lon = 105.7725;
         
         const RSS_FEEDS = [
-          { name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss" },
-          { name: "VnExpress", url: "https://vnexpress.net/rss/tin-moi-nhat.rss" },
-          { name: "Kênh 14", url: "https://kenh14.vn/home.rss" },
-          { name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/tin-moi-nhat.rss" },
-          { name: "Thanh Niên", url: "https://thanhnien.vn/rss/home.rss" },
-          { name: "VietnamNet", url: "https://vietnamnet.vn/rss/tin-moi-nhat.rss" },
-          { name: "Lao Động", url: "https://laodong.vn/rss/home.rss" },
-          { name: "VTV News", url: "https://vtv.vn/trong-nuoc.rss" },
-          { name: "Pháp Luật", url: "https://plo.vn/rss/thoi-su-c2.rss" },
-          { name: "Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" },
-          { name: "Google News", url: "https://news.google.com/rss?hl=vi&gl=VN&ceid=VN:vi" }
-        ];
+            { name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss" },
+            { name: "VnExpress", url: "https://vnexpress.net/rss/tin-moi-nhat.rss" },
+            { name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/tin-moi-nhat.rss" },
+            { name: "Thanh Niên", url: "https://thanhnien.vn/rss/home.rss" },
+            { name: "Báo Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" }
+          ];
         
         // Randomly select 2 RSS feeds to fetch to mix news without hitting rate limits
         const shuffledFeeds = [...RSS_FEEDS].sort(() => 0.5 - Math.random()).slice(0, 2);
