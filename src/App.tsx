@@ -367,7 +367,7 @@ function MobileLayout({
               className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <img alt="" className="rounded-full shrink-0 size-11 object-cover" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
+                <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-1">{item.author}</p>
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
@@ -378,7 +378,7 @@ function MobileLayout({
               </div>
               <p className="font-['Inter:Regular'] font-normal leading-[21px] text-[#182033] text-[14px]">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
               </div>
             </a>
           ))}
@@ -442,7 +442,7 @@ function TabletLayout({
               className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-['Inter:Bold'] font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
@@ -474,7 +474,7 @@ function TabletLayout({
               className="bg-white flex gap-3 items-center overflow-hidden p-3 rounded-[10px] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
@@ -567,7 +567,7 @@ function DesktopLayout({
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
               </div>
               {featured.body && (
                 <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[13px] line-clamp-2">{featured.body}</p>
@@ -586,7 +586,7 @@ function DesktopLayout({
                 className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-[calc(50%-6px)] no-underline"
               >
                 <div className="h-[140px] relative w-full overflow-hidden">
-                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
+                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.dataset.fallbackTried) { el.style.display = 'none'; return; } el.dataset.fallbackTried = '1'; const fb = el.dataset.fallback; if (fb) { el.src = fb; } else { el.style.display = 'none'; } }} />
                 </div>
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
                   <div className="flex gap-2 items-center">
