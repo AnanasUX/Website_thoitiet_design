@@ -167,12 +167,48 @@ type WeatherEntry = {
 
 // ── Default mock data (fallback khi chưa có API) ──────────────────────────────
 const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
-  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%", pressure: "1012 hPa", clouds: "10%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [] },
-  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%", pressure: "1009 hPa", clouds: "5%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [] },
-  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%", pressure: "1005 hPa", clouds: "0%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [] },
-  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%", pressure: "1015 hPa", clouds: "80%", visibility: "6 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [] },
-  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%", pressure: "1010 hPa", clouds: "100%", visibility: "4 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [] },
-  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%", pressure: "998 hPa", clouds: "100%", visibility: "2 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [] },
+  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%", pressure: "1012 hPa", clouds: "10%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+    { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
+    { time: "16h", icon: "02d", temp: 31, pop: 10 },
+    { time: "19h", icon: "03n", temp: 29, pop: 20 },
+    { time: "22h", icon: "10n", temp: 27, pop: 60 },
+    { time: "01h", icon: "10n", temp: 26, pop: 80 }
+  ] },
+  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%", pressure: "1009 hPa", clouds: "5%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+    { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
+    { time: "16h", icon: "02d", temp: 31, pop: 10 },
+    { time: "19h", icon: "03n", temp: 29, pop: 20 },
+    { time: "22h", icon: "10n", temp: 27, pop: 60 },
+    { time: "01h", icon: "10n", temp: 26, pop: 80 }
+  ] },
+  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%", pressure: "1005 hPa", clouds: "0%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+    { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
+    { time: "16h", icon: "02d", temp: 31, pop: 10 },
+    { time: "19h", icon: "03n", temp: 29, pop: 20 },
+    { time: "22h", icon: "10n", temp: 27, pop: 60 },
+    { time: "01h", icon: "10n", temp: 26, pop: 80 }
+  ] },
+  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%", pressure: "1015 hPa", clouds: "80%", visibility: "6 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+    { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
+    { time: "16h", icon: "02d", temp: 31, pop: 10 },
+    { time: "19h", icon: "03n", temp: 29, pop: 20 },
+    { time: "22h", icon: "10n", temp: 27, pop: 60 },
+    { time: "01h", icon: "10n", temp: 26, pop: 80 }
+  ] },
+  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%", pressure: "1010 hPa", clouds: "100%", visibility: "4 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+    { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
+    { time: "16h", icon: "02d", temp: 31, pop: 10 },
+    { time: "19h", icon: "03n", temp: 29, pop: 20 },
+    { time: "22h", icon: "10n", temp: 27, pop: 60 },
+    { time: "01h", icon: "10n", temp: 26, pop: 80 }
+  ] },
+  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%", pressure: "998 hPa", clouds: "100%", visibility: "2 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+    { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
+    { time: "16h", icon: "02d", temp: 31, pop: 10 },
+    { time: "19h", icon: "03n", temp: 29, pop: 20 },
+    { time: "22h", icon: "10n", temp: 27, pop: 60 },
+    { time: "01h", icon: "10n", temp: 26, pop: 80 }
+  ] },
 };
 
 // ── Ánh xạ trạng thái bot (BINH_THUONG, MUA_DONG …) → ConditionKey ───────────
@@ -265,16 +301,25 @@ function WeatherSection({
       {/* Forecast */}
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">DỰ BÁO HÀNG GIỜ (HOURLY)</p>
-        <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
-          {(WEATHER.hourlyForecast || []).map((hour: any, idx: number) => (
-            <div key={idx} className="flex flex-col items-center gap-2 min-w-[50px]">
-              <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
-              <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
-              <p className="font-['Inter:Semi_Bold'] font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
-              <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°</p>
-            </div>
-          ))}
-        </div>
+        {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
+          <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
+            {WEATHER.hourlyForecast.map((hour: any, idx: number) => (
+              <div key={idx} className="flex flex-col items-center gap-2 min-w-[50px]">
+                <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
+                <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
+                <p className="font-['Inter:Semi_Bold'] font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
+                <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="font-['Inter:Regular'] text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
+        )}
+      </div>
+
+      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
