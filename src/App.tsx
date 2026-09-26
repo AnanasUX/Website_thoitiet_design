@@ -826,39 +826,63 @@ export default function App() {
 
     // Nếu không có dữ liệu từ Bot và không có apiUrl, trang web tự động fetch dữ liệu thực tế
     if (!cData && !rawData && !apiUrl) {
-      setApiStatus("loading");
-      const apiKey = "a201c471567522a7d0b7a0567ad245fe";
-      const lat = 20.9716;
-      const lon = 105.7725;
-      
-      Promise.all([
-        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
-        fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
-        fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fnews.google.com%2Frss%2Fsearch%3Fq%3Dth%25E1%25BB%259Di%2Bti%25E1%25BA%25BFt%26hl%3Dvi%26gl%3DVN%26ceid%3DVN%3Avi`).then(r => r.json())
-      ]).then(([weather, forecast, aqi, news]) => {
-        const c_temp = Math.round(weather.main?.temp || 0);
-        const feels_like = Math.round(weather.main?.feels_like || 0);
-        const humidity = weather.main?.humidity || 0;
-        const c_desc = weather.weather?.[0]?.description || "";
-        // Mapping simple icon codes
-        const iconCode = weather.weather?.[0]?.icon || "";
-        const c_icon = iconCode.includes("d") ? "☀️" : "🌙";
+        setApiStatus("loading");
+        const apiKey = "a201c471567522a7d0b7a0567ad245fe";
+        const lat = 20.9716;
+        const lon = 105.7725;
         
-        const n_item = forecast.list?.[0] || {};
-        const n_temp = Math.round(n_item.main?.temp || c_temp);
-        const n_pop = Math.round((n_item.pop || 0) * 100);
-        const n_desc = n_item.weather?.[0]?.description || c_desc;
+        const RSS_FEEDS = [
+          { name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss" },
+          { name: "VnExpress", url: "https://vnexpress.net/rss/tin-moi-nhat.rss" },
+          { name: "Kênh 14", url: "https://kenh14.vn/home.rss" },
+          { name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/tin-moi-nhat.rss" },
+          { name: "Thanh Niên", url: "https://thanhnien.vn/rss/home.rss" },
+          { name: "VietnamNet", url: "https://vietnamnet.vn/rss/tin-moi-nhat.rss" },
+          { name: "Lao Động", url: "https://laodong.vn/rss/home.rss" },
+          { name: "VTV News", url: "https://vtv.vn/trong-nuoc.rss" },
+          { name: "Pháp Luật", url: "https://plo.vn/rss/thoi-su-c2.rss" },
+          { name: "Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" },
+          { name: "Google News", url: "https://news.google.com/rss?hl=vi&gl=VN&ceid=VN:vi" }
+        ];
         
-        const pm25 = aqi.list?.[0]?.components?.pm2_5 || 0;
-        const aqi_level = aqi.list?.[0]?.main?.aqi || 1;
+        // Randomly select 2 RSS feeds to fetch to mix news without hitting rate limits
+        const shuffledFeeds = [...RSS_FEEDS].sort(() => 0.5 - Math.random()).slice(0, 2);
         
-        // Simple logic for status
-        let trang_thai = "NANG";
-        if (n_pop > 50) trang_thai = "MUA";
-        else if (c_temp > 35) trang_thai = "NANG_GAT";
-        
-                const rawItems = (news.items || []).slice(0, 10);
+        const newsPromises = shuffledFeeds.map(feed => 
+          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`)
+            .then(r => r.json())
+            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+            .catch(() => [])
+        );
+
+        Promise.all([
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
+          fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
+          fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
+          Promise.all(newsPromises)
+        ]).then(([weather, forecast, aqi, newsArrays]) => {
+          const c_temp = Math.round(weather.main?.temp || 0);
+          const feels_like = Math.round(weather.main?.feels_like || 0);
+          const humidity = weather.main?.humidity || 0;
+          const c_desc = weather.weather?.[0]?.description || "";
+          const iconCode = weather.weather?.[0]?.icon || "";
+          const c_icon = iconCode.includes("d") ? "☀️" : "🌙";
+          
+          const n_item = forecast.list?.[0] || {};
+          const n_temp = Math.round(n_item.main?.temp || c_temp);
+          const n_pop = Math.round((n_item.pop || 0) * 100);
+          const n_desc = n_item.weather?.[0]?.description || c_desc;
+          
+          const pm25 = aqi.list?.[0]?.components?.pm2_5 || 0;
+          const aqi_level = aqi.list?.[0]?.main?.aqi || 1;
+          
+          let trang_thai = "NANG";
+          if (n_pop > 50) trang_thai = "MUA";
+          else if (c_temp > 35) trang_thai = "NANG_GAT";
+          
+          // Combine all news from the 2 fetched feeds, shuffle them, and take 10
+          let allNews = newsArrays.flat().sort(() => 0.5 - Math.random());
+          const rawItems = allNews.slice(0, 10);
           
           // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
           const baseNewsItems = rawItems.map((item: any) => {
@@ -875,11 +899,12 @@ export default function App() {
             return {
               title: item.title,
               link: item.link,
-              source: item.source || "Báo Mới",
-              time: new Date(item.pubDate).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
+              source: item.source || item._sourceName || "Báo Mới",
+              time: new Date(item.pubDate || Date.now()).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
               image: imageUrl
             };
           });
+
 
           const jsonPayload = {
             location: "Quận Hà Đông, VN",
