@@ -3,62 +3,24 @@
 with open("src/App.tsx", "r", encoding="utf-8") as f:
     content = f.read()
 
-s_old = """    const params  = new URLSearchParams(window.location.search);
-    const rawData = params.get("data");   // base64 JSON từ bot
-    const apiUrl  = params.get("api");    // URL API fallback
+# 1. Hide dev button
+content = re.sub(r'<button[^>]*aria-label="dev"[^>]*>.*?</button>', '', content, flags=re.DOTALL)
 
-    function processJson(json: Record<string, unknown>) {"""
+# 2. Change pulse. to Anx.
+content = content.replace('pulse.', 'Anx.')
 
-s_new = """    const params  = new URLSearchParams(window.location.search);
-    const rawData = params.get("data");   // base64 JSON từ bot
-    const cData   = params.get("cdata");  // zlib compressed base64 JSON từ bot
-    const apiUrl  = params.get("api");    // URL API fallback
+# 3. Strip PM2.5 emoji (remove ${icon} from pm25 interpolation)
+content = content.replace('pm25:           `${pm25Val} \u00B5g/m\u00B3 ${icon}`,', 'pm25:           `${pm25Val} \u00B5g/m\u00B3`,')
+content = content.replace('pm25:           `${pm25Val} A\u00B5g/mA3 ${icon}`,', 'pm25:           `${pm25Val} \u00B5g/m\u00B3`,')
 
-    function processJson(json: Record<string, unknown>) {"""
+# It's encoded in utf-8, maybe it is:
+content = re.sub(r'pm25:\s*`\$\{pm25Val\} [^`]*\$\{icon\}`', 'pm25: `${pm25Val} \u00B5g/m\u00B3`', content)
+
+# 4. Shuffle newsArr and pick 10
+s_old = """const mapped: LiveNewsItem[] = newsArr.slice(0, 10).map((item, i) => ({"""
+s_new = """const shuffledNews = [...newsArr].sort(() => Math.random() - 0.5);
+          const mapped: LiveNewsItem[] = shuffledNews.slice(0, 10).map((item, i) => ({"""
 content = content.replace(s_old, s_new)
-
-block_old = """    // 🟢 Ưu tiên ?data= (bot đã fetch sẵn, decode base64 là dùng được luôn) 🟢
-    if (rawData) {
-      try {
-        setApiStatus("loading");"""
-
-block_new = """    // 🟢 Ưu tiên ?cdata= (compressed zlib base64) 🟢
-    if (cData) {
-      setApiStatus("loading");
-      (async () => {
-        try {
-          const b64 = cData.replace(/-/g, "+").replace(/_/g, "/");
-          const binaryStr = atob(b64);
-          const bytes = new Uint8Array(binaryStr.length);
-          for(let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-          
-          const ds = new DecompressionStream('deflate');
-          const writer = ds.writable.getWriter();
-          writer.write(bytes);
-          writer.close();
-          
-          const reader = ds.readable.pipeThrough(new TextDecoderStream()).getReader();
-          let text = '';
-          while(true) {
-            const {value, done} = await reader.read();
-            if(done) break;
-            text += value;
-          }
-          const json = JSON.parse(text) as Record<string, unknown>;
-          processJson(json);
-        } catch (err) {
-          console.error("Lỗi giải nén cdata:", err);
-          setApiStatus("error");
-        }
-      })();
-      return;
-    }
-
-    // 🟢 Fallback ?data= (bot đã fetch sẵn, decode base64 là dùng được luôn) 🟢
-    if (rawData) {
-      try {
-        setApiStatus("loading");"""
-content = content.replace(block_old, block_new)
 
 with open("src/App.tsx", "w", encoding="utf-8") as f:
     f.write(content)

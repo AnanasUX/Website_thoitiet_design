@@ -163,12 +163,12 @@ type WeatherEntry = {
 
 // ── Default mock data (fallback khi chưa có API) ──────────────────────────────
 const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
-  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³ ✅", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%" },
-  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³ ⚠️", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%" },
-  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³ ❌", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%" },
-  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³ ✅", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%" },
-  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³ ✅", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%" },
-  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³ ✅", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%" },
+  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%" },
+  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%" },
+  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%" },
+  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%" },
+  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%" },
+  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%" },
 };
 
 // ── Ánh xạ trạng thái bot (BINH_THUONG, MUA_DONG …) → ConditionKey ───────────
@@ -263,7 +263,11 @@ function WeatherSection({
       {warningText && (
         <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
           <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
-          <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{warningText}</p>
+          <div className="flex flex-col gap-1 w-full">
+              {warningText.split('\n').map((line, i) => (
+                <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{line}</p>
+              ))}
+            </div>
         </div>
       )}
 
@@ -338,7 +342,7 @@ function MobileLayout({
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-4 w-full shrink-0">
-        <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px]">pulse.</p>
+        <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[11px]">
           {WEATHER.location} · Cập nhật {WEATHER.time}
         </p>
@@ -404,7 +408,7 @@ function TabletLayout({
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
         <div className="flex gap-3 items-center">
-          <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px] whitespace-nowrap">pulse.</p>
+          <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
           <p className="font-['Inter:Medium'] font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
             📍 {WEATHER.location}
           </p>
@@ -726,7 +730,7 @@ export default function App() {
         feelsLike:      `${cur.feels_like}°C`,
         conditionLabel: (cur.desc as string) ?? WEATHER_THEMES[key].label,
         humidity:       `${cur.humidity ?? 60}%`,
-        pm25:           `${pm25Val} µg/m³ ${icon}`,
+        pm25:           `${pm25Val} µg/m³`,
         wind,
         forecastText,
       };
@@ -738,7 +742,8 @@ export default function App() {
       const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string }>;
       if (Array.isArray(newsArr) && newsArr.length > 0) {
         const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
-        const mapped: LiveNewsItem[] = newsArr.slice(0, 10).map((item, i) => ({
+        const shuffledNews = [...newsArr].sort(() => Math.random() - 0.5);
+          const mapped: LiveNewsItem[] = shuffledNews.slice(0, 10).map((item, i) => ({
           img:    item.image || images[i % images.length],
           fallbackImg: images[i % images.length],
           author: item.title       ?? "Tin tức",
@@ -829,7 +834,7 @@ export default function App() {
     }
   }, []);
 
-  // Triple-tap the pulse. logo (or version tag) to open the hidden dev panel
+  // Triple-tap the Anx. logo (or version tag) to open the hidden dev panel
   function handleSecretTap() {
     tapCount.current += 1;
     if (tapTimer.current) clearTimeout(tapTimer.current);
@@ -858,14 +863,7 @@ export default function App() {
 
 
       {/* Hidden floating trigger — bottom-right corner, blends in */}
-      <button
-        onClick={handleSecretTap}
-        aria-label="dev"
-        className="fixed bottom-5 right-5 z-30 size-9 rounded-full bg-white/60 border border-[#e3e7ef] shadow-sm flex items-center justify-center text-[16px] opacity-30 hover:opacity-70 transition-opacity select-none"
-        title="Nhấn 3 lần để chọn thời tiết"
-      >
-        {theme.emoji}
-      </button>
+      
 
       {panelOpen && (
         <DevWeatherPanel
