@@ -896,13 +896,23 @@ export default function App() {
               if (imgMatch2) imageUrl = imgMatch2[1];
             }
             
-            return {
-              title: item.title,
-              link: item.link,
-              source: item.source || item._sourceName || "Báo Mới",
-              time: new Date(item.pubDate || Date.now()).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
-              image: imageUrl
-            };
+                          let cleanDesc = "";
+              if (item.description) {
+                  cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+                  cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+              } else if (item.content) {
+                  cleanDesc = item.content.replace(/<[^>]+>/g, '').trim();
+                  cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+              }
+              
+              return {
+                title: item.title,
+                link: item.link,
+                source: item.source || item._sourceName || "Báo Mới",
+                time: new Date(item.pubDate || Date.now()).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
+                image: imageUrl,
+                description: cleanDesc
+              };
           });
 
 
