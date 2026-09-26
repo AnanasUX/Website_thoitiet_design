@@ -247,16 +247,10 @@ function WeatherSection({
         </div>
                 <div className="grid grid-cols-2 gap-2 w-full text-[13px]">
           {[
-            { label: "💧 Độ ẩm", value: WEATHER.humidity },
             { label: "💨 Gió", value: WEATHER.wind },
-            { label: "😷 PM2.5", value: WEATHER.pm25 },
-            { label: "☁️ Mây", value: WEATHER.clouds },
+            { label: "💧 Độ ẩm", value: WEATHER.humidity },
             { label: "👁️ Tầm nhìn", value: WEATHER.visibility },
             { label: "⏬ Áp suất", value: WEATHER.pressure },
-            { label: "🌅 Bình minh", value: WEATHER.sunrise },
-            { label: "🌇 Hoàng hôn", value: WEATHER.sunset },
-            { label: "🌡️ Cao nhất", value: WEATHER.tempMax },
-            { label: "📉 Thấp nhất", value: WEATHER.tempMin },
             { label: "☀️ UV Index", value: WEATHER.uvIndex },
             { label: "💧 Điểm sương", value: WEATHER.dewPoint }
           ].map((stat, idx) => (
@@ -901,9 +895,13 @@ export default function App() {
       };
       
       setCondKey(mappedCondKey);
-      setLiveData({
-        [mappedCondKey]: entry
-      } as Record<ConditionKey, WeatherEntry>);
+      setLiveData(prev => {
+        const newData = { ...(prev || DEFAULT_WEATHER_DATA) };
+        (Object.keys(newData) as ConditionKey[]).forEach((k) => {
+           newData[k] = { ...(newData[k] || {}), ...entry };
+        });
+        return newData;
+      });
       
     } catch (e) {
       console.error("Lỗi cập nhật thời tiết realtime:", e);
@@ -1005,7 +1003,7 @@ export default function App() {
       const wind    = windMs > 0 ? `${Math.round(windMs * 3.6)} km/h` : "—";
       const forecastText = `~${(fore.temp as number) ?? cur.temp}°C | ${WEATHER_THEMES[key].label} | Mưa: ${(fore.pop as number) ?? 0}%`;
 
-      const entry: WeatherEntry = {
+      const entry: Partial<WeatherEntry> = {
         time:           timeStr,
         location:       loc,
         locationFull:   locStr,
@@ -1018,9 +1016,13 @@ export default function App() {
         forecastText,
       };
 
-      const newData = { ...DEFAULT_WEATHER_DATA };
-      (Object.keys(newData) as ConditionKey[]).forEach((k) => { newData[k] = entry; });
-      setLiveData(newData);
+      setLiveData(prev => {
+        const base = prev ? prev[key] : DEFAULT_WEATHER_DATA[key];
+        const merged: WeatherEntry = { ...base, ...entry };
+        const newData = { ...(prev || DEFAULT_WEATHER_DATA) };
+        (Object.keys(newData) as ConditionKey[]).forEach((k) => { newData[k] = merged; });
+        return newData;
+      });
 
       const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string }>;
       if (Array.isArray(newsArr) && newsArr.length > 0) {
