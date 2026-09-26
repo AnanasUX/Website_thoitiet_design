@@ -686,7 +686,7 @@ function DevWeatherPanel({
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 
-function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void, isLoading: boolean }) {
+function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigger: () => void, isLoading: boolean, hasMoreNews: boolean }) {
   const targetRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // 1. Intersection Observer
@@ -720,10 +720,10 @@ function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void
     <div ref={targetRef} className="w-full flex flex-col items-center justify-center gap-4 py-8 pb-12">
       <button 
         onClick={onTrigger} 
-        disabled={isLoading}
-        className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-['Inter:Semi_Bold'] font-semibold rounded-full text-[14px] active:scale-95 transition-transform"
+        disabled={isLoading || !hasMoreNews}
+        className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-['Inter:Semi_Bold'] font-semibold rounded-full text-[14px] active:scale-95 transition-transform disabled:opacity-50"
       >
-        {isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin (bản mới nhất)"}
+        {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
       </button>
       <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 15:33:35</div>
     </div>
@@ -766,21 +766,39 @@ export default function App() {
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMoreNews, setHasMoreNews] = useState(true);
   const loadingRef = useRef(false);
 
   const fetchMoreNews = useCallback(async () => {
-    if (loadingRef.current) return;
+    if (loadingRef.current || !hasMoreNews) return;
     loadingRef.current = true;
     setIsLoadingMore(true);
     try {
-      // alert("Bắt đầu tải thêm tin..."); // Optional: disabled for now, let's rely on button visibility
-      const feed = RSS_FEEDS[Math.floor(Math.random() * RSS_FEEDS.length)];
-      const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      const items = data.items || [];
-      const picked = items.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const existingLinks = new Set((liveNews || []).map(item => item.link));
+      
+      const newsPromises = RSS_FEEDS.map(feed => 
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`)
+          .then(r => { if (!r.ok) return null; return r.json(); })
+          .then(data => data ? (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })) : [])
+          .catch(() => [])
+      );
+      
+      const newsArrays = await Promise.all(newsPromises);
+      const allNews = newsArrays.flat();
+      
+      const trulyNewItems = allNews.filter(item => !existingLinks.has(item.link));
+      
+      if (trulyNewItems.length === 0) {
+        setHasMoreNews(false);
+        return;
+      }
+      
+      const picked = trulyNewItems.sort(() => 0.5 - Math.random()).slice(0, 10);
       const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
+      
+      if (trulyNewItems.length <= 10) {
+        setHasMoreNews(false);
+      }
       
       const newMapped: LiveNewsItem[] = picked.map((item: any, i: number) => {
         let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
@@ -1150,7 +1168,7 @@ export default function App() {
       <div className="hidden xl:block">
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
-      <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} />
+      <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
     </div>
   );
 }
