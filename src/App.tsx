@@ -819,7 +819,7 @@ export default function App() {
           logo: getNewspaperLogo(item.link || ""),
           fallbackImg: images[i % images.length],
           author: item.title ?? "Tin tức",
-          src: feed.name,
+          src: item._sourceName || "Tin tức",
           body: cleanDesc,
           link: item.link
         };
