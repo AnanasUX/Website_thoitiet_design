@@ -686,18 +686,29 @@ function DevWeatherPanel({
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 
-function InfiniteScrollTrigger({ onTrigger }: { onTrigger: () => void }) {
+function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void, isLoading: boolean }) {
   const targetRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
+      if (entries[0].isIntersecting && !isLoading) {
         onTrigger();
       }
-    }, { rootMargin: '300px' });
+    }, { rootMargin: '150px' });
     if (targetRef.current) observer.observe(targetRef.current);
     return () => observer.disconnect();
-  }, [onTrigger]);
-  return <div ref={targetRef} className="w-full h-10"></div>;
+  }, [onTrigger, isLoading]);
+  
+  return (
+    <div ref={targetRef} className="w-full flex justify-center py-8 pb-12">
+      <button 
+        onClick={onTrigger} 
+        disabled={isLoading}
+        className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-['Inter:Semi_Bold'] font-semibold rounded-full text-[14px] active:scale-95 transition-transform"
+      >
+        {isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
+      </button>
+    </div>
+  );
 }
 
 export function getNewspaperLogo(url: string) {
@@ -1108,7 +1119,7 @@ export default function App() {
 
       <div className="md:hidden">
         <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
-        {isLoadingMore && <div className="text-center py-4 text-[13px] text-[#5f687b] font-['Inter:Medium'] font-medium">⏳ Đang tải thêm tin tức...</div>}
+        
       </div>
       <div className="hidden md:block xl:hidden">
         <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
@@ -1116,7 +1127,7 @@ export default function App() {
       <div className="hidden xl:block">
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
-      <InfiniteScrollTrigger onTrigger={fetchMoreNews} />
+      <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} />
     </div>
   );
 }
