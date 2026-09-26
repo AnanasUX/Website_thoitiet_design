@@ -686,7 +686,7 @@ function DevWeatherPanel({
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export default function getProxyImageUrl(url: string) {
-  if (!url) return "";
+  if (!url || typeof url !== 'string') return "";
   let cleanUrl = url.trim();
   if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
   if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
@@ -723,7 +723,12 @@ function App() {
 
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const loc     = ((json.location as string) ?? "Hà Nội").split(",")[0].trim();
+      let rawLoc = json.location;
+      if (typeof rawLoc === 'object' && rawLoc !== null && (rawLoc as any).name) {
+          rawLoc = (rawLoc as any).name;
+      }
+      const locStr = (typeof rawLoc === 'string' ? rawLoc : "Hà Nội");
+      const loc = locStr.split(",")[0].trim();
       const pm25Val = Number(cur.pm25 ?? 15);
       const icon    = pm25Icon(pm25Val);
       const windMs  = Number(cur.wind_speed ?? 0);
@@ -733,7 +738,7 @@ function App() {
       const entry: WeatherEntry = {
         time:           timeStr,
         location:       loc,
-        locationFull:   (json.location as string) ?? loc,
+        locationFull:   locStr,
         temp:           `${cur.temp}°C`,
         feelsLike:      `${cur.feels_like}°C`,
         conditionLabel: (cur.desc as string) ?? WEATHER_THEMES[key].label,
@@ -901,10 +906,10 @@ function App() {
             }
             
                           let cleanDesc = "";
-              if (item.description) {
+              if (item.description && typeof item.description === 'string') {
                   cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
                   cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
-              } else if (item.content) {
+              } else if (item.content && typeof item.content === 'string') {
                   cleanDesc = item.content.replace(/<[^>]+>/g, '').trim();
                   cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
               }
