@@ -367,7 +367,7 @@ function MobileLayout({
               className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full no-underline"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-1">{item.author}</p>
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
@@ -684,6 +684,16 @@ function DevWeatherPanel({
 }
 
 // ── Root ─────────────────────────────────────────────────────────────────────
+
+export function getNewspaperLogo(url: string) {
+  if (!url || typeof url !== 'string') return "";
+  try {
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  } catch (e) {
+    return "";
+  }
+}
 
 export function getProxyImageUrl(url: string) {
   if (!url || typeof url !== 'string') return "";
