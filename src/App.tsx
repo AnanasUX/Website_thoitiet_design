@@ -707,6 +707,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void
       >
         {isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin (bản mới nhất)"}
       </button>
+      <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 15:33:35</div>
     </div>
   );
 }
