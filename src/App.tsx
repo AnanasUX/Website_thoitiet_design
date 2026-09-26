@@ -689,17 +689,35 @@ function DevWeatherPanel({
 function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void, isLoading: boolean }) {
   const targetRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    // 1. Intersection Observer
     const observer = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && !isLoading) {
         onTrigger();
       }
     }, { rootMargin: '150px' });
     if (targetRef.current) observer.observe(targetRef.current);
-    return () => observer.disconnect();
+    
+    // 2. Backup scroll event
+    const handleScroll = () => {
+      if (!targetRef.current || isLoading) return;
+      const rect = targetRef.current.getBoundingClientRect();
+      // If the top of the trigger element is within 500px of the bottom of the viewport
+      if (rect.top <= window.innerHeight + 500) {
+        onTrigger();
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('touchmove', handleScroll);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchmove', handleScroll);
+    };
   }, [onTrigger, isLoading]);
   
   return (
-    <div ref={targetRef} className="w-full flex justify-center py-8 pb-12">
+    <div ref={targetRef} className="w-full flex flex-col items-center justify-center gap-4 py-8 pb-12">
       <button 
         onClick={onTrigger} 
         disabled={isLoading}
@@ -747,6 +765,7 @@ export default function App() {
     loadingRef.current = true;
     setIsLoadingMore(true);
     try {
+      // alert("Bắt đầu tải thêm tin..."); // Optional: disabled for now, let's rely on button visibility
       const feed = RSS_FEEDS[Math.floor(Math.random() * RSS_FEEDS.length)];
       const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`);
       if (!res.ok) throw new Error("HTTP " + res.status);
