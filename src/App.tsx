@@ -685,7 +685,7 @@ function DevWeatherPanel({
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export default function getProxyImageUrl(url: string) {
+export function getProxyImageUrl(url: string) {
   if (!url || typeof url !== 'string') return "";
   let cleanUrl = url.trim();
   if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
@@ -695,7 +695,7 @@ export default function getProxyImageUrl(url: string) {
   return cleanUrl;
 }
 
-function App() {
+export default function App() {
   const [condKey, setCondKey] = useState<ConditionKey>("mua-nho");
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
