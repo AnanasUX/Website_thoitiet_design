@@ -541,9 +541,7 @@ function DesktopLayout({
                 <p className="font-['Inter:Bold'] font-bold text-[11px] text-white">LIVE</p>
               </div>
             </div>
-            <div className="bg-white border border-[#e3e7ef] flex items-center px-3 py-[6px] rounded-full">
-              <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">Mới nhất ▾</p>
-            </div>
+            
           </div>
 
           {/* Featured feed card */}
@@ -604,9 +602,7 @@ function DesktopLayout({
           </div>
 
           <div className="flex items-start justify-center py-2 w-full">
-            <div className="bg-white border border-[#e3e7ef] drop-shadow-[0px_4px_6px_rgba(23,33,51,0.1)] flex items-start px-7 py-[10px] rounded-full cursor-pointer hover:bg-[#f4f6fa] transition-colors">
-              <p className="font-['Inter:Semi_Bold'] font-semibold text-[#5f687b] text-[13px]">Xem thêm tin tức</p>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -862,23 +858,55 @@ export default function App() {
         if (n_pop > 50) trang_thai = "MUA";
         else if (c_temp > 35) trang_thai = "NANG_GAT";
         
-        const newsItems = (news.items || []).slice(0, 10).map((item: any) => ({
-          title: item.title,
-          link: item.link,
-          source: "Báo Mới", // Fallback source name
-          time: new Date(item.pubDate).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })
-        }));
+                const rawItems = (news.items || []).slice(0, 10);
+        
+        // Asynchronously fetch OpenGraph images for news articles using proxy
+        Promise.all(rawItems.map(async (item: any) => {
+          let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+          if (!imageUrl && item.description) {
+            const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+            if (imgMatch) imageUrl = imgMatch[1];
+          }
+          if (!imageUrl && item.content) {
+            const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+            if (imgMatch2) imageUrl = imgMatch2[1];
+          }
+          
+          if (!imageUrl && item.link) {
+            try {
+              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
+              const res = await fetch(proxyUrl);
+              const data = await res.json();
+              const html = data.contents || "";
+              const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
+                           || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+              if (ogMatch) {
+                imageUrl = ogMatch[1];
+              }
+            } catch(e) {
+              // fallback
+            }
+          }
 
-        const json = {
-          location: "Quận Hà Đông, VN",
-          weather: {
-            current: { temp: c_temp, feels_like, humidity, desc: c_desc, icon: c_icon, pm25, aqi_level },
-            forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
-            status: trang_thai
-          },
-          news: newsItems.length > 0 ? newsItems : undefined
-        };
-        processJson(json);
+          return {
+            title: item.title,
+            link: item.link,
+            source: item.source || "Báo Mới",
+            time: new Date(item.pubDate).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
+            image: imageUrl
+          };
+        })).then(newsItems => {
+          const json = {
+            location: "Quận Hà Đông, VN",
+            weather: {
+              current: { temp: c_temp, feels_like, humidity, desc: c_desc, icon: c_icon, pm25, aqi_level },
+              forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
+              status: trang_thai
+            },
+            news: newsItems.length > 0 ? newsItems : undefined
+          };
+          processJson(json);
+        });
       }).catch(e => {
         console.error("Standalone fetch error:", e);
         setApiStatus("error"); // Fallback to mock if fetch fails entirely
