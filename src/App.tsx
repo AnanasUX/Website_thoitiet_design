@@ -313,7 +313,7 @@ function WeatherSection({
 }
 
 // ── Live news item type ───────────────────────────────────────────────────────
-type LiveNewsItem = { img: string; fallbackImg?: string; author: string; src: string; body: string; link?: string };
+type LiveNewsItem = { img: string; fallbackImg?: string; logo?: string; author: string; src: string; body: string; link?: string };
 
 // ── Default mock news articles ────────────────────────────────────────────────
 const DEFAULT_NEWS_FEED: LiveNewsItem[] = [
@@ -768,6 +768,7 @@ export default function App() {
         const shuffledNews = [...newsArr].sort(() => Math.random() - 0.5);
           const mapped: LiveNewsItem[] = shuffledNews.slice(0, 10).map((item, i) => ({
           img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
+          logo: getNewspaperLogo(item.link || ""),
           fallbackImg: images[i % images.length],
           author: item.title       ?? "Tin tức",
           src:    item.source      ?? "Tin tức",
