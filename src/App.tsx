@@ -730,6 +730,14 @@ function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void
   );
 }
 
+const RSS_FEEDS = [
+  { name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss" },
+  { name: "VnExpress", url: "https://vnexpress.net/rss/tin-moi-nhat.rss" },
+  { name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/tin-moi-nhat.rss" },
+  { name: "Thanh Niên", url: "https://thanhnien.vn/rss/home.rss" },
+  { name: "Báo Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" }
+];
+
 export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
   try {
@@ -956,13 +964,7 @@ export default function App() {
         const lat = 20.9716;
         const lon = 105.7725;
         
-        const RSS_FEEDS = [
-            { name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss" },
-            { name: "VnExpress", url: "https://vnexpress.net/rss/tin-moi-nhat.rss" },
-            { name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/tin-moi-nhat.rss" },
-            { name: "Thanh Niên", url: "https://thanhnien.vn/rss/home.rss" },
-            { name: "Báo Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" }
-          ];
+
         
         // Fetch from ALL feeds to get the absolute newest articles across the board
         const shuffledFeeds = [...RSS_FEEDS];
