@@ -859,55 +859,64 @@ export default function App() {
         else if (c_temp > 35) trang_thai = "NANG_GAT";
         
                 const rawItems = (news.items || []).slice(0, 10);
-        
-        // Asynchronously fetch OpenGraph images for news articles using proxy
-        Promise.all(rawItems.map(async (item: any) => {
-          let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-          if (!imageUrl && item.description) {
-            const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (imgMatch) imageUrl = imgMatch[1];
-          }
-          if (!imageUrl && item.content) {
-            const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (imgMatch2) imageUrl = imgMatch2[1];
-          }
           
-          if (!imageUrl && item.link) {
-            try {
-              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
-              const res = await fetch(proxyUrl);
-              const data = await res.json();
-              const html = data.contents || "";
-              const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
-                           || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-              if (ogMatch) {
-                imageUrl = ogMatch[1];
-              }
-            } catch(e) {
-              // fallback
+          // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
+          const baseNewsItems = rawItems.map((item: any) => {
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
             }
-          }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            
+            return {
+              title: item.title,
+              link: item.link,
+              source: item.source || "Báo Mới",
+              time: new Date(item.pubDate).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
+              image: imageUrl
+            };
+          });
 
-          return {
-            title: item.title,
-            link: item.link,
-            source: item.source || "Báo Mới",
-            time: new Date(item.pubDate).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
-            image: imageUrl
-          };
-        })).then(newsItems => {
-          const json = {
+          const jsonPayload = {
             location: "Quận Hà Đông, VN",
             weather: {
               current: { temp: c_temp, feels_like, humidity, desc: c_desc, icon: c_icon, pm25, aqi_level },
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
               status: trang_thai
             },
-            news: newsItems.length > 0 ? newsItems : undefined
+            news: baseNewsItems.length > 0 ? baseNewsItems : undefined
           };
-          processJson(json);
-        });
-      }).catch(e => {
+          
+          processJson(jsonPayload);
+
+          // 2. Tải ảnh OG ngầm ở Background (không block UI)
+          baseNewsItems.forEach((item: any, idx: number) => {
+            if (!item.image && item.link) {
+              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
+              fetch(proxyUrl).then(res => res.json()).then(data => {
+                const html = data.contents || "";
+                const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
+                             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+                if (ogMatch) {
+                  const newImg = ogMatch[1];
+                  setLiveNews((prev: any) => {
+                    if (!prev) return prev;
+                    const next = [...prev];
+                    if (next[idx]) {
+                      next[idx] = { ...next[idx], img: newImg };
+                    }
+                    return next;
+                  });
+                }
+              }).catch(() => {});
+            }
+          });
+          
+        }).catch((e: any) => {
         console.error("Standalone fetch error:", e);
         setApiStatus("error"); // Fallback to mock if fetch fails entirely
       });
@@ -934,16 +943,21 @@ export default function App() {
     }
   }
 
+    if (apiStatus === "loading") {
+    return (
+      <div className="w-full h-screen bg-white">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-[#182033]/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
+          ⏳ Đang tải dữ liệu thực tế…
+        </div>
+      </div>
+    );
+  }
+
   const theme = WEATHER_THEMES[condKey];
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6fa]">
       {/* Live API status indicator */}
-      {apiStatus === "loading" && (
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-[#182033]/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
-          ⏳ Đang tải dữ liệu thực tế…
-        </div>
-      )}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
           ⚠️ Không thể tải dữ liệu – hiển thị dữ liệu mẫu
