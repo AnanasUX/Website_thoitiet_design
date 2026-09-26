@@ -735,11 +735,11 @@ export default function App() {
       (Object.keys(newData) as ConditionKey[]).forEach((k) => { newData[k] = entry; });
       setLiveData(newData);
 
-      const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, thumbnail?: string }>;
+      const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string }>;
       if (Array.isArray(newsArr) && newsArr.length > 0) {
         const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
         const mapped: LiveNewsItem[] = newsArr.slice(0, 10).map((item, i) => ({
-          img:    item.thumbnail || images[i % images.length],
+          img:    item.image || images[i % images.length],
           fallbackImg: images[i % images.length],
           author: item.title       ?? "Tin tức",
           src:    item.source      ?? "Tin tức",
@@ -761,6 +761,48 @@ export default function App() {
     }
 
     // ── Ưu tiên ?data= (bot đã fetch sẵn, decode base64 là dùng được luôn) ──
+    
+    // 🟢 Ưu tiên ?cdata= (bot đã nén zlib + base64) 🟢
+    if (cData) {
+      (async () => {
+        try {
+          setApiStatus("loading");
+          const b64 = cData.replace(/-/g, "+").replace(/_/g, "/");
+          const binaryStr = atob(b64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const ds = new DecompressionStream("deflate");
+          const writer = ds.writable.getWriter();
+          writer.write(bytes);
+          writer.close();
+          const reader = ds.readable.getReader();
+          const chunks = [];
+          let totalLen = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            totalLen += value.length;
+          }
+          const decompressed = new Uint8Array(totalLen);
+          let offset = 0;
+          for (const chunk of chunks) {
+            decompressed.set(chunk, offset);
+            offset += chunk.length;
+          }
+          const decodedStr = new TextDecoder("utf-8").decode(decompressed);
+          const json = JSON.parse(decodedStr);
+          processJson(json);
+        } catch (e) {
+          console.error(e);
+          setApiStatus("error");
+        }
+      })();
+      return;
+    }
+
     if (rawData) {
       try {
         setApiStatus("loading");
