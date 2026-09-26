@@ -225,7 +225,7 @@ function WeatherSection({
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full"
-        style={{ background: baseTheme.gradient }}
+          style={{ background: "linear-gradient(21deg, rgb(72 141 203) 0%, rgb(51 106 214) 50%, rgb(79 196 255) 100%)" }}
       >
         <p className="font-['Inter:Semi_Bold'] font-semibold text-[13px] text-white whitespace-nowrap">
           📍 {compact ? WEATHER.location : WEATHER.locationFull} · {WEATHER.time}
