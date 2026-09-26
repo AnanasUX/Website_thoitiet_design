@@ -774,7 +774,14 @@ export default function App() {
     loadingRef.current = true;
     setIsLoadingMore(true);
     try {
-      const existingLinks = new Set((liveNews || []).map(item => item.link));
+      const getUniqueKey = (item: any) => {
+        if (item.title && item.author) return (item.title || item.author).trim().toLowerCase();
+        if (item.title) return item.title.trim().toLowerCase();
+        if (item.author) return item.author.trim().toLowerCase();
+        return item.link ? item.link.split('?')[0].replace(/^https?:\/\//, '') : Math.random().toString();
+      };
+      
+      const existingKeys = new Set((liveNews || []).map(getUniqueKey));
       
       const newsPromises = RSS_FEEDS.map(feed => 
         fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`)
@@ -786,7 +793,7 @@ export default function App() {
       const newsArrays = await Promise.all(newsPromises);
       const allNews = newsArrays.flat();
       
-      const trulyNewItems = allNews.filter(item => !existingLinks.has(item.link));
+      const trulyNewItems = allNews.filter(item => !existingKeys.has(getUniqueKey(item)));
       
       if (trulyNewItems.length === 0) {
         setHasMoreNews(false);
