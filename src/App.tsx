@@ -915,6 +915,10 @@ export default function App() {
               if (imgMatch2) imageUrl = imgMatch2[1];
             }
             
+            if (imageUrl) {
+              imageUrl = imageUrl.replace(/&amp;/g, '&');
+            }
+            
                           let cleanDesc = "";
               if (item.description && typeof item.description === 'string') {
                   cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
