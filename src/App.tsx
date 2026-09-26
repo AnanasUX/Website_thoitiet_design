@@ -853,34 +853,26 @@ export default function App() {
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const fullNewsPool = useRef<any[]>([]);
     const [hasMoreNews, setHasMoreNews] = useState(true);
   const loadingRef = useRef(false);
 
-  const fetchMoreNews = useCallback(async () => {
+    const fetchMoreNews = useCallback(async () => {
     if (loadingRef.current || !hasMoreNews) return;
     loadingRef.current = true;
     setIsLoadingMore(true);
+    
+    await new Promise(res => setTimeout(res, 800));
+    
     try {
       const getUniqueKey = (item: any) => {
-        if (item.title && item.author) return (item.title || item.author).trim().toLowerCase();
-        if (item.title) return item.title.trim().toLowerCase();
         if (item.author) return item.author.trim().toLowerCase();
         return item.link ? item.link.split('?')[0].replace(/^https?:\/\//, '') : Math.random().toString();
       };
       
       const existingKeys = new Set((liveNews || []).map(getUniqueKey));
       
-      const newsPromises = RSS_FEEDS.map(feed => 
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
-          .then(r => { if (!r.ok) return null; return r.json(); })
-          .then(data => data ? (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })) : [])
-          .catch(() => [])
-      );
-      
-      const newsArrays = await Promise.all(newsPromises);
-      const allNews = newsArrays.flat();
-      
-      const trulyNewItems = allNews.filter(item => !existingKeys.has(getUniqueKey(item)) && isToday(item.pubDate));
+      const trulyNewItems = (fullNewsPool.current || []).filter(item => !existingKeys.has(getUniqueKey(item)));
       
       if (trulyNewItems.length === 0) {
         setHasMoreNews(false);
@@ -888,44 +880,22 @@ export default function App() {
       }
       
       const picked = trulyNewItems.sort(() => 0.5 - Math.random()).slice(0, 10);
-      const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
       
       if (trulyNewItems.length <= 10) {
         setHasMoreNews(false);
       }
       
-      const newMapped: LiveNewsItem[] = picked.map((item: any, i: number) => {
-        let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-        if (!imageUrl && item.description) {
-          const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (imgMatch) imageUrl = imgMatch[1];
-        }
-        if (!imageUrl && item.content) {
-          const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (imgMatch2) imageUrl = imgMatch2[1];
-        }
-        if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
-        
-        let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
-        
-        return {
-          img: imageUrl ? getProxyImageUrl(imageUrl) : images[i % images.length],
-          logo: getNewspaperLogo(item.link || ""),
-          fallbackImg: images[i % images.length],
-          author: item.title ?? "Tin tức",
-          src: item._sourceName || "Tin tức",
-          body: cleanDesc,
-          link: item.link
-        };
+      setLiveNews(prev => {
+        const next = [...(prev || []), ...picked];
+        return next;
       });
-      setLiveNews(prev => [...(prev || []), ...newMapped]);
     } catch (err) {
       console.error(err);
     } finally {
       loadingRef.current = false;
       setIsLoadingMore(false);
     }
-  }, []);
+  }, [liveNews, hasMoreNews]);
 
   
   
@@ -983,19 +953,22 @@ export default function App() {
 
       const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string }>;
       if (Array.isArray(newsArr) && newsArr.length > 0) {
-        const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
-        const shuffledNews = [...newsArr].sort(() => Math.random() - 0.5);
-          const mapped: LiveNewsItem[] = shuffledNews.slice(0, 10).map((item, i) => ({
-          img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
-          logo: getNewspaperLogo(item.link || ""),
-          fallbackImg: images[i % images.length],
-          author: item.title       ?? "Tin tức",
-          src:    item.source      ?? "Tin tức",
-          body:   item.description ?? "",
-          link:   item.link,
-        }));
-        setLiveNews(mapped);
-      }
+          const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
+          const allMapped: LiveNewsItem[] = newsArr.map((item, i) => ({
+            img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
+            logo: getNewspaperLogo(item.link || ""),
+            fallbackImg: images[i % images.length],
+            author: item.title       ?? "Tin tức",
+            src:    item.source      ?? "Tin tức",
+            body:   item.description ?? "",
+            link:   item.link,
+          }));
+          
+          fullNewsPool.current = allMapped;
+          
+          const shuffledPool = [...allMapped].sort(() => Math.random() - 0.5);
+          setLiveNews(shuffledPool.slice(0, 10));
+        }
 
       // Store dynamic overrides in React state (not mutating WEATHER_THEMES)
       setLiveOverrides({
@@ -1119,7 +1092,7 @@ export default function App() {
             const dateB = new Date(b.pubDate || 0).getTime();
             return dateB - dateA;
           });
-          const rawItems = allNews.slice(0, 10);
+          const rawItems = allNews;
           
           // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
           const baseNewsItems = rawItems.map((item: any) => {
@@ -1216,7 +1189,7 @@ export default function App() {
         const allNews = newsArrays.flat().filter(item => isToday(item.pubDate));
         const sortedNews = allNews.sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
         
-        json.news = sortedNews.slice(0, 10).map((item: any) => {
+        json.news = sortedNews.map((item: any) => {
            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
            if (!imageUrl && item.description) {
              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
