@@ -932,8 +932,8 @@ export default function App() {
             { name: "Báo Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" }
           ];
         
-        // Randomly select 2 RSS feeds to fetch to mix news without hitting rate limits
-        const shuffledFeeds = [...RSS_FEEDS].sort(() => 0.5 - Math.random()).slice(0, 2);
+        // Fetch from ALL feeds to get the absolute newest articles across the board
+        const shuffledFeeds = [...RSS_FEEDS];
         
         const newsPromises = shuffledFeeds.map(feed => 
           fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`)
@@ -967,8 +967,12 @@ export default function App() {
           if (n_pop > 50) trang_thai = "MUA";
           else if (c_temp > 35) trang_thai = "NANG_GAT";
           
-          // Combine all news from the 2 fetched feeds, shuffle them, and take 10
-          let allNews = newsArrays.flat().sort(() => 0.5 - Math.random());
+          // Combine all news, sort by newest (pubDate), and take top 10
+          let allNews = newsArrays.flat().sort((a, b) => {
+            const dateA = new Date(a.pubDate || 0).getTime();
+            const dateB = new Date(b.pubDate || 0).getTime();
+            return dateB - dateA;
+          });
           const rawItems = allNews.slice(0, 10);
           
           // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
