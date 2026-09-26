@@ -159,16 +159,17 @@ type WeatherEntry = {
   time: string; location: string; locationFull: string;
   temp: string; feelsLike: string; conditionLabel: string;
   humidity: string; pm25: string; wind: string; forecastText: string;
+  pressure: string; clouds: string; visibility: string;
 };
 
 // ── Default mock data (fallback khi chưa có API) ──────────────────────────────
 const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
-  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%" },
-  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%" },
-  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%" },
-  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%" },
-  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%" },
-  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%" },
+  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%", pressure: "1012 hPa", clouds: "10%", visibility: "10 km" },
+  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%", pressure: "1009 hPa", clouds: "5%", visibility: "10 km" },
+  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%", pressure: "1005 hPa", clouds: "0%", visibility: "10 km" },
+  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%", pressure: "1015 hPa", clouds: "80%", visibility: "6 km" },
+  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%", pressure: "1010 hPa", clouds: "100%", visibility: "4 km" },
+  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%", pressure: "998 hPa", clouds: "100%", visibility: "2 km" },
 };
 
 // ── Ánh xạ trạng thái bot (BINH_THUONG, MUA_DONG …) → ConditionKey ───────────
@@ -814,17 +815,18 @@ export default function App() {
       
       const entry: WeatherEntry = {
         time: timeStr,
-        location: weather.name || "Hà Nội",
-        temperature: c_temp,
-        condition: c_desc,
-        conditionIcon: c_icon,
+        location: (weather.name || "Hà Nội") + ", Hà Nội",
+        locationFull: (weather.name || "Hà Nội") + ", Thành phố Hà Nội",
+        temp: `${c_temp}°C`,
+        feelsLike: `${feels_like}°C`,
+        conditionLabel: WEATHER_THEMES[mappedCondKey].label,
+        humidity: `${humidity}%`,
+        pm25: `${pm25.toFixed(1)} µg/m³`,
+        wind: windStr,
         forecastText: forecastText,
-        stats: [
-          { icon: "💧", label: "Độ ẩm", value: `${humidity}%` },
-          { icon: pmIcon, label: "PM2.5", value: `${Math.round(pm25)}` },
-          { icon: "💨", label: "Sức gió", value: windStr },
-          { icon: "🌡️", label: "Cảm giác", value: `${feels_like}°C` }
-        ]
+        pressure: `${weather.main?.pressure || 1012} hPa`,
+        clouds: `${weather.clouds?.all || 0}%`,
+        visibility: `${(weather.visibility || 10000) / 1000} km`
       };
       
       setCondKey(mappedCondKey);
