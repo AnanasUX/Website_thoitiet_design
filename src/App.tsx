@@ -163,6 +163,7 @@ type WeatherEntry = {
   pressure: string; clouds: string; visibility: string;
   sunrise: string; sunset: string; tempMin: string; tempMax: string;
   uvIndex: string; dewPoint: string; hourlyForecast: HourlyItem[];
+  warningText?: string; suggestionItems?: string[];
 };
 
 // ── Default mock data (fallback khi chưa có API) ──────────────────────────────
@@ -327,9 +328,11 @@ function WeatherSection({
         <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
           <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
           <div className="flex flex-col gap-1 w-full">
-              {warningText.split('\n').map((line, i) => (
-                <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{line}</p>
-              ))}
+              {warningText.split('\n').map((line, i, arr) => {
+                const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
+                const text = line.replace(/^[└├]\s*/, '');
+                return <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+              })}
             </div>
         </div>
       )}
@@ -338,10 +341,13 @@ function WeatherSection({
       {suggestionItems && suggestionItems.length > 0 && (
         <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
           <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
-          <div className="flex flex-col gap-0 w-full">
-            {suggestionItems.map((line, i) => (
-              <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
-            ))}
+          <div className="flex flex-col gap-1 w-full mt-1">
+            {suggestionItems.map((line, i, arr) => {
+                const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
+                // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
+                const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
+                return <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+            })}
           </div>
         </div>
       )}
@@ -910,6 +916,52 @@ export default function App() {
       
       const isRaining = c_desc.toLowerCase().includes("mưa") || c_desc.toLowerCase().includes("rain");
       let mappedCondKey: ConditionKey = isRaining ? "mua-nho" : "nang-nhe";
+      if (c_temp >= 35) mappedCondKey = "nang-gat";
+      else if (c_temp >= 30) mappedCondKey = "nang";
+      
+      let dynamicWarnings: string[] = [];
+      let dynamicSuggestions: string[] = [];
+      
+      const uv = Math.round(uviRes.value || 0);
+      if (uv >= 8) {
+        dynamicWarnings.push(`Chỉ số UV rất cao (${uv}). Nguy cơ say nắng, phỏng da nếu hoạt động ngoài trời lâu.`);
+        dynamicSuggestions.push("Trang bị: Bắt buộc đội mũ rộng vành, đeo kính râm UV400, bôi kem chống nắng SPF50+.");
+      } else if (uv >= 6) {
+        dynamicWarnings.push(`Chỉ số UV cao (${uv}). Cần che chắn bảo vệ da khi ra ngoài.`);
+      }
+      
+      if (c_temp >= 35) {
+        dynamicWarnings.push(`Nắng nóng gay gắt (${c_temp}°C). Nguy cơ mất nước, kiệt sức.`);
+        dynamicSuggestions.push("Lịch trình: Hạn chế di chuyển giờ cao điểm nắng (11h-15h). Để xe ở nơi có bóng râm, kiểm tra áp suất lốp.");
+      } else if (c_temp <= 15) {
+        dynamicWarnings.push(`Trời rét (${c_temp}°C). Nguy cơ nhiễm lạnh cao.`);
+        dynamicSuggestions.push("Trang bị: Mặc áo ấm, giữ ấm cổ và tay khi đi xe máy.");
+      }
+      
+      if (windKmh > 30) {
+        dynamicWarnings.push(`Gió giật mạnh (${windKmh} km/h). Chú ý biển báo, cây cối dễ gãy đổ.`);
+        dynamicSuggestions.push("Điều khiển phương tiện: Giữ vững tay lái, giảm tốc độ, tránh đỗ xe dưới gốc cây lớn.");
+      }
+      
+      if (popPercent >= 50) {
+        dynamicWarnings.push(`Khả năng mưa rất cao (${popPercent}%). Mặt đường trơn trượt.`);
+        dynamicSuggestions.push("Trang bị: Mang theo áo mưa/ô. Điều khiển xe chậm lại, tránh phanh gấp.");
+      }
+      
+      if (pm25 > 50) {
+        dynamicWarnings.push(`Ô nhiễm không khí (PM2.5: ${pm25.toFixed(1)}). Nguy cơ ảnh hưởng đường hô hấp.`);
+        dynamicSuggestions.push("Trang bị: Đeo khẩu trang lọc bụi mịn (N95) khi di chuyển.");
+      }
+      
+      const visibilityKm = (weather.visibility || 10000) / 1000;
+      if (visibilityKm < 4) {
+        dynamicWarnings.push(`Tầm nhìn hạn chế (${visibilityKm.toFixed(1)} km).`);
+        dynamicSuggestions.push("Điều khiển phương tiện: Bật đèn sương mù hoặc đèn chiếu gần, giữ khoảng cách an toàn.");
+      }
+      
+      const finalWarning = dynamicWarnings.length > 0 ? dynamicWarnings.join("\n") : undefined;
+      const finalSuggestions = dynamicSuggestions.length > 0 ? dynamicSuggestions : undefined;
+
       
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -936,7 +988,9 @@ export default function App() {
         tempMax: `${t_max}°C`,
         uvIndex: `${Math.round(uviRes.value || 0)}`,
         dewPoint: `${dewPoint}°C`,
-        hourlyForecast
+        hourlyForecast,
+        warningText: finalWarning,
+        suggestionItems: finalSuggestions
       };
       
       setCondKey(mappedCondKey);
