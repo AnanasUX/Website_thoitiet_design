@@ -720,7 +720,7 @@ export default function App() {
       const icon    = pm25Icon(pm25Val);
       const windMs  = Number(cur.wind_speed ?? 0);
       const wind    = windMs > 0 ? `${Math.round(windMs * 3.6)} km/h` : "—";
-      const forecastText = `Khoảng ${(fore.temp as number) ?? cur.temp}°C | ${(fore.desc as string) ?? ""} | Mưa: ${(fore.pop as number) ?? 0}%`;
+      const forecastText = `~${(fore.temp as number) ?? cur.temp}°C | ${WEATHER_THEMES[key].label} | Mưa: ${(fore.pop as number) ?? 0}%`;
 
       const entry: WeatherEntry = {
         time:           timeStr,
