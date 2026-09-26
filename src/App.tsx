@@ -760,14 +760,21 @@ export default function App() {
     }
   };
 
+  const observerTarget = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300) {
-        fetchMoreNews();
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          fetchMoreNews();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+    return () => observer.disconnect();
   }, []);
 
 
@@ -1103,6 +1110,7 @@ export default function App() {
       <div className="hidden xl:block">
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
+      <div ref={observerTarget} className="w-full h-10"></div>
     </div>
   );
 }
