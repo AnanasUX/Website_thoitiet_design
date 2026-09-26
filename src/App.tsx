@@ -3,7 +3,7 @@
 // Ví dụ: https://website.../  ?api=https%3A%2F%2Fbot-server%2Fapi%2Fdaily-news
 // Nếu không có ?api thì dùng mock data (chế độ preview thiết kế)
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
 
@@ -685,6 +685,21 @@ function DevWeatherPanel({
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
+
+function InfiniteScrollTrigger({ onTrigger }: { onTrigger: () => void }) {
+  const targetRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        onTrigger();
+      }
+    }, { rootMargin: '300px' });
+    if (targetRef.current) observer.observe(targetRef.current);
+    return () => observer.disconnect();
+  }, [onTrigger]);
+  return <div ref={targetRef} className="w-full h-10"></div>;
+}
+
 export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
   try {
@@ -715,7 +730,7 @@ export default function App() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadingRef = useRef(false);
 
-  const fetchMoreNews = async () => {
+  const fetchMoreNews = useCallback(async () => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setIsLoadingMore(true);
@@ -724,7 +739,7 @@ export default function App() {
       const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`);
       const data = await res.json();
       const items = data.items || [];
-      const picked = items.sort(() => 0.5 - Math.random()).slice(0, 5);
+      const picked = items.sort(() => 0.5 - Math.random()).slice(0, 10);
       const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
       
       const newMapped: LiveNewsItem[] = picked.map((item: any, i: number) => {
@@ -758,25 +773,11 @@ export default function App() {
       loadingRef.current = false;
       setIsLoadingMore(false);
     }
-  };
+  }, []);
 
-  const observerTarget = useRef<HTMLDivElement>(null);
   
-  useEffect(() => {
-    if (apiStatus === "loading") return;
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting) {
-          fetchMoreNews();
-        }
-      },
-      { rootMargin: "300px" }
-    );
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-    return () => observer.disconnect();
-  }, [apiStatus]);
+  
+
 
 
   const tapCount = useRef(0);
@@ -1111,7 +1112,7 @@ export default function App() {
       <div className="hidden xl:block">
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
-      <div ref={observerTarget} className="w-full h-10"></div>
+      <InfiniteScrollTrigger onTrigger={fetchMoreNews} />
     </div>
   );
 }
