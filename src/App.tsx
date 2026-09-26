@@ -712,6 +712,64 @@ export default function App() {
   const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadingRef = useRef(false);
+
+  const fetchMoreNews = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setIsLoadingMore(true);
+    try {
+      const feed = RSS_FEEDS[Math.floor(Math.random() * RSS_FEEDS.length)];
+      const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`);
+      const data = await res.json();
+      const items = data.items || [];
+      const picked = items.sort(() => 0.5 - Math.random()).slice(0, 5);
+      const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
+      
+      const newMapped: LiveNewsItem[] = picked.map((item: any, i: number) => {
+        let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+        if (!imageUrl && item.description) {
+          const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (imgMatch) imageUrl = imgMatch[1];
+        }
+        if (!imageUrl && item.content) {
+          const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (imgMatch2) imageUrl = imgMatch2[1];
+        }
+        if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+        
+        let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
+        
+        return {
+          img: imageUrl ? getProxyImageUrl(imageUrl) : images[i % images.length],
+          logo: getNewspaperLogo(item.link || ""),
+          fallbackImg: images[i % images.length],
+          author: item.title ?? "Tin tức",
+          src: feed.name,
+          body: cleanDesc,
+          link: item.link
+        };
+      });
+      setLiveNews(prev => [...(prev || []), ...newMapped]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      loadingRef.current = false;
+      setIsLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 300) {
+        fetchMoreNews();
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
 
   const tapCount = useRef(0);
   const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1037,6 +1095,7 @@ export default function App() {
 
       <div className="md:hidden">
         <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        {isLoadingMore && <div className="text-center py-4 text-[13px] text-[#5f687b] font-['Inter:Medium'] font-medium">⏳ Đang tải thêm tin tức...</div>}
       </div>
       <div className="hidden md:block xl:hidden">
         <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
