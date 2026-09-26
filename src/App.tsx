@@ -763,6 +763,7 @@ export default function App() {
   const observerTarget = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
+    if (apiStatus === "loading") return;
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting) {
@@ -775,7 +776,7 @@ export default function App() {
       observer.observe(observerTarget.current);
     }
     return () => observer.disconnect();
-  }, []);
+  }, [apiStatus]);
 
 
   const tapCount = useRef(0);
