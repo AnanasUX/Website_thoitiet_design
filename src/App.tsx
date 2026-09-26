@@ -508,13 +508,15 @@ function DesktopLayout({
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...grid] = newsFeed;
   const now = useCurrentTime();
-  const dateStr = now.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" });
+  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dayName = days[now.getDay()];
+    const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
         <div className="flex gap-4 items-center">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[18px] whitespace-nowrap">Dashboard</p>
+          <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
           <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
             <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
