@@ -705,7 +705,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading }: { onTrigger: () => void
         disabled={isLoading}
         className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-['Inter:Semi_Bold'] font-semibold rounded-full text-[14px] active:scale-95 transition-transform"
       >
-        {isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
+        {isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin (bản mới nhất)"}
       </button>
     </div>
   );
@@ -748,6 +748,7 @@ export default function App() {
     try {
       const feed = RSS_FEEDS[Math.floor(Math.random() * RSS_FEEDS.length)];
       const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`);
+      if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       const items = data.items || [];
       const picked = items.sort(() => 0.5 - Math.random()).slice(0, 10);
