@@ -685,7 +685,17 @@ function DevWeatherPanel({
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export default function App() {
+export default function getProxyImageUrl(url: string) {
+  if (!url) return "";
+  let cleanUrl = url.trim();
+  if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
+  if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  }
+  return cleanUrl;
+}
+
+function App() {
   const [condKey, setCondKey] = useState<ConditionKey>("mua-nho");
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
@@ -742,7 +752,7 @@ export default function App() {
         const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
         const shuffledNews = [...newsArr].sort(() => Math.random() - 0.5);
           const mapped: LiveNewsItem[] = shuffledNews.slice(0, 10).map((item, i) => ({
-          img:    (item.image && item.image.startsWith("http") && !item.image.includes("wsrv.nl")) ? `https://wsrv.nl/?url=${encodeURIComponent(item.image)}` : (item.image || images[i % images.length]),
+          img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
           fallbackImg: images[i % images.length],
           author: item.title       ?? "Tin tức",
           src:    item.source      ?? "Tin tức",
@@ -937,7 +947,7 @@ export default function App() {
                 const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
                              || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
                 if (ogMatch) {
-                  const newImg = `https://wsrv.nl/?url=${encodeURIComponent(ogMatch[1])}`;
+                  const newImg = getProxyImageUrl(ogMatch[1]);
                   setLiveNews((prev: any) => {
                     if (!prev) return prev;
                     const next = [...prev];
