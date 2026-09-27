@@ -237,6 +237,7 @@ interface LiveOverrides {
   suggestionItems?: string[];
   floodItems?: string[];
   routeItems?: string[];
+  weatherNews?: { title: string, link: string, source: string }[];
 }
 
 function WeatherSection({
@@ -347,6 +348,26 @@ function WeatherSection({
                 // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
                 const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
                 return <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Weather News */}
+      {liveOverrides?.weatherNews && liveOverrides.weatherNews.length > 0 && (
+        <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🌍 TIN TỨC MỚI NHẤT (Hà Nội):</p>
+          <div className="flex flex-col gap-1 w-full mt-1">
+            {liveOverrides.weatherNews.map((news, i, arr) => {
+              const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
+              return (
+                <div key={i} className="flex gap-1">
+                  <span className="text-[#5f687b]">{prefix}</span>
+                  <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-['Inter:Medium'] font-medium text-[#0a84ff] hover:underline line-clamp-2">
+                    [{news.title} - {news.source}]
+                  </a>
+                </div>
+              );
             })}
           </div>
         </div>
@@ -1204,6 +1225,7 @@ export default function App() {
         suggestionItems: (Array.isArray(json.suggestionItems) && json.suggestionItems.length > 0) ? (json.suggestionItems as string[]) : undefined,
         floodItems: (Array.isArray(json.floodItems) && json.floodItems.length > 0) ? (json.floodItems as string[]) : undefined,
         routeItems: (Array.isArray(json.routeItems) && json.routeItems.length > 0) ? (json.routeItems as string[]) : undefined,
+        weatherNews: (Array.isArray(json.weatherNews) && json.weatherNews.length > 0) ? (json.weatherNews as any) : undefined,
       });
 
       setApiStatus("ok");
@@ -1293,8 +1315,12 @@ export default function App() {
           fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
           fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
           fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
-          Promise.all(newsPromises)
-        ]).then(([weather, forecast, aqi, newsArrays]) => {
+          Promise.all(newsPromises),
+          fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=thời+tiết+hà+nội&hl=vi&gl=VN&ceid=VN:vi'))
+            .then(r => r.json())
+            .then(data => data.items || [])
+            .catch(() => [])
+        ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
           const feels_like = Math.round(weather.main?.feels_like || 0);
           const humidity = weather.main?.humidity || 0;
@@ -1358,6 +1384,13 @@ export default function App() {
           });
 
 
+          const weatherNews = weatherNewsRaw.slice(0, 3).map((item: any) => {
+            const titleMatch = item.title ? item.title.match(/(.+) - (.+)/) : null;
+            const title = titleMatch ? titleMatch[1] : item.title;
+            const source = titleMatch ? titleMatch[2] : (item.source || "Google News");
+            return { title, link: item.link, source };
+          });
+
           const jsonPayload = {
             location: "Hà Nội, VN",
             weather: {
@@ -1377,7 +1410,8 @@ export default function App() {
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
               status: trang_thai
             },
-            news: baseNewsItems.length > 0 ? baseNewsItems : undefined
+            news: baseNewsItems.length > 0 ? baseNewsItems : undefined,
+            weatherNews: weatherNews.length > 0 ? weatherNews : undefined
           };
           
           processJson(jsonPayload);
