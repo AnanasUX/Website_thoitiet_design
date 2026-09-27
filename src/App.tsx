@@ -1013,6 +1013,10 @@ export default function App() {
         ...(cur.clouds !== undefined && { clouds: `${cur.clouds}%` }),
         ...(cur.uvIndex !== undefined && { uvIndex: `${cur.uvIndex}` }),
         ...(cur.dewPoint !== undefined && { dewPoint: `${cur.dewPoint}°C` }),
+        ...(cur.sunrise !== undefined && { sunrise: `${cur.sunrise}` }),
+        ...(cur.sunset !== undefined && { sunset: `${cur.sunset}` }),
+        ...(cur.tempMin !== undefined && { tempMin: `${cur.tempMin}°C` }),
+        ...(cur.tempMax !== undefined && { tempMax: `${cur.tempMax}°C` }),
         ...(w.hourlyForecast !== undefined && { hourlyForecast: w.hourlyForecast as any })
       };
 
@@ -1144,8 +1148,9 @@ export default function App() {
               .catch(() => []),
             fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`)
               .then(r => r.json())
-              .catch(() => [])
-          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw, geoReverse]) => {
+              .catch(() => []),
+            fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 }))
+          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw, geoReverse, uviRes]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
           const feels_like = Math.round(weather.main?.feels_like || 0);
           const humidity = weather.main?.humidity || 0;
@@ -1260,6 +1265,18 @@ export default function App() {
              }
           }
 
+          let dewPoint = c_temp;
+          if (humidity > 0) {
+            const a = 17.27, b = 237.7;
+            const alpha = ((a * c_temp) / (b + c_temp)) + Math.log(humidity / 100.0);
+            dewPoint = Math.round((b * alpha) / (a - alpha));
+          }
+
+          const formatTime = (ts: number) => {
+            if (!ts) return "--:--";
+            return new Date(ts * 1000).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
+          };
+
           const jsonPayload = {
             location: resolvedLocation,
             weather: {
@@ -1274,7 +1291,13 @@ export default function App() {
                 pressure: weather.main?.pressure,
                 visibility: weather.visibility,
                 clouds: weather.clouds?.all,
-                wind_speed: weather.wind?.speed
+                wind_speed: weather.wind?.speed,
+                uvIndex: Math.round(uviRes?.value || 0),
+                dewPoint: dewPoint,
+                sunrise: formatTime(weather.sys?.sunrise),
+                sunset: formatTime(weather.sys?.sunset),
+                tempMin: Math.round(weather.main?.temp_min || c_temp),
+                tempMax: Math.round(weather.main?.temp_max || c_temp)
               },
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
               status: trang_thai,
