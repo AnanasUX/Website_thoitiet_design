@@ -436,13 +436,24 @@ function MobileLayout({
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
+  const now = useCurrentTime();
+  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const dayName = days[now.getDay()];
+  const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
+  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-4 w-full shrink-0">
         <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px]">Anx.</p>
-        <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[11px]">
-          {WEATHER.location} · Cập nhật {WEATHER.time}
-        </p>
+        <div className="flex flex-col items-end">
+          <p className="font-['Inter:Medium'] font-medium text-[#182033] text-[12px]">
+            {WEATHER.location}
+          </p>
+          <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[10px]">
+            {dateStr} · {timeStr}
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-5 items-start pb-8 pt-4 px-4 w-full">
@@ -501,6 +512,12 @@ function TabletLayout({
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...rest] = newsFeed;
+  const now = useCurrentTime();
+  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const dayName = days[now.getDay()];
+  const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
+  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
@@ -510,9 +527,11 @@ function TabletLayout({
             📍 {WEATHER.location}
           </p>
         </div>
-        <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[11px] whitespace-nowrap">
-          Cập nhật {WEATHER.time} CH
-        </p>
+        <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
+          <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+            {dateStr} · {timeStr}
+          </p>
+        </div>
       </div>
 
       <div className="flex gap-5 items-start p-5 w-full">
