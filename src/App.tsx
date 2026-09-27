@@ -1135,8 +1135,11 @@ export default function App() {
             fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=thời+tiết+hà+nội&hl=vi&gl=VN&ceid=VN:vi'))
               .then(r => r.json())
               .then(data => data.items || [])
+              .catch(() => []),
+            fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`)
+              .then(r => r.json())
               .catch(() => [])
-          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw]) => {
+          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw, geoReverse]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
           const feels_like = Math.round(weather.main?.feels_like || 0);
           const humidity = weather.main?.humidity || 0;
@@ -1207,8 +1210,19 @@ export default function App() {
             return { title, link: item.link, source };
           });
 
+          let resolvedLocation = locationNameStr;
+          if (!resolvedLocation) {
+             if (geoReverse && Array.isArray(geoReverse) && geoReverse.length > 0) {
+                 const geo = geoReverse[0];
+                 const vnName = geo.local_names?.vi || geo.name;
+                 resolvedLocation = `${vnName}, VN`;
+             } else {
+                 resolvedLocation = (weather.name || "Hà Nội") + ", VN";
+             }
+          }
+
           const jsonPayload = {
-            location: locationNameStr || ((weather.name || "Hà Nội") + ", VN"),
+            location: resolvedLocation,
             weather: {
               current: { 
                 temp: c_temp, 
@@ -1269,7 +1283,7 @@ export default function App() {
           (err) => {
             doFetch(20.9716, 105.7725, "Hà Đông District, VN");
           },
-          { timeout: 5000 }
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       } else {
         doFetch(20.9716, 105.7725, "Hà Đông District, VN");
