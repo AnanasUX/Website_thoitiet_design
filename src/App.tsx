@@ -301,7 +301,7 @@ function WeatherSection({
 
       {/* Forecast */}
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">DỰ BÁO HÀNG GIỜ (HOURLY)</p>
+        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
             {WEATHER.hourlyForecast.map((hour: any, idx: number) => (
@@ -319,7 +319,7 @@ function WeatherSection({
       </div>
 
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
         <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
       </div>
 
@@ -1312,7 +1312,7 @@ export default function App() {
           
           let trang_thai = "NANG";
           if (n_pop > 50) trang_thai = "MUA";
-          else if (c_temp > 35) trang_thai = "NANG_GAT";
+          else if (c_temp >= 35 || feels_like >= 35) trang_thai = "NANG_GAT";
           
           // Combine all news, sort by newest (pubDate), and take top 10
           let allNews = newsArrays.flat().sort((a, b) => {
