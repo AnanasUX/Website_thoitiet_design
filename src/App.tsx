@@ -482,7 +482,7 @@ function MobileLayout({
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-1">{item.author}</p>
+                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-2">{item.author}</p>
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
                 </div>
                 <div className="relative shrink-0 size-5">
