@@ -1146,9 +1146,9 @@ export default function App() {
               .then(r => r.json())
               .then(data => data.items || [])
               .catch(() => []),
-            fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`)
+            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`)
               .then(r => r.json())
-              .catch(() => []),
+              .catch(() => null),
             fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 }))
           ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw, geoReverse, uviRes]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
@@ -1256,10 +1256,10 @@ export default function App() {
 
           let resolvedLocation = locationNameStr;
           if (!resolvedLocation) {
-             if (geoReverse && Array.isArray(geoReverse) && geoReverse.length > 0) {
-                 const geo = geoReverse[0];
-                 const vnName = geo.local_names?.vi || geo.name;
-                 resolvedLocation = `${vnName}, VN`;
+             if (geoReverse && geoReverse.locality) {
+                 resolvedLocation = `${geoReverse.locality}, ${geoReverse.principalSubdivision || 'VN'}`;
+             } else if (geoReverse && geoReverse.city) {
+                 resolvedLocation = `${geoReverse.city}, VN`;
              } else {
                  resolvedLocation = (weather.name || "Hà Nội") + ", VN";
              }
