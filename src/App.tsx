@@ -882,216 +882,7 @@ export function getProxyImageUrl(url: string) {
   };
 
 export default function App() {
-  const fetchRealtimeWeather = async () => {
-    try {
-      const apiKey = "a201c471567522a7d0b7a0567ad245fe";
-      const lat = 20.9716;
-      const lon = 105.7725;
-      
-      const [weather, forecast, aqi, uviRes] = await Promise.all([
-        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
-        fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
-        fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
-        fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 }))
-      ]);
 
-      const c_temp = Math.round(weather.main?.temp || 0);
-      const feels_like = Math.round(weather.main?.feels_like || 0);
-      const t_min = Math.round(weather.main?.temp_min || c_temp);
-      const t_max = Math.round(weather.main?.temp_max || c_temp);
-      const humidity = weather.main?.humidity || 0;
-      const c_desc = weather.weather?.[0]?.description || "";
-      const iconCode = weather.weather?.[0]?.icon || "";
-      const c_icon = iconCode.includes("d") ? "☀️" : "🌙";
-      
-      const pop = forecast.list?.[0]?.pop || 0;
-      const popPercent = Math.round(pop * 100);
-      
-      const pm25 = aqi.list?.[0]?.components?.pm25 || 15;
-      
-      const windMs = weather.wind?.speed || 0;
-      const windDeg = weather.wind?.deg || 0;
-      const windKmh = Math.round(windMs * 3.6);
-      const windStr = windKmh > 0 ? `${windKmh} km/h • ${getWindDirection(windDeg)}` : "N/A";
-      
-      const formatTime = (ts: number) => {
-        if (!ts) return "--:--";
-        return new Date(ts * 1000).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
-      };
-      const formatTimeShort = (ts: number) => {
-        if (!ts) return "--";
-        const d = new Date(ts * 1000);
-        return `${d.getHours()}h`;
-      };
-      const sunrise = formatTime(weather.sys?.sunrise);
-      const sunset = formatTime(weather.sys?.sunset);
-      
-      // Calculate Dew Point (Magnus formula)
-      let dewPoint = c_temp;
-      if (humidity > 0) {
-        const a = 17.27;
-        const b = 237.7;
-        const alpha = ((a * c_temp) / (b + c_temp)) + Math.log(humidity / 100.0);
-        dewPoint = Math.round((b * alpha) / (a - alpha));
-      }
-      
-      const nowSec = Math.floor(Date.now() / 1000);
-        const points = [
-          {
-            dt: nowSec,
-            temp: c_temp,
-            pop: (forecast.list?.[0]?.pop || 0),
-            icon: weather.weather?.[0]?.icon || "01d"
-          },
-          ...(forecast.list || []).map((item: any) => ({
-            dt: item.dt,
-            temp: item.main?.temp || 0,
-            pop: item.pop || 0,
-            icon: item.weather?.[0]?.icon || "01d"
-          }))
-        ];
-        
-        let startHourSec = nowSec - (nowSec % 3600);
-        let interpolatedHourly: any[] = [];
-        
-        for (let i = 0; i < 24; i++) {
-          const targetSec = startHourSec + i * 3600;
-          let p0 = points[0];
-          let p1 = points[1] || points[0];
-          
-          for (let j = 0; j < points.length - 1; j++) {
-            if (points[j].dt <= targetSec && points[j+1].dt >= targetSec) {
-              p0 = points[j];
-              p1 = points[j+1];
-              break;
-            } else if (points[j].dt > targetSec) {
-              p0 = points[0];
-              p1 = points[1] || points[0];
-              break;
-            } else if (j === points.length - 2) {
-              p0 = points[j];
-              p1 = points[j+1];
-            }
-          }
-          
-          let fraction = 0;
-          if (p1.dt > p0.dt) {
-            fraction = (targetSec - p0.dt) / (p1.dt - p0.dt);
-            fraction = Math.max(0, Math.min(1, fraction));
-          }
-          
-          const stepTemp = p0.temp + (p1.temp - p0.temp) * fraction;
-          const stepPop = p0.pop + (p1.pop - p0.pop) * fraction;
-          const icon = fraction < 0.5 ? p0.icon : p1.icon;
-          
-          interpolatedHourly.push({
-            time: i === 0 ? "Bây giờ" : formatTimeShort(targetSec),
-            icon: icon,
-            temp: Math.round(stepTemp),
-            pop: Math.round(stepPop * 100)
-          });
-        }
-        const hourlyForecast = interpolatedHourly;
-        
-        const isRaining = c_desc.toLowerCase().includes("mưa") || c_desc.toLowerCase().includes("rain");
-      let mappedCondKey: ConditionKey = isRaining ? "mua-nho" : "nang-nhe";
-      if (c_temp >= 35) mappedCondKey = "nang-gat";
-      else if (c_temp >= 30) mappedCondKey = "nang";
-      
-      let dynamicWarnings: string[] = [];
-      let dynamicSuggestions: string[] = [];
-      
-      const uv = Math.round(uviRes.value || 0);
-      if (uv >= 8) {
-        dynamicWarnings.push(`Chỉ số UV rất cao (${uv}). Nguy cơ say nắng, phỏng da nếu hoạt động ngoài trời lâu.`);
-        dynamicSuggestions.push("Trang bị: Bắt buộc đội mũ rộng vành, đeo kính râm UV400, bôi kem chống nắng SPF50+.");
-      } else if (uv >= 6) {
-        dynamicWarnings.push(`Chỉ số UV cao (${uv}). Cần che chắn bảo vệ da khi ra ngoài.`);
-      }
-      
-      if (c_temp >= 35) {
-        dynamicWarnings.push(`Nắng nóng gay gắt (${c_temp}°C). Nguy cơ mất nước, kiệt sức.`);
-        dynamicSuggestions.push("Lịch trình: Hạn chế di chuyển giờ cao điểm nắng (11h-15h). Để xe ở nơi có bóng râm, kiểm tra áp suất lốp.");
-      } else if (c_temp <= 15) {
-        dynamicWarnings.push(`Trời rét (${c_temp}°C). Nguy cơ nhiễm lạnh cao.`);
-        dynamicSuggestions.push("Trang bị: Mặc áo ấm, giữ ấm cổ và tay khi đi xe máy.");
-      }
-      
-      if (windKmh > 30) {
-        dynamicWarnings.push(`Gió giật mạnh (${windKmh} km/h). Chú ý biển báo, cây cối dễ gãy đổ.`);
-        dynamicSuggestions.push("Điều khiển phương tiện: Giữ vững tay lái, giảm tốc độ, tránh đỗ xe dưới gốc cây lớn.");
-      }
-      
-      if (popPercent >= 50) {
-        dynamicWarnings.push(`Khả năng mưa rất cao (${popPercent}%). Mặt đường trơn trượt.`);
-        dynamicSuggestions.push("Trang bị: Mang theo áo mưa/ô. Điều khiển xe chậm lại, tránh phanh gấp.");
-      }
-      
-      if (pm25 > 50) {
-        dynamicWarnings.push(`Ô nhiễm không khí (PM2.5: ${pm25.toFixed(1)}). Nguy cơ ảnh hưởng đường hô hấp.`);
-        dynamicSuggestions.push("Trang bị: Đeo khẩu trang lọc bụi mịn (N95) khi di chuyển.");
-      }
-      
-      const visibilityKm = (weather.visibility || 10000) / 1000;
-      if (visibilityKm < 4) {
-        dynamicWarnings.push(`Tầm nhìn hạn chế (${visibilityKm.toFixed(1)} km).`);
-        dynamicSuggestions.push("Điều khiển phương tiện: Bật đèn sương mù hoặc đèn chiếu gần, giữ khoảng cách an toàn.");
-      }
-      
-      const finalWarning = dynamicWarnings.length > 0 ? dynamicWarnings.join("\n") : undefined;
-      const finalSuggestions = dynamicSuggestions.length > 0 ? dynamicSuggestions : undefined;
-
-      
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      
-      const forecastText = `~${c_temp}°C | ${WEATHER_THEMES[mappedCondKey].label} | Mưa: ${popPercent}%`;
-      
-      const entry: WeatherEntry = {
-        time: timeStr,
-        location: (weather.name || "Hà Nội") + ", Hà Nội",
-        locationFull: (weather.name || "Hà Nội") + ", Thành phố Hà Nội",
-        temp: `${c_temp}°C`,
-        feelsLike: `${feels_like}°C`,
-        conditionLabel: WEATHER_THEMES[mappedCondKey].label,
-        humidity: `${humidity}%`,
-        pm25: `${pm25.toFixed(1)} µg/m³`,
-        wind: windStr,
-        forecastText: forecastText,
-        pressure: `${weather.main?.pressure || 1012} hPa`,
-        clouds: `${weather.clouds?.all || 0}%`,
-        visibility: `${(weather.visibility || 10000) / 1000} km`,
-        sunrise,
-        sunset,
-        tempMin: `${t_min}°C`,
-        tempMax: `${t_max}°C`,
-        uvIndex: `${Math.round(uviRes.value || 0)}`,
-        dewPoint: `${dewPoint}°C`,
-        hourlyForecast,
-        warningText: finalWarning,
-        suggestionItems: finalSuggestions
-      };
-      
-      setCondKey(mappedCondKey);
-      setLiveData(prev => {
-        const newData = { ...(prev || DEFAULT_WEATHER_DATA) };
-        (Object.keys(newData) as ConditionKey[]).forEach((k) => {
-           newData[k] = { ...(newData[k] || {}), ...entry };
-        });
-        return newData;
-      });
-      
-    } catch (e) {
-      console.error("Lỗi cập nhật thời tiết realtime:", e);
-    }
-  };
-
-  useEffect(() => {
-    // Start realtime weather interval
-    fetchRealtimeWeather();
-    const weatherInterval = setInterval(fetchRealtimeWeather, 5 * 60 * 1000); // Every 5 minutes
-    return () => clearInterval(weatherInterval);
-  }, []);
 
   const [condKey, setCondKey] = useState<ConditionKey>("mua-nho");
   const [panelOpen, setPanelOpen] = useState(false);
@@ -1154,6 +945,7 @@ export default function App() {
 
   // ── Load live data: ?data=<base64json> (bot-embedded) hoặc ?api=<url> (fetch) ───
   useEffect(() => {
+    const loadData = () => {
     const params  = new URLSearchParams(window.location.search);
     const rawData = params.get("data");   // base64 JSON từ bot
     const cData   = params.get("cdata");  // zlib compressed base64 JSON từ bot
@@ -1520,6 +1312,11 @@ export default function App() {
         processJson(json as Record<string, unknown>);
       }).catch(() => setApiStatus("error"));
     }
+    }; // end loadData
+
+    loadData();
+    const intervalId = setInterval(loadData, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(intervalId);
   }, []);
 
   // Triple-tap the Anx. logo (or version tag) to open the hidden dev panel
