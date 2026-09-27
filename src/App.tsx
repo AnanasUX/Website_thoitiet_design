@@ -10,7 +10,7 @@ const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env
 function useCurrentTime() {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
   return now;
