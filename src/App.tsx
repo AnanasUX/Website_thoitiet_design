@@ -353,39 +353,46 @@ function WeatherSection({
         </div>
       )}
 
-      {/* Weather News */}
-      {liveOverrides?.weatherNews && liveOverrides.weatherNews.length > 0 && (
-        <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🌍 TIN TỨC MỚI NHẤT (Hà Nội):</p>
-          <div className="flex flex-col gap-1 w-full mt-1">
-            {liveOverrides.weatherNews.map((news, i, arr) => {
-              const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
-              return (
-                <div key={i} className="flex gap-1">
-                  <span className="text-[#5f687b]">{prefix}</span>
-                  <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-['Inter:Medium'] font-medium text-[#0a84ff] hover:underline line-clamp-2">
-                    [{news.title} - {news.source}]
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Flood blackspots */}
-      {showFlood && floodItems && floodItems.length > 0 && (
-        <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">
-            BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
-          </p>
-          <div className="flex flex-col gap-0 w-full">
-            {floodItems.map((line, i) => (
+      {/* Combined Flood & Weather News */}
+      <div className="bg-white border border-[#e3e7ef] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+        {/* Flood Section */}
+        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap mb-2 uppercase">
+          BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
+        </p>
+        <div className="flex flex-col gap-0 w-full mb-1">
+          {showFlood && floodItems && floodItems.length > 0 ? (
+            floodItems.map((line, i) => (
               <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
-            ))}
-          </div>
+            ))
+          ) : (
+            <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
+          )}
         </div>
-      )}
+
+        {/* Divider & Weather News */}
+        {liveOverrides?.weatherNews && liveOverrides.weatherNews.length > 0 && (
+          <>
+            <div className="w-full border-t border-[#e3e7ef] my-3"></div>
+            
+            <p className="font-['Inter:Bold'] font-bold text-[#182033] flex items-center gap-2 mb-3">
+              📰 Bài viết liên quan
+            </p>
+            <div className="flex flex-col gap-3 w-full">
+              {liveOverrides.weatherNews.map((news, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <span className="text-[#0a84ff] font-bold mt-[1px]">›</span>
+                  <div className="flex flex-col gap-[2px]">
+                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-['Inter:Medium'] font-medium text-[#0a84ff] hover:underline line-clamp-2">
+                      {news.title}
+                    </a>
+                    <span className="text-[#5f687b] text-[11px]">{news.source}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Route advisory */}
       {showRouteAdvisory && routeItems && routeItems.length > 0 && (
