@@ -286,10 +286,10 @@ function WeatherSection({
           {[
             { label: "💨 Gió", value: WEATHER.wind },
             { label: "💧 Độ ẩm", value: WEATHER.humidity },
+            { label: "🌫️ Bụi PM2.5", value: WEATHER.pm25 },
             { label: "👁️ Tầm nhìn", value: WEATHER.visibility },
             { label: "⏬ Áp suất", value: WEATHER.pressure },
-            { label: "☀️ UV Index", value: WEATHER.uvIndex },
-            { label: "💧 Điểm sương", value: WEATHER.dewPoint }
+            { label: "☀️ UV Index", value: WEATHER.uvIndex }
           ].map((stat, idx) => (
             <div key={idx} className="bg-[rgba(255,255,255,0.09)] border border-[rgba(255,255,255,0.2)] flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-xl">
               <p className="font-['Inter:Medium'] font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
@@ -1161,9 +1161,14 @@ export default function App() {
         feelsLike:      `${cur.feels_like}°C`,
         conditionLabel: (cur.desc as string) ?? WEATHER_THEMES[key].label,
         humidity:       `${cur.humidity ?? 60}%`,
-        pm25:           `${pm25Val} µg/m³`,
+        pm25:           `${pm25Val} µg/m³ ${icon}`,
         wind,
         forecastText,
+        ...(cur.pressure !== undefined && { pressure: `${cur.pressure} hPa` }),
+        ...(cur.visibility !== undefined && { visibility: `${Number(cur.visibility)/1000} km` }),
+        ...(cur.clouds !== undefined && { clouds: `${cur.clouds}%` }),
+        ...(cur.uvIndex !== undefined && { uvIndex: `${cur.uvIndex}` }),
+        ...(cur.dewPoint !== undefined && { dewPoint: `${cur.dewPoint}°C` })
       };
 
       setLiveData(prev => {
@@ -1195,10 +1200,10 @@ export default function App() {
 
       // Store dynamic overrides in React state (not mutating WEATHER_THEMES)
       setLiveOverrides({
-        warningText: (json.warningText as string) || "",
-        suggestionItems: (json.suggestionItems as string[]) || [],
-        floodItems: (json.floodItems as string[]) || [],
-        routeItems: (json.routeItems as string[]) || [],
+        warningText: (json.warningText as string) || undefined,
+        suggestionItems: (Array.isArray(json.suggestionItems) && json.suggestionItems.length > 0) ? (json.suggestionItems as string[]) : undefined,
+        floodItems: (Array.isArray(json.floodItems) && json.floodItems.length > 0) ? (json.floodItems as string[]) : undefined,
+        routeItems: (Array.isArray(json.routeItems) && json.routeItems.length > 0) ? (json.routeItems as string[]) : undefined,
       });
 
       setApiStatus("ok");
@@ -1354,9 +1359,21 @@ export default function App() {
 
 
           const jsonPayload = {
-            location: "Quận Hà Đông, VN",
+            location: "Hà Nội, VN",
             weather: {
-              current: { temp: c_temp, feels_like, humidity, desc: c_desc, icon: c_icon, pm25, aqi_level },
+              current: { 
+                temp: c_temp, 
+                feels_like, 
+                humidity, 
+                desc: c_desc, 
+                icon: c_icon, 
+                pm25, 
+                aqi_level,
+                pressure: weather.main?.pressure,
+                visibility: weather.visibility,
+                clouds: weather.clouds?.all,
+                wind_speed: weather.wind?.speed
+              },
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
               status: trang_thai
             },
