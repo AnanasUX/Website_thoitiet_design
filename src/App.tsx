@@ -437,9 +437,7 @@ function MobileLayout({
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const now = useCurrentTime();
-  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-  const dayName = days[now.getDay()];
-  const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
+  const shortDateStr = `${now.getDate()} thg ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
@@ -447,12 +445,14 @@ function MobileLayout({
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-4 w-full shrink-0">
         <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
-          <p className="font-['Inter:Medium'] font-medium text-[#182033] text-[12px]">
-            {WEATHER.location}
+          <p className="font-['Inter:Medium'] font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
+            📍 {WEATHER.location}
           </p>
-          <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[10px]">
-            {dateStr} · {timeStr}
-          </p>
+          <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
+            <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
+              {shortDateStr} · {timeStr}
+            </p>
+          </div>
         </div>
       </div>
 
