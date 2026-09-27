@@ -305,14 +305,19 @@ function WeatherSection({
         <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
-            {WEATHER.hourlyForecast.map((hour: any, idx: number) => (
-              <div key={idx} className="flex flex-col items-center gap-2 min-w-[50px]">
-                <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
-                <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
-                <p className="font-['Inter:Semi_Bold'] font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
-                <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
-              </div>
-            ))}
+            {WEATHER.hourlyForecast.map((hour: any, idx: number) => {
+              const currentHourStr = new Date().getHours() + "h";
+              const isActive = hour.time === currentHourStr || hour.time === "Bây giờ";
+              const opacityClass = isActive ? "opacity-100" : "opacity-40";
+              return (
+                <div key={idx} className={`flex flex-col items-center gap-2 min-w-[50px] transition-opacity duration-300 ${opacityClass}`}>
+                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
+                  <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
+                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
+                  <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="font-['Inter:Regular'] text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
@@ -1007,7 +1012,8 @@ export default function App() {
         ...(cur.visibility !== undefined && { visibility: `${Number(cur.visibility)/1000} km` }),
         ...(cur.clouds !== undefined && { clouds: `${cur.clouds}%` }),
         ...(cur.uvIndex !== undefined && { uvIndex: `${cur.uvIndex}` }),
-        ...(cur.dewPoint !== undefined && { dewPoint: `${cur.dewPoint}°C` })
+        ...(cur.dewPoint !== undefined && { dewPoint: `${cur.dewPoint}°C` }),
+        ...(w.hourlyForecast !== undefined && { hourlyForecast: w.hourlyForecast as any })
       };
 
       setLiveData(prev => {
@@ -1155,6 +1161,39 @@ export default function App() {
           const pm25 = aqi.list?.[0]?.components?.pm2_5 || 0;
           const aqi_level = aqi.list?.[0]?.main?.aqi || 1;
           
+          const nowSec = Math.floor(Date.now() / 1000);
+          const points = [
+            { dt: nowSec, temp: c_temp, pop: (n_item.pop || 0), icon: iconCode || "01d" },
+            ...(forecast.list || []).map((item: any) => ({
+              dt: item.dt, temp: item.main?.temp || 0, pop: item.pop || 0, icon: item.weather?.[0]?.icon || "01d"
+            }))
+          ];
+          
+          let startHourSec = nowSec - (nowSec % 3600);
+          let interpolatedHourly: any[] = [];
+          
+          for (let i = 0; i < 24; i++) {
+            const targetSec = startHourSec + i * 3600;
+            let p0 = points[0];
+            let p1 = points[1] || points[0];
+            for (let j = 0; j < points.length - 1; j++) {
+              if (points[j].dt <= targetSec && points[j+1].dt >= targetSec) { p0 = points[j]; p1 = points[j+1]; break; }
+              else if (points[j].dt > targetSec) { p0 = points[0]; p1 = points[1] || points[0]; break; }
+              else if (j === points.length - 2) { p0 = points[j]; p1 = points[j+1]; }
+            }
+            let fraction = 0;
+            if (p1.dt > p0.dt) fraction = Math.max(0, Math.min(1, (targetSec - p0.dt) / (p1.dt - p0.dt)));
+            const stepTemp = p0.temp + (p1.temp - p0.temp) * fraction;
+            const stepPop = p0.pop + (p1.pop - p0.pop) * fraction;
+            const icon = fraction < 0.5 ? p0.icon : p1.icon;
+            interpolatedHourly.push({
+              time: `${new Date(targetSec * 1000).getHours()}h`,
+              icon: icon,
+              temp: Math.round(stepTemp),
+              pop: Math.round(stepPop * 100)
+            });
+          }
+          
           let trang_thai = "NANG";
           if (n_pop > 50) trang_thai = "MUA";
           else if (c_temp >= 35 || feels_like >= 35) trang_thai = "NANG_GAT";
@@ -1238,7 +1277,8 @@ export default function App() {
                 wind_speed: weather.wind?.speed
               },
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
-              status: trang_thai
+              status: trang_thai,
+              hourlyForecast: interpolatedHourly
             },
             news: baseNewsItems.length > 0 ? baseNewsItems : undefined,
             weatherNews: weatherNews.length > 0 ? weatherNews : undefined
