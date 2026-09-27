@@ -1094,32 +1094,30 @@ export default function App() {
     // Nếu không có dữ liệu từ Bot và không có apiUrl, trang web tự động fetch dữ liệu thực tế
     if (!cData && !rawData && !apiUrl) {
         setApiStatus("loading");
-        const apiKey = "a201c471567522a7d0b7a0567ad245fe";
-        const lat = 20.9716;
-        const lon = 105.7725;
         
+        const doFetch = (lat: number, lon: number, locationNameStr: string | null = null) => {
+          const apiKey = "a201c471567522a7d0b7a0567ad245fe";
+          
+          // Fetch from ALL feeds to get the absolute newest articles across the board
+          const shuffledFeeds = [...RSS_FEEDS];
+          
+          const newsPromises = shuffledFeeds.map(feed => 
+            fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
+              .then(r => r.json())
+              .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+              .catch(() => [])
+          );
 
-        
-        // Fetch from ALL feeds to get the absolute newest articles across the board
-        const shuffledFeeds = [...RSS_FEEDS];
-        
-        const newsPromises = shuffledFeeds.map(feed => 
-          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
-            .then(r => r.json())
-            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
-            .catch(() => [])
-        );
-
-        Promise.all([
-          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
-          fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
-          fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
-          Promise.all(newsPromises),
-          fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=thời+tiết+hà+nội&hl=vi&gl=VN&ceid=VN:vi'))
-            .then(r => r.json())
-            .then(data => data.items || [])
-            .catch(() => [])
-        ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw]) => {
+          Promise.all([
+            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
+            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
+            fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
+            Promise.all(newsPromises),
+            fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=thời+tiết+hà+nội&hl=vi&gl=VN&ceid=VN:vi'))
+              .then(r => r.json())
+              .then(data => data.items || [])
+              .catch(() => [])
+          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
           const feels_like = Math.round(weather.main?.feels_like || 0);
           const humidity = weather.main?.humidity || 0;
@@ -1191,7 +1189,7 @@ export default function App() {
           });
 
           const jsonPayload = {
-            location: "Hà Nội, VN",
+            location: locationNameStr || ((weather.name || "Hà Nội") + ", VN"),
             weather: {
               current: { 
                 temp: c_temp, 
@@ -1242,6 +1240,21 @@ export default function App() {
         console.error("Standalone fetch error:", e);
         setApiStatus("error"); // Fallback to mock if fetch fails entirely
       });
+      }; // end doFetch
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            doFetch(pos.coords.latitude, pos.coords.longitude);
+          },
+          (err) => {
+            doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+          },
+          { timeout: 5000 }
+        );
+      } else {
+        doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+      }
       return;
     }
 
