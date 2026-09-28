@@ -428,7 +428,7 @@ const DEFAULT_NEWS_FEED: LiveNewsItem[] = [
 
 // ── Mobile Layout ────────────────────────────────────────────────────────────
 
-function MobileLayout({
+function MobileLayout({ activeCategory, setActiveCategory,
   condKey,
   liveData,
   liveNews,
@@ -500,7 +500,7 @@ function MobileLayout({
 
 // ── Tablet Layout ────────────────────────────────────────────────────────────
 
-function TabletLayout({
+function TabletLayout({ activeCategory, setActiveCategory,
   condKey,
   liveData,
   liveNews,
@@ -611,7 +611,7 @@ function TabletLayout({
 
 // ── Desktop Layout ───────────────────────────────────────────────────────────
 
-function DesktopLayout({
+function DesktopLayout({ activeCategory, setActiveCategory,
   condKey,
   liveData,
   liveNews,
@@ -848,13 +848,75 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
   );
 }
 
-const RSS_FEEDS = [
-  { name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss" },
-  { name: "VnExpress", url: "https://vnexpress.net/rss/tin-moi-nhat.rss" },
-  { name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/tin-moi-nhat.rss" },
-  { name: "Thanh Niên", url: "https://thanhnien.vn/rss/home.rss" },
-  { name: "Báo Giao Thông", url: "https://www.baogiaothong.vn/rss/thoi-su.rss" }
+
+export const NEWS_CATEGORIES = ["Tất cả", "Thời sự", "Công nghệ", "AI", "Giới trẻ", "Giáo dục", "Kinh tế", "Startup", "Giải trí", "Du lịch", "Thể thao"];
+
+export const RSS_FEEDS_DB = [
+  // Thời sự
+  { category: "Thời sự", name: "VnExpress", url: "https://vnexpress.net/rss/thoi-su.rss" },
+  { category: "Thời sự", name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/thoi-su.rss" },
+  { category: "Thời sự", name: "Thanh Niên", url: "https://thanhnien.vn/rss/thoi-su.rss" },
+  { category: "Thời sự", name: "VietnamNet", url: "https://vietnamnet.vn/rss/thoi-su.rss" },
+  { category: "Thời sự", name: "Dân Trí", url: "https://dantri.com.vn/rss/xa-hoi.rss" },
+  { category: "Thời sự", name: "VTV News", url: "https://vtv.vn/trong-nuoc.rss" },
+  { category: "Thời sự", name: "Tiền Phong", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
+  { category: "Thời sự", name: "Người Lao Động", url: "https://nld.com.vn/rss/thoi-su.rss" },
+  { category: "Thời sự", name: "Lao Động", url: "https://laodong.vn/rss/thoi-su.rss" },
+
+  // Công nghệ
+  { category: "Công nghệ", name: "VnExpress Số Hóa", url: "https://vnexpress.net/rss/so-hoa.rss" },
+  { category: "Công nghệ", name: "Thanh Niên Công nghệ", url: "https://thanhnien.vn/rss/cong-nghe-game.rss" },
+  { category: "Công nghệ", name: "GenK", url: "https://genk.vn/rss/home.rss" },
+  { category: "Công nghệ", name: "ICTNews", url: "https://vietnamnet.vn/rss/cong-nghe.rss" },
+  { category: "Công nghệ", name: "Dân Trí Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
+  { category: "Công nghệ", name: "Tuổi Trẻ Công nghệ", url: "https://tuoitre.vn/rss/cong-nghe.rss" },
+
+  // AI
+  { category: "AI", name: "Google News AI", url: "https://news.google.com/rss/search?q=tr%C3%AD+tu%E1%BB%87+nh%C3%A2n+t%E1%BA%A1o+AI+vietnam&hl=vi&gl=VN&ceid=VN:vi" },
+  { category: "AI", name: "OpenAI News", url: "https://news.google.com/rss/search?q=OpenAI+ChatGPT&hl=vi&gl=VN&ceid=VN:vi" },
+  { category: "AI", name: "FPT AI", url: "https://news.google.com/rss/search?q=FPT+AI&hl=vi&gl=VN&ceid=VN:vi" },
+
+  // Giới trẻ
+  { category: "Giới trẻ", name: "Tuổi Trẻ Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
+  { category: "Giới trẻ", name: "Thanh Niên Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
+  { category: "Giới trẻ", name: "Dân Trí Nhịp sống trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
+  { category: "Giới trẻ", name: "Kenh14", url: "https://news.google.com/rss/search?q=site:kenh14.vn&hl=vi&gl=VN&ceid=VN:vi" },
+
+  // Giáo dục
+  { category: "Giáo dục", name: "VnExpress Giáo dục", url: "https://vnexpress.net/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "Tuổi Trẻ Giáo dục", url: "https://tuoitre.vn/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "Thanh Niên Giáo dục", url: "https://thanhnien.vn/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "Dân Trí Giáo dục", url: "https://dantri.com.vn/rss/giao-duc.rss" },
+
+  // Kinh tế
+  { category: "Kinh tế", name: "VnEconomy", url: "https://vneconomy.vn/rss/home.rss" },
+  { category: "Kinh tế", name: "CafeF", url: "https://cafef.vn/rss/home.rss" },
+  { category: "Kinh tế", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
+  { category: "Kinh tế", name: "VnExpress Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
+
+  // Startup
+  { category: "Startup", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
+  { category: "Startup", name: "VnExpress Startup", url: "https://vnexpress.net/rss/startup.rss" },
+  { category: "Startup", name: "Shark Tank", url: "https://news.google.com/rss/search?q=Shark+Tank+Vi%E1%BB%87t+Nam&hl=vi&gl=VN&ceid=VN:vi" },
+
+  // Giải trí
+  { category: "Giải trí", name: "VnExpress Giải trí", url: "https://vnexpress.net/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Tuổi Trẻ Giải trí", url: "https://tuoitre.vn/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Thanh Niên Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Ngôi Sao", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
+
+  // Du lịch
+  { category: "Du lịch", name: "VnExpress Du lịch", url: "https://vnexpress.net/rss/du-lich.rss" },
+  { category: "Du lịch", name: "Tuổi Trẻ Du lịch", url: "https://tuoitre.vn/rss/du-lich.rss" },
+  { category: "Du lịch", name: "Thanh Niên Du lịch", url: "https://thanhnien.vn/rss/du-lich.rss" },
+
+  // Thể thao
+  { category: "Thể thao", name: "VnExpress Thể thao", url: "https://vnexpress.net/rss/the-thao.rss" },
+  { category: "Thể thao", name: "Tuổi Trẻ Thể thao", url: "https://tuoitre.vn/rss/the-thao.rss" },
+  { category: "Thể thao", name: "Thanh Niên Thể thao", url: "https://thanhnien.vn/rss/the-thao.rss" },
+  { category: "Thể thao", name: "BongdaPlus", url: "https://news.google.com/rss/search?q=bongdaplus&hl=vi&gl=VN&ceid=VN:vi" }
 ];
+
 
 export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
@@ -924,6 +986,7 @@ export default function App() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
   const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -974,6 +1037,75 @@ export default function App() {
   
   
 
+
+
+  
+  useEffect(() => {
+    if (activeCategory === "Tất cả") return; // Let the initial fetch handle it, or we can fetch a mix
+    
+    let isCancelled = false;
+    const fetchCategoryNews = async () => {
+      try {
+        setApiStatus("loading");
+        
+        const catFeeds = RSS_FEEDS_DB.filter(f => f.category === activeCategory);
+        if (catFeeds.length === 0) return;
+        
+        // Fetch up to 10 feeds from this category
+        const selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 10);
+        
+        const promises = selectedFeeds.map(feed => 
+          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
+            .then(r => r.json())
+            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+            .catch(() => [])
+        );
+        
+        const results = await Promise.all(promises);
+        if (isCancelled) return;
+        
+        const allNews = results.flat().sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
+        
+        const mappedNews = allNews.map((item: any, i) => {
+          let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+          if (!imageUrl && item.description) {
+            const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+            if (imgMatch) imageUrl = imgMatch[1];
+          }
+          if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+          
+          let cleanDesc = "";
+          if (item.description) {
+             cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+             cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+          }
+          
+          const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
+          
+          return {
+            img: imageUrl || images[i % images.length],
+            logo: getNewspaperLogo(item.link || ""),
+            fallbackImg: images[i % images.length],
+            author: item.title ?? "Tin tức",
+            src: item.source || item._sourceName || "Tin tức",
+            body: cleanDesc,
+            link: item.link
+          };
+        });
+        
+        fullNewsPool.current = mappedNews;
+        setLiveNews(mappedNews.slice(0, 10));
+        setHasMoreNews(mappedNews.length > 10);
+        setApiStatus("ok");
+        
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    
+    fetchCategoryNews();
+    return () => { isCancelled = true; };
+  }, [activeCategory]);
 
 
   const tapCount = useRef(0);
@@ -1140,7 +1272,7 @@ export default function App() {
           const apiKey = "a201c471567522a7d0b7a0567ad245fe";
           
           // Fetch from ALL feeds to get the absolute newest articles across the board
-          const shuffledFeeds = [...RSS_FEEDS];
+          const shuffledFeeds = [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 5);
           
           const newsPromises = shuffledFeeds.map(feed => 
             fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
@@ -1393,7 +1525,7 @@ export default function App() {
     if (apiUrl) {
       setApiStatus("loading");
       
-      const newsPromises = RSS_FEEDS.map(feed => 
+      const newsPromises = [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 5).map(feed => 
         fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
           .then(r => r.json())
           .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
@@ -1509,14 +1641,14 @@ export default function App() {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
