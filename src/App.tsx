@@ -505,7 +505,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           
-      <div className="flex items-center justify-between w-full mb-1">
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
             <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
               Tin Tức Mới Nhất
             </p>
@@ -585,7 +585,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
         {/* News panel – dữ liệu động từ bot */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
 
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 scrollbar-hide">
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] mt-[-12px]">
         {NEWS_CATEGORIES.map(cat => (
           <button
             key={cat}
@@ -706,7 +706,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         {/* News column – dữ liệu động từ bot */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
 
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 scrollbar-hide">
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] mt-[-12px]">
         {NEWS_CATEGORIES.map(cat => (
           <button
             key={cat}
