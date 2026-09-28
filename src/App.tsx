@@ -1693,7 +1693,7 @@ export default function App() {
             });
           }
           const dailyForecastData = Object.values(dailyMap).map((d: any) => {
-            const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            const days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
             const dayName = days[d.date.getDay()];
             return {
                day: dayName,
@@ -1703,7 +1703,7 @@ export default function App() {
                pop: d.pop
             };
           });
-          if (dailyForecastData.length > 0) dailyForecastData[0].day = 'Hôm nay';
+          
 
           const formatTime = (ts: number) => {
             if (!ts) return "--:--";
