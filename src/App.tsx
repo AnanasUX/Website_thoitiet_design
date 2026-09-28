@@ -873,14 +873,14 @@ export const RSS_FEEDS_DB = [
 
   // AI
   
-  { category: "AI", name: "OpenAI News", url: "https://news.google.com/rss/search?q=OpenAI+ChatGPT&hl=vi&gl=VN&ceid=VN:vi" },
-  { category: "AI", name: "FPT AI", url: "https://news.google.com/rss/search?q=FPT+AI&hl=vi&gl=VN&ceid=VN:vi" },
+  { category: "AI", name: "Dân Trí Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
+  
 
   // Giới trẻ
   { category: "Giới trẻ", name: "Tuổi Trẻ Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
   { category: "Giới trẻ", name: "Thanh Niên Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
   { category: "Giới trẻ", name: "Dân Trí Nhịp sống trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
-  { category: "Giới trẻ", name: "Kenh14", url: "https://news.google.com/rss/search?q=site:kenh14.vn&hl=vi&gl=VN&ceid=VN:vi" },
+  { category: "Giới trẻ", name: "Kenh14", url: "https://kenh14.vn/rss/home.rss" },
 
   // Giáo dục
   { category: "Giáo dục", name: "VnExpress Giáo dục", url: "https://vnexpress.net/rss/giao-duc.rss" },
@@ -897,7 +897,7 @@ export const RSS_FEEDS_DB = [
   // Startup
   { category: "Startup", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
   { category: "Startup", name: "VnExpress Startup", url: "https://vnexpress.net/rss/startup.rss" },
-  { category: "Startup", name: "Shark Tank", url: "https://news.google.com/rss/search?q=Shark+Tank+Vi%E1%BB%87t+Nam&hl=vi&gl=VN&ceid=VN:vi" },
+  { category: "Startup", name: "Diễn đàn Doanh nghiệp", url: "https://diendandoanhnghiep.vn/rss/khoi-nghiep.rss" },
 
   // Giải trí
   { category: "Giải trí", name: "VnExpress Giải trí", url: "https://vnexpress.net/rss/giai-tri.rss" },
@@ -914,7 +914,7 @@ export const RSS_FEEDS_DB = [
   { category: "Thể thao", name: "VnExpress Thể thao", url: "https://vnexpress.net/rss/the-thao.rss" },
   { category: "Thể thao", name: "Tuổi Trẻ Thể thao", url: "https://tuoitre.vn/rss/the-thao.rss" },
   { category: "Thể thao", name: "Thanh Niên Thể thao", url: "https://thanhnien.vn/rss/the-thao.rss" },
-  { category: "Thể thao", name: "BongdaPlus", url: "https://news.google.com/rss/search?q=bongdaplus&hl=vi&gl=VN&ceid=VN:vi" }
+  { category: "Thể thao", name: "BongdaPlus", url: "https://bongdaplus.vn/rss/home.rss" }
 ];
 
 
