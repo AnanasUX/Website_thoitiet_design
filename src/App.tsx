@@ -1130,8 +1130,6 @@ export default function App() {
     let isCancelled = false;
     const fetchCategoryNews = async () => {
       try {
-        setApiStatus("loading");
-        
         const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
         if (catFeeds.length === 0) return;
         
@@ -1214,8 +1212,6 @@ export default function App() {
         fullNewsPool.current = mixedNews;
         setLiveNews(mixedNews.slice(0, 10));
         setHasMoreNews(mixedNews.length > 10);
-
-        setApiStatus("ok");
         
       } catch (e) {
         console.error(e);
