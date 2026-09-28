@@ -1,48 +1,48 @@
-@import 'tailwindcss';
+﻿@import "tailwindcss";
 
-@font-face {
-  font-family: "Inter:Bold";
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-  font-style: normal;
-  font-weight: 700;
+@theme {
+  --text-body: var(--font-body);
+  --text-caption: var(--font-caption);
+  --text-label: var(--font-label);
+  --text-btn: var(--font-button);
+  --text-h4: var(--font-h4);
+  --text-h3: var(--font-h3);
+  --text-h2: var(--font-h2);
+  --text-h1: var(--font-h1);
+  --text-hero: clamp(30px, 4vw, 64px);
 }
 
-@font-face {
-  font-family: "Inter:Medium";
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-  font-style: normal;
-  font-weight: 500;
-}
-
-@font-face {
-  font-family: "Inter:Regular";
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-  font-style: normal;
-  font-weight: 400;
-}
-
-@font-face {
-  font-family: "Inter:Semi Bold";
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-  font-style: normal;
-  font-weight: 600;
-}
-
-@font-face {
-  font-family: "Inter:Light";
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-  font-style: normal;
-  font-weight: 300;
-}
-
-@font-face {
-  font-family: "Inter:Extra Bold";
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-  font-style: normal;
-  font-weight: 800;
+:root {
+  --font-body: clamp(15px, 1vw, 16px);
+  --font-caption: clamp(12px, 0.8vw, 13px);
+  --font-label: clamp(12px, 0.9vw, 14px);
+  --font-button: clamp(14px, 0.95vw, 16px);
+  --font-h4: clamp(17px, 1.2vw, 20px);
+  --font-h3: clamp(19px, 1.5vw, 24px);
+  --font-h2: clamp(23px, 2vw, 32px);
+  --font-h1: clamp(28px, 3vw, 44px);
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #f4f6fa;
+  font-size: var(--font-body);
+}
+
+h1 {
+  font-size: var(--font-h1);
+}
+
+h2 {
+  font-size: var(--font-h2);
+}
+
+h3 {
+  font-size: var(--font-h3);
+}
+
+h4 {
+  font-size: var(--font-h4);
+}
+
+button {
+  font-size: var(--font-button);
 }

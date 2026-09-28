@@ -482,14 +482,14 @@ function MobileLayout({
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-2">{item.author}</p>
+                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2">{item.author}</p>
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
                 </div>
                 <div className="relative shrink-0 size-5">
                   <img alt="" className="absolute inset-0 size-full" src={imgMoreHorizontal} />
                 </div>
               </div>
-              <p className="font-['Inter:Regular'] font-normal leading-[21px] text-[#182033] text-[14px]">{item.body}</p>
+              <p className="font-['Inter:Regular'] font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
@@ -572,7 +572,7 @@ function TabletLayout({
                 <p className="font-['Inter:Bold'] font-bold leading-[22px] text-[#182033] text-[15px] w-full line-clamp-2">
                   {featured.author}
                 </p>
-                <p className="font-['Inter:Regular'] font-normal leading-[18px] text-[#5f687b] text-[12px] w-full line-clamp-2">
+                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
                   {featured.body}
                 </p>
                 <div className="flex items-center justify-between pt-1 w-full">
@@ -601,8 +601,8 @@ function TabletLayout({
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
                   <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[10px]">{item.src}</p>
                 </div>
-                <p className="font-['Inter:Semi_Bold'] font-semibold leading-[19px] text-[#182033] text-[13px] line-clamp-2 w-full">{item.author}</p>
-                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[11px] line-clamp-1 w-full">{item.body}</p>
+                <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
+                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
               </div>
             </a>
           ))}
@@ -684,28 +684,28 @@ function DesktopLayout({
                   <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{WEATHER.time}</p>
                 </div>
               </div>
-              <p className="font-['Inter:Regular'] font-normal leading-[21px] text-[#182033] text-[14px] w-full line-clamp-3">
+              <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               {featured.body && (
-                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[13px] line-clamp-2">{featured.body}</p>
+                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
               )}
             </a>
           )}
 
           {/* News grid */}
-          <div className="flex flex-wrap gap-3 items-start w-full">
-            {grid.map((item, i) => (
-              <a
-                key={i}
-                href={item.link ?? "#"}
-                target={item.link ? "_blank" : undefined}
-                rel="noopener noreferrer"
-                className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-[calc(50%-6px)] no-underline group"
-              >
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 w-full">
+              {grid.map((item, i) => (
+                <a
+                  key={i}
+                  href={item.link ?? "#"}
+                  target={item.link ? "_blank" : undefined}
+                  rel="noopener noreferrer"
+                  className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+                >
                 <div className="h-[140px] relative w-full overflow-hidden">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 </div>
@@ -715,8 +715,8 @@ function DesktopLayout({
                       <p className="font-['Inter:Semi_Bold'] font-semibold text-[#ff315f] text-[11px]">{item.src}</p>
                     </div>
                   </div>
-                  <p className="font-['Inter:Bold'] font-bold leading-5 text-[#182033] text-[14px] w-full line-clamp-2">{item.author}</p>
-                  <p className="font-['Inter:Regular'] font-normal leading-[18px] text-[#5f687b] text-[12px] w-full line-clamp-2">{item.body}</p>
+                  <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
+                  <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
                 </div>
               </a>
             ))}
@@ -1496,14 +1496,14 @@ export default function App() {
         />
       )}
 
-      <div className="md:hidden">
+      <div className="md:hidden w-[min(100%-32px,1200px)] mx-auto">
         <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
         
       </div>
-      <div className="hidden md:block xl:hidden">
+      <div className="hidden md:block xl:hidden w-[min(100%-32px,1200px)] mx-auto">
         <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
-      <div className="hidden xl:block">
+      <div className="hidden xl:block w-[min(100%-32px,1200px)] mx-auto">
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
