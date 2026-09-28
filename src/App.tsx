@@ -378,12 +378,17 @@ function WeatherSection({
         )}
       </div>
 
+        
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
           <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
-            <p className="font-bold text-[#182033] whitespace-nowrap">📅 DỰ BÁO 5 NGÀY TỚI</p>
+            <div className="flex flex-col gap-1 w-full">
+              <p className="font-bold text-[#182033] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
+              {WEATHER.weekRange && <p className="font-medium text-[#5f687b] text-[12px]">{WEATHER.weekRange}</p>}
+            </div>
             <div className="flex flex-col w-full gap-3">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between w-full">
+
                   <p className="font-semibold text-[#182033] w-14 text-left">{day.day}</p>
                   <div className="flex items-center gap-1 w-16">
                     <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-6 h-6 drop-shadow-sm" />
@@ -1380,7 +1385,8 @@ export default function App() {
         ...(cur.tempMin !== undefined && { tempMin: `${cur.tempMin}°C` }),
         ...(cur.tempMax !== undefined && { tempMax: `${cur.tempMax}°C` }),
         ...(w.hourlyForecast !== undefined && { hourlyForecast: w.hourlyForecast as any }),
-        ...(w.dailyForecast !== undefined && { dailyForecast: w.dailyForecast as any })
+        ...(w.dailyForecast !== undefined && { dailyForecast: w.dailyForecast as any }),
+        ...(w.weekRange !== undefined && { weekRange: w.weekRange as string })
       };
 
       setLiveData(prev => {
@@ -1644,10 +1650,29 @@ export default function App() {
           }
 
           
+          
+          const now = new Date();
+          const dayOfWeek = now.getDay() || 7; // 1 (Mon) to 7 (Sun)
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - dayOfWeek + 1);
+          monday.setHours(0, 0, 0, 0);
+          
+          const sunday = new Date(monday);
+          sunday.setDate(monday.getDate() + 6);
+          sunday.setHours(23, 59, 59, 999);
+
+          const fmtDate = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+          const weekRange = `${fmtDate(monday)} - ${fmtDate(sunday)}`;
+
           const dailyMap: Record<number, any> = {};
           if (forecast && forecast.list) {
             forecast.list.forEach((item: any) => {
               const date = new Date(item.dt * 1000);
+              
+              // Only include days that fall within the current week (Monday to Sunday)
+              // If it's next week, ignore it.
+              if (date.getTime() > sunday.getTime()) return;
+
               const dateStr = date.getDate();
               if (!dailyMap[dateStr]) {
                 dailyMap[dateStr] = {
@@ -1667,7 +1692,7 @@ export default function App() {
               }
             });
           }
-          const dailyForecastData = Object.values(dailyMap).slice(0, 5).map((d: any) => {
+          const dailyForecastData = Object.values(dailyMap).map((d: any) => {
             const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
             const dayName = days[d.date.getDay()];
             return {
@@ -1710,7 +1735,8 @@ export default function App() {
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
               status: trang_thai,
               hourlyForecast: interpolatedHourly,
-              dailyForecast: dailyForecastData
+              dailyForecast: dailyForecastData,
+              weekRange: weekRange
             },
             news: baseNewsItems.length > 0 ? baseNewsItems : undefined,
             weatherNews: weatherNews.length > 0 ? weatherNews : undefined
