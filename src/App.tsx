@@ -1692,7 +1692,7 @@ export default function App() {
               }
             });
           }
-          const dailyForecastData = Object.values(dailyMap).map((d: any) => {
+          const dailyForecastData = Object.values(dailyMap).sort((a: any, b: any) => a.date.getTime() - b.date.getTime()).map((d: any) => {
             const days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
             const dayName = days[d.date.getDay()];
             return {
