@@ -1034,7 +1034,7 @@ export default function App() {
         return;
       }
       
-      const picked = trulyNewItems.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const picked = trulyNewItems.slice(0, 10); // Lấy theo thứ tự đã mix sẵn
       
       if (trulyNewItems.length <= 10) {
         setHasMoreNews(false);
@@ -1059,14 +1059,14 @@ export default function App() {
 
   
   useEffect(() => {
-    if (activeCategory === "Tất cả") return; // Let the initial fetch handle it, or we can fetch a mix
+    
     
     let isCancelled = false;
     const fetchCategoryNews = async () => {
       try {
         setApiStatus("loading");
         
-        const catFeeds = RSS_FEEDS_DB.filter(f => f.category === activeCategory);
+        const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
         if (catFeeds.length === 0) return;
         
         // Fetch up to 10 feeds from this category
@@ -1082,52 +1082,73 @@ export default function App() {
         const results = await Promise.all(promises);
         if (isCancelled) return;
         
-        const allNews = results.flat().sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
         
-        const mappedNews = allNews.map((item: any, i) => {
-          let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-          if (!imageUrl && item.description) {
-            const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (imgMatch) imageUrl = imgMatch[1];
-          }
-          if (!imageUrl && item.content) {
-            const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (imgMatch2) imageUrl = imgMatch2[1];
-          }
-          if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
-          
-          // Google news or weird trackers sometimes return 1x1 pixels or generic icons
-          if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
-            imageUrl = ""; 
-          }
-          
-          let cleanDesc = "";
-          if (item.description) {
-             cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
-             cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
-          }
-          
-          // Fix for Google News: description is usually just a repeat of the title + publisher name
-          if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
-             cleanDesc = "";
-          }
-          
-          const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
-          
-          return {
-            img: imageUrl || images[i % images.length],
-            logo: getNewspaperLogo(item.link || ""),
-            fallbackImg: images[i % images.length],
-            author: decodeHTMLEntities(item.title ?? "Tin tức"),
-            src: item.source || item._sourceName || "Tin tức",
-            body: decodeHTMLEntities(cleanDesc),
-            link: item.link
-          };
+        const mappedFeeds = results.map(feedArticles => {
+          return feedArticles.map((item: any) => {
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
+            }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+            
+            if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
+              imageUrl = ""; 
+            }
+            
+            // QUAN TRỌNG: Loại bỏ bài viết nếu không có ảnh
+            if (!imageUrl || imageUrl.trim() === "") return null;
+            
+            let cleanDesc = "";
+            if (item.description) {
+               cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+               cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+            }
+            
+            if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
+               cleanDesc = "";
+            }
+            
+            return {
+              img: imageUrl,
+              logo: getNewspaperLogo(item.link || ""),
+              fallbackImg: imageUrl,
+              author: decodeHTMLEntities(item.title ?? "Tin tức"),
+              src: item.source || item._sourceName || "Tin tức",
+              body: decodeHTMLEntities(cleanDesc),
+              link: item.link
+            };
+          }).filter(Boolean); // Remove nulls (articles without images)
         });
         
-        fullNewsPool.current = mappedNews;
-        setLiveNews(mappedNews.slice(0, 10));
-        setHasMoreNews(mappedNews.length > 10);
+        // Remove empty feeds
+        let validFeeds = mappedFeeds.filter(f => f.length > 0);
+        
+        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú
+        const mixedNews = [];
+        while(validFeeds.length > 0) {
+           // Đảo lộn thứ tự các nguồn báo
+           validFeeds.sort(() => 0.5 - Math.random());
+           for (let i = validFeeds.length - 1; i >= 0; i--) {
+               const feed = validFeeds[i];
+               // Bốc ngẫu nhiên từ 1 đến 4 bài của nguồn này
+               const takeCount = Math.floor(Math.random() * 4) + 1;
+               const taken = feed.splice(0, takeCount);
+               mixedNews.push(...taken);
+               if (feed.length === 0) {
+                   validFeeds.splice(i, 1);
+               }
+           }
+        }
+        
+        fullNewsPool.current = mixedNews;
+        setLiveNews(mixedNews.slice(0, 10));
+        setHasMoreNews(mixedNews.length > 10);
+
         setApiStatus("ok");
         
       } catch (e) {
