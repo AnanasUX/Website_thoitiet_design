@@ -469,7 +469,7 @@ function MobileLayout({
 
         <div className="flex flex-col gap-3 items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
-            Tin Tức Mới Nhất • {newsFeed.length} bài
+            Tin Tức Mới Nhất
           </p>
           {newsFeed.map((item, i) => (
               <a
