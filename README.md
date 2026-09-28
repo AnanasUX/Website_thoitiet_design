@@ -29,3 +29,26 @@ Dự án web thời tiết xây dựng bằng React, Vite và Tailwind CSS. Theo
 2. Dịch ngược toạ độ sang tên Phường/Thành phố.
 3. Gọi API OpenWeatherMap (Thời tiết, Dự báo, Chất lượng không khí, UV).
 4. Cập nhật giao diện.
+
+
+## Các tính năng vừa được bổ sung (Bản cập nhật 28/09/2026)
+
+### 1. Phân tích Cảnh Báo & Gợi Ý Lịch Trình Động (Dynamic Real-time Warnings)
+- Khối "Cảnh Báo Trọng Tâm" và "Gợi Ý Lịch Trình" không còn dùng văn bản tĩnh. 
+- Hệ thống tự động phân tích các chỉ số thời tiết thực tế ngay lúc đó (UV, Nhiệt độ, Mưa, Gió, PM2.5, Tầm nhìn) để sinh ra các cảnh báo tương ứng (Ví dụ: UV > 8 sẽ khuyên mang kính râm, Gió > 30km/h sẽ cảnh báo gió giật).
+- Giao diện (UI) sử dụng cấu trúc Tree (nhánh cây `├` và `└`) chuẩn xác như thiết kế.
+
+### 2. Dự báo hàng giờ 1-Tiếng/Lần (Hourly Forecast Interpolation)
+- API miễn phí của OpenWeatherMap chỉ hỗ trợ 3-tiếng/lần.
+- Hệ thống đã tích hợp thuật toán **Nội suy Tuyến tính (Linear Interpolation)** để chia nhỏ và tính toán mượt mà nhiệt độ, tỷ lệ mưa và icon cho **từng khoảng 1 tiếng một**, kéo dài suốt 24 giờ. Giúp trải nghiệm ngang ngửa gói API OneCall cao cấp.
+
+### 3. Hệ thống Typography & Layout (Tích hợp SF Pro Display)
+- **Cập nhật Font chữ:** Đã tải và trích xuất bộ font **SF Pro Display** (chuẩn Apple) và tải cục bộ (`/public/fonts/SFProDisplay`), loại bỏ hoàn toàn font Inter tĩnh.
+- **Fluid Typography:** Sử dụng CSS Variables với `clamp()` (VD: `--font-h2: clamp(23px, 2vw, 32px)`) để font chữ tự động co giãn theo màn hình mượt mà.
+- **Grid Layout PC:** Khay tin tức trên Desktop đã được chuyển từ `flex` (ép 2 cột) sang CSS Grid hiện đại (`grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))`), cho phép tự động dàn 3 cột hiển thị tuyệt đẹp trên PC.
+- **Boxed Layout:** Bọc toàn bộ khung nội dung bằng cấu trúc `width: min(100% - 32px, 1200px); margin-inline: auto;` giúp giao diện không bị bè ngang khi mở ở màn hình lớn.
+
+### 4. Xử lý Trùng lặp & Bộ lọc Tin Tức Hôm Nay (News Feed Opt)
+- Cấu trúc lại luồng Infinite Scroll: Lấy toàn bộ bài viết, lọc trùng lặp qua hàm `getUniqueKey` triệt để và gán vào mảng lưu trữ tạm, mỗi lần cuộn chỉ lấy đúng 10 bài mới chưa từng hiển thị.
+- Cache-busting (`rnd=...`) để bỏ qua bộ đệm server RSS.
+- Áp dụng hàm `isToday` phân tích mốc `pubDate` để chỉ hiển thị các tin tức thuộc lịch ngày hôm nay.
