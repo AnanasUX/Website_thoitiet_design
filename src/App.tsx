@@ -872,7 +872,7 @@ export const RSS_FEEDS_DB = [
   { category: "Công nghệ", name: "Tuổi Trẻ Công nghệ", url: "https://tuoitre.vn/rss/cong-nghe.rss" },
 
   // AI
-  { category: "AI", name: "Google News AI", url: "https://news.google.com/rss/search?q=tr%C3%AD+tu%E1%BB%87+nh%C3%A2n+t%E1%BA%A1o+AI+vietnam&hl=vi&gl=VN&ceid=VN:vi" },
+  
   { category: "AI", name: "OpenAI News", url: "https://news.google.com/rss/search?q=OpenAI+ChatGPT&hl=vi&gl=VN&ceid=VN:vi" },
   { category: "AI", name: "FPT AI", url: "https://news.google.com/rss/search?q=FPT+AI&hl=vi&gl=VN&ceid=VN:vi" },
 
@@ -917,6 +917,24 @@ export const RSS_FEEDS_DB = [
   { category: "Thể thao", name: "BongdaPlus", url: "https://news.google.com/rss/search?q=bongdaplus&hl=vi&gl=VN&ceid=VN:vi" }
 ];
 
+
+
+export function decodeHTMLEntities(text: string) {
+  if (!text) return "";
+  try {
+    let decoded = text.replace(/&amp;/g, '&'); // Fix double encoded first
+    const doc = new DOMParser().parseFromString(decoded, "text/html");
+    decoded = doc.documentElement.textContent || "";
+    // If still double encoded somehow
+    if (decoded.includes('&')) {
+       const doc2 = new DOMParser().parseFromString(decoded, "text/html");
+       decoded = doc2.documentElement.textContent || "";
+    }
+    return decoded;
+  } catch(e) {
+    return text;
+  }
+}
 
 export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
@@ -1100,9 +1118,9 @@ export default function App() {
             img: imageUrl || images[i % images.length],
             logo: getNewspaperLogo(item.link || ""),
             fallbackImg: images[i % images.length],
-            author: item.title ?? "Tin tức",
+            author: decodeHTMLEntities(item.title ?? "Tin tức"),
             src: item.source || item._sourceName || "Tin tức",
-            body: cleanDesc,
+            body: decodeHTMLEntities(cleanDesc),
             link: item.link
           };
         });
@@ -1193,9 +1211,9 @@ export default function App() {
             img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
             logo: getNewspaperLogo(item.link || ""),
             fallbackImg: images[i % images.length],
-            author: item.title       ?? "Tin tức",
+            author: decodeHTMLEntities(item.title       ?? "Tin tức"),
             src:    item.source      ?? "Tin tức",
-            body:   item.description ?? "",
+            body:   decodeHTMLEntities(item.description ?? ""),
             link:   item.link,
           }));
           
@@ -1395,19 +1413,19 @@ export default function App() {
               }
               
               return {
-                title: item.title,
+                title: decodeHTMLEntities(item.title),
                 link: item.link,
                 source: item.source || item._sourceName || "Báo Mới",
                 time: new Date(item.pubDate || Date.now()).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
                 image: imageUrl,
-                description: cleanDesc
+                description: decodeHTMLEntities(cleanDesc)
               };
           });
 
 
           const weatherNews = weatherNewsRaw.slice(0, 3).map((item: any) => {
             const titleMatch = item.title ? item.title.match(/(.+) - (.+)/) : null;
-            const title = titleMatch ? titleMatch[1] : item.title;
+            const title = decodeHTMLEntities(titleMatch ? titleMatch[1] : item.title);
             const source = titleMatch ? titleMatch[2] : (item.source || "Google News");
             return { title, link: item.link, source };
           });
@@ -1567,7 +1585,7 @@ export default function App() {
            let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
            
            return {
-             title: item.title,
+             title: decodeHTMLEntities(item.title),
              link: item.link,
              source: item._sourceName,
              pubDate: item.pubDate,
