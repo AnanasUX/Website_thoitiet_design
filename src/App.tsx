@@ -447,7 +447,7 @@ function MobileLayout({
 
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
         <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
           <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
@@ -522,7 +522,7 @@ function TabletLayout({
 
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
           <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
@@ -632,7 +632,7 @@ function DesktopLayout({
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
           <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
@@ -901,6 +901,21 @@ export function getProxyImageUrl(url: string) {
     if (deg >= 292.5 && deg < 337.5) return 'Tây Bắc';
     return '';
   };
+
+
+function ScrollToTop() {
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    const toggleVisibility = () => setIsVisible(window.scrollY > 300);
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
+  }, []);
+  return isVisible ? (
+    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] bg-white border border-[#e3e7ef] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-[#ff315f] group animate-fade-in">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-1 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
+    </button>
+  ) : null;
+}
 
 export default function App() {
 
@@ -1504,6 +1519,7 @@ export default function App() {
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
+      <ScrollToTop />
     </div>
   );
 }
