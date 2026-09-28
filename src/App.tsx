@@ -1338,18 +1338,34 @@ export default function App() {
       });
       }; // end doFetch
 
+      const fallbackToIp = () => {
+        fetch("https://ipapi.co/json/")
+          .then(res => res.json())
+          .then(data => {
+            if (data.latitude && data.longitude) {
+              doFetch(data.latitude, data.longitude, `${data.city || "Hanoi"}, ${data.country || "VN"}`);
+            } else {
+              doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+            }
+          })
+          .catch(() => {
+            doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+          });
+      };
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             doFetch(pos.coords.latitude, pos.coords.longitude);
           },
           (err) => {
-            doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+            console.warn("Geolocation failed:", err);
+            fallbackToIp();
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
       } else {
-        doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+        fallbackToIp();
       }
       return;
     }
