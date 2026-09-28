@@ -468,9 +468,22 @@ function MobileLayout({ activeCategory, setActiveCategory,
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
-          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
-            Tin Tức Mới Nhất
-          </p>
+          
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 scrollbar-hide">
+        {NEWS_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+<p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+Tin Tức Mới Nhất
+</p>
           {newsFeed.map((item, i) => (
               <a
               key={i}
@@ -544,6 +557,19 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
         {/* News panel – dữ liệu động từ bot */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
+
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 scrollbar-hide">
+        {NEWS_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
             <p className="font-normal text-[#5f687b] text-[12px]">
@@ -652,6 +678,19 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
         {/* News column – dữ liệu động từ bot */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
+
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 scrollbar-hide">
+        {NEWS_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
           <div className="flex items-center justify-between w-full">
             <div className="flex gap-[10px] items-center">
               <p className="font-bold text-[#182033] text-[20px] whitespace-nowrap">Tin Tức Mới Nhất</p>
