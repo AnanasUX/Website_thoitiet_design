@@ -1100,7 +1100,7 @@ export default function App() {
         return;
       }
       
-      const picked = trulyNewItems.slice(0, 10); // Lấy theo thứ tự đã mix sẵn
+      const picked = trulyNewItems.slice(0, 15); // Lấy theo thứ tự đã mix sẵn
       
       if (trulyNewItems.length <= 10) {
         setHasMoreNews(false);
@@ -1134,7 +1134,7 @@ export default function App() {
         if (catFeeds.length === 0) return;
         
         // Fetch up to 10 feeds from this category
-        const selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 10);
+        const selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 15);
         
         const promises = selectedFeeds.map(feed => 
           fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
@@ -1193,28 +1193,38 @@ export default function App() {
         let validFeeds = mappedFeeds.filter(f => f.length > 0);
         
         // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú
-        // Gộp tất cả bài viết lại và sắp xếp strictly theo thời gian (mới nhất lên đầu)
-        const allSortedNews = validFeeds.flat().sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
-        
         // Chỉ lấy bài viết trong vòng 24h qua (mới nhất trong ngày)
         const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const recentNews = allSortedNews.filter(item => new Date(item.pubDate || 0).getTime() > oneDayAgo);
         
-        // Nếu số bài trong 24h quá ít (< 10 bài), fallback về lấy toàn bộ bài mới nhất
-        const mixedNews = recentNews.length >= 10 ? recentNews : allSortedNews;
+        let recentFeeds = validFeeds.map(feed => {
+            return feed.filter(item => new Date(item.pubDate || 0).getTime() > oneDayAgo);
+        }).filter(feed => feed.length > 0);
         
-        // Nhóm các bài đã sort theo thời gian thành từng cụm 10 bài, trong mỗi cụm thì random nhẹ để đa dạng nguồn (vẫn giữ nguyên lý tỉ lệ)
-        const chunkedMix = [];
-        for (let i = 0; i < mixedNews.length; i += 10) {
-            const chunk = mixedNews.slice(i, i + 10);
-            // Xáo trộn nhẹ các bài trong cùng một khung thời gian (cùng cụm 10 bài) để đảm bảo tỉ lệ đa dạng nguồn
-            chunk.sort(() => 0.5 - Math.random());
-            chunkedMix.push(...chunk);
+        // Nếu số lượng bài quá ít do lọc 24h, fallback về lấy tất cả
+        if (recentFeeds.flat().length < 15) {
+            recentFeeds = validFeeds;
         }
 
-        fullNewsPool.current = chunkedMix;
-        setLiveNews(chunkedMix.slice(0, 10));
-        setHasMoreNews(chunkedMix.length > 10);
+        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú nguồn (chống hiện tượng 1 báo chiếm sóng)
+        const mixedNews = [];
+        while(recentFeeds.length > 0) {
+           // Đảo lộn thứ tự các nguồn báo
+           recentFeeds.sort(() => 0.5 - Math.random());
+           for (let i = recentFeeds.length - 1; i >= 0; i--) {
+               const feed = recentFeeds[i];
+               // Bốc ngẫu nhiên từ 1 đến 4 bài của nguồn này
+               const takeCount = Math.floor(Math.random() * 4) + 1;
+               const taken = feed.splice(0, takeCount);
+               mixedNews.push(...taken);
+               if (feed.length === 0) {
+                   recentFeeds.splice(i, 1);
+               }
+           }
+        }
+        
+        fullNewsPool.current = mixedNews;
+        setLiveNews(mixedNews.slice(0, 15));
+        setHasMoreNews(mixedNews.length > 10);
         
       } catch (e) {
         console.error(e);
@@ -1306,7 +1316,7 @@ export default function App() {
           fullNewsPool.current = allMapped;
           
           const shuffledPool = [...allMapped].sort(() => Math.random() - 0.5);
-          setLiveNews(shuffledPool.slice(0, 10));
+          setLiveNews(shuffledPool.slice(0, 15));
         }
 
       // Store dynamic overrides in React state (not mutating WEATHER_THEMES)
