@@ -1193,25 +1193,28 @@ export default function App() {
         let validFeeds = mappedFeeds.filter(f => f.length > 0);
         
         // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú
-        const mixedNews = [];
-        while(validFeeds.length > 0) {
-           // Đảo lộn thứ tự các nguồn báo
-           validFeeds.sort(() => 0.5 - Math.random());
-           for (let i = validFeeds.length - 1; i >= 0; i--) {
-               const feed = validFeeds[i];
-               // Bốc ngẫu nhiên từ 1 đến 4 bài của nguồn này
-               const takeCount = Math.floor(Math.random() * 4) + 1;
-               const taken = feed.splice(0, takeCount);
-               mixedNews.push(...taken);
-               if (feed.length === 0) {
-                   validFeeds.splice(i, 1);
-               }
-           }
-        }
+        // Gộp tất cả bài viết lại và sắp xếp strictly theo thời gian (mới nhất lên đầu)
+        const allSortedNews = validFeeds.flat().sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
         
-        fullNewsPool.current = mixedNews;
-        setLiveNews(mixedNews.slice(0, 10));
-        setHasMoreNews(mixedNews.length > 10);
+        // Chỉ lấy bài viết trong vòng 24h qua (mới nhất trong ngày)
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        const recentNews = allSortedNews.filter(item => new Date(item.pubDate || 0).getTime() > oneDayAgo);
+        
+        // Nếu số bài trong 24h quá ít (< 10 bài), fallback về lấy toàn bộ bài mới nhất
+        const mixedNews = recentNews.length >= 10 ? recentNews : allSortedNews;
+        
+        // Nhóm các bài đã sort theo thời gian thành từng cụm 10 bài, trong mỗi cụm thì random nhẹ để đa dạng nguồn (vẫn giữ nguyên lý tỉ lệ)
+        const chunkedMix = [];
+        for (let i = 0; i < mixedNews.length; i += 10) {
+            const chunk = mixedNews.slice(i, i + 10);
+            // Xáo trộn nhẹ các bài trong cùng một khung thời gian (cùng cụm 10 bài) để đảm bảo tỉ lệ đa dạng nguồn
+            chunk.sort(() => 0.5 - Math.random());
+            chunkedMix.push(...chunk);
+        }
+
+        fullNewsPool.current = chunkedMix;
+        setLiveNews(chunkedMix.slice(0, 10));
+        setHasMoreNews(chunkedMix.length > 10);
         
       } catch (e) {
         console.error(e);
