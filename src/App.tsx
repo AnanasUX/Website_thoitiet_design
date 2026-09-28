@@ -269,17 +269,17 @@ function WeatherSection({
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02]"
           style={{ background: "linear-gradient(21deg, rgb(72 141 203) 0%, rgb(51 106 214) 50%, rgb(79 196 255) 100%)" }}
       >
-        <p className="font-['Inter:Semi_Bold'] font-semibold text-[13px] text-white whitespace-nowrap">
+        <p className="font-semibold text-[13px] text-white whitespace-nowrap">
           📍 {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
         </p>
         <div className="flex flex-col gap-1 items-start w-full">
-          <p className="font-['Inter:Extra_Bold'] font-extrabold leading-none text-[60px] text-white whitespace-nowrap">
+          <p className="font-extrabold leading-none text-[60px] text-white whitespace-nowrap">
             {WEATHER.temp}
           </p>
-          <p className="font-['Inter:Semi_Bold'] font-semibold text-[18px] text-white whitespace-nowrap">
+          <p className="font-semibold text-[18px] text-white whitespace-nowrap">
             <span className="inline-block animate-bounce" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span> {WEATHER.conditionLabel}
           </p>
-          <p className="font-['Inter:Regular'] font-normal text-[14px] text-[rgba(255,255,255,0.8)] whitespace-nowrap">
+          <p className="font-normal text-[14px] text-[rgba(255,255,255,0.8)] whitespace-nowrap">
             Cảm nhận {WEATHER.feelsLike}
           </p>
         </div>
@@ -293,8 +293,8 @@ function WeatherSection({
             { label: "☀️ UV Index", value: WEATHER.uvIndex }
           ].map((stat, idx) => (
             <div key={idx} className="bg-[rgba(255,255,255,0.09)] border border-[rgba(255,255,255,0.2)] flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-xl">
-              <p className="font-['Inter:Medium'] font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
-              <p className="font-['Inter:Bold'] font-bold leading-5 text-white">{stat.value}</p>
+              <p className="font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
+              <p className="font-bold leading-5 text-white">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -302,7 +302,7 @@ function WeatherSection({
 
       {/* Forecast */}
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
+        <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
             {WEATHER.hourlyForecast.map((hour: any, idx: number) => {
@@ -311,33 +311,33 @@ function WeatherSection({
               const opacityClass = isActive ? "opacity-100" : "opacity-40";
               return (
                 <div key={idx} className={`flex flex-col items-center gap-2 min-w-[50px] transition-opacity duration-300 ${opacityClass}`}>
-                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
+                  <p className="font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
                   <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
-                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
-                  <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
+                  <p className="font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
+                  <p className="font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
                 </div>
               );
             })}
           </div>
         ) : (
-          <p className="font-['Inter:Regular'] text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
+          <p className="text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
         )}
       </div>
 
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
-        <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
+        <p className="font-bold text-[#182033] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
       {warningText && (
         <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
+          <p className="font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
           <div className="flex flex-col gap-1 w-full">
               {warningText.split('\n').map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 const text = line.replace(/^[└├]\s*/, '');
-                return <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
               })}
             </div>
         </div>
@@ -346,13 +346,13 @@ function WeatherSection({
       {/* Suggestion – only show when we have items */}
       {suggestionItems && suggestionItems.length > 0 && (
         <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
+          <p className="font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
           <div className="flex flex-col gap-1 w-full mt-1">
             {suggestionItems.map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
                 const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
-                return <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
             })}
           </div>
         </div>
@@ -361,16 +361,16 @@ function WeatherSection({
       {/* Combined Flood & Weather News */}
       <div className="bg-white border border-[#e3e7ef] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         {/* Flood Section */}
-        <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap mb-2 uppercase">
+        <p className="font-bold text-[#182033] whitespace-nowrap mb-2 uppercase">
           BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
         </p>
         <div className="flex flex-col gap-0 w-full mb-1">
           {showFlood && floodItems && floodItems.length > 0 ? (
             floodItems.map((line, i) => (
-              <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#5f687b]">{line}</p>
             ))
           ) : (
-            <p className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
+            <p className="font-normal leading-5 text-[#5f687b]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
           )}
         </div>
 
@@ -379,7 +379,7 @@ function WeatherSection({
           <>
             <div className="w-full border-t border-[#e3e7ef] my-3"></div>
             
-            <p className="font-['Inter:Bold'] font-bold text-[#182033] flex items-center gap-2 mb-3">
+            <p className="font-bold text-[#182033] flex items-center gap-2 mb-3">
               📰 Bài viết liên quan
             </p>
             <div className="flex flex-col gap-3 w-full">
@@ -387,7 +387,7 @@ function WeatherSection({
                 <div key={i} className="flex gap-2 items-start">
                   <span className="text-[#0a84ff] font-bold mt-[1px]">›</span>
                   <div className="flex flex-col gap-[2px]">
-                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-['Inter:Medium'] font-medium text-[#0a84ff] hover:underline line-clamp-2">
+                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#0a84ff] hover:underline line-clamp-2">
                       {news.title}
                     </a>
                     <span className="text-[#5f687b] text-[11px]">{news.source}</span>
@@ -402,10 +402,10 @@ function WeatherSection({
       {/* Route advisory */}
       {showRouteAdvisory && routeItems && routeItems.length > 0 && (
         <div className="bg-[#eff6ff] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] whitespace-nowrap">KHUYẾN CÁO LỘ TRÌNH</p>
+          <p className="font-bold text-[#182033] whitespace-nowrap">KHUYẾN CÁO LỘ TRÌNH</p>
           <div className="flex flex-col gap-0 w-full">
             {routeItems.map((line, i) => (
-              <p key={i} className="font-['Inter:Regular'] font-normal leading-5 text-[#5f687b]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#5f687b]">{line}</p>
             ))}
           </div>
         </div>
@@ -448,13 +448,13 @@ function MobileLayout({
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-4 w-full shrink-0">
-        <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px]">Anx.</p>
+        <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
-          <p className="font-['Inter:Medium'] font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
+          <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
             📍 {WEATHER.location}
           </p>
           <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
-            <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
+            <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
               {shortDateStr} · {timeStr}
             </p>
           </div>
@@ -463,12 +463,12 @@ function MobileLayout({
 
       <div className="flex flex-col gap-5 items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-3 items-start w-full">
-          <p className="font-['Inter:Semi_Bold'] font-semibold leading-[26px] text-[#182033] text-[20px]">Thời tiết</p>
+          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">Thời tiết</p>
           <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         <div className="flex flex-col gap-3 items-start w-full">
-          <p className="font-['Inter:Semi_Bold'] font-semibold leading-[26px] text-[#182033] text-[20px]">
+          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
             Tin Tức Mới Nhất • {newsFeed.length} bài
           </p>
           {newsFeed.map((item, i) => (
@@ -482,14 +482,14 @@ function MobileLayout({
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2">{item.author}</p>
-                  <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+                  <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2">{item.author}</p>
+                  <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
                 </div>
                 <div className="relative shrink-0 size-5">
                   <img alt="" className="absolute inset-0 size-full" src={imgMoreHorizontal} />
                 </div>
               </div>
-              <p className="font-['Inter:Regular'] font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
+              <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
@@ -527,13 +527,13 @@ function TabletLayout({
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
         <div className="flex gap-3 items-center">
-          <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
-          <p className="font-['Inter:Medium'] font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
+          <p className="font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
+          <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
             📍 {WEATHER.location}
           </p>
         </div>
         <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
-          <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+          <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
             {dateStr} · {timeStr}
           </p>
         </div>
@@ -548,8 +548,8 @@ function TabletLayout({
         {/* News panel – dữ liệu động từ bot */}
         <div className="flex flex-1 flex-col gap-3 items-start min-w-0 overflow-hidden">
           <div className="flex flex-col gap-[2px] items-start">
-            <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
-            <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">
+            <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
+            <p className="font-normal text-[#5f687b] text-[12px]">
               {WEATHER.location} · {newsFeed.length} bài mới nhất
             </p>
           </div>
@@ -565,20 +565,20 @@ function TabletLayout({
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
-                  <p className="font-['Inter:Bold'] font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
+                  <p className="font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
               </div>
               <div className="flex flex-col gap-2 items-start p-[14px] w-full">
-                <p className="font-['Inter:Bold'] font-bold leading-[22px] text-[#182033] text-[15px] w-full line-clamp-2">
+                <p className="font-bold leading-[22px] text-[#182033] text-[15px] w-full line-clamp-2">
                   {featured.author}
                 </p>
-                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
+                <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
                   {featured.body}
                 </p>
                 <div className="flex items-center justify-between pt-1 w-full">
                   <div className="flex gap-[6px] items-center">
                     <div className="bg-[#f7a928] rounded-[4px] size-2" />
-                    <p className="font-['Inter:Semi_Bold'] font-semibold text-[#ff315f] text-[11px]">{featured.src}</p>
+                    <p className="font-semibold text-[#ff315f] text-[11px]">{featured.src}</p>
                   </div>
                 </div>
               </div>
@@ -599,10 +599,10 @@ function TabletLayout({
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
-                  <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[10px]">{item.src}</p>
+                  <p className="font-bold text-[#ff315f] text-[10px]">{item.src}</p>
                 </div>
-                <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
-                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
+                <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
+                <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
               </div>
             </a>
           ))}
@@ -637,9 +637,9 @@ function DesktopLayout({
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
         <div className="flex gap-4 items-center">
-          <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
+          <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
           <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
-            <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+            <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
           </div>
@@ -657,9 +657,9 @@ function DesktopLayout({
         <div className="flex flex-1 flex-col gap-4 items-start min-w-0 overflow-hidden">
           <div className="flex items-center justify-between w-full">
             <div className="flex gap-[10px] items-center">
-              <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[20px] whitespace-nowrap">Tin Tức Mới Nhất</p>
+              <p className="font-bold text-[#182033] text-[20px] whitespace-nowrap">Tin Tức Mới Nhất</p>
               <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
-                <p className="font-['Inter:Bold'] font-bold text-[11px] text-white">LIVE</p>
+                <p className="font-bold text-[11px] text-white">LIVE</p>
               </div>
             </div>
             
@@ -675,23 +675,23 @@ function DesktopLayout({
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
-                  <p className="font-['Inter:Bold'] font-bold text-[#ff315f] text-[15.84px]">
+                  <p className="font-bold text-[#ff315f] text-[15.84px]">
                     📰
                   </p>
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-['Inter:Semi_Bold'] font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
-                  <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[12px]">{WEATHER.time}</p>
+                  <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
+                  <p className="font-normal text-[#5f687b] text-[12px]">{WEATHER.time}</p>
                 </div>
               </div>
-              <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
+              <p className="font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               {featured.body && (
-                <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
+                <p className="font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
               )}
             </a>
           )}
@@ -712,11 +712,11 @@ function DesktopLayout({
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
                   <div className="flex gap-2 items-center">
                     <div className="bg-[#ffe8ee] flex items-start px-2 py-[3px] rounded-full">
-                      <p className="font-['Inter:Semi_Bold'] font-semibold text-[#ff315f] text-[11px]">{item.src}</p>
+                      <p className="font-semibold text-[#ff315f] text-[11px]">{item.src}</p>
                     </div>
                   </div>
-                  <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
-                  <p className="font-['Inter:Regular'] font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
+                  <p className="font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
+                  <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
                 </div>
               </a>
             ))}
@@ -769,8 +769,8 @@ function DevWeatherPanel({
         </div>
         <div className="px-5 pt-2 pb-2 flex items-center justify-between border-b border-[#f0f2f5]">
           <div>
-            <p className="font-['Inter:Bold'] font-bold text-[#182033] text-[15px]">Chọn trạng thái thời tiết</p>
-            <p className="font-['Inter:Regular'] font-normal text-[#9aa3b0] text-[12px] mt-[2px]">Dữ liệu thực tế sẽ tự cập nhật khi tích hợp API</p>
+            <p className="font-bold text-[#182033] text-[15px]">Chọn trạng thái thời tiết</p>
+            <p className="font-normal text-[#9aa3b0] text-[12px] mt-[2px]">Dữ liệu thực tế sẽ tự cập nhật khi tích hợp API</p>
           </div>
           <button onClick={onClose} className="text-[#9aa3b0] text-[20px] leading-none hover:text-[#182033] transition-colors">✕</button>
         </div>
@@ -787,10 +787,10 @@ function DevWeatherPanel({
               >
                 <span className="text-[28px] shrink-0 leading-none">{opt.emoji}</span>
                 <div className="flex flex-1 flex-col items-start min-w-0">
-                  <p className={`font-['Inter:Semi_Bold'] font-semibold text-[14px] ${active ? "text-[#182033]" : "text-[#182033]"}`}>
+                  <p className={`font-semibold text-[14px] ${active ? "text-[#182033]" : "text-[#182033]"}`}>
                     {opt.label}
                   </p>
-                  <p className="font-['Inter:Regular'] font-normal text-[#9aa3b0] text-[12px]">{opt.desc}</p>
+                  <p className="font-normal text-[#9aa3b0] text-[12px]">{opt.desc}</p>
                 </div>
                 {active && (
                   <span className="shrink-0 size-5 rounded-full bg-[#182033] flex items-center justify-center text-white text-[11px]">✓</span>
@@ -842,7 +842,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
       <button 
         onClick={onTrigger} 
         disabled={isLoading || !hasMoreNews}
-        className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-['Inter:Semi_Bold'] font-semibold rounded-full text-[14px] active:scale-95 transition-transform disabled:opacity-50"
+        className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-semibold rounded-full text-[14px] active:scale-95 transition-transform disabled:opacity-50"
       >
         {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
       </button>
