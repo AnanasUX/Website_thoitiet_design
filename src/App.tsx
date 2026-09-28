@@ -1256,9 +1256,17 @@ export default function App() {
 
           let resolvedLocation = locationNameStr;
           if (!resolvedLocation) {
-             if (geoReverse && geoReverse.locality) {
-                 resolvedLocation = `${geoReverse.locality}, ${geoReverse.principalSubdivision || 'VN'}`;
-             } else if (geoReverse && geoReverse.city) {
+             let bestLocality = geoReverse?.locality;
+             if (geoReverse?.localityInfo?.administrative) {
+                 const admin6s = geoReverse.localityInfo.administrative.filter((a: any) => a.adminLevel === 6 || a.adminLevel === 7 || a.adminLevel === 8);
+                 if (admin6s.length > 0) {
+                     bestLocality = admin6s[0].name;
+                 }
+             }
+             if (bestLocality) {
+                 bestLocality = bestLocality.replace(/ \(phường\)/i, "").replace(/ \(xã\)/i, "");
+                 resolvedLocation = `${bestLocality}, ${geoReverse.principalSubdivision || 'VN'}`;
+             } else if (geoReverse?.city) {
                  resolvedLocation = `${geoReverse.city}, VN`;
              } else {
                  resolvedLocation = (weather.name || "Hà Nội") + ", VN";
