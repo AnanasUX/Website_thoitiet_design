@@ -1072,12 +1072,26 @@ export default function App() {
             const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
             if (imgMatch) imageUrl = imgMatch[1];
           }
+          if (!imageUrl && item.content) {
+            const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+            if (imgMatch2) imageUrl = imgMatch2[1];
+          }
           if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+          
+          // Google news or weird trackers sometimes return 1x1 pixels or generic icons
+          if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
+            imageUrl = ""; 
+          }
           
           let cleanDesc = "";
           if (item.description) {
              cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
              cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+          }
+          
+          // Fix for Google News: description is usually just a repeat of the title + publisher name
+          if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
+             cleanDesc = "";
           }
           
           const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
