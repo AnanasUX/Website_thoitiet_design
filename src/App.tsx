@@ -428,6 +428,42 @@ const DEFAULT_NEWS_FEED: LiveNewsItem[] = [
 
 // ── Mobile Layout ────────────────────────────────────────────────────────────
 
+
+function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCategory: string, setActiveCategory: (c: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#e3e7ef] rounded-full text-[13px] font-semibold text-[#182033] shadow-sm active:scale-95 transition-transform"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        <span>{activeCategory}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-2 bg-white border border-[#e3e7ef] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
+          <div className="grid grid-cols-2 gap-[6px]">
+            {NEWS_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  setIsOpen(false);
+                }}
+                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white font-bold' : 'hover:bg-[#f4f6fa] text-[#5f687b] font-medium'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MobileLayout({ activeCategory, setActiveCategory,
   condKey,
   liveData,
@@ -469,21 +505,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 scrollbar-hide">
-        {NEWS_CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-<p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
-Tin Tức Mới Nhất
-</p>
+      <div className="flex items-center justify-between w-full mb-1">
+            <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+              Tin Tức Mới Nhất
+            </p>
+            <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+          </div>
           {newsFeed.map((item, i) => (
               <a
               key={i}
