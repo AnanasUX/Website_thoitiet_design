@@ -582,12 +582,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           
-      <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
-            <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
-              Tin Tức Mới Nhất
-            </p>
-            <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
-          </div>
+                  <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+        <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+          Tin Tức Mới Nhất
+        </p>
+        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+      </div>
           {newsFeed.map((item, i) => (
               <a
               key={i}
@@ -659,10 +659,9 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
-        {/* News panel – dữ liệu động từ bot */}
+        {/* News panel */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
-
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] mt-[-12px]">
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] mt-[-12px]">
         {NEWS_CATEGORIES.map(cat => (
           <button
             key={cat}
@@ -780,19 +779,13 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
-        {/* News column – dữ liệu động từ bot */}
+        {/* News column */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
-
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] mt-[-12px]">
-        {NEWS_CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
-          >
-            {cat}
-          </button>
-        ))}
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+        <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+          Tin Tức Mới Nhất
+        </p>
+        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
 
           <div className="flex items-center justify-between w-full">
@@ -1650,6 +1643,43 @@ export default function App() {
             dewPoint = Math.round((b * alpha) / (a - alpha));
           }
 
+          
+          const dailyMap: Record<number, any> = {};
+          if (forecast && forecast.list) {
+            forecast.list.forEach((item: any) => {
+              const date = new Date(item.dt * 1000);
+              const dateStr = date.getDate();
+              if (!dailyMap[dateStr]) {
+                dailyMap[dateStr] = {
+                  date: date,
+                  tempMin: item.main.temp_min,
+                  tempMax: item.main.temp_max,
+                  icon: item.weather[0].icon,
+                  pop: Math.round((item.pop || 0) * 100)
+                };
+              } else {
+                dailyMap[dateStr].tempMin = Math.min(dailyMap[dateStr].tempMin, item.main.temp_min);
+                dailyMap[dateStr].tempMax = Math.max(dailyMap[dateStr].tempMax, item.main.temp_max);
+                dailyMap[dateStr].pop = Math.max(dailyMap[dateStr].pop, Math.round((item.pop || 0) * 100));
+                if (date.getHours() >= 11 && date.getHours() <= 15) {
+                  dailyMap[dateStr].icon = item.weather[0].icon;
+                }
+              }
+            });
+          }
+          const dailyForecastData = Object.values(dailyMap).slice(0, 5).map((d: any) => {
+            const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            const dayName = days[d.date.getDay()];
+            return {
+               day: dayName,
+               icon: d.icon,
+               tempMin: Math.round(d.tempMin),
+               tempMax: Math.round(d.tempMax),
+               pop: d.pop
+            };
+          });
+          if (dailyForecastData.length > 0) dailyForecastData[0].day = 'Hôm nay';
+
           const formatTime = (ts: number) => {
             if (!ts) return "--:--";
             return new Date(ts * 1000).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
@@ -1679,7 +1709,8 @@ export default function App() {
               },
               forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
               status: trang_thai,
-              hourlyForecast: interpolatedHourly
+              hourlyForecast: interpolatedHourly,
+              dailyForecast: dailyForecastData
             },
             news: baseNewsItems.length > 0 ? baseNewsItems : undefined,
             weatherNews: weatherNews.length > 0 ? weatherNews : undefined
@@ -1749,9 +1780,22 @@ export default function App() {
     }
 
     if (apiUrl) {
-      setApiStatus("loading");
+      // Silent load in background, keep old news visible
       
-      const newsPromises = [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 5).map(feed => 
+      
+      const isToday = (dateStr: string) => {
+        if (!dateStr) return false;
+        const d = new Date(dateStr).getTime();
+        const now = Date.now();
+        // last 24 hours
+        return (now - d) < 24 * 60 * 60 * 1000;
+      };
+
+      const feedsToFetch = activeCategory === "Tất cả" 
+        ? [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 15)
+        : [...RSS_FEEDS_DB].filter(f => f.category === activeCategory).slice(0, 10);
+
+      const newsPromises = feedsToFetch.map(feed => 
         fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
           .then(r => r.json())
           .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
@@ -1762,10 +1806,35 @@ export default function App() {
         fetch(apiUrl).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
         Promise.all(newsPromises)
       ]).then(([json, newsArrays]) => {
-        const allNews = newsArrays.flat().filter(item => isToday(item.pubDate));
-        const sortedNews = allNews.sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime());
         
-        json.news = sortedNews.map((item: any) => {
+        // Group by feed
+        const grouped: Record<string, any[]> = {};
+        newsArrays.forEach((arr) => {
+          if (!arr || arr.length === 0) return;
+          const src = arr[0]._sourceName;
+          grouped[src] = arr.filter((item: any) => isToday(item.pubDate));
+        });
+
+        // Interleave
+        const interleavedNews: any[] = [];
+        let hasMore = true;
+        while(hasMore) {
+          hasMore = false;
+          for (const src of Object.keys(grouped)) {
+            // Take 2-4 items randomly per feed per round
+            const count = Math.floor(Math.random() * 3) + 2; 
+            const chunk = grouped[src].splice(0, count);
+            if (chunk.length > 0) {
+              interleavedNews.push(...chunk);
+              hasMore = true;
+            }
+          }
+        }
+
+        // Final sort chunked (to keep recent vibes but interleaved)
+        // Actually interleaving is enough, we just map them now.
+
+        let processedNews = interleavedNews.map((item: any) => {
            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
            if (!imageUrl && item.description) {
              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
@@ -1787,6 +1856,12 @@ export default function App() {
              image: imageUrl
            };
         });
+
+        // FILTER OUT ALL NEWS WITHOUT IMAGES (as requested by user)
+        processedNews = processedNews.filter((item: any) => item.image && item.image.trim() !== "");
+
+        json.news = processedNews;
+
         
         const baseNewsItems = json.news;
         setTimeout(() => {
