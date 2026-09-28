@@ -447,7 +447,7 @@ function MobileLayout({
 
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-4 w-full shrink-0">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0">
         <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
           <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
@@ -461,13 +461,13 @@ function MobileLayout({
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 items-start pb-8 pt-4 px-4 w-full">
-        <div className="flex flex-col gap-3 items-start w-full">
+      <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">Thời tiết</p>
           <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
-        <div className="flex flex-col gap-3 items-start w-full">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
             Tin Tức Mới Nhất
           </p>
@@ -477,7 +477,7 @@ function MobileLayout({
               href={item.link ?? "#"}
               target={item.link ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
             >
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full">
@@ -522,8 +522,8 @@ function TabletLayout({
 
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
-        <div className="flex gap-3 items-center">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto">
+        <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
           <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
             📍 {WEATHER.location}
@@ -536,14 +536,14 @@ function TabletLayout({
         </div>
       </div>
 
-      <div className="flex gap-5 items-start p-5 w-full">
+      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
-        <div className="flex flex-col gap-3 items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
           <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         {/* News panel – dữ liệu động từ bot */}
-        <div className="flex flex-1 flex-col gap-3 items-start min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
             <p className="font-normal text-[#5f687b] text-[12px]">
@@ -557,7 +557,7 @@ function TabletLayout({
               href={featured.link ?? "#"}
               target={featured.link ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -589,7 +589,7 @@ function TabletLayout({
               href={item.link ?? "#"}
               target={item.link ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="bg-white flex gap-3 items-center overflow-hidden p-3 rounded-[10px] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -632,8 +632,8 @@ function DesktopLayout({
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[72px] items-center justify-between px-6 w-full shrink-0">
-        <div className="flex gap-4 items-center">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto">
+        <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
           <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
             <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
@@ -644,14 +644,14 @@ function DesktopLayout({
 
       </div>
 
-      <div className="flex gap-6 items-start p-6 w-full">
+      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
-        <div className="flex flex-col gap-4 items-start shrink-0 w-[420px]">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         {/* News column – dữ liệu động từ bot */}
-        <div className="flex flex-1 flex-col gap-4 items-start min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
           <div className="flex items-center justify-between w-full">
             <div className="flex gap-[10px] items-center">
               <p className="font-bold text-[#182033] text-[20px] whitespace-nowrap">Tin Tức Mới Nhất</p>
@@ -668,7 +668,7 @@ function DesktopLayout({
               href={featured.link ?? "#"}
               target={featured.link ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
@@ -694,14 +694,14 @@ function DesktopLayout({
           )}
 
           {/* News grid */}
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 w-full">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
               {grid.map((item, i) => (
                 <a
                   key={i}
                   href={item.link ?? "#"}
                   target={item.link ? "_blank" : undefined}
                   rel="noopener noreferrer"
-                  className="bg-white flex flex-col items-start overflow-hidden rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+                  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
                 >
                 <div className="h-[140px] relative w-full overflow-hidden">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -839,7 +839,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
       <button 
         onClick={onTrigger} 
         disabled={isLoading || !hasMoreNews}
-        className="px-6 py-3 bg-[#e3e7ef] text-[#182033] font-semibold rounded-full text-[14px] active:scale-95 transition-transform disabled:opacity-50"
+        className="px-[16px] py-[10px] bg-[#e3e7ef] text-[#182033] font-semibold rounded-[8px] min-h-[44px] active:scale-95 transition-transform disabled:opacity-50"
       >
         {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
       </button>
@@ -1493,14 +1493,14 @@ export default function App() {
         />
       )}
 
-      <div className="md:hidden w-[min(100%-32px,1200px)] mx-auto">
+      <div className="md:hidden w-full">
         <MobileLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
         
       </div>
-      <div className="hidden md:block xl:hidden w-[min(100%-32px,1200px)] mx-auto">
+      <div className="hidden md:block xl:hidden w-full">
         <TabletLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
-      <div className="hidden xl:block w-[min(100%-32px,1200px)] mx-auto">
+      <div className="hidden xl:block w-full">
         <DesktopLayout condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />

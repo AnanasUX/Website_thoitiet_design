@@ -1,4 +1,69 @@
-﻿@font-face {
+﻿@import "tailwindcss";
+
+@theme {
+  --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  --text-body: var(--font-body);
+  --text-small: var(--font-small);
+  --text-caption: var(--font-caption);
+  --text-label: var(--font-label);
+  --text-btn: var(--font-button);
+  --text-h6: var(--font-h6);
+  --text-h5: var(--font-h5);
+  --text-h4: var(--font-h4);
+  --text-h3: var(--font-h3);
+  --text-h2: var(--font-h2);
+  --text-h1: var(--font-h1);
+}
+
+:root {
+  /* =========================
+     TYPOGRAPHY (Fluid)
+  ========================= */
+  --font-body: clamp(15px, 1vw, 16px);
+  --font-small: clamp(13px, 0.9vw, 14px);
+  --font-caption: clamp(12px, 0.8vw, 13px);
+  --font-button: clamp(14px, 1vw, 16px);
+  --font-label: clamp(13px, 0.9vw, 14px);
+
+  --font-h1: clamp(28px, 3vw, 48px);
+  --font-h2: clamp(24px, 2.2vw, 36px);
+  --font-h3: clamp(20px, 1.7vw, 28px);
+  --font-h4: clamp(18px, 1.3vw, 22px);
+  --font-h5: clamp(16px, 1.2vw, 20px);
+  --font-h6: clamp(15px, 1vw, 18px);
+
+  /* =========================
+     RESPONSIVE TOKENS
+  ========================= */
+  --page-padding: clamp(16px, 4vw, 32px);
+  --section-gap: clamp(32px, 4vw, 64px);
+  --card-padding: clamp(16px, 2vw, 24px);
+  --grid-gap: clamp(12px, 2vw, 24px);
+  --card-radius: clamp(12px, 1.5vw, 16px);
+  --header-height: clamp(56px, 6vw, 72px);
+}
+
+body {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: var(--font-body);
+  line-height: 1.5;
+  color: #182033;
+}
+
+h1 { font-size: var(--font-h1); line-height: 1.2; font-weight: 700; }
+h2 { font-size: var(--font-h2); line-height: 1.25; font-weight: 700; }
+h3 { font-size: var(--font-h3); line-height: 1.3; font-weight: 600; }
+h4 { font-size: var(--font-h4); line-height: 1.4; font-weight: 600; }
+h5 { font-size: var(--font-h5); line-height: 1.4; font-weight: 600; }
+h6 { font-size: var(--font-h6); line-height: 1.4; font-weight: 600; }
+
+button {
+  font-size: var(--font-button);
+  line-height: 1.4;
+  min-height: 44px;
+}
+
+@font-face {
   font-family: 'SF Pro Display';
   src: url('/fonts/SFProDisplay/SF-Pro-Display-Regular.otf') format('opentype');
   font-weight: 400;
@@ -28,55 +93,4 @@
   font-weight: 700;
   font-style: normal;
   font-display: swap;
-}
-
-@import "tailwindcss";
-
-@theme {
-  --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  --text-body: var(--font-body);
-  --text-caption: var(--font-caption);
-  --text-label: var(--font-label);
-  --text-btn: var(--font-button);
-  --text-h4: var(--font-h4);
-  --text-h3: var(--font-h3);
-  --text-h2: var(--font-h2);
-  --text-h1: var(--font-h1);
-  --text-hero: clamp(30px, 4vw, 64px);
-}
-
-:root {
-  --font-body: clamp(15px, 1vw, 16px);
-  --font-caption: clamp(12px, 0.8vw, 13px);
-  --font-label: clamp(12px, 0.9vw, 14px);
-  --font-button: clamp(14px, 0.95vw, 16px);
-  --font-h4: clamp(17px, 1.2vw, 20px);
-  --font-h3: clamp(19px, 1.5vw, 24px);
-  --font-h2: clamp(23px, 2vw, 32px);
-  --font-h1: clamp(28px, 3vw, 44px);
-}
-
-body {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: var(--font-body);
-}
-
-h1 {
-  font-size: var(--font-h1);
-}
-
-h2 {
-  font-size: var(--font-h2);
-}
-
-h3 {
-  font-size: var(--font-h3);
-}
-
-h4 {
-  font-size: var(--font-h4);
-}
-
-button {
-  font-size: var(--font-button);
 }
