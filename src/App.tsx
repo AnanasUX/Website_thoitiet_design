@@ -479,16 +479,13 @@ function MobileLayout({
               rel="noopener noreferrer"
               className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-4 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
             >
-              <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <img alt="" className="rounded-full shrink-0 size-11 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
-                <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2">{item.author}</p>
-                  <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+              <div className="flex flex-col gap-2 items-start w-full">
+                  <div className="flex gap-[10px] items-center w-full">
+                    <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                    <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+                  </div>
+                  <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
-                <div className="relative shrink-0 size-5">
-                  <img alt="" className="absolute inset-0 size-full" src={imgMoreHorizontal} />
-                </div>
-              </div>
               <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
