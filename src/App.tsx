@@ -1255,32 +1255,32 @@ function MarketSection() {
       }).catch(() => {});
   }, []);
 
-  const rawPts = [
+  const rawReal = [
     4060, 4055, 4065, 4065, 4070, 4085, 4075, 4095, 4085, 4090, 
     4080, 4075, 4075, 4085, 4075, 4065, 4065, 4055, 4065, 4055, 
-    4040, 4045, 4030, 4040, 4045, 4015, 4005, 3965, 3975, 3960, 
-    4005, 4035, 4020, 4030, 4010, 4002
+    4040, 4045, 4030, 4040, 4045, 4015
   ];
-  const maxV = Math.max(...rawPts);
-  const minV = Math.min(...rawPts);
+  const rawForecast = [
+    4050, 4065, 4055, 4075, 4080, 4080, 4085, 4090, 4095, 4085,
+    4085, 4080, 4085, 4075, 4085, 4075, 4055, 4065, 4055, 4065,
+    4045, 4040, 4040, 4035, 4040, 4025, 4010, 3980, 3970, 3980,
+    4010, 4025, 4035, 4020, 4015, 4010
+  ];
+  const maxV = Math.max(...rawReal, ...rawForecast);
+  const minV = Math.min(...rawReal, ...rawForecast);
   const r = maxV - minV || 1;
-  const pts = rawPts.map((v, i) => {
-    return { 
-      x: (i / (rawPts.length - 1)) * 300, 
-      y: 60 - ((v - minV) / r) * 55 // values from 5 to 60
-    };
-  });
   
-  const realPts = pts.slice(0, 26);
-  const forecastPts = pts.slice(25, 36);
+  const ptsReal = rawReal.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - minV) / r) * 55 
+  }));
+  const ptsForecast = rawForecast.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - minV) / r) * 55 
+  }));
 
-  const pathReal = realPts.map((p, i) => {
-    return i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`;
-  }).join(" ");
-  
-  const pathForecast = forecastPts.map((p, i) => {
-    return i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`;
-  }).join(" ");
+  const pathReal = ptsReal.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
+  const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
@@ -1308,6 +1308,7 @@ function MarketSection() {
           </div>
         ))}
       </div>
+      
       <div className="w-full flex flex-col mt-2 bg-gradient-to-r from-[#f0f4ff] to-[#f8fafc] rounded-[8px] border border-[#e3e7ef] overflow-hidden">
         <div className="w-full flex items-center justify-between p-2 sm:p-3 border-b border-[#e3e7ef]/50">
           <div className="flex items-center gap-2">
@@ -1336,7 +1337,7 @@ function MarketSection() {
               let x = e.clientX - rect.left;
               if (x < 0) x = 0;
               if (x > rect.width) x = rect.width;
-              const closestIdx = Math.round((x / rect.width) * (rawPts.length - 1));
+              const closestIdx = Math.round((x / rect.width) * (rawForecast.length - 1));
               setHoverIdx(closestIdx);
             }}
             onMouseLeave={() => setHoverIdx(null)}
@@ -1350,40 +1351,54 @@ function MarketSection() {
                 <line key={`h-${i}`} x1="0" y1={i * 16.25} x2="300" y2={i * 16.25} stroke="#e3e7ef" strokeWidth="0.5" />
               ))}
               
+              <path d={pathForecast} fill="none" stroke="#f7a928" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3 3" opacity="0.8" />
               <path d={pathReal} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
-              <path d={pathForecast} fill="none" stroke="#f7a928" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3 3" />
             </svg>
             
             {hoverIdx !== null && (
               <>
                 <div 
                   className="absolute top-0 bottom-0 border-l border-dashed border-[#182033]/40 z-10 pointer-events-none" 
-                  style={{ left: `${(hoverIdx / (rawPts.length - 1)) * 100}%` }}
+                  style={{ left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%` }}
                 ></div>
                 <div 
-                  className="absolute top-[-25px] bg-[#182033] text-white text-[10px] px-2 py-1 rounded-[6px] z-20 pointer-events-none whitespace-nowrap shadow-md flex items-center gap-1"
+                  className="absolute top-[-25px] bg-[#182033] text-white text-[9px] sm:text-[10px] px-2 py-1.5 rounded-[6px] z-20 pointer-events-none whitespace-nowrap shadow-md flex flex-col gap-0.5"
                   style={{ 
-                    left: `${(hoverIdx / (rawPts.length - 1)) * 100}%`, 
-                    transform: hoverIdx > rawPts.length / 2 ? 'translateX(calc(-100% - 6px))' : 'translateX(6px)' 
+                    left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%`, 
+                    transform: hoverIdx > rawForecast.length / 2 ? 'translateX(calc(-100% - 6px))' : 'translateX(6px)' 
                   }}
                 >
-                  <span className="text-[#f7a928] font-mono">
-                    {Math.floor((hoverIdx / (rawPts.length - 1)) * 24).toString().padStart(2, '0')}:
-                    {Math.floor(((hoverIdx / (rawPts.length - 1)) * 24 % 1) * 60).toString().padStart(2, '0')}
-                  </span>
-                  <span className="text-white/50">|</span>
-                  <span className="font-bold text-[#4ade80]">{rawPts[hoverIdx]}</span>
-                  <span className={`text-[8px] font-bold px-1 rounded-sm ${hoverIdx > 25 ? 'bg-[#f7a928]/20 text-[#f7a928]' : 'bg-[#3b82f6]/20 text-[#3b82f6]'}`}>
-                    {hoverIdx > 25 ? 'DỰ BÁO' : 'THỰC TẾ'}
-                  </span>
+                  <p className="text-[#f7a928] font-mono border-b border-white/20 pb-0.5 mb-0.5">
+                    {Math.floor((hoverIdx / (rawForecast.length - 1)) * 24).toString().padStart(2, '0')}:
+                    {Math.floor(((hoverIdx / (rawForecast.length - 1)) * 24 % 1) * 60).toString().padStart(2, '0')}
+                  </p>
+                  {hoverIdx < rawReal.length && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#ef4444] font-bold">Thực tế:</span>
+                      <span className="font-bold">{rawReal[hoverIdx]}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#f7a928] font-bold">Dự báo:</span>
+                    <span className="font-bold">{rawForecast[hoverIdx]}</span>
+                  </div>
                 </div>
                 
+                {/* Dots on lines */}
+                {hoverIdx < rawReal.length && (
+                  <div 
+                    className="absolute w-2.5 h-2.5 bg-[#ef4444] rounded-full z-20 pointer-events-none border-2 border-white shadow-sm"
+                    style={{ 
+                      left: `calc(${(hoverIdx / (rawForecast.length - 1)) * 100}% - 5px)`, 
+                      top: `calc(${(ptsReal[hoverIdx].y / 65) * 100}% - 5px)` 
+                    }}
+                  ></div>
+                )}
                 <div 
-                  className="absolute w-2.5 h-2.5 rounded-full z-20 pointer-events-none border-2 border-white shadow-sm"
+                  className="absolute w-2 h-2 bg-[#f7a928] rounded-full z-20 pointer-events-none shadow-sm"
                   style={{ 
-                    backgroundColor: hoverIdx > 25 ? '#f7a928' : '#ef4444',
-                    left: `calc(${(hoverIdx / (rawPts.length - 1)) * 100}% - 5px)`, 
-                    top: `calc(${(pts[hoverIdx].y / 65) * 100}% - 5px)` 
+                    left: `calc(${(hoverIdx / (rawForecast.length - 1)) * 100}% - 4px)`, 
+                    top: `calc(${(ptsForecast[hoverIdx].y / 65) * 100}% - 4px)` 
                   }}
                 ></div>
               </>
