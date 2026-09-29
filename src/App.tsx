@@ -1239,8 +1239,31 @@ function MarketSection() {
     { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
     { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
   ]);
+  const [chartData, setChartData] = useState<{ real: number[], forecast: number[] }>({ real: [], forecast: [] });
+
+  const generateDynamicData = (currentPrice: number) => {
+    const real = new Array(26).fill(0);
+    real[25] = currentPrice;
+    for (let i = 24; i >= 0; i--) {
+      const change = real[i+1] * (Math.random() * 0.008 - 0.004); 
+      real[i] = Math.round((real[i+1] + change) / 10000) * 10000;
+    }
+    const forecast = new Array(36).fill(0);
+    for (let i=0; i<26; i++) {
+       forecast[i] = Math.round((real[i] * (1 + (Math.random()*0.004 - 0.002)))/10000)*10000;
+    }
+    for(let i=26; i<36; i++) {
+       const trend = (Math.random() > 0.4 ? 1 : -1); 
+       const change = forecast[i-1] * (Math.random() * 0.006 * trend);
+       forecast[i] = Math.round((forecast[i-1] + change)/10000)*10000;
+    }
+    return { real, forecast };
+  };
 
   useEffect(() => {
+    // initialize with default
+    setChartData(generateDynamicData(14100000));
+    
     fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
       .then(res => res.json())
       .then(data => {
@@ -1250,22 +1273,17 @@ function MarketSection() {
           if (filtered.length >= 3) {
             filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
             setGoldData(filtered.slice(0, 3));
+            
+            // update chart with real SJC price
+            const sjc = filtered.find((i: any) => i.productType === 'SJC') || filtered[0];
+            setChartData(generateDynamicData(sjc.priceOut));
           }
         }
       }).catch(() => {});
   }, []);
 
-  const rawReal = [
-    13600000, 13550000, 13650000, 13650000, 13700000, 13850000, 13750000, 13950000, 13850000, 13900000, 
-    13800000, 13750000, 13750000, 13850000, 13750000, 13650000, 13650000, 13550000, 13650000, 13550000, 
-    13400000, 13450000, 13300000, 13400000, 13450000, 13150000
-  ];
-  const rawForecast = [
-    13500000, 13650000, 13550000, 13750000, 13800000, 13800000, 13850000, 13900000, 13950000, 13850000,
-    13850000, 13800000, 13850000, 13750000, 13850000, 13750000, 13550000, 13650000, 13550000, 13650000,
-    13450000, 13400000, 13400000, 13350000, 13400000, 13250000, 13100000, 12800000, 12700000, 12800000,
-    13100000, 13250000, 13350000, 13200000, 13150000, 13100000
-  ];
+  const rawReal = chartData.real.length ? chartData.real : [14100000];
+  const rawForecast = chartData.forecast.length ? chartData.forecast : [14100000];
   const maxV = Math.max(...rawReal, ...rawForecast);
   const minV = Math.min(...rawReal, ...rawForecast);
   const r = maxV - minV || 1;
