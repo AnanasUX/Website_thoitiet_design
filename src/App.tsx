@@ -1172,6 +1172,9 @@ export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
   try {
     const domain = new URL(url).hostname;
+    if (domain.includes('dantri.com.vn')) {
+      return 'https://cdn.dantri.com.vn/dantri-favicon.ico';
+    }
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   } catch (e) {
     return "";
@@ -1182,6 +1185,16 @@ export function getProxyImageUrl(url: string) {
   if (!url || typeof url !== 'string') return "";
   let cleanUrl = url.trim();
   if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
+  
+  if (cleanUrl.includes("dantri.dev")) {
+    cleanUrl = cleanUrl.replace("dantri.dev", "dantri.com.vn");
+  }
+  
+  const bypassDomains = ['dantri.com.vn', 'tuoitre.vn', 'thanhnien.vn', 'vietnamnet.vn', 'vtv.vn'];
+  if (bypassDomains.some(d => cleanUrl.includes(d))) {
+    return cleanUrl;
+  }
+  
   if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
     return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
   }
@@ -1269,7 +1282,7 @@ function MarketSection() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 4000); 
         
-        const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'), { signal: controller.signal });
+        const res = await fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'), { signal: controller.signal });
         clearTimeout(timeoutId);
         
         const data = await res.json();
@@ -1281,9 +1294,9 @@ function MarketSection() {
           
           if (filtered.length > 0) {
             const fallback = [
-              { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
-              { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
-              { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
+              { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13650000, priceOut: 14150000 },
+              { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13950000, priceOut: 14250000 },
+              { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 13950000, priceOut: 14250000 }
             ];
             const finalData = keys.map(k => filtered.find((i:any) => i.productType === k) || fallback.find((i:any) => i.productType === k));
             
@@ -1301,11 +1314,11 @@ function MarketSection() {
       // Fallback
       if (isMounted) {
         setGoldData(prev => prev.length ? prev : [
-          { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
-          { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
-          { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
+          { productTypeName: 'Vàng trang sức 999.9', priceIn: 13650000, priceOut: 14150000 },
+          { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13950000, priceOut: 14250000 },
+          { productTypeName: 'Vàng miếng SJC', priceIn: 13950000, priceOut: 14250000 }
         ]);
-        setChartData(prev => prev.real.length ? prev : generateDynamicData(14100000));
+        setChartData(prev => prev.real.length ? prev : generateDynamicData(14250000));
         setLoading(false);
       }
     };
