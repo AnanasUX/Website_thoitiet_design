@@ -45,7 +45,7 @@ body {
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: var(--font-body);
   line-height: 1.5;
-  color: #182033;
+  color: #2C3B59;
 }
 
 h1 { font-size: var(--font-h1); line-height: 1.2; font-weight: 700; }

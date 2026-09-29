@@ -321,7 +321,7 @@ function WeatherSection({
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] animate-gradient-xy"
-          style={{ background: "linear-gradient(21deg, rgb(72 141 203) 0%, rgb(51 106 214) 50%, rgb(79 196 255) 100%)" }}
+          style={{ background: "linear-gradient(135deg, #6F8ABD 0%, #C3DAFD 100%)" }}
       >
         <p className="font-semibold text-[13px] text-white whitespace-nowrap">
           📍 {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
@@ -355,8 +355,8 @@ function WeatherSection({
       </div>
 
       {/* Forecast */}
-      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
+      <div className="bg-white border border-[#DCE4F0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
             {WEATHER.hourlyForecast.map((hour: any, idx: number) => {
@@ -365,39 +365,39 @@ function WeatherSection({
               const opacityClass = isActive ? "opacity-100" : "opacity-40";
               return (
                 <div key={idx} className={`flex flex-col items-center gap-2 min-w-[50px] transition-opacity duration-300 ${opacityClass}`}>
-                  <p className="font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
+                  <p className="font-semibold text-[#2C3B59] text-[12px] whitespace-nowrap">{hour.time}</p>
                   <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
-                  <p className="font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
-                  <p className="font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
+                  <p className="font-semibold text-[#6F8ABD] text-[10px] whitespace-nowrap">{hour.pop}%</p>
+                  <p className="font-bold text-[#2C3B59] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
                 </div>
               );
             })}
           </div>
         ) : (
-          <p className="text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
+          <p className="text-[12px] text-[#6F8ABD] italic">Đang tải dữ liệu...</p>
         )}
       </div>
 
         
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
-          <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
+          <div className="bg-white border border-[#DCE4F0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
             <div className="flex flex-col gap-1 w-full">
-              <p className="font-bold text-[#182033] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
-              {WEATHER.weekRange && <p className="font-medium text-[#5f687b] text-[12px]">{WEATHER.weekRange}</p>}
+              <p className="font-bold text-[#2C3B59] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
+              {WEATHER.weekRange && <p className="font-medium text-[#6F8ABD] text-[12px]">{WEATHER.weekRange}</p>}
             </div>
             <div className="flex flex-col w-full gap-3">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between w-full animate-fade-in-up" style={{ animationDelay: `${idx * 150}ms` }}>
 
-                  <p className="font-semibold text-[#182033] w-14 text-left">{day.day}</p>
+                  <p className="font-semibold text-[#2C3B59] w-14 text-left">{day.day}</p>
                   <div className="flex items-center gap-1 w-16">
                     <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-6 h-6 drop-shadow-sm" />
-                    {day.pop > 0 && <span className="text-[#0a84ff] text-[10px] font-semibold">{day.pop}%</span>}
+                    {day.pop > 0 && <span className="text-[#6F8ABD] text-[10px] font-semibold">{day.pop}%</span>}
                   </div>
                   <div className="flex items-center gap-2 justify-end flex-1">
-                    <span className="text-[#5f687b] font-medium text-[12px]">{day.tempMin}°</span>
-                    <div className="flex-1 h-1 bg-gradient-to-r from-blue-400 to-red-400 rounded-full opacity-70"></div>
-                    <span className="text-[#182033] font-bold text-[12px]">{day.tempMax}°</span>
+                    <span className="text-[#6F8ABD] font-medium text-[12px]">{day.tempMin}°</span>
+                    <div className="flex-1 h-1 bg-gradient-to-r from-[#C3DAFD] to-[#D68D8D] rounded-full opacity-70"></div>
+                    <span className="text-[#2C3B59] font-bold text-[12px]">{day.tempMax}°</span>
                   </div>
                 </div>
               ))}
@@ -406,20 +406,20 @@ function WeatherSection({
         )}
 
 
-      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
-        <p className="font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
+      <div className="bg-white border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-normal leading-5 text-[#6F8ABD] w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
       {warningText && (
-        <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
+        <div className="bg-[#FFF9F0] border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-bold text-[#2C3B59] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
           <div className="flex flex-col gap-1 w-full">
               {warningText.split('\n').map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 const text = line.replace(/^[└├]\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-[#6F8ABD] w-full">{prefix}{text}</p>;
               })}
             </div>
         </div>
@@ -427,52 +427,52 @@ function WeatherSection({
 
       {/* Suggestion – only show when we have items */}
       {suggestionItems && suggestionItems.length > 0 && (
-        <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
+        <div className="bg-[#f0fdf4] border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-bold text-[#2C3B59] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
           <div className="flex flex-col gap-1 w-full mt-1">
             {suggestionItems.map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
                 const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-[#6F8ABD] w-full">{prefix}{text}</p>;
             })}
           </div>
         </div>
       )}
 
       {/* Combined Flood & Weather News */}
-      <div className="bg-white border border-[#e3e7ef] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+      <div className="bg-white border border-[#DCE4F0] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         {/* Flood Section */}
-        <p className="font-bold text-[#182033] whitespace-nowrap mb-2 uppercase">
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap mb-2 uppercase">
           BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
         </p>
         <div className="flex flex-col gap-0 w-full mb-1">
           {showFlood && floodItems && floodItems.length > 0 ? (
             floodItems.map((line, i) => (
-              <p key={i} className="font-normal leading-5 text-[#5f687b]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#6F8ABD]">{line}</p>
             ))
           ) : (
-            <p className="font-normal leading-5 text-[#5f687b]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
+            <p className="font-normal leading-5 text-[#6F8ABD]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
           )}
         </div>
 
         {/* Divider & Weather News */}
         {liveOverrides?.weatherNews && liveOverrides.weatherNews.length > 0 && (
           <>
-            <div className="w-full border-t border-[#e3e7ef] my-3"></div>
+            <div className="w-full border-t border-[#DCE4F0] my-3"></div>
             
-            <p className="font-bold text-[#182033] flex items-center gap-2 mb-3">
+            <p className="font-bold text-[#2C3B59] flex items-center gap-2 mb-3">
               📰 Bài viết liên quan
             </p>
             <div className="flex flex-col gap-3 w-full">
               {liveOverrides.weatherNews.map((news, i) => (
                 <div key={i} className="flex gap-2 items-start">
-                  <span className="text-[#0a84ff] font-bold mt-[1px]">›</span>
+                  <span className="text-[#6F8ABD] font-bold mt-[1px]">›</span>
                   <div className="flex flex-col gap-[2px]">
-                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#0a84ff] hover:underline line-clamp-2">
+                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#6F8ABD] hover:underline line-clamp-2">
                       {news.title}
                     </a>
-                    <span className="text-[#5f687b] text-[11px]">{news.source}</span>
+                    <span className="text-[#6F8ABD] text-[11px]">{news.source}</span>
                   </div>
                 </div>
               ))}
@@ -483,11 +483,11 @@ function WeatherSection({
 
       {/* Route advisory */}
       {showRouteAdvisory && routeItems && routeItems.length > 0 && (
-        <div className="bg-[#eff6ff] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">KHUYẾN CÁO LỘ TRÌNH</p>
+        <div className="bg-[#eff6ff] border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+          <p className="font-bold text-[#2C3B59] whitespace-nowrap">KHUYẾN CÁO LỘ TRÌNH</p>
           <div className="flex flex-col gap-0 w-full">
             {routeItems.map((line, i) => (
-              <p key={i} className="font-normal leading-5 text-[#5f687b]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#6F8ABD]">{line}</p>
             ))}
           </div>
         </div>
@@ -517,7 +517,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)} 
-        className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#e3e7ef] rounded-full text-[13px] font-semibold text-[#182033] shadow-sm active:scale-95 transition-transform"
+        className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#DCE4F0] rounded-full text-[13px] font-semibold text-[#2C3B59] shadow-sm active:scale-95 transition-transform"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
         <span>{activeCategory}</span>
@@ -525,7 +525,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
       </button>
       
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-[#e3e7ef] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-[#DCE4F0] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
           <div className="grid grid-cols-2 gap-[6px]">
             {NEWS_CATEGORIES.map(cat => (
               <button
@@ -534,7 +534,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
                   setActiveCategory(cat);
                   setIsOpen(false);
                 }}
-                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white font-bold' : 'hover:bg-[#f4f6fa] text-[#5f687b] font-medium'}`}
+                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white font-bold' : 'hover:bg-[#F2F6FC] text-[#6F8ABD] font-medium'}`}
               >
                 {cat}
               </button>
@@ -566,15 +566,15 @@ function MobileLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
-        <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
+    <div className="bg-[#F2F6FC] flex flex-col items-start w-full">
+      <div className="bg-white border-b border-[#DCE4F0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
+        <p className="font-bold text-[#D68D8D] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
-          <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
+          <p className="font-medium text-[#2C3B59] text-[12px] whitespace-nowrap text-right">
             📍 {WEATHER.location}
           </p>
-          <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
-            <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
+          <div className="bg-[#F2F6FC] mt-1 flex items-center px-2 py-0.5 rounded-full">
+            <p className="font-normal text-[#6F8ABD] text-[10px] whitespace-nowrap">
               {shortDateStr} · {timeStr}
             </p>
           </div>
@@ -583,14 +583,14 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
-          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">Thời tiết</p>
+          <p className="font-semibold leading-[26px] text-[#2C3B59] text-[20px]">Thời tiết</p>
           <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <GoldPriceSection />
-                  <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
-        <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+                  <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#F2F6FC] z-[90] py-3 mt-[-12px]">
+        <p className="font-semibold leading-[26px] text-[#2C3B59] text-[20px]">
           Tin Tức Mới Nhất
         </p>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
@@ -607,11 +607,11 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full">
                     <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
-                    <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+                    <p className="font-normal text-[#6F8ABD] text-[12px]">{item.src}</p>
                   </div>
-                  <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
+                  <p className="font-semibold text-[#2C3B59] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
-              <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
+              <p className="font-normal text-[#2C3B59] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
@@ -649,16 +649,16 @@ function TabletLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+    <div className="bg-[#F2F6FC] flex flex-col items-start w-full">
+      <div className="bg-white border-b border-[#DCE4F0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
-          <p className="font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
-          <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
+          <p className="font-bold text-[#D68D8D] text-[20px] whitespace-nowrap">Anx.</p>
+          <p className="font-medium text-[#6F8ABD] text-[13px] whitespace-nowrap">
             📍 {WEATHER.location}
           </p>
         </div>
-        <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
-          <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+        <div className="bg-[#F2F6FC] flex items-start px-3 py-1 rounded-full">
+          <p className="font-normal text-[#6F8ABD] text-[12px] whitespace-nowrap">
             {dateStr} · {timeStr}
           </p>
         </div>
@@ -672,12 +672,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
         {/* News panel */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] mt-[-12px]">
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#F2F6FC] z-[90] mt-[-12px]">
         {NEWS_CATEGORIES.map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
+            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white shadow-md' : 'bg-white text-[#6F8ABD] border border-[#DCE4F0]'}`}
           >
             {cat}
           </button>
@@ -686,8 +686,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
           <GoldPriceSection />
           <div className="flex flex-col gap-[2px] items-start">
-            <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
-            <p className="font-normal text-[#5f687b] text-[12px]">
+            <p className="font-bold text-[#2C3B59] text-[20px] tracking-[-0.3px]">Tin tức</p>
+            <p className="font-normal text-[#6F8ABD] text-[12px]">
               {WEATHER.location} · {newsFeed.length} bài mới nhất
             </p>
           </div>
@@ -703,21 +703,21 @@ function TabletLayout({ activeCategory, setActiveCategory,
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
-                <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
+                <div className="absolute bg-[#D68D8D] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
               </div>
               <div className="flex flex-col gap-2 items-start p-[14px] w-full">
-                <p className="font-bold leading-[22px] text-[#182033] text-[15px] w-full line-clamp-2">
+                <p className="font-bold leading-[22px] text-[#2C3B59] text-[15px] w-full line-clamp-2">
                   {featured.author}
                 </p>
-                <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
+                <p className="font-normal text-[#6F8ABD] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
                   {featured.body}
                 </p>
                 <div className="flex items-center justify-between pt-1 w-full">
                   <div className="flex gap-[6px] items-center">
                     <div className="bg-[#f7a928] rounded-[4px] size-2" />
-                    <p className="font-semibold text-[#ff315f] text-[11px]">{featured.src}</p>
+                    <p className="font-semibold text-[#D68D8D] text-[11px]">{featured.src}</p>
                   </div>
                 </div>
               </div>
@@ -733,15 +733,15 @@ function TabletLayout({ activeCategory, setActiveCategory,
               rel="noopener noreferrer"
               className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}
             >
-              <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
+              <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#F2F6FC]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
-                  <p className="font-bold text-[#ff315f] text-[10px]">{item.src}</p>
+                  <p className="font-bold text-[#D68D8D] text-[10px]">{item.src}</p>
                 </div>
-                <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
-                <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
+                <p className="font-semibold text-[#2C3B59] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
+                <p className="font-normal text-[#6F8ABD] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
               </div>
             </a>
           ))}
@@ -776,12 +776,12 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+    <div className="bg-[#F2F6FC] flex flex-col items-start w-full">
+      <div className="bg-white border-b border-[#DCE4F0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
-          <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
-          <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
-            <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+          <p className="font-bold text-[#2C3B59] text-[18px] whitespace-nowrap">Anx.</p>
+          <div className="bg-[#F2F6FC] flex items-start px-3 py-1 rounded-full">
+            <p className="font-normal text-[#6F8ABD] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
           </div>
@@ -798,9 +798,9 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         {/* News column */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
       <GoldPriceSection />
-      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#F2F6FC] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
-          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+          <p className="font-semibold leading-[26px] text-[#2C3B59] text-[20px]">
             Tin Tức Mới Nhất
           </p>
           <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
@@ -821,23 +821,23 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
-                  <p className="font-bold text-[#ff315f] text-[15.84px]">
+                  <p className="font-bold text-[#D68D8D] text-[15.84px]">
                     📰
                   </p>
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
-                  <p className="font-normal text-[#5f687b] text-[12px]">{WEATHER.time}</p>
+                  <p className="font-semibold text-[#2C3B59] text-[14px] line-clamp-1">{featured.src}</p>
+                  <p className="font-normal text-[#6F8ABD] text-[12px]">{WEATHER.time}</p>
                 </div>
               </div>
-              <p className="font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
+              <p className="font-bold text-[#2C3B59] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               {featured.body && (
-                <p className="font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
+                <p className="font-normal text-[#6F8ABD] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
               )}
             </a>
           )}
@@ -858,11 +858,11 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
                   <div className="flex gap-2 items-center">
                     <div className="bg-[#ffe8ee] flex items-start px-2 py-[3px] rounded-full">
-                      <p className="font-semibold text-[#ff315f] text-[11px]">{item.src}</p>
+                      <p className="font-semibold text-[#D68D8D] text-[11px]">{item.src}</p>
                     </div>
                   </div>
-                  <p className="font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
-                  <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
+                  <p className="font-bold text-[#2C3B59] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
+                  <p className="font-normal text-[#6F8ABD] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
                 </div>
               </a>
             ))}
@@ -916,10 +916,10 @@ function DevWeatherPanel({
         </div>
         <div className="px-5 pt-2 pb-2 flex items-center justify-between border-b border-[#f0f2f5]">
           <div>
-            <p className="font-bold text-[#182033] text-[15px]">Chọn trạng thái thời tiết</p>
+            <p className="font-bold text-[#2C3B59] text-[15px]">Chọn trạng thái thời tiết</p>
             <p className="font-normal text-[#9aa3b0] text-[12px] mt-[2px]">Dữ liệu thực tế sẽ tự cập nhật khi tích hợp API</p>
           </div>
-          <button onClick={onClose} className="text-[#9aa3b0] text-[20px] leading-none hover:text-[#182033] transition-colors">✕</button>
+          <button onClick={onClose} className="text-[#9aa3b0] text-[20px] leading-none hover:text-[#2C3B59] transition-colors">✕</button>
         </div>
         <div className="flex flex-col gap-0 pb-6 pt-1 overflow-y-auto max-h-[60vh]">
           {CONDITION_OPTIONS.map(opt => {
@@ -929,18 +929,18 @@ function DevWeatherPanel({
                 key={opt.key}
                 onClick={() => { onSelect(opt.key); onClose(); }}
                 className={`flex items-center gap-4 px-5 py-[14px] w-full text-left transition-colors ${
-                  active ? "bg-[#f4f6fa]" : "hover:bg-[#fafafa]"
+                  active ? "bg-[#F2F6FC]" : "hover:bg-[#fafafa]"
                 }`}
               >
                 <span className="text-[28px] shrink-0 leading-none">{opt.emoji}</span>
                 <div className="flex flex-1 flex-col items-start min-w-0">
-                  <p className={`font-semibold text-[14px] ${active ? "text-[#182033]" : "text-[#182033]"}`}>
+                  <p className={`font-semibold text-[14px] ${active ? "text-[#2C3B59]" : "text-[#2C3B59]"}`}>
                     {opt.label}
                   </p>
                   <p className="font-normal text-[#9aa3b0] text-[12px]">{opt.desc}</p>
                 </div>
                 {active && (
-                  <span className="shrink-0 size-5 rounded-full bg-[#182033] flex items-center justify-center text-white text-[11px]">✓</span>
+                  <span className="shrink-0 size-5 rounded-full bg-[#2C3B59] flex items-center justify-center text-white text-[11px]">✓</span>
                 )}
               </button>
             );
@@ -989,7 +989,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
       <button 
         onClick={onTrigger} 
         disabled={isLoading || !hasMoreNews}
-        className="px-[16px] py-[10px] bg-[#e3e7ef] text-[#182033] font-semibold rounded-[8px] min-h-[44px] active:scale-95 transition-transform disabled:opacity-50"
+        className="px-[16px] py-[10px] bg-[#DCE4F0] text-[#2C3B59] font-semibold rounded-[8px] min-h-[44px] active:scale-95 transition-transform disabled:opacity-50"
       >
         {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
       </button>
@@ -1090,15 +1090,15 @@ export function decodeHTMLEntities(text: string) {
 function NewsSkeleton() {
   return (
     <div className="flex flex-col gap-[14px] w-full">
-      <div className="w-full h-[240px] bg-[#e3e7ef] animate-pulse rounded-[16px]"></div>
+      <div className="w-full h-[240px] bg-[#DCE4F0] animate-pulse rounded-[16px]"></div>
       {[1, 2, 3, 4].map(i => (
-        <div key={i} className="flex gap-[14px] w-full p-[14px] bg-white rounded-[12px] border border-[#e3e7ef]">
+        <div key={i} className="flex gap-[14px] w-full p-[14px] bg-white rounded-[12px] border border-[#DCE4F0]">
           <div className="flex-1 flex flex-col gap-2 pt-1">
-            <div className="w-full h-[18px] bg-[#e3e7ef] animate-pulse rounded"></div>
-            <div className="w-3/4 h-[18px] bg-[#e3e7ef] animate-pulse rounded"></div>
-            <div className="w-1/3 h-[14px] bg-[#e3e7ef] animate-pulse rounded mt-2"></div>
+            <div className="w-full h-[18px] bg-[#DCE4F0] animate-pulse rounded"></div>
+            <div className="w-3/4 h-[18px] bg-[#DCE4F0] animate-pulse rounded"></div>
+            <div className="w-1/3 h-[14px] bg-[#DCE4F0] animate-pulse rounded mt-2"></div>
           </div>
-          <div className="w-[110px] h-[80px] bg-[#e3e7ef] animate-pulse rounded-[8px] shrink-0"></div>
+          <div className="w-[110px] h-[80px] bg-[#DCE4F0] animate-pulse rounded-[8px] shrink-0"></div>
         </div>
       ))}
     </div>
@@ -1160,7 +1160,7 @@ function ScrollToTop() {
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
   return isVisible ? (
-    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] bg-white border border-[#e3e7ef] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-[#ff315f] group animate-fade-in">
+    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] bg-white border border-[#DCE4F0] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-[#D68D8D] group animate-fade-in">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-1 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
     </button>
   ) : null;
@@ -1201,9 +1201,9 @@ function GoldPriceSection() {
   if (!goldData.length) return null;
 
   return (
-    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
+    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#DCE4F0]">
       <div className="flex items-center gap-2">
-        <p className="font-bold text-[#182033] text-[18px]">Giá Vàng Phú Quý</p>
+        <p className="font-bold text-[#2C3B59] text-[18px]">Giá Vàng Phú Quý</p>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center">
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
         </div>
@@ -1211,14 +1211,14 @@ function GoldPriceSection() {
       
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
         {goldData.map((item, idx) => (
-          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
-            <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+          <div key={idx} className="flex flex-col border border-[#DCE4F0] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
+            <p className="font-bold text-[#2C3B59] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
-              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
+              <p className="text-[#6F8ABD] text-[10px] sm:text-[12px]">Mua</p>
               <p className="font-semibold text-[#16a34a] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
             </div>
             <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
-              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
+              <p className="text-[#6F8ABD] text-[10px] sm:text-[12px]">Bán</p>
               <p className="font-semibold text-[#ef4444] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceOut.toLocaleString('vi-VN')}</p>
             </div>
           </div>
@@ -2045,7 +2045,7 @@ export default function App() {
     if (apiStatus === "loading") {
     return (
       <div className="w-full h-screen bg-white">
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-[#182033]/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-[#2C3B59]/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
           ⏳ Đang tải dữ liệu thực tế…
         </div>
       </div>
@@ -2055,7 +2055,7 @@ export default function App() {
   const theme = WEATHER_THEMES[condKey];
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f6fa]">
+    <div className="min-h-screen w-full bg-[#F2F6FC]">
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
