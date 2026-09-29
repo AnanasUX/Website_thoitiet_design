@@ -304,15 +304,17 @@ interface LiveOverrides {
 function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
   if (!hourlyData || hourlyData.length === 0) return null;
   
-  const width = Math.max(600, hourlyData.length * 60);
-  const height = 100;
+  const itemWidth = 65;
+  const width = Math.max(600, hourlyData.length * itemWidth);
+  const height = 180;
+  
   const maxTemp = Math.max(...hourlyData.map(d => d.temp)) + 1;
   const minTemp = Math.min(...hourlyData.map(d => d.temp)) - 1;
   const range = maxTemp - minTemp || 1;
 
   const points = hourlyData.map((d, i) => {
-    const x = i * 60 + 30;
-    const y = height - ((d.temp - minTemp) / range) * (height - 40) - 20;
+    const x = i * itemWidth + (itemWidth / 2);
+    const y = 140 - ((d.temp - minTemp) / range) * 55; 
     return { x, y, temp: d.temp, time: d.time, icon: d.icon, pop: d.pop };
   });
 
@@ -324,33 +326,22 @@ function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
   }).join(' ');
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide pb-4">
-      <div className="relative" style={{ width: `${width}px`, height: '140px' }}>
-        <svg width={width} height={height} className="absolute top-[20px] left-0 overflow-visible z-0">
-          <defs>
-            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ff315f" />
-              <stop offset="100%" stopColor="#f7a928" />
-            </linearGradient>
-            <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ff315f" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#f7a928" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="url(#fillGrad)" />
-          <path d={pathD} fill="none" stroke="url(#lineGrad)" strokeWidth="3" strokeLinecap="round" />
+    <div className="w-full overflow-x-auto scrollbar-hide pb-2">
+      <div className="relative" style={{ width: `${width}px`, height: `${height}px` }}>
+        <svg width={width} height={height} className="absolute top-0 left-0 overflow-visible z-0">
+          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="rgba(255, 49, 95, 0.08)" />
+          <path d={pathD} fill="none" stroke="#ff315f" strokeWidth="2.5" strokeLinecap="round" />
           {points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="4" fill="#fff" stroke="#ff315f" strokeWidth="2" />
+            <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="#fff" stroke="#ff315f" strokeWidth="2.5" />
           ))}
         </svg>
         
         {points.map((p, i) => (
-          <div key={i} className="absolute flex flex-col items-center justify-center w-[60px] z-10" style={{ left: `${p.x - 30}px`, top: '0px' }}>
-            <p className="font-semibold text-[#182033] text-[12px] whitespace-nowrap mb-1">{p.time}</p>
+          <div key={i} className="absolute flex flex-col items-center justify-start w-[65px] z-10" style={{ left: `${p.x - 32.5}px`, top: '10px' }}>
+            <p className="font-semibold text-[#182033] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
             <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" />
-            <p className="font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap mb-1">{p.pop}%</p>
-            <div className="h-[50px]"></div>
-            <p className="font-bold text-[#182033] text-[14px] mt-1 absolute" style={{ top: `${p.y + 20}px` }}>{p.temp}°C</p>
+            <p className="font-semibold text-[#0a84ff] text-[11px] whitespace-nowrap">{p.pop}%</p>
+            <p className="font-bold text-[#182033] text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
           </div>
         ))}
       </div>
