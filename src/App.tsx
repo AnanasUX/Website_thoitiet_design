@@ -1263,38 +1263,59 @@ function MarketSection() {
   };
 
   useEffect(() => {
-    const fetchGold = () => {
-      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.data) {
-            const keys = ['24K', 'NPQ', 'SJC'];
-            const filtered = data.data.filter((item: any) => keys.includes(item.productType));
-            if (filtered.length >= 3) {
-              filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
-              setGoldData(filtered.slice(0, 3));
-              
-              const sjc = filtered.find((i: any) => i.productType === 'SJC') || filtered[0];
-              setChartData(generateDynamicData(sjc.priceOut));
-              setLoading(false);
-            }
-          }
-        }).catch(() => {
-          // If error on first load, use fallback
-          if(goldData.length === 0) {
-            setGoldData([
-              { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
-              { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
-              { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
-            ]);
-            setChartData(generateDynamicData(14100000));
+    let isMounted = true;
+    const fetchGold = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); 
+        
+        const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'), { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        const data = await res.json();
+        if (!isMounted) return;
+        
+        if (data && data.data) {
+          const keys = ['24K', 'NPQ', 'SJC'];
+          const filtered = data.data.filter((item: any) => keys.includes(item.productType));
+          
+          if (filtered.length > 0) {
+            const fallback = [
+              { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
+              { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
+              { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
+            ];
+            const finalData = keys.map(k => filtered.find((i:any) => i.productType === k) || fallback.find((i:any) => i.productType === k));
+            
+            setGoldData(finalData);
+            const sjc = finalData.find((i: any) => i.productType === 'SJC') || finalData[0];
+            setChartData(generateDynamicData(sjc.priceOut));
             setLoading(false);
+            return;
           }
-        });
+        }
+      } catch (err) {
+        // silently fallback
+      }
+      
+      // Fallback
+      if (isMounted) {
+        setGoldData(prev => prev.length ? prev : [
+          { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
+          { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
+          { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
+        ]);
+        setChartData(prev => prev.real.length ? prev : generateDynamicData(14100000));
+        setLoading(false);
+      }
     };
+    
     fetchGold();
-    const intervalId = setInterval(fetchGold, 60000); // refresh every minute
-    return () => clearInterval(intervalId);
+    const intervalId = setInterval(fetchGold, 60000); 
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
   }, []);
 
   if (loading) {
