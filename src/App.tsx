@@ -592,7 +592,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <GoldPriceSection />
                   <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f8fafc] z-[90] py-3 mt-[-12px]">
-        <p className="font-extrabold leading-[26px] text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 text-[22px]">
+        <p className="font-extrabold leading-[26px] text-black text-[22px]">
           Tin Tức Mới Nhất
         </p>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
@@ -802,7 +802,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <GoldPriceSection />
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f8fafc] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
-          <p className="font-extrabold leading-[26px] text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500 text-[22px]">
+          <p className="font-extrabold leading-[26px] text-black text-[22px]">
             Tin Tức Mới Nhất
           </p>
           <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
