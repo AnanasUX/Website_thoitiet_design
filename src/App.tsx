@@ -1203,35 +1203,17 @@ function GoldPriceSection() {
         </div>
       </div>
       
-      {/* MOBILE LAYOUT (Horizontal Scroll) */}
-      <div className="flex md:hidden overflow-x-auto gap-3 scrollbar-hide pb-1 w-full">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
         {goldData.map((item, idx) => (
-          <div key={idx} className="flex flex-col shrink-0 min-w-[150px] border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
-            <p className="font-bold text-[#182033] text-[14px] line-clamp-1 mb-2">{item.productTypeName}</p>
-            <div className="flex justify-between items-center w-full">
-              <p className="text-[#5f687b] text-[12px]">Mua</p>
-              <p className="font-semibold text-[#16a34a] text-[14px] whitespace-nowrap">{item.priceIn.toLocaleString('vi-VN')}</p>
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
+            <p className="font-bold text-[#182033] text-[10px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[9px] sm:text-[12px]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[10px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
             </div>
-            <div className="flex justify-between items-center w-full mt-1">
-              <p className="text-[#5f687b] text-[12px]">Bán</p>
-              <p className="font-semibold text-[#ef4444] text-[14px] whitespace-nowrap">{item.priceOut.toLocaleString('vi-VN')}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* PC / TABLET LAYOUT (Grid 3 Columns) */}
-      <div className="hidden md:grid grid-cols-3 gap-2 w-full">
-        {goldData.map((item, idx) => (
-          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
-            <p className="font-bold text-[#182033] text-[12px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
-            <div className="flex justify-between items-center w-full gap-1">
-              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
-              <p className="font-semibold text-[#16a34a] text-[11px] sm:text-[14px] whitespace-nowrap">{item.priceIn.toLocaleString('vi-VN')}</p>
-            </div>
-            <div className="flex justify-between items-center w-full mt-1 gap-1">
-              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
-              <p className="font-semibold text-[#ef4444] text-[11px] sm:text-[14px] whitespace-nowrap">{item.priceOut.toLocaleString('vi-VN')}</p>
+            <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[9px] sm:text-[12px]">Bán</p>
+              <p className="font-semibold text-[#ef4444] text-[10px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceOut.toLocaleString('vi-VN')}</p>
             </div>
           </div>
         ))}
