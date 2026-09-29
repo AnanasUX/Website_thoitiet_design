@@ -1391,17 +1391,19 @@ function MarketSection() {
 
   const rawReal = chartData.real;
   const rawForecast = chartData.forecast;
-  const maxV = Math.max(...rawReal, ...rawForecast);
-  const minV = Math.min(...rawReal, ...rawForecast);
-  const r = maxV - minV || 1;
+  const displayMax = Math.max(...rawReal);
+  const displayMin = Math.min(...rawReal);
+  const axisMax = Math.max(...rawReal, ...rawForecast);
+  const axisMin = Math.min(...rawReal, ...rawForecast);
+  const r = axisMax - axisMin || 1;
   
   const ptsReal = rawReal.map((v, i) => ({ 
     x: (i / (rawForecast.length - 1)) * 300, 
-    y: 60 - ((v - minV) / r) * 55 
+    y: 60 - ((v - axisMin) / r) * 55 
   }));
   const ptsForecast = rawForecast.map((v, i) => ({ 
     x: (i / (rawForecast.length - 1)) * 300, 
-    y: 60 - ((v - minV) / r) * 55 
+    y: 60 - ((v - axisMin) / r) * 55 
   }));
 
   const pathReal = ptsReal.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
@@ -1440,18 +1442,25 @@ function MarketSection() {
             <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></div>
             <p className="text-[11px] sm:text-[13px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
           </div>
-          <p className="text-[11px] sm:text-[13px] font-bold text-[#16a34a] flex items-center gap-1">
-            TĂNG TRƯỞNG 
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
-          </p>
+          {rawReal.length > 1 && rawReal[rawReal.length - 1] < rawReal[0] ? (
+                <p className="text-[11px] sm:text-[13px] font-bold text-[#ef4444] flex items-center gap-1">
+                  SUY GIẢM
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 18l-9.5-9.5-5 5L1 6"></path><path d="M17 18h6v-6"></path></svg>
+                </p>
+              ) : (
+                <p className="text-[11px] sm:text-[13px] font-bold text-[#16a34a] flex items-center gap-1">
+                  TĂNG TRƯỞNG
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"></path><path d="M17 6h6v6"></path></svg>
+                </p>
+              )}
         </div>
 
         <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
           <div className="flex justify-between items-center mb-1">
             <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY) - {new Date().toLocaleDateString('vi-VN')}</p>
             <div className="flex gap-2 text-[9px] font-bold">
-              <span className="text-[#5f687b]">H: {maxV.toLocaleString('vi-VN')}</span>
-              <span className="text-[#5f687b]">L: {minV.toLocaleString('vi-VN')}</span>
+              <span className="text-[#5f687b]">H: {displayMax.toLocaleString('vi-VN')}</span>
+              <span className="text-[#5f687b]">L: {displayMin.toLocaleString('vi-VN')}</span>
             </div>
           </div>
           
