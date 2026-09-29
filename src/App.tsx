@@ -4,6 +4,8 @@
 // Nếu không có ?api thì dùng mock data (chế độ preview thiết kế)
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Location, Wind, Drop, Eye, Sun, Danger, Calendar, Clock, Filter, ArrowDown2, ArrowUp2, InfoCircle, Weight, Mask } from 'iconsax-react';
+
 
 const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
 
