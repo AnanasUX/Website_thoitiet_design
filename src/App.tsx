@@ -1233,6 +1233,7 @@ function ScrollToTop() {
 
 
 function MarketSection() {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [goldData, setGoldData] = useState<any[]>([
     { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
     { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
@@ -1321,8 +1322,19 @@ function MarketSection() {
             </div>
           </div>
           
-          <div className="w-full h-[65px] relative mt-1 border-l border-b border-[#e3e7ef]/50">
-            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" className="overflow-visible">
+          <div 
+            className="w-full h-[65px] relative mt-1 border-l border-b border-[#e3e7ef]/50 cursor-crosshair"
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              let x = e.clientX - rect.left;
+              if (x < 0) x = 0;
+              if (x > rect.width) x = rect.width;
+              const closestIdx = Math.round((x / rect.width) * (rawPts.length - 1));
+              setHoverIdx(closestIdx);
+            }}
+            onMouseLeave={() => setHoverIdx(null)}
+          >
+            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" className="overflow-visible pointer-events-none">
               {/* Grid Lines */}
               {[1, 2, 3, 4, 5].map(i => (
                 <line key={`v-${i}`} x1={i * 50} y1="0" x2={i * 50} y2="65" stroke="#e3e7ef" strokeWidth="0.5" strokeDasharray="2 2" />
@@ -1330,8 +1342,51 @@ function MarketSection() {
               {[1, 2, 3].map(i => (
                 <line key={`h-${i}`} x1="0" y1={i * 16.25} x2="300" y2={i * 16.25} stroke="#e3e7ef" strokeWidth="0.5" />
               ))}
-              <path d={pathD} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
+              
+              <defs>
+                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="70%" stopColor="#ef4444" />
+                  <stop offset="70%" stopColor="#f7a928" />
+                  <stop offset="100%" stopColor="#f7a928" />
+                </linearGradient>
+              </defs>
+              <path d={pathD} fill="none" stroke="url(#lineGrad)" strokeWidth="1.5" strokeLinejoin="round" />
             </svg>
+            
+            {hoverIdx !== null && (
+              <>
+                <div 
+                  className="absolute top-0 bottom-0 border-l border-dashed border-[#182033]/40 z-10 pointer-events-none" 
+                  style={{ left: `${(hoverIdx / (rawPts.length - 1)) * 100}%` }}
+                ></div>
+                <div 
+                  className="absolute top-[-25px] bg-[#182033] text-white text-[10px] px-2 py-1 rounded-[6px] z-20 pointer-events-none whitespace-nowrap shadow-md flex items-center gap-1"
+                  style={{ 
+                    left: `${(hoverIdx / (rawPts.length - 1)) * 100}%`, 
+                    transform: hoverIdx > rawPts.length / 2 ? 'translateX(calc(-100% - 6px))' : 'translateX(6px)' 
+                  }}
+                >
+                  <span className="text-[#f7a928] font-mono">
+                    {Math.floor((hoverIdx / (rawPts.length - 1)) * 24).toString().padStart(2, '0')}:
+                    {Math.floor(((hoverIdx / (rawPts.length - 1)) * 24 % 1) * 60).toString().padStart(2, '0')}
+                  </span>
+                  <span className="text-white/50">|</span>
+                  <span className="font-bold text-[#4ade80]">{rawPts[hoverIdx]}</span>
+                  <span className={`text-[8px] font-bold px-1 rounded-sm ${hoverIdx > 25 ? 'bg-[#f7a928]/20 text-[#f7a928]' : 'bg-[#3b82f6]/20 text-[#3b82f6]'}`}>
+                    {hoverIdx > 25 ? 'DỰ BÁO' : 'THỰC TẾ'}
+                  </span>
+                </div>
+                
+                <div 
+                  className="absolute w-2.5 h-2.5 rounded-full z-20 pointer-events-none border-2 border-white shadow-sm"
+                  style={{ 
+                    backgroundColor: hoverIdx > 25 ? '#f7a928' : '#ef4444',
+                    left: `calc(${(hoverIdx / (rawPts.length - 1)) * 100}% - 5px)`, 
+                    top: `calc(${(pts[hoverIdx].y / 65) * 100}% - 5px)` 
+                  }}
+                ></div>
+              </>
+            )}
           </div>
           
           <div className="flex justify-between text-[8px] sm:text-[9px] text-[#5f687b] mt-1 font-medium px-[2px]">
