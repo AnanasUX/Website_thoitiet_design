@@ -1136,6 +1136,7 @@ function ScrollToTop() {
 }
 
 
+
 function GoldPriceSection() {
   const [goldData, setGoldData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1145,10 +1146,12 @@ function GoldPriceSection() {
       .then(res => res.json())
       .then(data => {
         if (data && data.data) {
-          // Filter some key products like SJC, NPQ, 24K
-          const keys = ['SJC', 'NPQ', '24K', '9999'];
+          // Filter EXACTLY 3 products: 24K (Vàng trang sức), NPQ (Nhẫn Phú Quý), SJC (Vàng miếng)
+          const keys = ['24K', 'NPQ', 'SJC'];
           const filtered = data.data.filter((item: any) => keys.includes(item.productType));
-          setGoldData(filtered.length ? filtered : data.data.slice(0, 4));
+          // Sort them in the exact order requested
+          filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
+          setGoldData(filtered.length === 3 ? filtered : data.data.slice(0, 3));
         }
         setLoading(false);
       })
@@ -1166,17 +1169,17 @@ function GoldPriceSection() {
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
         </div>
       </div>
-      <div className="flex overflow-x-auto gap-3 hide-scrollbar pb-1">
+      <div className="grid grid-cols-3 gap-2 w-full">
         {goldData.map((item, idx) => (
-          <div key={idx} className="flex flex-col shrink-0 min-w-[150px] border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
-            <p className="font-bold text-[#182033] text-[14px] line-clamp-1 mb-2">{item.productTypeName}</p>
-            <div className="flex justify-between items-center w-full">
-              <p className="text-[#5f687b] text-[12px]">Mua</p>
-              <p className="font-semibold text-[#16a34a] text-[14px]">{item.priceIn.toLocaleString('vi-VN')}</p>
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
+            <p className="font-bold text-[#182033] text-[12px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <div className="flex justify-between items-center w-full gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[11px] sm:text-[14px] whitespace-nowrap">{item.priceIn.toLocaleString('vi-VN')}</p>
             </div>
-            <div className="flex justify-between items-center w-full mt-1">
-              <p className="text-[#5f687b] text-[12px]">Bán</p>
-              <p className="font-semibold text-[#ef4444] text-[14px]">{item.priceOut.toLocaleString('vi-VN')}</p>
+            <div className="flex justify-between items-center w-full mt-1 gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
+              <p className="font-semibold text-[#ef4444] text-[11px] sm:text-[14px] whitespace-nowrap">{item.priceOut.toLocaleString('vi-VN')}</p>
             </div>
           </div>
         ))}
@@ -1184,6 +1187,7 @@ function GoldPriceSection() {
     </div>
   );
 }
+
 
 export default function App() {
 
