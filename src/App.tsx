@@ -1412,7 +1412,7 @@ function MarketSection() {
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full mb-1">
-        <h2 className="font-semibold leading-[26px] text-[#182033] text-[20px]">Giá Vàng</h2>
+        <h2 className="font-semibold leading-[26px] text-[#182033] text-[20px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
