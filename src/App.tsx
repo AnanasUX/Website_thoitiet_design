@@ -65,7 +65,7 @@ const WEATHER_THEMES: Record<ConditionKey, WeatherTheme> = {
   "nang": {
     key: "nang",
     gradient: "linear-gradient(135deg, #1e73be 0%, #58a8dc 50%, #f7a928 100%)",
-    emoji: <Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" />,
+    emoji: <Sun size="16" variant="Bulk" className="inline-block mr-1 " />,
     label: "Nắng",
     warningText: "Trời nắng đẹp, tầm nhìn tốt. Chỉ số UV ở mức trung bình đến cao.",
     suggestionItems: [
@@ -321,10 +321,10 @@ function WeatherSection({
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] animate-gradient-xy"
-          style={{ background: "linear-gradient(135deg, #6F8ABD 0%, #C3DAFD 100%)" }}
+          style={{ background: "linear-gradient(135deg, #2C3B59 0%, #6F8ABD 100%)" }}
       >
         <p className="font-semibold text-[13px] text-white whitespace-nowrap">
-          <Location size="16" variant="Bulk" className="inline-block mr-1 opacity-90" /> {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
+          <Location size="16" variant="Bulk" className="inline-block mr-1 " /> {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
         </p>
         <div className="flex flex-col gap-1 items-start w-full">
           <p className="font-extrabold leading-none text-[60px] text-white whitespace-nowrap">
@@ -339,12 +339,12 @@ function WeatherSection({
         </div>
                 <div className="grid grid-cols-2 gap-2 w-full text-[13px]">
           {[
-            { label: <><Wind size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Gió</>, value: WEATHER.wind },
-            { label: <><Drop size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Độ ẩm</>, value: WEATHER.humidity },
-            { label: <><Mask size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Bụi PM2.5</>, value: WEATHER.pm25 },
-            { label: <><Eye size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Tầm nhìn</>, value: WEATHER.visibility },
-            { label: <><ArrowDown2 size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Áp suất</>, value: WEATHER.pressure },
-            { label: <><Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> UV Index</>, value: WEATHER.uvIndex }
+            { label: <><Wind size="16" variant="Bulk" className="inline-block mr-1 " /> Gió</>, value: WEATHER.wind },
+            { label: <><Drop size="16" variant="Bulk" className="inline-block mr-1 " /> Độ ẩm</>, value: WEATHER.humidity },
+            { label: <><Mask size="16" variant="Bulk" className="inline-block mr-1 " /> Bụi PM2.5</>, value: WEATHER.pm25 },
+            { label: <><Eye size="16" variant="Bulk" className="inline-block mr-1 " /> Tầm nhìn</>, value: WEATHER.visibility },
+            { label: <><ArrowDown2 size="16" variant="Bulk" className="inline-block mr-1 " /> Áp suất</>, value: WEATHER.pressure },
+            { label: <><Sun size="16" variant="Bulk" className="inline-block mr-1 " /> UV Index</>, value: WEATHER.uvIndex }
           ].map((stat, idx) => (
             <div key={idx} className="bg-[rgba(255,255,255,0.09)] border border-[rgba(255,255,255,0.2)] flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-xl">
               <p className="font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
@@ -356,7 +356,7 @@ function WeatherSection({
 
       {/* Forecast */}
       <div className="bg-white border border-[#DCE4F0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Clock size="18" variant="Bulk" className="inline-block mr-1 text-[#6F8ABD]" /> DỰ BÁO HÀNG GIỜ (HOURLY)</p>
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Clock size="18" variant="Bulk" className="inline-block mr-1 text-[#4B6189]" /> DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
             {WEATHER.hourlyForecast.map((hour: any, idx: number) => {
@@ -367,14 +367,14 @@ function WeatherSection({
                 <div key={idx} className={`flex flex-col items-center gap-2 min-w-[50px] transition-opacity duration-300 ${opacityClass}`}>
                   <p className="font-semibold text-[#2C3B59] text-[12px] whitespace-nowrap">{hour.time}</p>
                   <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
-                  <p className="font-semibold text-[#6F8ABD] text-[10px] whitespace-nowrap">{hour.pop}%</p>
+                  <p className="font-semibold text-[#4B6189] text-[10px] whitespace-nowrap">{hour.pop}%</p>
                   <p className="font-bold text-[#2C3B59] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
                 </div>
               );
             })}
           </div>
         ) : (
-          <p className="text-[12px] text-[#6F8ABD] italic">Đang tải dữ liệu...</p>
+          <p className="text-[12px] text-[#4B6189] italic">Đang tải dữ liệu...</p>
         )}
       </div>
 
@@ -382,8 +382,8 @@ function WeatherSection({
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
           <div className="bg-white border border-[#DCE4F0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
             <div className="flex flex-col gap-1 w-full">
-              <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Calendar size="18" variant="Bulk" className="inline-block mr-1 text-[#6F8ABD]" /> DỰ BÁO THỜI TIẾT TUẦN</p>
-              {WEATHER.weekRange && <p className="font-medium text-[#6F8ABD] text-[12px]">{WEATHER.weekRange}</p>}
+              <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Calendar size="18" variant="Bulk" className="inline-block mr-1 text-[#4B6189]" /> DỰ BÁO THỜI TIẾT TUẦN</p>
+              {WEATHER.weekRange && <p className="font-medium text-[#4B6189] text-[12px]">{WEATHER.weekRange}</p>}
             </div>
             <div className="flex flex-col w-full gap-3">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
@@ -392,10 +392,10 @@ function WeatherSection({
                   <p className="font-semibold text-[#2C3B59] w-14 text-left">{day.day}</p>
                   <div className="flex items-center gap-1 w-16">
                     <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-6 h-6 drop-shadow-sm" />
-                    {day.pop > 0 && <span className="text-[#6F8ABD] text-[10px] font-semibold">{day.pop}%</span>}
+                    {day.pop > 0 && <span className="text-[#4B6189] text-[10px] font-semibold">{day.pop}%</span>}
                   </div>
                   <div className="flex items-center gap-2 justify-end flex-1">
-                    <span className="text-[#6F8ABD] font-medium text-[12px]">{day.tempMin}°</span>
+                    <span className="text-[#4B6189] font-medium text-[12px]">{day.tempMin}°</span>
                     <div className="flex-1 h-1 bg-gradient-to-r from-[#C3DAFD] to-[#D68D8D] rounded-full opacity-70"></div>
                     <span className="text-[#2C3B59] font-bold text-[12px]">{day.tempMax}°</span>
                   </div>
@@ -407,8 +407,8 @@ function WeatherSection({
 
 
       <div className="bg-white border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#2C3B59] whitespace-nowrap"><InfoCircle size="18" variant="Bulk" className="inline-block mr-1 text-[#6F8ABD]" /> DỰ BÁO 3 GIỜ TỚI</p>
-        <p className="font-normal leading-5 text-[#6F8ABD] w-full">{WEATHER.forecastText}</p>
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap"><InfoCircle size="18" variant="Bulk" className="inline-block mr-1 text-[#4B6189]" /> DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-normal leading-5 text-[#4B6189] w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
@@ -419,7 +419,7 @@ function WeatherSection({
               {warningText.split('\n').map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 const text = line.replace(/^[└├]\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#6F8ABD] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-[#4B6189] w-full">{prefix}{text}</p>;
               })}
             </div>
         </div>
@@ -434,7 +434,7 @@ function WeatherSection({
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
                 const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#6F8ABD] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-[#4B6189] w-full">{prefix}{text}</p>;
             })}
           </div>
         </div>
@@ -449,10 +449,10 @@ function WeatherSection({
         <div className="flex flex-col gap-0 w-full mb-1">
           {showFlood && floodItems && floodItems.length > 0 ? (
             floodItems.map((line, i) => (
-              <p key={i} className="font-normal leading-5 text-[#6F8ABD]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#4B6189]">{line}</p>
             ))
           ) : (
-            <p className="font-normal leading-5 text-[#6F8ABD]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
+            <p className="font-normal leading-5 text-[#4B6189]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
           )}
         </div>
 
@@ -467,12 +467,12 @@ function WeatherSection({
             <div className="flex flex-col gap-3 w-full">
               {liveOverrides.weatherNews.map((news, i) => (
                 <div key={i} className="flex gap-2 items-start">
-                  <span className="text-[#6F8ABD] font-bold mt-[1px]">›</span>
+                  <span className="text-[#4B6189] font-bold mt-[1px]">›</span>
                   <div className="flex flex-col gap-[2px]">
-                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#6F8ABD] hover:underline line-clamp-2">
+                    <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#4B6189] hover:underline line-clamp-2">
                       {news.title}
                     </a>
-                    <span className="text-[#6F8ABD] text-[11px]">{news.source}</span>
+                    <span className="text-[#4B6189] text-[11px]">{news.source}</span>
                   </div>
                 </div>
               ))}
@@ -487,7 +487,7 @@ function WeatherSection({
           <p className="font-bold text-[#2C3B59] whitespace-nowrap">KHUYẾN CÁO LỘ TRÌNH</p>
           <div className="flex flex-col gap-0 w-full">
             {routeItems.map((line, i) => (
-              <p key={i} className="font-normal leading-5 text-[#6F8ABD]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#4B6189]">{line}</p>
             ))}
           </div>
         </div>
@@ -534,7 +534,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
                   setActiveCategory(cat);
                   setIsOpen(false);
                 }}
-                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white font-bold' : 'hover:bg-[#F2F6FC] text-[#6F8ABD] font-medium'}`}
+                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white font-bold' : 'hover:bg-[#F2F6FC] text-[#4B6189] font-medium'}`}
               >
                 {cat}
               </button>
@@ -571,10 +571,10 @@ function MobileLayout({ activeCategory, setActiveCategory,
         <p className="font-bold text-[#D68D8D] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
           <p className="font-medium text-[#2C3B59] text-[12px] whitespace-nowrap text-right">
-            <Location size="16" variant="Bulk" className="inline-block mr-1 opacity-90" /> {WEATHER.location}
+            <Location size="16" variant="Bulk" className="inline-block mr-1 " /> {WEATHER.location}
           </p>
           <div className="bg-[#F2F6FC] mt-1 flex items-center px-2 py-0.5 rounded-full">
-            <p className="font-normal text-[#6F8ABD] text-[10px] whitespace-nowrap">
+            <p className="font-normal text-[#4B6189] text-[10px] whitespace-nowrap">
               {shortDateStr} · {timeStr}
             </p>
           </div>
@@ -607,7 +607,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full">
                     <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
-                    <p className="font-normal text-[#6F8ABD] text-[12px]">{item.src}</p>
+                    <p className="font-normal text-[#4B6189] text-[12px]">{item.src}</p>
                   </div>
                   <p className="font-semibold text-[#2C3B59] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
@@ -653,12 +653,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#DCE4F0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#D68D8D] text-[20px] whitespace-nowrap">Anx.</p>
-          <p className="font-medium text-[#6F8ABD] text-[13px] whitespace-nowrap">
-            <Location size="16" variant="Bulk" className="inline-block mr-1 opacity-90" /> {WEATHER.location}
+          <p className="font-medium text-[#4B6189] text-[13px] whitespace-nowrap">
+            <Location size="16" variant="Bulk" className="inline-block mr-1 " /> {WEATHER.location}
           </p>
         </div>
         <div className="bg-[#F2F6FC] flex items-start px-3 py-1 rounded-full">
-          <p className="font-normal text-[#6F8ABD] text-[12px] whitespace-nowrap">
+          <p className="font-normal text-[#4B6189] text-[12px] whitespace-nowrap">
             {dateStr} · {timeStr}
           </p>
         </div>
@@ -677,7 +677,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white shadow-md' : 'bg-white text-[#6F8ABD] border border-[#DCE4F0]'}`}
+            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white shadow-md font-bold' : 'bg-white text-[#4B6189] border border-[#DCE4F0]'}`}
           >
             {cat}
           </button>
@@ -687,7 +687,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <GoldPriceSection />
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-bold text-[#2C3B59] text-[20px] tracking-[-0.3px]">Tin tức</p>
-            <p className="font-normal text-[#6F8ABD] text-[12px]">
+            <p className="font-normal text-[#4B6189] text-[12px]">
               {WEATHER.location} · {newsFeed.length} bài mới nhất
             </p>
           </div>
@@ -711,7 +711,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
                 <p className="font-bold leading-[22px] text-[#2C3B59] text-[15px] w-full line-clamp-2">
                   {featured.author}
                 </p>
-                <p className="font-normal text-[#6F8ABD] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
+                <p className="font-normal text-[#4B6189] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
                   {featured.body}
                 </p>
                 <div className="flex items-center justify-between pt-1 w-full">
@@ -741,7 +741,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
                   <p className="font-bold text-[#D68D8D] text-[10px]">{item.src}</p>
                 </div>
                 <p className="font-semibold text-[#2C3B59] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
-                <p className="font-normal text-[#6F8ABD] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
+                <p className="font-normal text-[#4B6189] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
               </div>
             </a>
           ))}
@@ -781,7 +781,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#2C3B59] text-[18px] whitespace-nowrap">Anx.</p>
           <div className="bg-[#F2F6FC] flex items-start px-3 py-1 rounded-full">
-            <p className="font-normal text-[#6F8ABD] text-[12px] whitespace-nowrap">
+            <p className="font-normal text-[#4B6189] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
           </div>
@@ -827,7 +827,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-semibold text-[#2C3B59] text-[14px] line-clamp-1">{featured.src}</p>
-                  <p className="font-normal text-[#6F8ABD] text-[12px]">{WEATHER.time}</p>
+                  <p className="font-normal text-[#4B6189] text-[12px]">{WEATHER.time}</p>
                 </div>
               </div>
               <p className="font-bold text-[#2C3B59] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
@@ -837,7 +837,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               {featured.body && (
-                <p className="font-normal text-[#6F8ABD] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
+                <p className="font-normal text-[#4B6189] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
               )}
             </a>
           )}
@@ -862,7 +862,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                     </div>
                   </div>
                   <p className="font-bold text-[#2C3B59] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
-                  <p className="font-normal text-[#6F8ABD] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
+                  <p className="font-normal text-[#4B6189] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
                 </div>
               </a>
             ))}
@@ -883,7 +883,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
 const CONDITION_OPTIONS: { key: ConditionKey; emoji: React.ReactNode; label: React.ReactNode; desc: string }[] = [
   { key: "binh-thuong", emoji: "☁️", label: "Bình thường", desc: "Trời đẹp, ít biến động" },
-  { key: "nang",        emoji: <Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" />, label: "Nắng",        desc: "Tầm nhìn tốt, UV trung bình" },
+  { key: "nang",        emoji: <Sun size="16" variant="Bulk" className="inline-block mr-1 " />, label: "Nắng",        desc: "Tầm nhìn tốt, UV trung bình" },
   { key: "nang-gat",   emoji: "🔥", label: "Nắng gắt",   desc: "UV rất cao, nguy cơ say nắng" },
   { key: "am-u",       emoji: "🌥️", label: "Âm u",       desc: "Nhiều mây, có thể mưa nhẹ" },
   { key: "mua-nho",    emoji: "🌦️", label: "Mưa nhỏ",    desc: "Đường ướt, tầm nhìn giảm nhẹ" },
@@ -1214,11 +1214,11 @@ function GoldPriceSection() {
           <div key={idx} className="flex flex-col border border-[#DCE4F0] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
             <p className="font-bold text-[#2C3B59] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
-              <p className="text-[#6F8ABD] text-[10px] sm:text-[12px]">Mua</p>
+              <p className="text-[#4B6189] text-[10px] sm:text-[12px]">Mua</p>
               <p className="font-semibold text-[#16a34a] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
             </div>
             <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
-              <p className="text-[#6F8ABD] text-[10px] sm:text-[12px]">Bán</p>
+              <p className="text-[#4B6189] text-[10px] sm:text-[12px]">Bán</p>
               <p className="font-semibold text-[#ef4444] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceOut.toLocaleString('vi-VN')}</p>
             </div>
           </div>
@@ -1633,7 +1633,7 @@ export default function App() {
           const humidity = weather.main?.humidity || 0;
           const c_desc = weather.weather?.[0]?.description || "";
           const iconCode = weather.weather?.[0]?.icon || "";
-          const c_icon = iconCode.includes("d") ? <><Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /></> : "🌙";
+          const c_icon = iconCode.includes("d") ? <><Sun size="16" variant="Bulk" className="inline-block mr-1 " /></> : "🌙";
           
           const n_item = forecast.list?.[0] || {};
           const n_temp = Math.round(n_item.main?.temp || c_temp);
