@@ -678,6 +678,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
         ))}
       </div>
 
+          <GoldPriceSection />
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
             <p className="font-normal text-[#5f687b] text-[12px]">
@@ -786,6 +787,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
         {/* News column */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
+      <GoldPriceSection />
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
           <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
@@ -1131,6 +1133,56 @@ function ScrollToTop() {
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-1 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
     </button>
   ) : null;
+}
+
+
+function GoldPriceSection() {
+  const [goldData, setGoldData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          // Filter some key products like SJC, NPQ, 24K
+          const keys = ['SJC', 'NPQ', '24K', '9999'];
+          const filtered = data.data.filter((item: any) => keys.includes(item.productType));
+          setGoldData(filtered.length ? filtered : data.data.slice(0, 4));
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return null;
+  if (!goldData.length) return null;
+
+  return (
+    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
+      <div className="flex items-center gap-2">
+        <p className="font-bold text-[#182033] text-[18px]">Giá Vàng Phú Quý</p>
+        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center">
+          <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
+        </div>
+      </div>
+      <div className="flex overflow-x-auto gap-3 hide-scrollbar pb-1">
+        {goldData.map((item, idx) => (
+          <div key={idx} className="flex flex-col shrink-0 min-w-[150px] border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
+            <p className="font-bold text-[#182033] text-[14px] line-clamp-1 mb-2">{item.productTypeName}</p>
+            <div className="flex justify-between items-center w-full">
+              <p className="text-[#5f687b] text-[12px]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[14px]">{item.priceIn.toLocaleString('vi-VN')}</p>
+            </div>
+            <div className="flex justify-between items-center w-full mt-1">
+              <p className="text-[#5f687b] text-[12px]">Bán</p>
+              <p className="font-semibold text-[#ef4444] text-[14px]">{item.priceOut.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
