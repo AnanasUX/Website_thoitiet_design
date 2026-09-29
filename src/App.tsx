@@ -37,8 +37,8 @@ type ConditionKey = "binh-thuong" | "nang" | "nang-gat" | "am-u" | "mua-nho" | "
 interface WeatherTheme {
   key: ConditionKey;
   gradient: string;
-  emoji: string;
-  label: string;
+  emoji: React.ReactNode;
+  label: React.ReactNode;
   warningText: string;
   suggestionItems: string[];
   showFlood: boolean;
@@ -65,7 +65,7 @@ const WEATHER_THEMES: Record<ConditionKey, WeatherTheme> = {
   "nang": {
     key: "nang",
     gradient: "linear-gradient(135deg, #1e73be 0%, #58a8dc 50%, #f7a928 100%)",
-    emoji: "☀️",
+    emoji: <Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" />,
     label: "Nắng",
     warningText: "Trời nắng đẹp, tầm nhìn tốt. Chỉ số UV ở mức trung bình đến cao.",
     suggestionItems: [
@@ -324,7 +324,7 @@ function WeatherSection({
           style={{ background: "linear-gradient(135deg, #6F8ABD 0%, #C3DAFD 100%)" }}
       >
         <p className="font-semibold text-[13px] text-white whitespace-nowrap">
-          📍 {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
+          <Location size="16" variant="Bulk" className="inline-block mr-1 opacity-90" /> {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
         </p>
         <div className="flex flex-col gap-1 items-start w-full">
           <p className="font-extrabold leading-none text-[60px] text-white whitespace-nowrap">
@@ -339,12 +339,12 @@ function WeatherSection({
         </div>
                 <div className="grid grid-cols-2 gap-2 w-full text-[13px]">
           {[
-            { label: "💨 Gió", value: WEATHER.wind },
-            { label: "💧 Độ ẩm", value: WEATHER.humidity },
-            { label: "🌫️ Bụi PM2.5", value: WEATHER.pm25 },
-            { label: "👁️ Tầm nhìn", value: WEATHER.visibility },
-            { label: "⏬ Áp suất", value: WEATHER.pressure },
-            { label: "☀️ UV Index", value: WEATHER.uvIndex }
+            { label: <><Wind size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Gió</>, value: WEATHER.wind },
+            { label: <><Drop size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Độ ẩm</>, value: WEATHER.humidity },
+            { label: <><Mask size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Bụi PM2.5</>, value: WEATHER.pm25 },
+            { label: <><Eye size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Tầm nhìn</>, value: WEATHER.visibility },
+            { label: <><ArrowDown2 size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> Áp suất</>, value: WEATHER.pressure },
+            { label: <><Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /> UV Index</>, value: WEATHER.uvIndex }
           ].map((stat, idx) => (
             <div key={idx} className="bg-[rgba(255,255,255,0.09)] border border-[rgba(255,255,255,0.2)] flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-xl">
               <p className="font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
@@ -356,7 +356,7 @@ function WeatherSection({
 
       {/* Forecast */}
       <div className="bg-white border border-[#DCE4F0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#2C3B59] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Clock size="18" variant="Bulk" className="inline-block mr-1 text-[#6F8ABD]" /> DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
             {WEATHER.hourlyForecast.map((hour: any, idx: number) => {
@@ -382,7 +382,7 @@ function WeatherSection({
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
           <div className="bg-white border border-[#DCE4F0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
             <div className="flex flex-col gap-1 w-full">
-              <p className="font-bold text-[#2C3B59] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
+              <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Calendar size="18" variant="Bulk" className="inline-block mr-1 text-[#6F8ABD]" /> DỰ BÁO THỜI TIẾT TUẦN</p>
               {WEATHER.weekRange && <p className="font-medium text-[#6F8ABD] text-[12px]">{WEATHER.weekRange}</p>}
             </div>
             <div className="flex flex-col w-full gap-3">
@@ -407,14 +407,14 @@ function WeatherSection({
 
 
       <div className="bg-white border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#2C3B59] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-bold text-[#2C3B59] whitespace-nowrap"><InfoCircle size="18" variant="Bulk" className="inline-block mr-1 text-[#6F8ABD]" /> DỰ BÁO 3 GIỜ TỚI</p>
         <p className="font-normal leading-5 text-[#6F8ABD] w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
       {warningText && (
         <div className="bg-[#FFF9F0] border border-[#DCE4F0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#2C3B59] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
+          <p className="font-bold text-[#2C3B59] whitespace-nowrap"><Danger size="18" variant="Bulk" className="inline-block mr-1 text-[#D68D8D]" /> CẢNH BÁO TRỌNG TÂM</p>
           <div className="flex flex-col gap-1 w-full">
               {warningText.split('\n').map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
@@ -519,9 +519,9 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
         onClick={() => setIsOpen(!isOpen)} 
         className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#DCE4F0] rounded-full text-[13px] font-semibold text-[#2C3B59] shadow-sm active:scale-95 transition-transform"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+        <Filter size="14" variant="Bulk" />
         <span>{activeCategory}</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <ArrowDown2 size="14" />
       </button>
       
       {isOpen && (
@@ -571,7 +571,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
         <p className="font-bold text-[#D68D8D] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
           <p className="font-medium text-[#2C3B59] text-[12px] whitespace-nowrap text-right">
-            📍 {WEATHER.location}
+            <Location size="16" variant="Bulk" className="inline-block mr-1 opacity-90" /> {WEATHER.location}
           </p>
           <div className="bg-[#F2F6FC] mt-1 flex items-center px-2 py-0.5 rounded-full">
             <p className="font-normal text-[#6F8ABD] text-[10px] whitespace-nowrap">
@@ -654,7 +654,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#D68D8D] text-[20px] whitespace-nowrap">Anx.</p>
           <p className="font-medium text-[#6F8ABD] text-[13px] whitespace-nowrap">
-            📍 {WEATHER.location}
+            <Location size="16" variant="Bulk" className="inline-block mr-1 opacity-90" /> {WEATHER.location}
           </p>
         </div>
         <div className="bg-[#F2F6FC] flex items-start px-3 py-1 rounded-full">
@@ -881,9 +881,9 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
 // ── Condition options ─────────────────────────────────────────────────────────
 
-const CONDITION_OPTIONS: { key: ConditionKey; emoji: string; label: string; desc: string }[] = [
+const CONDITION_OPTIONS: { key: ConditionKey; emoji: React.ReactNode; label: React.ReactNode; desc: string }[] = [
   { key: "binh-thuong", emoji: "☁️", label: "Bình thường", desc: "Trời đẹp, ít biến động" },
-  { key: "nang",        emoji: "☀️", label: "Nắng",        desc: "Tầm nhìn tốt, UV trung bình" },
+  { key: "nang",        emoji: <Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" />, label: "Nắng",        desc: "Tầm nhìn tốt, UV trung bình" },
   { key: "nang-gat",   emoji: "🔥", label: "Nắng gắt",   desc: "UV rất cao, nguy cơ say nắng" },
   { key: "am-u",       emoji: "🌥️", label: "Âm u",       desc: "Nhiều mây, có thể mưa nhẹ" },
   { key: "mua-nho",    emoji: "🌦️", label: "Mưa nhỏ",    desc: "Đường ướt, tầm nhìn giảm nhẹ" },
@@ -1161,7 +1161,7 @@ function ScrollToTop() {
   }, []);
   return isVisible ? (
     <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] bg-white border border-[#DCE4F0] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-[#D68D8D] group animate-fade-in">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-1 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
+      <ArrowUp2 size="24" className="group-hover:-translate-y-1 transition-transform duration-300" />
     </button>
   ) : null;
 }
@@ -1633,7 +1633,7 @@ export default function App() {
           const humidity = weather.main?.humidity || 0;
           const c_desc = weather.weather?.[0]?.description || "";
           const iconCode = weather.weather?.[0]?.icon || "";
-          const c_icon = iconCode.includes("d") ? "☀️" : "🌙";
+          const c_icon = iconCode.includes("d") ? <><Sun size="16" variant="Bulk" className="inline-block mr-1 opacity-80" /></> : "🌙";
           
           const n_item = forecast.list?.[0] || {};
           const n_temp = Math.round(n_item.main?.temp || c_temp);
