@@ -320,7 +320,7 @@ function WeatherSection({
     <div className="flex flex-col gap-4 w-full">
       {/* Hero card */}
       <div
-        className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02]"
+        className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] animate-gradient-xy"
           style={{ background: "linear-gradient(21deg, rgb(72 141 203) 0%, rgb(51 106 214) 50%, rgb(79 196 255) 100%)" }}
       >
         <p className="font-semibold text-[13px] text-white whitespace-nowrap">
@@ -331,7 +331,7 @@ function WeatherSection({
             {WEATHER.temp}
           </p>
           <p className="font-semibold text-[18px] text-white whitespace-nowrap">
-            <span className="inline-block animate-bounce" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span> {WEATHER.conditionLabel}
+            <span className="inline-block animate-float">{baseTheme.emoji}</span> {WEATHER.conditionLabel}
           </p>
           <p className="font-normal text-[14px] text-[rgba(255,255,255,0.8)] whitespace-nowrap">
             Cảm nhận {WEATHER.feelsLike}
@@ -387,7 +387,7 @@ function WeatherSection({
             </div>
             <div className="flex flex-col w-full gap-3">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between w-full">
+                <div key={idx} className="flex items-center justify-between w-full animate-fade-in-up" style={{ animationDelay: `${idx * 150}ms` }}>
 
                   <p className="font-semibold text-[#182033] w-14 text-left">{day.day}</p>
                   <div className="flex items-center gap-1 w-16">
@@ -731,7 +731,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
               href={item.link ?? "#"}
               target={item.link ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
