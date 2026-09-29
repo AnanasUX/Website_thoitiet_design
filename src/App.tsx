@@ -588,7 +588,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
-          
+          <GoldPriceSection />
                   <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
           Tin Tức Mới Nhất
