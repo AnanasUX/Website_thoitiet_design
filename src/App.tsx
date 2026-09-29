@@ -2046,7 +2046,7 @@ export default function App() {
 
     if (apiStatus === "loading") {
     return (
-      <div className="w-full h-screen bg-white">
+      <div className="w-full h-screen bg-white font-sans">
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b]/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
           ⏳ Đang tải dữ liệu thực tế…
         </div>
@@ -2057,7 +2057,7 @@ export default function App() {
   const theme = WEATHER_THEMES[condKey];
 
   return (
-    <div className="min-h-screen w-full mesh-bg">
+    <div className="min-h-screen w-full mesh-bg font-sans">
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
