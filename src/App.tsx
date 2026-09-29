@@ -294,6 +294,70 @@ interface LiveOverrides {
   weatherNews?: { title: string, link: string, source: string }[];
 }
 
+
+
+
+
+
+
+
+function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
+  if (!hourlyData || hourlyData.length === 0) return null;
+  
+  const width = Math.max(600, hourlyData.length * 60);
+  const height = 100;
+  const maxTemp = Math.max(...hourlyData.map(d => d.temp)) + 1;
+  const minTemp = Math.min(...hourlyData.map(d => d.temp)) - 1;
+  const range = maxTemp - minTemp || 1;
+
+  const points = hourlyData.map((d, i) => {
+    const x = i * 60 + 30;
+    const y = height - ((d.temp - minTemp) / range) * (height - 40) - 20;
+    return { x, y, temp: d.temp, time: d.time, icon: d.icon, pop: d.pop };
+  });
+
+  const pathD = points.map((p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`;
+    const prev = points[i - 1];
+    const cpX = (prev.x + p.x) / 2;
+    return `C ${cpX} ${prev.y}, ${cpX} ${p.y}, ${p.x} ${p.y}`;
+  }).join(' ');
+
+  return (
+    <div className="w-full overflow-x-auto scrollbar-hide pb-4">
+      <div className="relative" style={{ width: `${width}px`, height: '140px' }}>
+        <svg width={width} height={height} className="absolute top-[20px] left-0 overflow-visible z-0">
+          <defs>
+            <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ff315f" />
+              <stop offset="100%" stopColor="#f7a928" />
+            </linearGradient>
+            <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ff315f" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#f7a928" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="url(#fillGrad)" />
+          <path d={pathD} fill="none" stroke="url(#lineGrad)" strokeWidth="3" strokeLinecap="round" />
+          {points.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r="4" fill="#fff" stroke="#ff315f" strokeWidth="2" />
+          ))}
+        </svg>
+        
+        {points.map((p, i) => (
+          <div key={i} className="absolute flex flex-col items-center justify-center w-[60px] z-10" style={{ left: `${p.x - 30}px`, top: '0px' }}>
+            <p className="font-semibold text-[#182033] text-[12px] whitespace-nowrap mb-1">{p.time}</p>
+            <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" />
+            <p className="font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap mb-1">{p.pop}%</p>
+            <div className="h-[50px]"></div>
+            <p className="font-bold text-[#182033] text-[14px] mt-1 absolute" style={{ top: `${p.y + 20}px` }}>{p.temp}°C</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function WeatherSection({
   compact = false,
   condKey,
@@ -358,25 +422,11 @@ function WeatherSection({
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
-          <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
-            {WEATHER.hourlyForecast.map((hour: any, idx: number) => {
-              const currentHourStr = new Date().getHours() + "h";
-              const isActive = hour.time === currentHourStr || hour.time === "Bây giờ";
-              const opacityClass = isActive ? "opacity-100" : "opacity-40";
-              return (
-                <div key={idx} className={`flex flex-col items-center gap-2 min-w-[50px] transition-opacity duration-300 ${opacityClass}`}>
-                  <p className="font-semibold text-[#182033] text-[12px] whitespace-nowrap">{hour.time}</p>
-                  <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} className="w-8 h-8 drop-shadow-sm" />
-                  <p className="font-semibold text-[#0a84ff] text-[10px] whitespace-nowrap">{hour.pop}%</p>
-                  <p className="font-bold text-[#182033] text-[14px] whitespace-nowrap">{hour.temp}°C</p>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
-        )}
-      </div>
+          <HourlyTemperatureChart hourlyData={WEATHER.hourlyForecast || []} />
+          ) : (
+            <p className="text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
+          )}
+        </div>
 
         
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
@@ -588,7 +638,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
-          <GoldPriceSection />
+          <MarketSection />
                   <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
           Tin Tức Mới Nhất
@@ -684,7 +734,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
         ))}
       </div>
 
-          <GoldPriceSection />
+          <MarketSection />
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
             <p className="font-normal text-[#5f687b] text-[12px]">
@@ -797,7 +847,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
         {/* News column */}
         <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
-      <GoldPriceSection />
+      <MarketSection />
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
           <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
@@ -1168,13 +1218,16 @@ function ScrollToTop() {
 
 
 
-function GoldPriceSection() {
+
+function MarketSection() {
+  const [activeTab, setActiveTab] = useState<'gold'|'crypto'|'forex'>('gold');
   const [goldData, setGoldData] = useState<any[]>([
     { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
     { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
     { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
   ]);
-  const [loading, setLoading] = useState(false);
+  const [cryptoData, setCryptoData] = useState<any[]>([]);
+  const [forexData, setForexData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchGold = () => {
@@ -1190,27 +1243,69 @@ function GoldPriceSection() {
             }
           }
         })
-        .catch(() => console.error("Gold API failed, using fallback"));
+        .catch(() => {});
+    };
+    
+    const fetchCrypto = () => {
+      fetch('https://api.binance.com/api/v3/ticker/price?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22BNBUSDT%22]')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setCryptoData(data.map(d => ({
+              symbol: d.symbol.replace('USDT', ''),
+              price: parseFloat(d.price)
+            })));
+          }
+        })
+        .catch(() => {
+          setCryptoData([
+            { symbol: 'BTC', price: 65000 },
+            { symbol: 'ETH', price: 3500 },
+            { symbol: 'BNB', price: 600 }
+          ]);
+        });
+    };
+
+    const fetchForex = () => {
+      fetch('https://api.exchangerate-api.com/v4/latest/USD')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.rates && data.rates.VND) {
+            const vnd = data.rates.VND;
+            const eur = data.rates.EUR;
+            const jpy = data.rates.JPY;
+            setForexData([
+              { pair: 'USD/VND', price: vnd },
+              { pair: 'EUR/VND', price: vnd / eur },
+              { pair: '100JPY/VND', price: (vnd / jpy) * 100 }
+            ]);
+          }
+        })
+        .catch(() => {});
     };
 
     fetchGold();
-    const interval = setInterval(fetchGold, 2 * 60 * 1000); // Poll every 2 mins
+    fetchCrypto();
+    fetchForex();
+    const interval = setInterval(() => { fetchGold(); fetchCrypto(); }, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  if (!goldData.length) return null;
-
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
-      <div className="flex items-center gap-2">
-        <p className="font-bold text-[#182033] text-[18px]">Giá Vàng Phú Quý</p>
-        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex bg-[#f4f6fa] rounded-[8px] p-1 gap-1">
+          <button onClick={() => setActiveTab('gold')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'gold' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Giá Vàng</button>
+          <button onClick={() => setActiveTab('forex')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'forex' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Ngoại Tệ</button>
+          <button onClick={() => setActiveTab('crypto')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'crypto' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Tiền Ảo</button>
+        </div>
+        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
-        {goldData.map((item, idx) => (
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
+        {activeTab === 'gold' && goldData.map((item, idx) => (
           <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
             <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
@@ -1223,10 +1318,25 @@ function GoldPriceSection() {
             </div>
           </div>
         ))}
+
+        {activeTab === 'forex' && forexData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden justify-center items-center">
+            <p className="font-bold text-[#182033] text-[13px] sm:text-[16px] mb-1">{item.pair}</p>
+            <p className="font-bold text-[#16a34a] text-[14px] sm:text-[16px]">{Math.round(item.price).toLocaleString('vi-VN')} đ</p>
+          </div>
+        ))}
+
+        {activeTab === 'crypto' && cryptoData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden justify-center items-center">
+            <p className="font-bold text-[#182033] text-[14px] sm:text-[16px] mb-1">{item.symbol}</p>
+            <p className="font-bold text-[#ef4444] text-[14px] sm:text-[16px]">${item.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
+
 
 
 export default function App() {
