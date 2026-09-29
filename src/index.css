@@ -1,5 +1,4 @@
 
-
 @font-face { font-family: 'SF Pro Display'; src: url('/fonts/SFProDisplay/SF-Pro-Display-Ultralight.otf') format('opentype'); font-weight: 100; font-style: normal; font-display: swap; }
 @font-face { font-family: 'SF Pro Display'; src: url('/fonts/SFProDisplay/SF-Pro-Display-UltralightItalic.otf') format('opentype'); font-weight: 100; font-style: italic; font-display: swap; }
 @font-face { font-family: 'SF Pro Display'; src: url('/fonts/SFProDisplay/SF-Pro-Display-Thin.otf') format('opentype'); font-weight: 200; font-style: normal; font-display: swap; }
@@ -18,3 +17,111 @@
 @font-face { font-family: 'SF Pro Display'; src: url('/fonts/SFProDisplay/SF-Pro-Display-HeavyItalic.otf') format('opentype'); font-weight: 800; font-style: italic; font-display: swap; }
 @font-face { font-family: 'SF Pro Display'; src: url('/fonts/SFProDisplay/SF-Pro-Display-Black.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
 @font-face { font-family: 'SF Pro Display'; src: url('/fonts/SFProDisplay/SF-Pro-Display-BlackItalic.otf') format('opentype'); font-weight: 900; font-style: italic; font-display: swap; }
+
+@import "tailwindcss";
+@source "./src";
+
+@theme {
+  --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  --text-body: var(--font-body);
+  --text-small: var(--font-small);
+  --text-caption: var(--font-caption);
+  --text-label: var(--font-label);
+  --text-btn: var(--font-button);
+  --text-h6: var(--font-h6);
+  --text-h5: var(--font-h5);
+  --text-h4: var(--font-h4);
+  --text-h3: var(--font-h3);
+  --text-h2: var(--font-h2);
+  --text-h1: var(--font-h1);
+}
+
+:root {
+  --font-body: clamp(15px, 1vw, 16px);
+  --font-small: clamp(13px, 0.9vw, 14px);
+  --font-caption: clamp(12px, 0.8vw, 13px);
+  --font-button: clamp(14px, 1vw, 16px);
+  --font-label: clamp(13px, 0.9vw, 14px);
+  --font-h1: clamp(28px, 3vw, 48px);
+  --font-h2: clamp(24px, 2.2vw, 36px);
+  --font-h3: clamp(20px, 1.7vw, 28px);
+  --font-h4: clamp(18px, 1.3vw, 22px);
+  --font-h5: clamp(16px, 1.2vw, 20px);
+  --font-h6: clamp(15px, 1vw, 18px);
+
+  --page-padding: clamp(16px, 4vw, 32px);
+  --section-gap: clamp(32px, 4vw, 64px);
+  --card-padding: clamp(16px, 2vw, 24px);
+  --grid-gap: clamp(12px, 2vw, 24px);
+  --card-radius: clamp(12px, 1.5vw, 16px);
+  --header-height: clamp(56px, 6vw, 72px);
+}
+
+html, body {
+  touch-action: pan-x pan-y;
+}
+
+body {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: var(--font-body);
+  line-height: 1.5;
+  color: #2C3B59;
+}
+
+h1 { font-size: var(--font-h1); line-height: 1.2; font-weight: 700; }
+h2 { font-size: var(--font-h2); line-height: 1.25; font-weight: 700; }
+h3 { font-size: var(--font-h3); line-height: 1.3; font-weight: 600; }
+h4 { font-size: var(--font-h4); line-height: 1.4; font-weight: 600; }
+h5 { font-size: var(--font-h5); line-height: 1.4; font-weight: 600; }
+h6 { font-size: var(--font-h6); line-height: 1.4; font-weight: 600; }
+
+button {
+  font-size: var(--font-button);
+  line-height: 1.4;
+  min-height: 44px;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes gradientXY {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-xy {
+  background-size: 200% 200%;
+  animation: gradientXY 8s ease infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.mesh-bg {
+  background-color: #f6f8fd;
+  background-image: 
+    radial-gradient(at 10% 20%, hsla(253, 100%, 93%, 1) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, hsla(339, 100%, 93%, 1) 0px, transparent 50%),
+    radial-gradient(at 90% 90%, hsla(39, 100%, 90%, 1) 0px, transparent 50%),
+    radial-gradient(at 10% 90%, hsla(188, 100%, 90%, 1) 0px, transparent 50%);
+  background-size: 200% 200%;
+  animation: gradientXY 15s ease infinite;
+}
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.04);
+}
