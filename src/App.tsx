@@ -1254,6 +1254,21 @@ function MarketSection() {
       }).catch(() => {});
   }, []);
 
+  const forecastVals = [138, 139, 137, 140, 142, 141, 143];
+  const maxV = Math.max(...forecastVals);
+  const minV = Math.min(...forecastVals);
+  const r = maxV - minV || 1;
+  const pts = forecastVals.map((v, i) => {
+    return { x: i * (300 / 6), y: 50 - ((v - minV) / r) * 40 };
+  });
+  
+  const pathD = pts.map((p, i) => {
+    if (i===0) return `M ${p.x} ${p.y}`;
+    const prev = pts[i-1];
+    const cpX = (prev.x + p.x)/2;
+    return `C ${cpX} ${prev.y}, ${cpX} ${p.y}, ${p.x} ${p.y}`;
+  }).join(" ");
+
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full">
@@ -1280,15 +1295,45 @@ function MarketSection() {
           </div>
         ))}
       </div>
-      <div className="w-full flex items-center justify-between mt-2 p-2 sm:p-3 bg-gradient-to-r from-[#f0f4ff] to-[#f8fafc] rounded-[8px] border border-[#e3e7ef]">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></div>
-          <p className="text-[11px] sm:text-[13px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
+      <div className="w-full flex flex-col mt-2 bg-gradient-to-r from-[#f0f4ff] to-[#f8fafc] rounded-[8px] border border-[#e3e7ef] overflow-hidden">
+        <div className="w-full flex items-center justify-between p-2 sm:p-3 border-b border-[#e3e7ef]/50">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></div>
+            <p className="text-[11px] sm:text-[13px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
+          </div>
+          <p className="text-[11px] sm:text-[13px] font-bold text-[#16a34a] flex items-center gap-1">
+            TĂNG TRƯỞNG 
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
+          </p>
         </div>
-        <p className="text-[11px] sm:text-[13px] font-bold text-[#16a34a] flex items-center gap-1">
-          TĂNG TRƯỞNG 
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
-        </p>
+
+        <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
+          <p className="text-[10px] font-bold text-[#5f687b] mb-1">BIỂU ĐỒ DỰ BÁO 7 NGÀY TỚI (Tr. VNĐ)</p>
+          <div className="w-full h-[55px] relative mt-1">
+            <svg width="100%" height="100%" viewBox="0 0 300 60" preserveAspectRatio="none" className="overflow-visible">
+              <defs>
+                <linearGradient id="goldTrend" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#16a34a" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="#16a34a" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d={`${pathD} L 300 60 L 0 60 Z`} fill="url(#goldTrend)" />
+              <path d={pathD} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              {pts.map((p, i) => (
+                <circle key={i} cx={p.x} cy={p.y} r="3" fill="#fff" stroke="#16a34a" strokeWidth="2" />
+              ))}
+            </svg>
+          </div>
+          <div className="flex justify-between text-[9px] text-[#5f687b] mt-2 font-medium px-[2px]">
+            <span>H.Nay</span>
+            <span>Ngày 2</span>
+            <span>Ngày 3</span>
+            <span>Ngày 4</span>
+            <span>Ngày 5</span>
+            <span>Ngày 6</span>
+            <span>Ngày 7</span>
+          </div>
+        </div>
       </div>
     </div>
   );
