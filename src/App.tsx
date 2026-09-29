@@ -1200,7 +1200,7 @@ function GoldPriceSection() {
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full">
+      <div className="grid grid-cols-3 gap-2 w-full">
         {goldData.map((item, idx) => (
           <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
             <p className="font-bold text-[#182033] text-[12px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
