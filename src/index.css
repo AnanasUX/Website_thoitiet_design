@@ -37,6 +37,10 @@
   --header-height: clamp(56px, 6vw, 72px);
 }
 
+html, body {
+  touch-action: pan-x pan-y;
+}
+
 body {
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: var(--font-body);
