@@ -349,6 +349,24 @@ function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
   );
 }
 
+
+function getConditionLabel(iconCode: string) {
+  if (!iconCode) return "Có mây";
+  const code = iconCode.substring(0, 2);
+  switch (code) {
+    case '01': return 'Nắng';
+    case '02': return 'Ít mây';
+    case '03': return 'Trời râm';
+    case '04': return 'Nhiều mây';
+    case '09': return 'Mưa rào';
+    case '10': return 'Có mưa';
+    case '11': return 'Mưa dông';
+    case '13': return 'Tuyết rơi';
+    case '50': return 'Sương mù';
+    default: return 'Có mây';
+  }
+}
+
 function WeatherSection({
   compact = false,
   condKey,
@@ -426,19 +444,23 @@ function WeatherSection({
               <p className="font-bold text-[#182033] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
               {WEATHER.weekRange && <p className="font-medium text-[#5f687b] text-[12px]">{WEATHER.weekRange}</p>}
             </div>
-            <div className="flex flex-col w-full gap-3">
+            <div className="flex flex-col w-full gap-4">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between w-full">
-
-                  <p className="font-semibold text-[#182033] w-14 text-left">{day.day}</p>
-                  <div className="flex items-center gap-1 w-16">
-                    <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-6 h-6 drop-shadow-sm" />
-                    {day.pop > 0 && <span className="text-[#0a84ff] text-[10px] font-semibold">{day.pop}%</span>}
+                  <p className="font-semibold text-[#182033] w-[70px] shrink-0 text-left">{day.day}</p>
+                  
+                  <div className="flex items-center gap-2 w-[110px] shrink-0">
+                    <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-9 h-9 drop-shadow-sm" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-[#182033] text-[12px] font-bold">{getConditionLabel(day.icon)}</span>
+                      {day.pop > 0 && <span className="text-[#0a84ff] text-[10px] font-bold tracking-tight">Mưa {day.pop}%</span>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 justify-end flex-1">
-                    <span className="text-[#5f687b] font-medium text-[12px]">{day.tempMin}°</span>
-                    <div className="flex-1 h-1 bg-gradient-to-r from-blue-400 to-red-400 rounded-full opacity-70"></div>
-                    <span className="text-[#182033] font-bold text-[12px]">{day.tempMax}°</span>
+                  
+                  <div className="flex items-center gap-2 justify-end flex-1 ml-2">
+                    <span className="text-[#5f687b] font-medium text-[13px]">{day.tempMin}°</span>
+                    <div className="flex-1 h-1.5 bg-gradient-to-r from-blue-400 to-red-400 rounded-full opacity-70"></div>
+                    <span className="text-[#182033] font-bold text-[13px]">{day.tempMax}°</span>
                   </div>
                 </div>
               ))}
