@@ -1254,20 +1254,18 @@ function MarketSection() {
       }).catch(() => {});
   }, []);
 
-  const forecastVals = [138, 139, 137, 140, 142, 141, 143];
-  const maxV = Math.max(...forecastVals);
-  const minV = Math.min(...forecastVals);
+  const candles = [
+    { o: 137, c: 138, l: 136, h: 139 },
+    { o: 138, c: 140, l: 137, h: 141 },
+    { o: 140, c: 139, l: 138, h: 142 },
+    { o: 139, c: 141, l: 138, h: 143 },
+    { o: 141, c: 143, l: 140, h: 145 },
+    { o: 143, c: 142, l: 141, h: 144 },
+    { o: 142, c: 145, l: 141, h: 146 },
+  ];
+  const maxV = 146;
+  const minV = 136;
   const r = maxV - minV || 1;
-  const pts = forecastVals.map((v, i) => {
-    return { x: i * (300 / 6), y: 50 - ((v - minV) / r) * 40 };
-  });
-  
-  const pathD = pts.map((p, i) => {
-    if (i===0) return `M ${p.x} ${p.y}`;
-    const prev = pts[i-1];
-    const cpX = (prev.x + p.x)/2;
-    return `C ${cpX} ${prev.y}, ${cpX} ${p.y}, ${p.x} ${p.y}`;
-  }).join(" ");
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
@@ -1308,30 +1306,48 @@ function MarketSection() {
         </div>
 
         <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
-          <p className="text-[10px] font-bold text-[#5f687b] mb-1">BIỂU ĐỒ DỰ BÁO 7 NGÀY TỚI (Tr. VNĐ)</p>
-          <div className="w-full h-[55px] relative mt-1">
-            <svg width="100%" height="100%" viewBox="0 0 300 60" preserveAspectRatio="none" className="overflow-visible">
-              <defs>
-                <linearGradient id="goldTrend" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#16a34a" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#16a34a" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d={`${pathD} L 300 60 L 0 60 Z`} fill="url(#goldTrend)" />
-              <path d={pathD} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              {pts.map((p, i) => (
-                <circle key={i} cx={p.x} cy={p.y} r="3" fill="#fff" stroke="#16a34a" strokeWidth="2" />
-              ))}
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ NẾN DỰ BÁO THEO TUẦN (Tr. VNĐ)</p>
+            <div className="flex gap-2 text-[9px] font-bold">
+              <span className="text-[#16a34a] flex items-center gap-0.5"><div className="w-1.5 h-1.5 bg-[#16a34a]"></div> Tăng</span>
+              <span className="text-[#ef4444] flex items-center gap-0.5"><div className="w-1.5 h-1.5 bg-[#ef4444]"></div> Giảm</span>
+            </div>
+          </div>
+          
+          <div className="w-full h-[65px] relative mt-1">
+            <svg width="100%" height="100%" className="overflow-visible">
+              {candles.map((c, i) => {
+                const isUp = c.c >= c.o;
+                const color = isUp ? "#16a34a" : "#ef4444";
+                const xCenter = ((i + 0.5) / 7) * 100;
+                
+                const yH = 100 - ((c.h - minV) / r) * 100;
+                const yL = 100 - ((c.l - minV) / r) * 100;
+                const yO = 100 - ((c.o - minV) / r) * 100;
+                const yC = 100 - ((c.c - minV) / r) * 100;
+                
+                const topB = Math.min(yO, yC);
+                const botB = Math.max(yO, yC);
+                const hB = Math.max(botB - topB, 2); // min height 2%
+                
+                return (
+                  <g key={i}>
+                    <line x1={`${xCenter}%`} y1={`${yH}%`} x2={`${xCenter}%`} y2={`${yL}%`} stroke={color} strokeWidth="1.5" />
+                    <rect x={`calc(${xCenter}% - 4px)`} y={`${topB}%`} width="8px" height={`${hB}%`} fill={color} rx="1" />
+                  </g>
+                );
+              })}
             </svg>
           </div>
+          
           <div className="flex justify-between text-[9px] text-[#5f687b] mt-2 font-medium px-[2px]">
-            <span>H.Nay</span>
-            <span>Ngày 2</span>
-            <span>Ngày 3</span>
-            <span>Ngày 4</span>
-            <span>Ngày 5</span>
-            <span>Ngày 6</span>
-            <span>Ngày 7</span>
+            <span>Tuần 1</span>
+            <span>Tuần 2</span>
+            <span>Tuần 3</span>
+            <span>Tuần 4</span>
+            <span>Tuần 5</span>
+            <span>Tuần 6</span>
+            <span>Tuần 7</span>
           </div>
         </div>
       </div>
