@@ -1307,7 +1307,7 @@ function MarketSection() {
 
         <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
           <div className="flex justify-between items-center mb-1">
-            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ NẾN DỰ BÁO THEO TUẦN (Tr. VNĐ)</p>
+            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ NẾN DỰ BÁO TRONG TUẦN (Tr. VNĐ)</p>
             <div className="flex gap-2 text-[9px] font-bold">
               <span className="text-[#16a34a] flex items-center gap-0.5"><div className="w-1.5 h-1.5 bg-[#16a34a]"></div> Tăng</span>
               <span className="text-[#ef4444] flex items-center gap-0.5"><div className="w-1.5 h-1.5 bg-[#ef4444]"></div> Giảm</span>
@@ -1329,9 +1329,12 @@ function MarketSection() {
                 const topB = Math.min(yO, yC);
                 const botB = Math.max(yO, yC);
                 const hB = Math.max(botB - topB, 2); // min height 2%
+
+                const todayIdx = (new Date().getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+                const isFuture = i > todayIdx;
                 
                 return (
-                  <g key={i}>
+                  <g key={i} style={{ opacity: isFuture ? 0.35 : 1 }}>
                     <line x1={`${xCenter}%`} y1={`${yH}%`} x2={`${xCenter}%`} y2={`${yL}%`} stroke={color} strokeWidth="1.5" />
                     <rect x={`calc(${xCenter}% - 4px)`} y={`${topB}%`} width="8px" height={`${hB}%`} fill={color} rx="1" />
                   </g>
@@ -1341,13 +1344,13 @@ function MarketSection() {
           </div>
           
           <div className="flex justify-between text-[9px] text-[#5f687b] mt-2 font-medium px-[2px]">
-            <span>Tuần 1</span>
-            <span>Tuần 2</span>
-            <span>Tuần 3</span>
-            <span>Tuần 4</span>
-            <span>Tuần 5</span>
-            <span>Tuần 6</span>
-            <span>Tuần 7</span>
+            <span>Thứ 2</span>
+            <span>Thứ 3</span>
+            <span>Thứ 4</span>
+            <span>Thứ 5</span>
+            <span>Thứ 6</span>
+            <span>Thứ 7</span>
+            <span>CN</span>
           </div>
         </div>
       </div>
