@@ -1233,84 +1233,32 @@ function ScrollToTop() {
 
 
 function MarketSection() {
-  const [activeTab, setActiveTab] = useState<'gold'|'crypto'|'forex'>('gold');
   const [goldData, setGoldData] = useState<any[]>([
     { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
     { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
     { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
   ]);
-  const [cryptoData, setCryptoData] = useState<any[]>([]);
-  const [forexData, setForexData] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchGold = () => {
-      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.data) {
-            const keys = ['24K', 'NPQ', 'SJC'];
-            const filtered = data.data.filter((item: any) => keys.includes(item.productType));
-            if (filtered.length >= 3) {
-              filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
-              setGoldData(filtered.slice(0, 3));
-            }
+    fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          const keys = ['24K', 'NPQ', 'SJC'];
+          const filtered = data.data.filter((item: any) => keys.includes(item.productType));
+          if (filtered.length >= 3) {
+            filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
+            setGoldData(filtered.slice(0, 3));
           }
-        })
-        .catch(() => {});
-    };
-    
-    const fetchCrypto = () => {
-      fetch('https://api.binance.com/api/v3/ticker/price?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22BNBUSDT%22]')
-        .then(res => res.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            setCryptoData(data.map(d => ({
-              symbol: d.symbol.replace('USDT', ''),
-              price: parseFloat(d.price)
-            })));
-          }
-        })
-        .catch(() => {
-          setCryptoData([
-            { symbol: 'BTC', price: 65000 },
-            { symbol: 'ETH', price: 3500 },
-            { symbol: 'BNB', price: 600 }
-          ]);
-        });
-    };
-
-    const fetchForex = () => {
-      fetch('https://api.exchangerate-api.com/v4/latest/USD')
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.rates && data.rates.VND) {
-            const vnd = data.rates.VND;
-            const eur = data.rates.EUR;
-            const jpy = data.rates.JPY;
-            setForexData([
-              { pair: 'USD/VND', price: vnd },
-              { pair: 'EUR/VND', price: vnd / eur },
-              { pair: '100JPY/VND', price: (vnd / jpy) * 100 }
-            ]);
-          }
-        })
-        .catch(() => {});
-    };
-
-    fetchGold();
-    fetchCrypto();
-    fetchForex();
-    const interval = setInterval(() => { fetchGold(); fetchCrypto(); }, 2 * 60 * 1000);
-    return () => clearInterval(interval);
+        }
+      }).catch(() => {});
   }, []);
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full">
         <div className="flex bg-[#f4f6fa] rounded-[8px] p-1 gap-1">
-          <button onClick={() => setActiveTab('gold')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'gold' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Giá Vàng</button>
-          <button onClick={() => setActiveTab('forex')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'forex' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Ngoại Tệ</button>
-          <button onClick={() => setActiveTab('crypto')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'crypto' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Tiền Ảo</button>
+          <button className="px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all bg-white text-[#182033] shadow-sm">Giá Vàng</button>
         </div>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
@@ -1318,7 +1266,7 @@ function MarketSection() {
       </div>
       
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
-        {activeTab === 'gold' && goldData.map((item, idx) => (
+        {goldData.map((item, idx) => (
           <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
             <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
@@ -1331,26 +1279,20 @@ function MarketSection() {
             </div>
           </div>
         ))}
-
-        {activeTab === 'forex' && forexData.map((item, idx) => (
-          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden justify-center items-center">
-            <p className="font-bold text-[#182033] text-[13px] sm:text-[16px] mb-1">{item.pair}</p>
-            <p className="font-bold text-[#16a34a] text-[14px] sm:text-[16px]">{Math.round(item.price).toLocaleString('vi-VN')} đ</p>
-          </div>
-        ))}
-
-        {activeTab === 'crypto' && cryptoData.map((item, idx) => (
-          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden justify-center items-center">
-            <p className="font-bold text-[#182033] text-[14px] sm:text-[16px] mb-1">{item.symbol}</p>
-            <p className="font-bold text-[#ef4444] text-[14px] sm:text-[16px]">${item.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-          </div>
-        ))}
+      </div>
+      <div className="w-full flex items-center justify-between mt-2 p-2 sm:p-3 bg-gradient-to-r from-[#f0f4ff] to-[#f8fafc] rounded-[8px] border border-[#e3e7ef]">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></div>
+          <p className="text-[11px] sm:text-[13px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
+        </div>
+        <p className="text-[11px] sm:text-[13px] font-bold text-[#16a34a] flex items-center gap-1">
+          TĂNG TRƯỞNG 
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
+        </p>
       </div>
     </div>
   );
 }
-
-
 
 export default function App() {
 
