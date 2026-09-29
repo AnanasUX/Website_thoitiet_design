@@ -1234,25 +1234,27 @@ function ScrollToTop() {
 
 function MarketSection() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [goldData, setGoldData] = useState<any[]>([
-    { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
-    { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
-    { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
-  ]);
+  const [goldData, setGoldData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{ real: number[], forecast: number[] }>({ real: [], forecast: [] });
+  const [loading, setLoading] = useState(true);
 
   const generateDynamicData = (currentPrice: number) => {
-    const real = new Array(26).fill(0);
-    real[25] = currentPrice;
-    for (let i = 24; i >= 0; i--) {
+    const currentHour = new Date().getHours();
+    
+    // Exactly currentHour + 1 points for reality
+    const real = new Array(currentHour + 1).fill(0);
+    real[currentHour] = currentPrice;
+    for (let i = currentHour - 1; i >= 0; i--) {
       const change = real[i+1] * (Math.random() * 0.008 - 0.004); 
       real[i] = Math.round((real[i+1] + change) / 10000) * 10000;
     }
-    const forecast = new Array(36).fill(0);
-    for (let i=0; i<26; i++) {
+    
+    // Exactly 25 points for forecast (0 to 24)
+    const forecast = new Array(25).fill(0);
+    for (let i=0; i<=currentHour; i++) {
        forecast[i] = Math.round((real[i] * (1 + (Math.random()*0.004 - 0.002)))/10000)*10000;
     }
-    for(let i=26; i<36; i++) {
+    for(let i=currentHour+1; i<25; i++) {
        const trend = (Math.random() > 0.4 ? 1 : -1); 
        const change = forecast[i-1] * (Math.random() * 0.006 * trend);
        forecast[i] = Math.round((forecast[i-1] + change)/10000)*10000;
@@ -1261,29 +1263,56 @@ function MarketSection() {
   };
 
   useEffect(() => {
-    // initialize with default
-    setChartData(generateDynamicData(14100000));
-    
-    fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.data) {
-          const keys = ['24K', 'NPQ', 'SJC'];
-          const filtered = data.data.filter((item: any) => keys.includes(item.productType));
-          if (filtered.length >= 3) {
-            filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
-            setGoldData(filtered.slice(0, 3));
-            
-            // update chart with real SJC price
-            const sjc = filtered.find((i: any) => i.productType === 'SJC') || filtered[0];
-            setChartData(generateDynamicData(sjc.priceOut));
+    const fetchGold = () => {
+      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.data) {
+            const keys = ['24K', 'NPQ', 'SJC'];
+            const filtered = data.data.filter((item: any) => keys.includes(item.productType));
+            if (filtered.length >= 3) {
+              filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
+              setGoldData(filtered.slice(0, 3));
+              
+              const sjc = filtered.find((i: any) => i.productType === 'SJC') || filtered[0];
+              setChartData(generateDynamicData(sjc.priceOut));
+              setLoading(false);
+            }
           }
-        }
-      }).catch(() => {});
+        }).catch(() => {
+          // If error on first load, use fallback
+          if(goldData.length === 0) {
+            setGoldData([
+              { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
+              { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
+              { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
+            ]);
+            setChartData(generateDynamicData(14100000));
+            setLoading(false);
+          }
+        });
+    };
+    fetchGold();
+    const intervalId = setInterval(fetchGold, 60000); // refresh every minute
+    return () => clearInterval(intervalId);
   }, []);
 
-  const rawReal = chartData.real.length ? chartData.real : [14100000];
-  const rawForecast = chartData.forecast.length ? chartData.forecast : [14100000];
+  if (loading) {
+    return (
+      <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-sm border border-[#e3e7ef]">
+        <div className="w-full h-[40px] bg-slate-100 animate-pulse rounded-md"></div>
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          <div className="h-[80px] bg-slate-100 animate-pulse rounded-xl"></div>
+          <div className="h-[80px] bg-slate-100 animate-pulse rounded-xl"></div>
+          <div className="h-[80px] bg-slate-100 animate-pulse rounded-xl"></div>
+        </div>
+        <div className="w-full h-[120px] bg-slate-100 animate-pulse rounded-xl mt-2"></div>
+      </div>
+    );
+  }
+
+  const rawReal = chartData.real;
+  const rawForecast = chartData.forecast;
   const maxV = Math.max(...rawReal, ...rawForecast);
   const minV = Math.min(...rawReal, ...rawForecast);
   const r = maxV - minV || 1;
@@ -1341,7 +1370,7 @@ function MarketSection() {
 
         <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
           <div className="flex justify-between items-center mb-1">
-            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY)</p>
+            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY) - {new Date().toLocaleDateString('vi-VN')}</p>
             <div className="flex gap-2 text-[9px] font-bold">
               <span className="text-[#5f687b]">H: {maxV.toLocaleString('vi-VN')}</span>
               <span className="text-[#5f687b]">L: {minV.toLocaleString('vi-VN')}</span>
@@ -1386,9 +1415,8 @@ function MarketSection() {
                     transform: hoverIdx > rawForecast.length / 2 ? 'translateX(calc(-100% - 6px))' : 'translateX(6px)' 
                   }}
                 >
-                  <p className="text-[#f7a928] font-mono border-b border-white/20 pb-0.5 mb-0.5">
-                    {Math.floor((hoverIdx / (rawForecast.length - 1)) * 24).toString().padStart(2, '0')}:
-                    {Math.floor(((hoverIdx / (rawForecast.length - 1)) * 24 % 1) * 60).toString().padStart(2, '0')}
+                  <p className="text-[#f7a928] font-mono border-b border-white/20 pb-0.5 mb-0.5 text-center">
+                    {hoverIdx.toString().padStart(2, '0')}:00
                   </p>
                   {hoverIdx < rawReal.length && (
                     <div className="flex justify-between gap-3">
@@ -2251,17 +2279,7 @@ export default function App() {
     }
   }
 
-    if (apiStatus === "loading") {
-    return (
-      <div className="w-full h-screen bg-white">
-        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-[#182033]/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
-          ⏳ Đang tải dữ liệu thực tế…
-        </div>
-      </div>
-    );
-  }
-
-  const theme = WEATHER_THEMES[condKey];
+    const theme = WEATHER_THEMES[condKey];
 
   return (
     <div className="min-h-screen w-full bg-[#f4f6fa]">
