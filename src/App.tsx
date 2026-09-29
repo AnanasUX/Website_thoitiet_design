@@ -1179,21 +1179,13 @@ export function getNewspaperLogo(url: string) {
 }
 
 export function getProxyImageUrl(url: string) {
-    if (!url || typeof url !== 'string') return "";
-    let cleanUrl = url.trim();
-    if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
-    
-    cleanUrl = cleanUrl.replace('.dev', '.com.vn');
-
-    const bypassDomains = ['dantri.com.vn', 'tuoitre.vn', 'thanhnien.vn', 'vietnamnet.vn', 'vtv.vn', 'tienphong.vn', 'kenh14.vn'];
-    if (bypassDomains.some(d => cleanUrl.includes(d))) {
-      return cleanUrl;
-    }
-
-    if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
-      return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
-    }
-    return cleanUrl;
+  if (!url || typeof url !== 'string') return "";
+  let cleanUrl = url.trim();
+  if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
+  if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  }
+  return cleanUrl;
 }
 
 
@@ -1241,121 +1233,124 @@ function ScrollToTop() {
 
 
 function MarketSection() {
-  const [goldData, setGoldData] = React.useState<any[]>([
+  const [activeTab, setActiveTab] = useState<'gold'|'crypto'|'forex'>('gold');
+  const [goldData, setGoldData] = useState<any[]>([
     { productTypeName: 'Vàng trang sức 999.9', priceIn: 13500000, priceOut: 14000000 },
     { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13800000, priceOut: 14100000 },
     { productTypeName: 'Vàng miếng SJC', priceIn: 13800000, priceOut: 14100000 }
   ]);
+  const [cryptoData, setCryptoData] = useState<any[]>([]);
+  const [forexData, setForexData] = useState<any[]>([]);
 
-  React.useEffect(() => {
-    fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.data) {
-          const keys = ['24K', 'NPQ', 'SJC'];
-          const filtered = data.data.filter((item: any) => keys.includes(item.productType));
-          if (filtered.length >= 3) {
-            filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
-            setGoldData(filtered.slice(0, 3));
+  useEffect(() => {
+    const fetchGold = () => {
+      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.data) {
+            const keys = ['24K', 'NPQ', 'SJC'];
+            const filtered = data.data.filter((item: any) => keys.includes(item.productType));
+            if (filtered.length >= 3) {
+              filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
+              setGoldData(filtered.slice(0, 3));
+            }
           }
-        }
-      }).catch(() => {});
+        })
+        .catch(() => {});
+    };
+    
+    const fetchCrypto = () => {
+      fetch('https://api.binance.com/api/v3/ticker/price?symbols=[%22BTCUSDT%22,%22ETHUSDT%22,%22BNBUSDT%22]')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setCryptoData(data.map(d => ({
+              symbol: d.symbol.replace('USDT', ''),
+              price: parseFloat(d.price)
+            })));
+          }
+        })
+        .catch(() => {
+          setCryptoData([
+            { symbol: 'BTC', price: 65000 },
+            { symbol: 'ETH', price: 3500 },
+            { symbol: 'BNB', price: 600 }
+          ]);
+        });
+    };
+
+    const fetchForex = () => {
+      fetch('https://api.exchangerate-api.com/v4/latest/USD')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.rates && data.rates.VND) {
+            const vnd = data.rates.VND;
+            const eur = data.rates.EUR;
+            const jpy = data.rates.JPY;
+            setForexData([
+              { pair: 'USD/VND', price: vnd },
+              { pair: 'EUR/VND', price: vnd / eur },
+              { pair: '100JPY/VND', price: (vnd / jpy) * 100 }
+            ]);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchGold();
+    fetchCrypto();
+    fetchForex();
+    const interval = setInterval(() => { fetchGold(); fetchCrypto(); }, 2 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const forecastVals = [138, 139, 137, 140, 142, 141, 143];
-  const maxV = Math.max(...forecastVals);
-  const minV = Math.min(...forecastVals);
-  const r = maxV - minV || 1;
-  const pts = forecastVals.map((v, i) => {
-    return { x: i * (300 / 6), y: 50 - ((v - minV) / r) * 40 };
-  });
-  
-  const pathD = pts.map((p, i) => {
-    if (i===0) return `M ${p.x} ${p.y}`;
-    const prev = pts[i-1];
-    const cpX = (prev.x + p.x)/2;
-    return `C ${cpX} ${prev.y}, ${cpX} ${p.y}, ${p.x} ${p.y}`;
-  }).join(" ");
-
   return (
-    <div className="w-full flex flex-col gap-4 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
-      {/* Title */}
+    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full">
-        <p className="font-bold text-[#182033] text-[14px] sm:text-[15px]">💰 Bảng Giá Vàng & Phân Tích</p>
-        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0 border border-[#f7a928]/30">
+        <div className="flex bg-[#f4f6fa] rounded-[8px] p-1 gap-1">
+          <button onClick={() => setActiveTab('gold')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'gold' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Giá Vàng</button>
+          <button onClick={() => setActiveTab('forex')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'forex' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Ngoại Tệ</button>
+          <button onClick={() => setActiveTab('crypto')} className={`px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all ${activeTab === 'crypto' ? 'bg-white text-[#182033] shadow-sm' : 'text-[#5f687b]'}`}>Tiền Ảo</button>
+        </div>
+        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
         </div>
       </div>
+      
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
+        {activeTab === 'gold' && goldData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
+            <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
+            </div>
+            <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
+              <p className="font-semibold text-[#ef4444] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceOut.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        ))}
 
-      {/* Gold Grid */}
-      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
-        {goldData.map((g, i) => (
-          <div key={i} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 bg-[#f8fafc] w-full min-w-0">
-             <p className="font-bold text-[#182033] text-[11px] sm:text-[13px] line-clamp-1 mb-1.5" title={g.productTypeName}>{g.productTypeName}</p>
-             <div className="flex justify-between items-center w-full gap-1">
-               <p className="text-[#5f687b] text-[9px] sm:text-[11px]">Mua</p>
-               <p className="font-semibold text-[#16a34a] text-[11px] sm:text-[13px] whitespace-nowrap tracking-tighter sm:tracking-normal">{g.priceIn.toLocaleString('vi-VN')}</p>
-             </div>
-             <div className="flex justify-between items-center w-full mt-0.5 gap-1">
-               <p className="text-[#5f687b] text-[9px] sm:text-[11px]">Bán</p>
-               <p className="font-semibold text-[#ef4444] text-[11px] sm:text-[13px] whitespace-nowrap tracking-tighter sm:tracking-normal">{g.priceOut.toLocaleString('vi-VN')}</p>
-             </div>
+        {activeTab === 'forex' && forexData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden justify-center items-center">
+            <p className="font-bold text-[#182033] text-[13px] sm:text-[16px] mb-1">{item.pair}</p>
+            <p className="font-bold text-[#16a34a] text-[14px] sm:text-[16px]">{Math.round(item.price).toLocaleString('vi-VN')} đ</p>
+          </div>
+        ))}
+
+        {activeTab === 'crypto' && cryptoData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-2 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden justify-center items-center">
+            <p className="font-bold text-[#182033] text-[14px] sm:text-[16px] mb-1">{item.symbol}</p>
+            <p className="font-bold text-[#ef4444] text-[14px] sm:text-[16px]">${item.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
           </div>
         ))}
       </div>
-
-      <hr className="border-[#e3e7ef]" />
-
-      {/* Analysis & Chart */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
-        {/* Text Analysis */}
-        <div className="flex-1 flex flex-col gap-2 p-3 bg-gradient-to-br from-[#f8fafc] to-[#f4f6fa] rounded-[10px] border border-[#e3e7ef]">
-          <p className="text-[12px] font-bold text-[#182033] mb-1">Chỉ Số Kỹ Thuật (SJC)</p>
-          <div className="flex justify-between items-center border-b border-[#e3e7ef] pb-1">
-            <span className="text-[11px] text-[#5f687b]">Xu hướng:</span>
-            <span className="text-[11px] font-bold text-[#16a34a]">Tăng Mạnh ⬆</span>
-          </div>
-          <div className="flex justify-between items-center border-b border-[#e3e7ef] pb-1">
-            <span className="text-[11px] text-[#5f687b]">Chỉ báo RSI:</span>
-            <span className="text-[11px] font-bold text-[#f7a928]">68 (Sắp quá mua)</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-[11px] text-[#5f687b]">Khuyến nghị:</span>
-            <span className="text-[11px] font-bold text-[#0a84ff]">Nắm Giữ / Theo dõi</span>
-          </div>
-        </div>
-
-        {/* Line Chart */}
-        <div className="flex-[2] flex flex-col p-3 bg-white rounded-[10px] border border-[#e3e7ef]">
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-[12px] font-bold text-[#182033]">Dự báo 7 ngày tới</p>
-            <p className="text-[10px] font-medium text-[#5f687b]">Đơn vị: Tr. VNĐ</p>
-          </div>
-          
-          <div className="w-full h-[55px] relative mt-1">
-            <svg width="100%" height="100%" viewBox="0 0 300 60" preserveAspectRatio="none" className="overflow-visible">
-              <path d={`${pathD} L 300 60 L 0 60 Z`} fill="rgba(247, 169, 40, 0.1)" />
-              <path d={pathD} fill="none" stroke="#f7a928" strokeWidth="3" strokeLinecap="round" />
-              {pts.map((p, i) => (
-                <circle key={i} cx={p.x} cy={p.y} r="3" fill="#fff" stroke="#f7a928" strokeWidth="2" />
-              ))}
-            </svg>
-          </div>
-          <div className="flex justify-between text-[9px] text-[#5f687b] mt-2 font-medium">
-            <span>T2</span>
-            <span>T3</span>
-            <span>T4</span>
-            <span>T5</span>
-            <span>T6</span>
-            <span>T7</span>
-            <span>CN</span>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }
+
+
 
 export default function App() {
 
@@ -1465,23 +1460,16 @@ export default function App() {
         
         const mappedFeeds = results.map(feedArticles => {
           return feedArticles.map((item: any) => {
-            let imageUrl = "";
-             if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
-             if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
-             if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string') imageUrl = item.enclosure.link;
-             if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
-             if (!imageUrl && item.description && typeof item.description === 'string') {
-               const m = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-               if (m) imageUrl = m[1];
-             }
-             if (!imageUrl && item.content && typeof item.content === 'string') {
-               const m = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-               if (m) imageUrl = m[1];
-             }
-             if (imageUrl) {
-               imageUrl = imageUrl.replace(/&amp;/g, '&');
-               imageUrl = imageUrl.replace('.dev', '.com.vn');
-             }
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
+            }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
             
             if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
               imageUrl = ""; 
@@ -1825,23 +1813,19 @@ export default function App() {
           
           // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
           const baseNewsItems = rawItems.map((item: any) => {
-            let imageUrl = "";
-             if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
-             if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
-             if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string') imageUrl = item.enclosure.link;
-             if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
-             if (!imageUrl && item.description && typeof item.description === 'string') {
-               const m = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-               if (m) imageUrl = m[1];
-             }
-             if (!imageUrl && item.content && typeof item.content === 'string') {
-               const m = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-               if (m) imageUrl = m[1];
-             }
-             if (imageUrl) {
-               imageUrl = imageUrl.replace(/&amp;/g, '&');
-               imageUrl = imageUrl.replace('.dev', '.com.vn');
-             }
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
+            }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            
+            if (imageUrl) {
+              imageUrl = imageUrl.replace(/&amp;/g, '&');
+            }
             
                           let cleanDesc = "";
               if (item.description && typeof item.description === 'string') {
@@ -2108,23 +2092,16 @@ export default function App() {
         // Actually interleaving is enough, we just map them now.
 
         let processedNews = interleavedNews.map((item: any) => {
-           let imageUrl = "";
-             if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
-             if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
-             if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string') imageUrl = item.enclosure.link;
-             if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
-             if (!imageUrl && item.description && typeof item.description === 'string') {
-               const m = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-               if (m) imageUrl = m[1];
-             }
-             if (!imageUrl && item.content && typeof item.content === 'string') {
-               const m = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-               if (m) imageUrl = m[1];
-             }
-             if (imageUrl) {
-               imageUrl = imageUrl.replace(/&amp;/g, '&');
-               imageUrl = imageUrl.replace('.dev', '.com.vn');
-             }
+           let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+           if (!imageUrl && item.description) {
+             const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+             if (imgMatch) imageUrl = imgMatch[1];
+           }
+           if (!imageUrl && item.content) {
+             const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+             if (imgMatch2) imageUrl = imgMatch2[1];
+           }
+           if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
            let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
            
            return {
