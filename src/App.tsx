@@ -1200,7 +1200,7 @@ function GoldPriceSection() {
       </div>
       <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-2 sm:gap-3 w-full scrollbar-hide pb-1">
         {goldData.map((item, idx) => (
-          <div key={idx} className="flex flex-col shrink-0 min-w-[150px] md:min-w-0 border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc] w-full overflow-hidden">
+          <div key={idx} className="flex flex-col shrink-0 min-w-[150px] md:min-w-0 border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc] overflow-hidden">
             <p className="font-bold text-[#182033] text-[14px] line-clamp-1 mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-1">
               <p className="text-[#5f687b] text-[12px]">Mua</p>
