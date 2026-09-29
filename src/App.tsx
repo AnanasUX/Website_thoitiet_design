@@ -1256,15 +1256,15 @@ function MarketSection() {
   }, []);
 
   const rawReal = [
-    4060, 4055, 4065, 4065, 4070, 4085, 4075, 4095, 4085, 4090, 
-    4080, 4075, 4075, 4085, 4075, 4065, 4065, 4055, 4065, 4055, 
-    4040, 4045, 4030, 4040, 4045, 4015
+    13600000, 13550000, 13650000, 13650000, 13700000, 13850000, 13750000, 13950000, 13850000, 13900000, 
+    13800000, 13750000, 13750000, 13850000, 13750000, 13650000, 13650000, 13550000, 13650000, 13550000, 
+    13400000, 13450000, 13300000, 13400000, 13450000, 13150000
   ];
   const rawForecast = [
-    4050, 4065, 4055, 4075, 4080, 4080, 4085, 4090, 4095, 4085,
-    4085, 4080, 4085, 4075, 4085, 4075, 4055, 4065, 4055, 4065,
-    4045, 4040, 4040, 4035, 4040, 4025, 4010, 3980, 3970, 3980,
-    4010, 4025, 4035, 4020, 4015, 4010
+    13500000, 13650000, 13550000, 13750000, 13800000, 13800000, 13850000, 13900000, 13950000, 13850000,
+    13850000, 13800000, 13850000, 13750000, 13850000, 13750000, 13550000, 13650000, 13550000, 13650000,
+    13450000, 13400000, 13400000, 13350000, 13400000, 13250000, 13100000, 12800000, 12700000, 12800000,
+    13100000, 13250000, 13350000, 13200000, 13150000, 13100000
   ];
   const maxV = Math.max(...rawReal, ...rawForecast);
   const minV = Math.min(...rawReal, ...rawForecast);
@@ -1325,8 +1325,8 @@ function MarketSection() {
           <div className="flex justify-between items-center mb-1">
             <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY)</p>
             <div className="flex gap-2 text-[9px] font-bold">
-              <span className="text-[#5f687b]">H: {maxV}</span>
-              <span className="text-[#5f687b]">L: {minV}</span>
+              <span className="text-[#5f687b]">H: {maxV.toLocaleString('vi-VN')}</span>
+              <span className="text-[#5f687b]">L: {minV.toLocaleString('vi-VN')}</span>
             </div>
           </div>
           
@@ -1375,12 +1375,12 @@ function MarketSection() {
                   {hoverIdx < rawReal.length && (
                     <div className="flex justify-between gap-3">
                       <span className="text-[#ef4444] font-bold">Thực tế:</span>
-                      <span className="font-bold">{rawReal[hoverIdx]}</span>
+                      <span className="font-bold">{rawReal[hoverIdx].toLocaleString('vi-VN')}đ</span>
                     </div>
                   )}
                   <div className="flex justify-between gap-3">
                     <span className="text-[#f7a928] font-bold">Dự báo:</span>
-                    <span className="font-bold">{rawForecast[hoverIdx]}</span>
+                    <span className="font-bold">{rawForecast[hoverIdx].toLocaleString('vi-VN')}đ</span>
                   </div>
                 </div>
                 
