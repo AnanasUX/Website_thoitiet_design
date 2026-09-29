@@ -1271,15 +1271,22 @@ function MarketSection() {
     };
   });
   
-  const pathD = pts.map((p, i) => {
+  const realPts = pts.slice(0, 26);
+  const forecastPts = pts.slice(25, 36);
+
+  const pathReal = realPts.map((p, i) => {
+    return i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`;
+  }).join(" ");
+  
+  const pathForecast = forecastPts.map((p, i) => {
     return i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`;
   }).join(" ");
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full">
-        <div className="flex bg-[#f4f6fa] rounded-[8px] p-1 gap-1">
-          <button className="px-3 py-1.5 text-[12px] sm:text-[13px] font-bold rounded-[6px] transition-all bg-white text-[#182033] shadow-sm">Giá Vàng</button>
+        <div className="flex bg-[#f4f6fa] rounded-[8px] p-1.5 gap-1">
+          <div className="px-4 py-2 text-[16px] sm:text-[18px] font-bold rounded-[6px] bg-white text-[#182033] shadow-sm tracking-tight border border-[#e3e7ef]/50">Giá Vàng</div>
         </div>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
@@ -1343,14 +1350,8 @@ function MarketSection() {
                 <line key={`h-${i}`} x1="0" y1={i * 16.25} x2="300" y2={i * 16.25} stroke="#e3e7ef" strokeWidth="0.5" />
               ))}
               
-              <defs>
-                <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="70%" stopColor="#ef4444" />
-                  <stop offset="70%" stopColor="#f7a928" />
-                  <stop offset="100%" stopColor="#f7a928" />
-                </linearGradient>
-              </defs>
-              <path d={pathD} fill="none" stroke="url(#lineGrad)" strokeWidth="1.5" strokeLinejoin="round" />
+              <path d={pathReal} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
+              <path d={pathForecast} fill="none" stroke="#f7a928" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3 3" />
             </svg>
             
             {hoverIdx !== null && (
