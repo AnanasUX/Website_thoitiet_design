@@ -1254,18 +1254,25 @@ function MarketSection() {
       }).catch(() => {});
   }, []);
 
-  const candles = [
-    { o: 137, c: 138, l: 136, h: 139 },
-    { o: 138, c: 140, l: 137, h: 141 },
-    { o: 140, c: 139, l: 138, h: 142 },
-    { o: 139, c: 141, l: 138, h: 143 },
-    { o: 141, c: 143, l: 140, h: 145 },
-    { o: 143, c: 142, l: 141, h: 144 },
-    { o: 142, c: 145, l: 141, h: 146 },
+  const rawPts = [
+    4060, 4055, 4065, 4065, 4070, 4085, 4075, 4095, 4085, 4090, 
+    4080, 4075, 4075, 4085, 4075, 4065, 4065, 4055, 4065, 4055, 
+    4040, 4045, 4030, 4040, 4045, 4015, 4005, 3965, 3975, 3960, 
+    4005, 4035, 4020, 4030, 4010, 4002
   ];
-  const maxV = 146;
-  const minV = 136;
+  const maxV = Math.max(...rawPts);
+  const minV = Math.min(...rawPts);
   const r = maxV - minV || 1;
+  const pts = rawPts.map((v, i) => {
+    return { 
+      x: (i / (rawPts.length - 1)) * 300, 
+      y: 60 - ((v - minV) / r) * 55 // values from 5 to 60
+    };
+  });
+  
+  const pathD = pts.map((p, i) => {
+    return i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`;
+  }).join(" ");
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
@@ -1307,50 +1314,34 @@ function MarketSection() {
 
         <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
           <div className="flex justify-between items-center mb-1">
-            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ NẾN DỰ BÁO TRONG TUẦN (Tr. VNĐ)</p>
+            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY)</p>
             <div className="flex gap-2 text-[9px] font-bold">
-              <span className="text-[#16a34a] flex items-center gap-0.5"><div className="w-1.5 h-1.5 bg-[#16a34a]"></div> Tăng</span>
-              <span className="text-[#ef4444] flex items-center gap-0.5"><div className="w-1.5 h-1.5 bg-[#ef4444]"></div> Giảm</span>
+              <span className="text-[#5f687b]">H: {maxV}</span>
+              <span className="text-[#5f687b]">L: {minV}</span>
             </div>
           </div>
           
-          <div className="w-full h-[65px] relative mt-1">
-            <svg width="100%" height="100%" className="overflow-visible">
-              {candles.map((c, i) => {
-                const isUp = c.c >= c.o;
-                const color = isUp ? "#16a34a" : "#ef4444";
-                const xCenter = ((i + 0.5) / 7) * 100;
-                
-                const yH = 100 - ((c.h - minV) / r) * 100;
-                const yL = 100 - ((c.l - minV) / r) * 100;
-                const yO = 100 - ((c.o - minV) / r) * 100;
-                const yC = 100 - ((c.c - minV) / r) * 100;
-                
-                const topB = Math.min(yO, yC);
-                const botB = Math.max(yO, yC);
-                const hB = Math.max(botB - topB, 2); // min height 2%
-
-                const todayIdx = (new Date().getDay() + 6) % 7; // 0 for Mon, 6 for Sun
-                const isFuture = i > todayIdx;
-                
-                return (
-                  <g key={i} style={{ opacity: isFuture ? 0.35 : 1 }}>
-                    <line x1={`${xCenter}%`} y1={`${yH}%`} x2={`${xCenter}%`} y2={`${yL}%`} stroke={color} strokeWidth="1.5" />
-                    <rect x={`calc(${xCenter}% - 4px)`} y={`${topB}%`} width="8px" height={`${hB}%`} fill={color} rx="1" />
-                  </g>
-                );
-              })}
+          <div className="w-full h-[65px] relative mt-1 border-l border-b border-[#e3e7ef]/50">
+            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" className="overflow-visible">
+              {/* Grid Lines */}
+              {[1, 2, 3, 4, 5].map(i => (
+                <line key={`v-${i}`} x1={i * 50} y1="0" x2={i * 50} y2="65" stroke="#e3e7ef" strokeWidth="0.5" strokeDasharray="2 2" />
+              ))}
+              {[1, 2, 3].map(i => (
+                <line key={`h-${i}`} x1="0" y1={i * 16.25} x2="300" y2={i * 16.25} stroke="#e3e7ef" strokeWidth="0.5" />
+              ))}
+              <path d={pathD} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
             </svg>
           </div>
           
-          <div className="flex justify-between text-[9px] text-[#5f687b] mt-2 font-medium px-[2px]">
-            <span>Thứ 2</span>
-            <span>Thứ 3</span>
-            <span>Thứ 4</span>
-            <span>Thứ 5</span>
-            <span>Thứ 6</span>
-            <span>Thứ 7</span>
-            <span>CN</span>
+          <div className="flex justify-between text-[8px] sm:text-[9px] text-[#5f687b] mt-1 font-medium px-[2px]">
+            <span>00:00</span>
+            <span>04:00</span>
+            <span>08:00</span>
+            <span>12:00</span>
+            <span>16:00</span>
+            <span>20:00</span>
+            <span>23:59</span>
           </div>
         </div>
       </div>
