@@ -323,7 +323,7 @@ function WeatherSection({
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] animate-gradient-xy"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #6F8ABD 100%)" }}
+          className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-[24px] shadow-[0_8px_32px_rgba(109,40,217,0.25)] w-full transition-transform duration-500 hover:scale-[1.02] bg-gradient-to-br from-violet-600 via-fuchsia-500 to-orange-400"
       >
         <p className="font-semibold text-[13px] text-white whitespace-nowrap">
           <Location size="16" variant="Bulk" className="inline-block mr-1 " /> {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
@@ -357,7 +357,7 @@ function WeatherSection({
       </div>
 
       {/* Forecast */}
-      <div className="bg-white border border-[#e2e8f0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+      <div className="glass-card rounded-[20px] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         <p className="font-bold text-[#1e293b] whitespace-nowrap"><Clock size="18" variant="Bulk" className="inline-block mr-1 text-emerald-500" /> DỰ BÁO HÀNG GIỜ (HOURLY)</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
@@ -382,7 +382,7 @@ function WeatherSection({
 
         
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
-          <div className="bg-white border border-[#e2e8f0] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
+          <div className="glass-card rounded-[20px] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
             <div className="flex flex-col gap-1 w-full">
               <p className="font-bold text-[#1e293b] whitespace-nowrap"><Calendar size="18" variant="Bulk" className="inline-block mr-1 text-purple-500" /> DỰ BÁO THỜI TIẾT TUẦN</p>
               {WEATHER.weekRange && <p className="font-medium text-[#64748b] text-[12px]">{WEATHER.weekRange}</p>}
@@ -408,7 +408,7 @@ function WeatherSection({
         )}
 
 
-      <div className="bg-white border border-[#e2e8f0] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+      <div className="glass-card rounded-[20px] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         <p className="font-bold text-[#1e293b] whitespace-nowrap"><InfoCircle size="18" variant="Bulk" className="inline-block mr-1 text-blue-500" /> DỰ BÁO 3 GIỜ TỚI</p>
         <p className="font-normal leading-5 text-[#64748b] w-full">{WEATHER.forecastText}</p>
       </div>
@@ -443,7 +443,7 @@ function WeatherSection({
       )}
 
       {/* Combined Flood & Weather News */}
-      <div className="bg-white border border-[#e2e8f0] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+      <div className="glass-card rounded-[20px] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
         {/* Flood Section */}
         <p className="font-bold text-[#1e293b] whitespace-nowrap mb-2 uppercase">
           BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
@@ -519,7 +519,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)} 
-        className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#e2e8f0] rounded-full text-[13px] font-semibold text-[#1e293b] shadow-sm active:scale-95 transition-transform"
+        className="flex items-center gap-[6px] px-[12px] py-[6px] glass-card rounded-[20px] rounded-full text-[13px] font-semibold text-[#1e293b] shadow-sm active:scale-95 transition-transform"
       >
         <Filter size="14" variant="Bulk" />
         <span>{activeCategory}</span>
@@ -527,7 +527,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
       </button>
       
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-[#e2e8f0] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
+        <div className="absolute top-full right-0 mt-2 glass-card rounded-[20px] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
           <div className="grid grid-cols-2 gap-[6px]">
             {NEWS_CATEGORIES.map(cat => (
               <button
@@ -536,7 +536,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
                   setActiveCategory(cat);
                   setIsOpen(false);
                 }}
-                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white font-bold' : 'hover:bg-[#f8fafc] text-[#64748b] font-medium'}`}
+                className={`text-left px-3 py-[8px] rounded-full text-[13px] transition-all ${activeCategory === cat ? 'bg-[#D68D8D] text-white font-bold' : 'hover:bg-[#f8fafc] text-[#64748b] font-medium'}`}
               >
                 {cat}
               </button>
@@ -569,7 +569,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
   return (
     <div className="bg-[#f8fafc] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e2e8f0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
+      <div className="glass-card !border-b-0 sticky top-0 z-50 flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
         <p className="font-bold text-[#D68D8D] text-[20px]">Anx.</p>
         <div className="flex flex-col items-end">
           <p className="font-medium text-[#1e293b] text-[12px] whitespace-nowrap text-right">
@@ -614,7 +614,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
                   <p className="font-semibold text-[#1e293b] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
               <p className="font-normal text-[#1e293b] text-[length:var(--font-body)] mt-2">{item.body}</p>
-              <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
+              <div className="h-[180px] relative rounded-full w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
             </a>
@@ -652,7 +652,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
   return (
     <div className="bg-[#f8fafc] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e2e8f0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+      <div className="glass-card !border-b-0 sticky top-0 z-50 flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#D68D8D] text-[20px] whitespace-nowrap">Anx.</p>
           <p className="font-medium text-[#64748b] text-[13px] whitespace-nowrap">
@@ -735,7 +735,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
               rel="noopener noreferrer"
               className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}
             >
-              <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f8fafc]">
+              <div className="relative rounded-full shrink-0 size-[72px] overflow-hidden bg-[#f8fafc]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
@@ -779,7 +779,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
     <div className="bg-[#f8fafc] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e2e8f0] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+      <div className="glass-card !border-b-0 sticky top-0 z-50 flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#1e293b] text-[18px] whitespace-nowrap">Anx.</p>
           <div className="bg-[#f8fafc] flex items-start px-3 py-1 rounded-full">
@@ -835,7 +835,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               <p className="font-bold text-[#1e293b] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
                 {featured.author}
               </p>
-              <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
+              <div className="h-[180px] relative rounded-full w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
               {featured.body && (
@@ -1094,7 +1094,7 @@ function NewsSkeleton() {
     <div className="flex flex-col gap-[14px] w-full">
       <div className="w-full h-[240px] bg-[#e2e8f0] animate-pulse rounded-[16px]"></div>
       {[1, 2, 3, 4].map(i => (
-        <div key={i} className="flex gap-[14px] w-full p-[14px] bg-white rounded-[12px] border border-[#e2e8f0]">
+        <div key={i} className="flex gap-[14px] w-full p-[14px] glass-card rounded-[12px]">
           <div className="flex-1 flex flex-col gap-2 pt-1">
             <div className="w-full h-[18px] bg-[#e2e8f0] animate-pulse rounded"></div>
             <div className="w-3/4 h-[18px] bg-[#e2e8f0] animate-pulse rounded"></div>
@@ -1162,7 +1162,7 @@ function ScrollToTop() {
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
   return isVisible ? (
-    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] bg-white border border-[#e2e8f0] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-[#D68D8D] group animate-fade-in">
+    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] glass-card rounded-[20px] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-violet-600 group animate-fade-in glass-card">
       <ArrowUp2 size="24" className="group-hover:-translate-y-1 transition-transform duration-300" />
     </button>
   ) : null;
@@ -1203,7 +1203,7 @@ function GoldPriceSection() {
   if (!goldData.length) return null;
 
   return (
-    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e2e8f0]">
+    <div className="w-full flex flex-col gap-3 mb-6 glass-card p-[var(--card-padding)] rounded-[var(--card-radius)]">
       <div className="flex items-center gap-2">
         <p className="font-bold text-[#1e293b] text-[18px]">Giá Vàng Phú Quý</p>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center">
@@ -2057,7 +2057,7 @@ export default function App() {
   const theme = WEATHER_THEMES[condKey];
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc]">
+    <div className="min-h-screen w-full mesh-bg">
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
