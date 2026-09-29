@@ -1179,13 +1179,21 @@ export function getNewspaperLogo(url: string) {
 }
 
 export function getProxyImageUrl(url: string) {
-  if (!url || typeof url !== 'string') return "";
-  let cleanUrl = url.trim();
-  if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
-  if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
-  }
-  return cleanUrl;
+    if (!url || typeof url !== 'string') return "";
+    let cleanUrl = url.trim();
+    if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
+    
+    cleanUrl = cleanUrl.replace('.dev', '.com.vn');
+
+    const bypassDomains = ['dantri.com.vn', 'tuoitre.vn', 'thanhnien.vn', 'vietnamnet.vn', 'vtv.vn', 'tienphong.vn', 'kenh14.vn'];
+    if (bypassDomains.some(d => cleanUrl.includes(d))) {
+      return cleanUrl;
+    }
+
+    if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
+      return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+    }
+    return cleanUrl;
 }
 
 
@@ -1460,16 +1468,23 @@ export default function App() {
         
         const mappedFeeds = results.map(feedArticles => {
           return feedArticles.map((item: any) => {
-            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-            if (!imageUrl && item.description) {
-              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (imgMatch) imageUrl = imgMatch[1];
-            }
-            if (!imageUrl && item.content) {
-              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (imgMatch2) imageUrl = imgMatch2[1];
-            }
-            if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+            let imageUrl = "";
+             if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
+             if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
+             if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string') imageUrl = item.enclosure.link;
+             if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
+             if (!imageUrl && item.description && typeof item.description === 'string') {
+               const m = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+               if (m) imageUrl = m[1];
+             }
+             if (!imageUrl && item.content && typeof item.content === 'string') {
+               const m = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+               if (m) imageUrl = m[1];
+             }
+             if (imageUrl) {
+               imageUrl = imageUrl.replace(/&amp;/g, '&');
+               imageUrl = imageUrl.replace('.dev', '.com.vn');
+             }
             
             if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
               imageUrl = ""; 
@@ -1813,19 +1828,23 @@ export default function App() {
           
           // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
           const baseNewsItems = rawItems.map((item: any) => {
-            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-            if (!imageUrl && item.description) {
-              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (imgMatch) imageUrl = imgMatch[1];
-            }
-            if (!imageUrl && item.content) {
-              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (imgMatch2) imageUrl = imgMatch2[1];
-            }
-            
-            if (imageUrl) {
-              imageUrl = imageUrl.replace(/&amp;/g, '&');
-            }
+            let imageUrl = "";
+             if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
+             if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
+             if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string') imageUrl = item.enclosure.link;
+             if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
+             if (!imageUrl && item.description && typeof item.description === 'string') {
+               const m = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+               if (m) imageUrl = m[1];
+             }
+             if (!imageUrl && item.content && typeof item.content === 'string') {
+               const m = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+               if (m) imageUrl = m[1];
+             }
+             if (imageUrl) {
+               imageUrl = imageUrl.replace(/&amp;/g, '&');
+               imageUrl = imageUrl.replace('.dev', '.com.vn');
+             }
             
                           let cleanDesc = "";
               if (item.description && typeof item.description === 'string') {
@@ -2092,16 +2111,23 @@ export default function App() {
         // Actually interleaving is enough, we just map them now.
 
         let processedNews = interleavedNews.map((item: any) => {
-           let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-           if (!imageUrl && item.description) {
-             const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-             if (imgMatch) imageUrl = imgMatch[1];
-           }
-           if (!imageUrl && item.content) {
-             const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-             if (imgMatch2) imageUrl = imgMatch2[1];
-           }
-           if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+           let imageUrl = "";
+             if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
+             if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
+             if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string') imageUrl = item.enclosure.link;
+             if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
+             if (!imageUrl && item.description && typeof item.description === 'string') {
+               const m = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+               if (m) imageUrl = m[1];
+             }
+             if (!imageUrl && item.content && typeof item.content === 'string') {
+               const m = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+               if (m) imageUrl = m[1];
+             }
+             if (imageUrl) {
+               imageUrl = imageUrl.replace(/&amp;/g, '&');
+               imageUrl = imageUrl.replace('.dev', '.com.vn');
+             }
            let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
            
            return {
