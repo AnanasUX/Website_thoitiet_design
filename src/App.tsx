@@ -1177,19 +1177,25 @@ function GoldPriceSection() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.data) {
-          const keys = ['24K', 'NPQ', 'SJC'];
-          const filtered = data.data.filter((item: any) => keys.includes(item.productType));
-          if (filtered.length >= 3) {
-            filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
-            setGoldData(filtered.slice(0, 3));
+    const fetchGold = () => {
+      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'))
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.data) {
+            const keys = ['24K', 'NPQ', 'SJC'];
+            const filtered = data.data.filter((item: any) => keys.includes(item.productType));
+            if (filtered.length >= 3) {
+              filtered.sort((a: any, b: any) => keys.indexOf(a.productType) - keys.indexOf(b.productType));
+              setGoldData(filtered.slice(0, 3));
+            }
           }
-        }
-      })
-      .catch(() => console.error("Gold API failed, using fallback"));
+        })
+        .catch(() => console.error("Gold API failed, using fallback"));
+    };
+
+    fetchGold();
+    const interval = setInterval(fetchGold, 2 * 60 * 1000); // Poll every 2 mins
+    return () => clearInterval(interval);
   }, []);
 
   if (!goldData.length) return null;
