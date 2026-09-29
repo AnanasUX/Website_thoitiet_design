@@ -547,12 +547,14 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 }
 
 function MobileLayout({ activeCategory, setActiveCategory,
-  condKey,
+  isFetchingCategory,
+    condKey,
   liveData,
   liveNews,
   liveOverrides,
 }: {
-  condKey: ConditionKey;
+  isFetchingCategory?: boolean;
+    condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
@@ -593,6 +595,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
         </p>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
+          {isFetchingCategory ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
               <a
               key={i}
@@ -614,6 +617,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
               </div>
             </a>
           ))}
+          </>)}
         </div>
       </div>
     </div>
@@ -623,12 +627,14 @@ function MobileLayout({ activeCategory, setActiveCategory,
 // ── Tablet Layout ────────────────────────────────────────────────────────────
 
 function TabletLayout({ activeCategory, setActiveCategory,
-  condKey,
+  isFetchingCategory,
+    condKey,
   liveData,
   liveNews,
   liveOverrides,
 }: {
-  condKey: ConditionKey;
+  isFetchingCategory?: boolean;
+    condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
@@ -686,6 +692,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             </p>
           </div>
 
+          {isFetchingCategory ? <NewsSkeleton /> : (<>
           {/* Featured article */}
           {featured && (
             <a
@@ -738,6 +745,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
               </div>
             </a>
           ))}
+          </>)}
         </div>
       </div>
     </div>
@@ -747,12 +755,14 @@ function TabletLayout({ activeCategory, setActiveCategory,
 // ── Desktop Layout ───────────────────────────────────────────────────────────
 
 function DesktopLayout({ activeCategory, setActiveCategory,
-  condKey,
+  isFetchingCategory,
+    condKey,
   liveData,
   liveNews,
   liveOverrides,
 }: {
-  condKey: ConditionKey;
+  isFetchingCategory?: boolean;
+    condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
@@ -800,6 +810,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
 
+          {isFetchingCategory ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
           {featured && (
             <a
@@ -856,6 +867,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               </a>
             ))}
           </div>
+          </>)}
 
           <div className="flex items-start justify-center py-2 w-full">
             
@@ -1074,6 +1086,25 @@ export function decodeHTMLEntities(text: string) {
   }
 }
 
+
+function NewsSkeleton() {
+  return (
+    <div className="flex flex-col gap-[14px] w-full">
+      <div className="w-full h-[240px] bg-[#e3e7ef] animate-pulse rounded-[16px]"></div>
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="flex gap-[14px] w-full p-[14px] bg-white rounded-[12px] border border-[#e3e7ef]">
+          <div className="flex-1 flex flex-col gap-2 pt-1">
+            <div className="w-full h-[18px] bg-[#e3e7ef] animate-pulse rounded"></div>
+            <div className="w-3/4 h-[18px] bg-[#e3e7ef] animate-pulse rounded"></div>
+            <div className="w-1/3 h-[14px] bg-[#e3e7ef] animate-pulse rounded mt-2"></div>
+          </div>
+          <div className="w-[110px] h-[80px] bg-[#e3e7ef] animate-pulse rounded-[8px] shrink-0"></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
   try {
@@ -1220,6 +1251,7 @@ export default function App() {
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isFetchingCategory, setIsFetchingCategory] = useState(false);
     const fullNewsPool = useRef<any[]>([]);
     const [hasMoreNews, setHasMoreNews] = useState(true);
   const loadingRef = useRef(false);
@@ -1271,10 +1303,11 @@ export default function App() {
 
   
   useEffect(() => {
-    
-    
     let isCancelled = false;
-    const fetchCategoryNews = async () => {
+    let timer: any;
+    
+    const fetchCategoryNews = async (isBackground = false) => {
+      if (!isBackground) setIsFetchingCategory(true);
       try {
         const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
         if (catFeeds.length === 0) return;
@@ -1368,17 +1401,32 @@ export default function App() {
            }
         }
         
-        fullNewsPool.current = mixedNews;
-        setLiveNews(mixedNews.slice(0, 15));
-        setHasMoreNews(mixedNews.length > 10);
-        
+        if (!isBackground) {
+          fullNewsPool.current = mixedNews;
+          setLiveNews(mixedNews.slice(0, 15));
+        } else {
+          const existingLinks = new Set(fullNewsPool.current.map(n => n.link));
+          const newItems = mixedNews.filter(n => !existingLinks.has(n.link));
+          if (newItems.length > 0) {
+            fullNewsPool.current = [...newItems, ...fullNewsPool.current];
+            setLiveNews((prev: any) => {
+              const current = prev || [];
+              const uniqueNew = newItems.filter(n => !current.find((c: any) => c.link === n.link));
+              return [...uniqueNew, ...current];
+            });
+          }
+        }
+        setHasMoreNews(fullNewsPool.current.length > 10);
       } catch (e) {
         console.error(e);
+      } finally {
+        if (!isBackground) setIsFetchingCategory(false);
       }
     };
     
-    fetchCategoryNews();
-    return () => { isCancelled = true; };
+    fetchCategoryNews(false);
+    timer = setInterval(() => { fetchCategoryNews(true); }, 2 * 60 * 1000);
+    return () => { isCancelled = true; clearInterval(timer); };
   }, [activeCategory]);
 
 
@@ -2019,14 +2067,14 @@ export default function App() {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} liveOverrides={liveOverrides} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} liveOverrides={liveOverrides} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} liveOverrides={liveOverrides} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
