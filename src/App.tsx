@@ -1449,7 +1449,7 @@ function MarketSection() {
              <span className="text-[9px] text-[#5f687b] font-bold uppercase tracking-wider">Thực tế</span>
           </div>
           <div className="flex items-center gap-1.5">
-             <div className="w-3 h-[1px] border-t-2 border-dashed border-[#94a3b8]"></div>
+             <div className="w-3 h-[1px] border-t-2 border-dashed border-[#cbd5e1]"></div>
              <span className="text-[9px] text-[#5f687b] font-bold uppercase tracking-wider">Dự kiến</span>
           </div>
         </div>
@@ -1478,7 +1478,7 @@ function MarketSection() {
 
           <svg viewBox="0 0 300 65" className="absolute top-0 left-0 w-full h-[65px] overflow-visible preserve-3d" preserveAspectRatio="none">
              {/* Forecast line (dashed) */}
-             <path d={pathForecast} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+             <path d={pathForecast} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
              {/* Real line (solid green) */}
              <path d={pathReal} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           </svg>
