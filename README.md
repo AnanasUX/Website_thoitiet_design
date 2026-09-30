@@ -72,3 +72,5 @@ Dự án web thời tiết xây dựng bằng React, Vite và Tailwind CSS. Theo
 - Tích hợp **Skeleton Loading** cục bộ khi tải API thay vì chặn màn hình (Blocking Loading).
 - Khắc phục lỗi CORS/Cloudflare của Logo nhà mạng Dân Trí, đảm bảo Favicon luôn hiển thị chuẩn.
 - Cấu hình Fallback an toàn: Khi API Giá Vàng lỗi hoặc bị chặn, hệ thống tự động đổ dữ liệu dự phòng (static data) nhằm tránh hiện tượng ẩn toàn bộ khối (layout shift).
+- Chuẩn hóa hiển thị nguồn tin tức: Tự động phân tách tên tòa soạn và tên chuyên mục bằng dấu chấm tròn (ví dụ: `VnExpress • Giáo dục`, `Dân Trí • Sức mạnh số`) giúp giao diện thẻ bài viết gọn gàng và dễ đọc hơn.
+
