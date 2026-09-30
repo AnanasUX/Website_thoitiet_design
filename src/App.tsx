@@ -1732,6 +1732,28 @@ export default function App() {
     window.history.pushState({}, '', `/Website_thoitiet_design/`);
   };
 
+  // Auto-fullscreen on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request failed:", err));
+      }
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+    
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction, { passive: true });
+    document.addEventListener('keydown', handleFirstInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
