@@ -1297,45 +1297,33 @@ function ScrollToTop() {
 function MarketSection() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [goldData, setGoldData] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<{ real: any[], forecast: any[] }>({ real: [], forecast: [] });
+  const [chartData, setChartData] = useState<{ real: number[], forecast: number[] }>({ real: [], forecast: [] });
   const [loading, setLoading] = useState(true);
 
   const generateDynamicData = (currentPrice: number) => {
       const currentHour = new Date().getHours();
       
-      const realArr = new Array(currentHour + 1).fill(0);
-      realArr[currentHour] = currentPrice;
+      const real = new Array(currentHour + 1).fill(0);
+      real[currentHour] = currentPrice;
       for (let i = currentHour - 1; i >= 0; i--) {
-        const change = realArr[i+1] * (Math.random() * 0.008 - 0.004); 
-        realArr[i] = Math.round((realArr[i+1] + change) / 10000) * 10000;
+        const change = real[i+1] * (Math.random() * 0.008 - 0.004); 
+        real[i] = Math.round((real[i+1] + change) / 10000) * 10000;
       }
       
-      const forecastArr = new Array(25).fill(0);
+      const forecast = new Array(25).fill(0);
       for (let i=0; i<=currentHour; i++) {
-         forecastArr[i] = Math.round((realArr[i] * (1 + (Math.random()*0.004 - 0.002)))/10000)*10000;
+         forecast[i] = Math.round((real[i] * (1 + (Math.random()*0.004 - 0.002)))/10000)*10000;
       }
       for(let i=currentHour+1; i<25; i++) {
          const trend = (Math.random() > 0.4 ? 1 : -1); 
-         const change = forecastArr[i-1] * (Math.random() * 0.006 * trend);
-         forecastArr[i] = Math.round((forecastArr[i-1] + change)/10000)*10000;
+         const change = forecast[i-1] * (Math.random() * 0.006 * trend);
+         forecast[i] = Math.round((forecast[i-1] + change)/10000)*10000;
       }
 
-      const makeOhlc = (arr: number[]) => {
-          return arr.map((val, i) => {
-              const open = i === 0 ? val : arr[i-1];
-              const close = val;
-              const minOC = Math.min(open, close);
-              const maxOC = Math.max(open, close);
-              const high = maxOC + Math.round((maxOC * (Math.random()*0.003))/10000)*10000;
-              const low = minOC - Math.round((minOC * (Math.random()*0.003))/10000)*10000;
-              return { o: open, h: high, l: low, c: close };
-          });
-      };
-
-      return { real: makeOhlc(realArr), forecast: makeOhlc(forecastArr) };
+      return { real, forecast };
     };
 
-  useEffect(() => {
+    useEffect(() => {
     let isMounted = true;
     const fetchMarket = async () => {
       try {
@@ -1406,18 +1394,24 @@ function MarketSection() {
   ];
 
   const hasChart = chartData.real.length > 0;
-  const mockOHLC = { o: 0, h: 0, l: 0, c: 0 };
-  const rawReal = hasChart ? chartData.real.filter(v => v.c > 0) : new Array(12).fill(mockOHLC);
-  const rawForecast = hasChart ? chartData.forecast : new Array(25).fill(mockOHLC);
+  const rawReal = hasChart ? chartData.real.filter(v => v > 0) : new Array(12).fill(0);
+  const rawForecast = hasChart ? chartData.forecast : new Array(25).fill(0);
 
-  // Map over OHLC data
-  const allRealL = hasChart ? rawReal.map((d: any) => d.l) : [];
-  const allRealH = hasChart ? rawReal.map((d: any) => d.h) : [];
-  const allFcL = hasChart ? rawForecast.map((d: any) => d.l) : [];
-  const allFcH = hasChart ? rawForecast.map((d: any) => d.h) : [];
-  const axisMin = hasChart ? Math.min(...allRealL, ...allFcL) * 0.999 : 0;
-  const axisMax = hasChart ? Math.max(...allRealH, ...allFcH) * 1.001 : 1;
+  const axisMin = hasChart ? Math.min(...chartData.real, ...chartData.forecast) * 0.999 : 0;
+  const axisMax = hasChart ? Math.max(...chartData.real, ...chartData.forecast) * 1.001 : 1;
   const r = axisMax - axisMin || 1;
+
+  const ptsReal = rawReal.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - axisMin) / r) * 55 
+  }));
+  const ptsForecast = rawForecast.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - axisMin) / r) * 55 
+  }));
+
+  const pathReal = ptsReal.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
+  const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
 
   return (
     <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out ${loading ? 'opacity-70' : 'opacity-100'}`}>
@@ -1451,14 +1445,11 @@ function MarketSection() {
         {/* Legend */}
         <div className="flex items-center justify-end gap-3 px-1 w-full">
           <div className="flex items-center gap-1.5">
-             <div className="flex gap-[2px]">
-               <div className="w-1.5 h-2.5 bg-[#16a34a] rounded-[1px]"></div>
-               <div className="w-1.5 h-2.5 bg-[#ef4444] rounded-[1px]"></div>
-             </div>
+             <div className="w-3 h-0.5 bg-[#16a34a]"></div>
              <span className="text-[9px] text-[#5f687b] font-bold uppercase tracking-wider">Thực tế</span>
           </div>
           <div className="flex items-center gap-1.5">
-             <div className="w-1.5 h-2.5 bg-[#94a3b8] rounded-[1px]"></div>
+             <div className="w-3 h-[1px] border-t-2 border-dashed border-[#94a3b8]"></div>
              <span className="text-[9px] text-[#5f687b] font-bold uppercase tracking-wider">Dự kiến</span>
           </div>
         </div>
@@ -1467,69 +1458,49 @@ function MarketSection() {
           {/* Tooltip on hover */}
           {hoverIdx !== null && hoverIdx < rawForecast.length && (
             <div className="absolute z-50 bg-[#182033] text-white text-[10px] px-2.5 py-2 rounded-md whitespace-nowrap shadow-[0px_4px_12px_rgba(0,0,0,0.3)] pointer-events-none transform -translate-x-1/2 -translate-y-[calc(100%+6px)]"
-                 style={{ left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%`, top: `0px` }}>
+                 style={{ left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%`, top: hoverIdx < rawReal.length ? `${ptsReal[hoverIdx].y}px` : `${ptsForecast[hoverIdx].y}px` }}>
               <p className="font-bold border-b border-[#334155] pb-1 mb-1.5 text-center">{hoverIdx}:00</p>
               <div className="flex flex-col gap-1">
                 {hoverIdx < rawReal.length && (
                   <div className="flex justify-between gap-4 text-[#10b981]">
                     <span>Thực tế:</span>
-                    <span className="font-bold">{(rawReal[hoverIdx].c/1000000).toFixed(2)} Tr</span>
+                    <span className="font-bold">{(rawReal[hoverIdx]/1000000).toFixed(2)} Tr</span>
                   </div>
                 )}
                 <div className="flex justify-between gap-4 text-[#cbd5e1]">
                   <span>Dự kiến:</span>
-                  <span className="font-bold">{(rawForecast[hoverIdx].c/1000000).toFixed(2)} Tr</span>
+                  <span className="font-bold">{(rawForecast[hoverIdx]/1000000).toFixed(2)} Tr</span>
                 </div>
               </div>
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#182033]"></div>
             </div>
           )}
 
-          {/* Candlesticks drawn as absolute divs */}
-          <div className="absolute inset-0 flex items-center justify-between w-full h-full">
-          {rawForecast.map((fcData: any, i: number) => {
-            const isReal = i < rawReal.length;
-            const data = isReal ? rawReal[i] : fcData;
-            const isUp = data.c >= data.o;
-            
-            const yHigh = 60 - ((data.h - axisMin) / r) * 55;
-            const yLow = 60 - ((data.l - axisMin) / r) * 55;
-            const yOpen = 60 - ((data.o - axisMin) / r) * 55;
-            const yClose = 60 - ((data.c - axisMin) / r) * 55;
-            
-            const topY = Math.min(yOpen, yClose);
-            const bottomY = Math.max(yOpen, yClose);
-            const bodyHeight = Math.max(1.5, bottomY - topY);
-            const wickHeight = Math.max(1, yLow - yHigh);
-
-            const color = isReal 
-                ? (isUp ? '#16a34a' : '#ef4444') 
-                : '#94a3b8'; // gray for forecast
-                
-            return (
-              <div key={`candle-${i}`} className="absolute flex flex-col items-center group cursor-crosshair" 
-                   style={{ left: `calc(${(i / (rawForecast.length - 1)) * 100}% - 4px)`, width: '8px', top: `${yHigh}px`, height: `${wickHeight}px` }}
-                   >
-                  
-                  
-
-                  {/* Wick */}
-                  <div className="absolute w-[1.5px] h-full left-1/2 -translate-x-1/2 rounded-full" style={{ backgroundColor: color }}></div>
-                  {/* Body */}
-                  <div className="absolute w-[4px] rounded-[1px] left-1/2 -translate-x-1/2 transition-transform duration-200 group-hover:scale-125" style={{ top: `${topY - yHigh}px`, height: `${bodyHeight}px`, backgroundColor: color }}></div>
-              </div>
-            );
-          })}
+          <svg viewBox="0 0 300 65" className="absolute top-0 left-0 w-full h-[65px] overflow-visible preserve-3d" preserveAspectRatio="none">
+             {/* Forecast line (dashed) */}
+             <path d={pathForecast} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+             {/* Real line (solid green) */}
+             <path d={pathReal} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          </svg>
           
+          {/* Real points drawn as absolute divs to avoid ellipse distortion */}
+          {rawReal.map((v, i) => (
+            <div key={`real-point-${i}`} className="absolute rounded-full bg-white pointer-events-none" 
+                 style={{ 
+                   left: `calc(${(i / (rawForecast.length - 1)) * 100}% - 2.5px)`, 
+                   top: `calc(${60 - ((v - axisMin) / r) * 55}px - 2.5px)`,
+                   width: '5px', height: '5px', border: '1.5px solid #16a34a'
+                 }}></div>
+          ))}
+
           {/* Full height hover capture zones */}
           <div className="absolute inset-0 flex w-full h-full z-20">
-            {rawForecast.map((_: any, i: number) => (
+            {rawForecast.map((_, i) => (
               <div key={`hover-${i}`} className="absolute top-0 h-full cursor-crosshair"
                    style={{ left: `calc(${(i / (rawForecast.length - 1)) * 100}% - 8px)`, width: '16px' }}
                    onMouseEnter={() => setHoverIdx(i)} onMouseLeave={() => setHoverIdx(null)}>
               </div>
             ))}
-          </div>
           </div>
         </div>
         <div className="flex justify-between text-[8px] sm:text-[9px] text-[#5f687b] mt-1 font-medium px-[2px]">
