@@ -860,10 +860,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           {/* Featured article */}
           {featured && (
             <a
-              href={featured.link ?? "#"}
-              target={featured.link ? "_blank" : undefined}
-              rel="noopener noreferrer"
-              className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              href="#" onClick={(e) => { e.preventDefault(); if (onArticleClick) onArticleClick(featured); }} className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -992,10 +989,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {/* Featured feed card */}
           {featured && (
             <a
-              href={featured.link ?? "#"}
-              target={featured.link ? "_blank" : undefined}
-              rel="noopener noreferrer"
-              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+              href="#" onClick={(e) => { e.preventDefault(); if (onArticleClick) onArticleClick(featured); }} className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
