@@ -1519,14 +1519,14 @@ function MarketSection() {
         const timeoutId = setTimeout(() => controller.abort(), 6000); 
         
         const [pqRes] = await Promise.allSettled([
-          fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'), { signal: controller.signal })
+          fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history?_t=' + Date.now()), { signal: controller.signal })
         ]);
         
         clearTimeout(timeoutId);
         if (!isMounted) return;
 
         let finalGoldData = [];
-        let chartBasePrice = 14320000;
+        let chartBasePrice = 14410000;
 
         if (pqRes.status === 'fulfilled') {
           const pqJson = await pqRes.value.json();
@@ -1535,9 +1535,9 @@ function MarketSection() {
             const filtered = pqJson.data.filter((item: any) => keys.includes(item.productType));
             if (filtered.length > 0) {
               const fallback = [
-                { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
-                { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14020000, priceOut: 14320000 },
-                { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 14020000, priceOut: 14350000 }
+                { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
+                { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
+                { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
               ];
               finalGoldData = keys.map(k => filtered.find((i:any) => i.productType === k) || fallback.find((i:any) => i.productType === k));
               const npq = finalGoldData.find((i: any) => i.productType === 'NPQ') || finalGoldData[1];
@@ -1548,9 +1548,9 @@ function MarketSection() {
         
         if (finalGoldData.length === 0) {
            finalGoldData = [
-            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
-            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14020000, priceOut: 14320000 },
-            { productTypeName: 'Vàng miếng SJC', priceIn: 14020000, priceOut: 14350000 }
+            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
           ];
         }
 
@@ -1560,11 +1560,11 @@ function MarketSection() {
       } catch (err) {
         if (isMounted) {
           setGoldData([
-            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
-            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14020000, priceOut: 14320000 },
-            { productTypeName: 'Vàng miếng SJC', priceIn: 14020000, priceOut: 14350000 }
+            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
           ]);
-          setChartData(prev => prev.real.length ? prev : generateDynamicData(14320000));
+          setChartData(prev => prev.real.length ? prev : generateDynamicData(14410000));
           setLoading(false);
         }
       }
@@ -1576,9 +1576,9 @@ function MarketSection() {
   
 
   const displayData = goldData.length ? goldData : [
-    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 },
-    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 },
-    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 }
+    { productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
   ];
 
   const hasChart = chartData.real.length > 0;
