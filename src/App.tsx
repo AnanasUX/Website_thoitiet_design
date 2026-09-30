@@ -1290,11 +1290,8 @@ function ScrollToTop() {
 
 
 function MarketSection() {
-  const [activeMarketTab, setActiveMarketTab] = useState<'gold' | 'fx' | 'petrol'>('gold');
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [goldData, setGoldData] = useState<any[]>([]);
-  const [fxData, setFxData] = useState<any[]>([]);
-  const [petrolData, setPetrolData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{ real: number[], forecast: number[] }>({ real: [], forecast: [] });
   const [loading, setLoading] = useState(true);
 
@@ -1365,32 +1362,7 @@ function MarketSection() {
           ];
         }
 
-        // Generate dynamic mock for FX
-        const baseFx = [
-          { code: 'USD', name: 'Đô la Mỹ', buy: 24450, sell: 24820 },
-          { code: 'EUR', name: 'Euro', buy: 26850, sell: 27450 },
-          { code: 'JPY', name: 'Yên Nhật', buy: 168.50, sell: 175.20 }
-        ];
-        const dynamicFx = baseFx.map(item => ({
-          ...item,
-          buy: (item.buy * (1 + (Math.random() * 0.004 - 0.002))).toLocaleString('vi-VN', { minimumFractionDigits: item.code === 'JPY' ? 2 : 0, maximumFractionDigits: item.code === 'JPY' ? 2 : 0 }),
-          sell: (item.sell * (1 + (Math.random() * 0.004 - 0.002))).toLocaleString('vi-VN', { minimumFractionDigits: item.code === 'JPY' ? 2 : 0, maximumFractionDigits: item.code === 'JPY' ? 2 : 0 }),
-        }));
-
-        // Generate dynamic mock for Petrol (match actual API format from user's screen)
-        const basePetrol = [
-          { name: 'Xăng E10', price: 27080 },
-          { name: 'Xăng E5', price: 26390 },
-          { name: 'Dầu DO 0,05S-II', price: 18770 }
-        ];
-        const dynamicPetrol = basePetrol.map(item => ({
-          ...item,
-          price: (item.price * (1 + (Math.random() * 0.01 - 0.005))).toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-        }));
-
         setGoldData(finalGoldData);
-        setFxData(dynamicFx);
-        setPetrolData(dynamicPetrol);
         setChartData(prev => prev.real.length ? prev : generateDynamicData(sjcPrice));
         setLoading(false);
       } catch (err) {
@@ -1399,16 +1371,6 @@ function MarketSection() {
             { productTypeName: 'Vàng trang sức 999.9', priceIn: 13650000, priceOut: 14150000 },
             { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13950000, priceOut: 14250000 },
             { productTypeName: 'Vàng miếng SJC', priceIn: 13950000, priceOut: 14250000 }
-          ]);
-          setFxData([
-            { code: 'USD', name: 'Đô la Mỹ', buy: '24.450', sell: '24.820' },
-            { code: 'EUR', name: 'Euro', buy: '26.850', sell: '27.450' },
-            { code: 'JPY', name: 'Yên Nhật', buy: '168.50', sell: '175.20' }
-          ]);
-          setPetrolData([
-            { name: 'Xăng E10', price: '27.080' },
-            { name: 'Xăng E5', price: '26.390' },
-            { name: 'Dầu DO 0,05S-II', price: '18.770' }
           ]);
           setChartData(prev => prev.real.length ? prev : generateDynamicData(14250000));
           setLoading(false);
@@ -1449,15 +1411,7 @@ function MarketSection() {
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
-      
-        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 mb-1">
-          <button onClick={() => setActiveMarketTab('gold')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'gold' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Giá Vàng</button>
-          <button onClick={() => setActiveMarketTab('fx')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'fx' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Ngoại Tệ</button>
-          <button onClick={() => setActiveMarketTab('petrol')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'petrol' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Xăng Dầu</button>
-        </div>
-        
-        <div className={activeMarketTab === 'gold' ? 'block' : 'hidden'}>
-<div className="flex items-center justify-between w-full mb-1">
+      <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
@@ -1521,45 +1475,6 @@ function MarketSection() {
           <span>23:59</span>
         </div>
       </div>
-    </div>
-
-      {activeMarketTab === 'fx' && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between w-full mb-1">
-            <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Tỷ giá Ngoại tệ (Vietcombank)</h2>
-          </div>
-          {fxData.map((item, idx) => (
-            <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
-              <div className="flex justify-between items-center mb-1">
-                <p className="font-bold text-[#182033] text-[14px]">{item.code} <span className="font-normal text-[12px] text-[#5f687b]">({item.name})</span></p>
-              </div>
-              <div className="flex justify-between items-center w-full mt-1">
-                <p className="text-[#5f687b] text-[12px]">Mua tiền mặt</p>
-                <p className="font-semibold text-[#16a34a] text-[14px]">{item.buy}</p>
-              </div>
-              <div className="flex justify-between items-center w-full mt-1">
-                <p className="text-[#5f687b] text-[12px]">Bán ra</p>
-                <p className="font-semibold text-[#ef4444] text-[14px]">{item.sell}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeMarketTab === 'petrol' && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between w-full mb-1">
-            <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá Xăng Dầu (Petrolimex)</h2>
-          </div>
-          {petrolData.map((item, idx) => (
-            <div key={idx} className="flex justify-between items-center border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
-              <p className="font-bold text-[#182033] text-[14px]">{item.name}</p>
-              <p className="font-semibold text-[#16a34a] text-[14px]">{item.price} đ/l</p>
-            </div>
-          ))}
-          <p className="text-[11px] text-[#5f687b] mt-1 italic">Giá bán lẻ tham khảo vùng 1</p>
-        </div>
-      )}
     </div>
   );
 }
