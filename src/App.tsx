@@ -394,7 +394,7 @@ function WeatherSection({
   const showRouteAdvisory = liveOverrides ? (liveOverrides.routeItems != null && liveOverrides.routeItems.length > 0) : baseTheme.showRouteAdvisory;
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02]"
@@ -615,13 +615,14 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 }
 
 function MobileLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory, darkMode, setDarkMode,
+  isFetchingCategory, isLoading, darkMode, setDarkMode,
     condKey,
   liveData,
   liveNews,
   liveOverrides,
 }: {
   isFetchingCategory?: boolean;
+    isLoading?: boolean;
     condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
@@ -708,13 +709,14 @@ function MobileLayout({ activeCategory, setActiveCategory,
 // ── Tablet Layout ────────────────────────────────────────────────────────────
 
 function TabletLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory, darkMode, setDarkMode,
+  isFetchingCategory, isLoading, darkMode, setDarkMode,
     condKey,
   liveData,
   liveNews,
   liveOverrides,
 }: {
   isFetchingCategory?: boolean;
+    isLoading?: boolean;
     condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
@@ -850,13 +852,14 @@ function TabletLayout({ activeCategory, setActiveCategory,
 // ── Desktop Layout ───────────────────────────────────────────────────────────
 
 function DesktopLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory, darkMode, setDarkMode,
+  isFetchingCategory, isLoading, darkMode, setDarkMode,
     condKey,
   liveData,
   liveNews,
   liveOverrides,
 }: {
   isFetchingCategory?: boolean;
+    isLoading?: boolean;
     condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
@@ -1381,21 +1384,25 @@ function MarketSection() {
     return () => { isMounted = false; };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
-        <div className="w-full h-[40px] bg-slate-100 animate-pulse rounded-md"></div>
-        <div className="w-full h-[150px] bg-slate-100 animate-pulse rounded-md mt-2"></div>
-      </div>
-    );
-  }
-
-  const axisMin = Math.min(...chartData.real, ...chartData.forecast) * 0.999;
-  const axisMax = Math.max(...chartData.real, ...chartData.forecast) * 1.001;
-  const r = axisMax - axisMin;
   
-  const rawReal = chartData.real.filter(v => v > 0);
-  const rawForecast = chartData.forecast;
+
+  const displayData = goldData.length ? goldData : [
+    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 },
+    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 },
+    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 }
+  ];
+
+  const hasChart = chartData.real.length > 0;
+  const rawReal = hasChart ? chartData.real.filter(v => v > 0) : new Array(12).fill(0);
+  const rawForecast = hasChart ? chartData.forecast : new Array(25).fill(0);
+
+  const axisMin = hasChart ? Math.min(...chartData.real, ...chartData.forecast) * 0.999 : 0;
+  const axisMax = hasChart ? Math.max(...chartData.real, ...chartData.forecast) * 1.001 : 1;
+  const r = axisMax - axisMin || 1;
+
+  
+  
+  
 
   const ptsReal = rawReal.map((v, i) => ({ 
     x: (i / (rawForecast.length - 1)) * 300, 
@@ -1410,7 +1417,7 @@ function MarketSection() {
   const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
 
   return (
-    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
+    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-all duration-700 ease-in-out ${loading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
       <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
@@ -1420,7 +1427,7 @@ function MarketSection() {
       </div>
       
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
-        {goldData.map((item, idx) => (
+        {displayData.map((item, idx) => (
           <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
             <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
@@ -2334,14 +2341,14 @@ export default function App() {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
