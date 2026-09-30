@@ -3,23 +3,9 @@
 with open("src/App.tsx", "r", encoding="utf-8") as f:
     content = f.read()
 
-# We need to fix the malformed inline types.
-# It looks like:
-#   liveOverrides?: LiveOverrides;
-# }
-#     activeCategory?: string;
-#     setActiveCategory?: (c: string) => void;
-#     darkMode?: boolean;
-#     setDarkMode?: (d: boolean) => void;) {
-
-malformed_pattern = r'liveOverrides\?: LiveOverrides;\s*\}\s*activeCategory\?: string;\s*setActiveCategory\?: \(c: string\) => void;\s*darkMode\?: boolean;\s*setDarkMode\?: \(d: boolean\) => void;'
-
-def fix_malformed(match):
-    return "liveOverrides?: LiveOverrides;\n    activeCategory?: string;\n    setActiveCategory?: (c: string) => void;\n    darkMode?: boolean;\n    setDarkMode?: (d: boolean) => void;\n}"
-
-content = re.sub(malformed_pattern, fix_malformed, content)
+# Add the missing </div>
+content = content.replace('</div>\n        <div className="flex justify-between text-[8px] sm:text-[9px] text-[#5f687b] mt-1 font-medium px-[2px]">', '</div>\n        </div>\n        <div className="flex justify-between text-[8px] sm:text-[9px] text-[#5f687b] mt-1 font-medium px-[2px]">')
 
 with open("src/App.tsx", "w", encoding="utf-8") as f:
     f.write(content)
-
-print("Fixed Syntax Errors")
+print("Added missing closing tag.")
