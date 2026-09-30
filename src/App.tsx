@@ -634,20 +634,16 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     if (!article.link) return;
     setIsLoadingFull(true);
     setFullContent('');
-    // Fast fallback proxy chain for fetching article content
     const fetchHtml = async () => {
       const url = encodeURIComponent(article.link);
       try {
-        const res = await fetch(`https://corsproxy.io/?url=${url}`);
-        if (res.ok) return await res.text();
+        const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
+        if (res.ok) {
+           const data = await res.json();
+           return data.contents || "";
+        }
       } catch (e) {}
-      try {
-        const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${url}`);
-        if (res.ok) return await res.text();
-      } catch (e) {}
-      const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
-      const data = await res.json();
-      return data.contents || "";
+      return "";
     };
 
     fetchHtml()
@@ -778,9 +774,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
            <div className="mt-6" dangerouslySetInnerHTML={{ __html: fullContent }} />
         )}
 
-        <a href={article.link} target="_blank" rel="noopener noreferrer" className="mt-4 bg-[#f4f6fa] hover:bg-[#e3e7ef] text-[#182033] font-bold text-center py-3 rounded-xl transition-colors">
-          Đọc bài viết gốc trên {article.src.split(' ')[0]}
-        </a>
+
 
         {/* Related articles */}
         <div className="mt-10 border-t border-[#e3e7ef] pt-8">
