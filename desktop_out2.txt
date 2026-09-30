@@ -1,0 +1,30 @@
+
+        {/* News column */}
+        <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+        <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+          Tin Tức Mới Nhất
+        </p>
+        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+      </div>
+
+          <div className="flex items-center justify-between w-full">
+            <div className="flex gap-[10px] items-center">
+              <p className="font-bold text-[#182033] text-[20px] whitespace-nowrap">Tin Tức Mới Nhất</p>
+              <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
+                <p className="font-bold text-[11px] text-white">LIVE</p>
+              </div>
+            </div>
+            
+          </div>
+
+          {/* Featured feed card */}
+          {featured && (
+            <a
+              href={featured.link ?? "#"}
+              target={featured.link ? "_blank" : undefined}
+              rel="noopener noreferrer"
+              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+            >
+              <div className="flex gap-[10px] items-center overflow-hidden w-full">
+                <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">

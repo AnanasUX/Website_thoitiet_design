@@ -1,0 +1,145 @@
+      if (trulyNewItems.length <= 10) {
+        setHasMoreNews(false);
+      }
+      
+      setLiveNews(prev => {
+        const next = [...(prev || []), ...picked];
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      loadingRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, [liveNews, hasMoreNews]);
+
+  
+  
+
+
+
+  
+  useEffect(() => {
+    
+    
+    let isCancelled = false;
+    const fetchCategoryNews = async () => {
+      try {
+        const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
+        if (catFeeds.length === 0) return;
+        
+        // Fetch up to 10 feeds from this category
+        const selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 15);
+        
+        const promises = selectedFeeds.map(feed => 
+          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
+            .then(r => r.json())
+            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+            .catch(() => [])
+        );
+        
+        const results = await Promise.all(promises);
+        if (isCancelled) return;
+        
+        
+        const mappedFeeds = results.map(feedArticles => {
+          return feedArticles.map((item: any) => {
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
+            }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+            
+            if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
+              imageUrl = ""; 
+            }
+            
+            // QUAN TRỌNG: Loại bỏ bài viết nếu không có ảnh
+            if (!imageUrl || imageUrl.trim() === "") return null;
+            
+            let cleanDesc = "";
+            if (item.description) {
+               cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+               cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+            }
+            
+            if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
+               cleanDesc = "";
+            }
+            
+            return {
+              img: imageUrl,
+              logo: getNewspaperLogo(item.link || ""),
+              fallbackImg: imageUrl,
+              author: decodeHTMLEntities(item.title ?? "Tin tức"),
+              src: item.source || item._sourceName || "Tin tức",
+              body: decodeHTMLEntities(cleanDesc),
+              link: item.link
+            };
+          }).filter(Boolean); // Remove nulls (articles without images)
+        });
+        
+        // Remove empty feeds
+        let validFeeds = mappedFeeds.filter(f => f.length > 0);
+        
+        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú
+        // Chỉ lấy bài viết trong vòng 24h qua (mới nhất trong ngày)
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        
+        let recentFeeds = validFeeds.map(feed => {
+            return feed.filter(item => new Date(item.pubDate || 0).getTime() > oneDayAgo);
+        }).filter(feed => feed.length > 0);
+        
+        // Nếu số lượng bài quá ít do lọc 24h, fallback về lấy tất cả
+        if (recentFeeds.flat().length < 15) {
+            recentFeeds = validFeeds;
+        }
+
+        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú nguồn (chống hiện tượng 1 báo chiếm sóng)
+        const mixedNews = [];
+        while(recentFeeds.length > 0) {
+           // Đảo lộn thứ tự các nguồn báo
+           recentFeeds.sort(() => 0.5 - Math.random());
+           for (let i = recentFeeds.length - 1; i >= 0; i--) {
+               const feed = recentFeeds[i];
+               // Bốc ngẫu nhiên từ 1 đến 4 bài của nguồn này
+               const takeCount = Math.floor(Math.random() * 4) + 1;
+               const taken = feed.splice(0, takeCount);
+               mixedNews.push(...taken);
+               if (feed.length === 0) {
+                   recentFeeds.splice(i, 1);
+               }
+           }
+        }
+        
+        fullNewsPool.current = mixedNews;
+        setLiveNews(mixedNews.slice(0, 15));
+        setHasMoreNews(mixedNews.length > 10);
+        
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    
+    fetchCategoryNews();
+    return () => { isCancelled = true; };
+  }, [activeCategory]);
+
+
+  const tapCount = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Load live data: ?data=<base64json> (bot-embedded) hoặc ?api=<url> (fetch) ───
+  useEffect(() => {
+    const loadData = () => {
+    const params  = new URLSearchParams(window.location.search);
+    const rawData = params.get("data");   // base64 JSON từ bot
+    const cData   = params.get("cdata");  // zlib compressed base64 JSON từ bot
+    const apiUrl  = params.get("api");    // URL API fallback
+

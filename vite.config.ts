@@ -1,3 +1,4 @@
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -18,6 +19,7 @@ export default defineConfig(({ mode }) => {
       minify: !emitSourcemaps,
     },
     plugins: [
+    VitePWA({ registerType: 'autoUpdate', manifest: { name: 'Thời Tiết AnX', short_name: 'AnX', theme_color: '#ffffff', icons: [{ src: '/vite.svg', sizes: '192x192', type: 'image/svg+xml' }, { src: '/vite.svg', sizes: '512x512', type: 'image/svg+xml' }] } }),
 react(),
       tailwindcss(),
       figmaSiteConfiguration(siteConfiguration),

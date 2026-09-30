@@ -1,0 +1,60 @@
+  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
+  return (
+    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+        <div className="flex gap-[var(--grid-gap)] items-center">
+          <p className="font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
+          <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
+            📍 {WEATHER.location}
+          </p>
+        </div>
+        <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
+          <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+            {dateStr} · {timeStr}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
+        {/* Weather column */}
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
+          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
+        </div>
+
+        {/* News panel */}
+        <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
+      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] mt-[-12px]">
+        {NEWS_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+          <GoldPriceSection />
+          <div className="flex flex-col gap-[2px] items-start">
+            <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
+            <p className="font-normal text-[#5f687b] text-[12px]">
+              {WEATHER.location} · {newsFeed.length} bài mới nhất
+            </p>
+          </div>
+
+          {isFetchingCategory ? <NewsSkeleton /> : (<div className="w-full flex flex-col gap-[var(--grid-gap)]">
+{isFetchingCategory ? <NewsSkeleton /> : (<div className="w-full flex flex-col gap-[var(--grid-gap)]">
+{/* Featured article */}
+          {featured && (
+            <a
+              href={featured.link ?? "#"}
+              target={featured.link ? "_blank" : undefined}
+              rel="noopener noreferrer"
+              className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+            >
+              <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
+                  <p className="font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>

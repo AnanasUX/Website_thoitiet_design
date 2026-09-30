@@ -1,0 +1,14 @@
+--- Line 687 ---
+      </div>
+
+          <GoldPriceSection />
+          <div className="flex flex-col gap-[2px] items-start">
+            <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
+            <p className="font-normal text-[#5f687b] text-[12px]">
+--- Line 800 ---
+        {/* News column */}
+        <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
+      <GoldPriceSection />
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+        <div className="flex gap-[10px] items-center">
+          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">

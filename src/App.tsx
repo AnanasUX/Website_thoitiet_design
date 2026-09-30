@@ -641,6 +641,15 @@ function MobileLayout({ activeCategory, setActiveCategory,
               {shortDateStr} · {timeStr}
             </p>
           </div>
+        
+          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
+            {darkMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            )}
+          </button>
+
         </div>
       </div>
 
@@ -725,7 +734,16 @@ function TabletLayout({ activeCategory, setActiveCategory,
             {dateStr} · {timeStr}
           </p>
         </div>
-      </div>
+      
+          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
+            {darkMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            )}
+          </button>
+
+        </div>
 
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
@@ -848,6 +866,15 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               {dateStr} · {timeStr}
             </p>
           </div>
+        
+          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
+            {darkMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            )}
+          </button>
+
         </div>
 
       </div>
@@ -1246,6 +1273,7 @@ function ScrollToTop() {
 
 
 function MarketSection() {
+  const [activeMarketTab, setActiveMarketTab] = React.useState<'gold' | 'fx' | 'petrol'>('gold');
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [goldData, setGoldData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{ real: number[], forecast: number[] }>({ real: [], forecast: [] });
@@ -1411,7 +1439,15 @@ function MarketSection() {
 
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
-      <div className="flex items-center justify-between w-full mb-1">
+      
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 mb-1">
+          <button onClick={() => setActiveMarketTab('gold')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'gold' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Giá Vàng</button>
+          <button onClick={() => setActiveMarketTab('fx')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'fx' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Ngoại Tệ</button>
+          <button onClick={() => setActiveMarketTab('petrol')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'petrol' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Xăng Dầu</button>
+        </div>
+        
+        <div className={activeMarketTab === 'gold' ? 'block' : 'hidden'}>
+<div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
@@ -1549,10 +1585,76 @@ function MarketSection() {
         </div>
       </div>
     </div>
+
+        {activeMarketTab === 'fx' && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between w-full mb-1">
+              <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Tỷ giá Ngoại tệ (Vietcombank)</h2>
+            </div>
+            {[
+              { code: 'USD', name: 'Đô la Mỹ', buy: '24.450', sell: '24.820' },
+              { code: 'EUR', name: 'Euro', buy: '26.850', sell: '27.450' },
+              { code: 'JPY', name: 'Yên Nhật', buy: '168.50', sell: '175.20' }
+            ].map((item, idx) => (
+              <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="font-bold text-[#182033] text-[14px]">{item.code} <span className="font-normal text-[12px] text-[#5f687b]">({item.name})</span></p>
+                </div>
+                <div className="flex justify-between items-center w-full mt-1">
+                  <p className="text-[#5f687b] text-[12px]">Mua tiền mặt</p>
+                  <p className="font-semibold text-[#16a34a] text-[14px]">{item.buy}</p>
+                </div>
+                <div className="flex justify-between items-center w-full mt-1">
+                  <p className="text-[#5f687b] text-[12px]">Bán ra</p>
+                  <p className="font-semibold text-[#ef4444] text-[14px]">{item.sell}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeMarketTab === 'petrol' && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between w-full mb-1">
+              <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá Xăng Dầu (Petrolimex)</h2>
+            </div>
+            {[
+              { name: 'Xăng RON 95-III', price: '21.320' },
+              { name: 'Xăng E5 RON 92-II', price: '20.420' },
+              { name: 'Dầu DO 0,05S-II', price: '18.770' }
+            ].map((item, idx) => (
+              <div key={idx} className="flex justify-between items-center border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
+                <p className="font-bold text-[#182033] text-[14px]">{item.name}</p>
+                <p className="font-semibold text-[#16a34a] text-[14px]">{item.price} đ/l</p>
+              </div>
+            ))}
+            <p className="text-[11px] text-[#5f687b] mt-1 italic">Giá bán lẻ tham khảo vùng 1</p>
+          </div>
+        )}
+      </div>
   );
 }
 
+
+
 export default function App() {
+  const [darkMode, setDarkMode] = React.useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  React.useEffect(() => {
+    const root = window.document.documentElement;
+    if (darkMode) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
 
   useEffect(() => {
     const handleWheel = (e: any) => {

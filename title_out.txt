@@ -1,0 +1,5 @@
+            Tin Tức Mới Nhất
+#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
+#182033] text-[20px] whitespace-nowrap">Tin Tức Mới Nhất</p>
+           author: item.title       ?? "Tin tức",
+           src:    item.source      ?? "Tin tức",

@@ -1,0 +1,1 @@
+﻿console.log(new Date("2026-09-26 08:33:38".replace(' ', 'T') + 'Z').toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
