@@ -1460,7 +1460,7 @@ function MarketSection() {
         <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 mb-1">
           <button onClick={() => setActiveMarketTab('gold')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'gold' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Giá Vàng</button>
           <button onClick={() => setActiveMarketTab('fx')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'fx' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Ngoại Tệ</button>
-          <button onClick={() => setActiveMarketTab('petrol')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'petrol' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Xăng Dầu</button>
+          
         </div>
         
         <div className={activeMarketTab === 'gold' ? 'block' : 'hidden'}>
@@ -1630,25 +1630,7 @@ function MarketSection() {
           </div>
         )}
 
-        {activeMarketTab === 'petrol' && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between w-full mb-1">
-              <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá Xăng Dầu (Petrolimex)</h2>
-            </div>
-            {[
-              { name: 'Xăng E10', price: '27.080' },
-              { name: 'Xăng E5', price: '26.390' },
-              { name: 'Dầu DO 0,05S-II', price: '18.770' }
-            ].map((item, idx) => (
-              <div key={idx} className="flex justify-between items-center border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
-                <p className="font-bold text-[#182033] text-[14px]">{item.name}</p>
-                <p className="font-semibold text-[#16a34a] text-[14px]">{item.price} đ/l</p>
               </div>
-            ))}
-            <p className="text-[11px] text-[#5f687b] mt-1 italic">Giá bán lẻ tham khảo vùng 1</p>
-          </div>
-        )}
-      </div>
   );
 }
 
