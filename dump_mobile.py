@@ -1,9 +1,8 @@
-﻿import re
-with open("src/App.tsx", "r", encoding="utf-8") as f:
+﻿with open("src/App.tsx", "r", encoding="utf-8") as f:
     content = f.read()
 
-match = re.search(r'function MobileLayout.*?(return \(\s*<div.*?\);\s*\})', content, re.DOTALL)
-if match:
-    mobile_html = match.group(1)
-    with open("mobile_full.txt", "w", encoding="utf-8") as outf:
-        outf.write(mobile_html)
+idx = content.find("function MobileLayout")
+end_idx = content.find("function TabletLayout", idx)
+
+with open("mobile_layout.txt", "w", encoding="utf-8") as f:
+    f.write(content[idx:end_idx])

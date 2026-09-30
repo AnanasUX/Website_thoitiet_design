@@ -1,0 +1,94 @@
+function MobileLayout({ activeCategory, setActiveCategory,
+  isFetchingCategory, isLoading, darkMode, setDarkMode,
+    condKey,
+  liveData,
+  liveNews,
+  liveOverrides,
+}: {
+  isFetchingCategory?: boolean;
+    isLoading?: boolean;
+    condKey: ConditionKey;
+  liveData?: Record<ConditionKey, WeatherEntry>;
+  liveNews?: LiveNewsItem[];
+  liveOverrides?: LiveOverrides;
+    activeCategory?: string;
+    setActiveCategory?: (c: string) => void;
+    darkMode?: boolean;
+    setDarkMode?: (d: boolean) => void;
+}) {
+  const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
+  const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
+  const now = useCurrentTime();
+  const shortDateStr = `${now.getDate()} thg ${now.getMonth() + 1}`;
+  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+
+  return (
+    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
+        <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
+        <div className="flex items-center">
+          <div className="flex flex-col items-end">
+            <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
+            📍 {WEATHER.location}
+          </p>
+            <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
+            <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
+              {shortDateStr} · {timeStr}
+            </p>
+          </div>
+          </div>
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+              {darkMode ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+              )}
+            </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
+          <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
+          <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+        </div>
+
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
+          <MarketSection />
+                  <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+        <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+            Tin Tức Mới Nhất
+        </p>
+        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+      </div>
+          {isFetchingCategory ? <NewsSkeleton /> : (<>
+          {newsFeed.map((item, i) => (
+              <a
+              key={i}
+              href={item.link ?? "#"}
+              target={item.link ? "_blank" : undefined}
+              rel="noopener noreferrer"
+              className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group"
+            >
+              <div className="flex flex-col gap-2 items-start w-full">
+                  <div className="flex gap-[10px] items-center w-full">
+                    <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                    <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+                  </div>
+                  <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
+                </div>
+              <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
+              <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+              </div>
+            </a>
+          ))}
+          </>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tablet Layout ────────────────────────────────────────────────────────────
+
