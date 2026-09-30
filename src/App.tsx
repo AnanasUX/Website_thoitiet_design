@@ -1314,7 +1314,7 @@ function MarketSection() {
     // Exactly 25 points for forecast (0 to 24)
     const forecast = new Array(25).fill(0);
     for (let i=0; i<=currentHour; i++) {
-       forecast[i] = Math.round((real[i] * (1 + (Math.random()*0.004 - 0.002)))/10000)*10000;
+       forecast[i] = real[i];
     }
     for(let i=currentHour+1; i<25; i++) {
        const trend = (Math.random() > 0.4 ? 1 : -1); 
