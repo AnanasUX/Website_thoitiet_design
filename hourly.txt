@@ -1,0 +1,66 @@
+function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
+  if (!hourlyData || hourlyData.length === 0) return null;
+  
+  const itemWidth = 65;
+  const width = Math.max(600, hourlyData.length * itemWidth);
+  const height = 180;
+  
+  const maxTemp = Math.max(...hourlyData.map(d => d.temp)) + 1;
+  const minTemp = Math.min(...hourlyData.map(d => d.temp)) - 1;
+  const range = maxTemp - minTemp || 1;
+
+  const points = hourlyData.map((d, i) => {
+    const x = i * itemWidth + (itemWidth / 2);
+    const y = 140 - ((d.temp - minTemp) / range) * 55; 
+    return { x, y, temp: d.temp, time: d.time, icon: d.icon, pop: d.pop };
+  });
+
+  const pathD = points.map((p, i) => {
+    if (i === 0) return `M ${p.x} ${p.y}`;
+    const prev = points[i - 1];
+    const cpX = (prev.x + p.x) / 2;
+    return `C ${cpX} ${prev.y}, ${cpX} ${p.y}, ${p.x} ${p.y}`;
+  }).join(' ');
+
+  return (
+    <div className="w-full overflow-x-auto scrollbar-hide pb-2">
+      <div className="relative" style={{ width: `${width}px`, height: `${height}px` }}>
+        <svg width={width} height={height} className="absolute top-0 left-0 overflow-visible z-0">
+          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="rgba(255, 49, 95, 0.08)" />
+          <path d={pathD} fill="none" stroke="#ff315f" strokeWidth="2.5" strokeLinecap="round" />
+          {points.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="#fff" stroke="#ff315f" strokeWidth="2.5" />
+          ))}
+        </svg>
+        
+        {points.map((p, i) => (
+          <div key={i} className="absolute flex flex-col items-center justify-start w-[65px] z-10" style={{ left: `${p.x - 32.5}px`, top: '10px' }}>
+            <p className="font-semibold text-[#182033] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
+            <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" />
+            <p className="font-semibold text-[#0a84ff] text-[11px] whitespace-nowrap">{p.pop}%</p>
+            <p className="font-bold text-[#182033] text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+function getConditionLabel(iconCode: string) {
+  if (!iconCode) return "Có mây";
+  const code = iconCode.substring(0, 2);
+  switch (code) {
+    case '01': return 'Nắng';
+    case '02': return 'Ít mây';
+    case '03': return 'Trời râm';
+    case '04': return 'Nhiều mây';
+    case '09': return 'Mưa rào';
+    case '10': return 'Có mưa';
+    case '11': return 'Mưa dông';
+    case '13': return 'Tuyết rơi';
+    case '50': return 'Sương mù';
+    default: return 'Có mây';
+  }
+}
+

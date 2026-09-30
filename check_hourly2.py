@@ -3,4 +3,6 @@
 
 idx = content.find("function HourlyTemperatureChart")
 end_idx = content.find("function WeatherSection", idx)
-print(content[idx:end_idx])
+
+with open("hourly.txt", "w", encoding="utf-8") as f:
+    f.write(content[idx:end_idx])
