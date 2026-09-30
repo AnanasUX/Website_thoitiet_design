@@ -2595,7 +2595,7 @@ useEffect(() => {
       {selectedArticle && (
         <NewsDetailView 
           article={selectedArticle} 
-          allNews={liveNews} 
+          allNews={liveNews ?? DEFAULT_NEWS_FEED} 
           onClose={closeArticle} 
           onSelectRelated={handleArticleSelect}
         />
