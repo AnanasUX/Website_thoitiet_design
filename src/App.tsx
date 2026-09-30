@@ -1338,7 +1338,7 @@ function MarketSection() {
         if (!isMounted) return;
 
         let finalGoldData = [];
-        let sjcPrice = 14250000;
+        let chartBasePrice = 14320000;
 
         if (pqRes.status === 'fulfilled') {
           const pqJson = await pqRes.value.json();
@@ -1352,8 +1352,8 @@ function MarketSection() {
                 { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 14020000, priceOut: 14350000 }
               ];
               finalGoldData = keys.map(k => filtered.find((i:any) => i.productType === k) || fallback.find((i:any) => i.productType === k));
-              const sjc = finalGoldData.find((i: any) => i.productType === 'SJC') || finalGoldData[0];
-              sjcPrice = sjc.priceOut;
+              const npq = finalGoldData.find((i: any) => i.productType === 'NPQ') || finalGoldData[1];
+              chartBasePrice = npq.priceOut;
             }
           }
         }
@@ -1367,7 +1367,7 @@ function MarketSection() {
         }
 
         setGoldData(finalGoldData);
-        setChartData(prev => prev.real.length ? prev : generateDynamicData(sjcPrice));
+        setChartData(prev => prev.real.length ? prev : generateDynamicData(chartBasePrice));
         setLoading(false);
       } catch (err) {
         if (isMounted) {
@@ -1376,7 +1376,7 @@ function MarketSection() {
             { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14020000, priceOut: 14320000 },
             { productTypeName: 'Vàng miếng SJC', priceIn: 14020000, priceOut: 14350000 }
           ]);
-          setChartData(prev => prev.real.length ? prev : generateDynamicData(14350000));
+          setChartData(prev => prev.real.length ? prev : generateDynamicData(14320000));
           setLoading(false);
         }
       }
