@@ -130,3 +130,11 @@ html.dark .bg-\[\#ffe8ee\] {
 html.dark .bg-\[\#fff4e5\] {
   background-color: #2c2c2e !important;
 }
+
+.hero-gradient {
+  background: linear-gradient(21deg, rgb(72, 141, 203) 0%, rgb(51, 106, 214) 50%, rgb(79, 196, 255) 100%);
+}
+
+html.dark .hero-gradient {
+  background: linear-gradient(21deg, rgb(23, 43, 115) 0%, rgb(18, 28, 48) 50%, rgb(41, 76, 194) 100%) !important;
+}
