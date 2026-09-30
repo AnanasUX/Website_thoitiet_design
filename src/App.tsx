@@ -164,6 +164,8 @@ type WeatherEntry = {
   sunrise: string; sunset: string; tempMin: string; tempMax: string;
   uvIndex: string; dewPoint: string; hourlyForecast: HourlyItem[];
   warningText?: string; suggestionItems?: string[];
+  dailyForecast?: any[];
+  weekRange?: string;
 };
 
 // ── Default mock data (fallback khi chưa có API) ──────────────────────────────
@@ -377,11 +379,11 @@ function WeatherSection({
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveOverrides?: LiveOverrides;
-}
     activeCategory?: string;
     setActiveCategory?: (c: string) => void;
     darkMode?: boolean;
-    setDarkMode?: (d: boolean) => void;) {
+    setDarkMode?: (d: boolean) => void;
+}) {
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
 
@@ -625,11 +627,11 @@ function MobileLayout({ activeCategory, setActiveCategory,
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
-}
     activeCategory?: string;
     setActiveCategory?: (c: string) => void;
     darkMode?: boolean;
-    setDarkMode?: (d: boolean) => void;) {
+    setDarkMode?: (d: boolean) => void;
+}) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const now = useCurrentTime();
@@ -718,11 +720,11 @@ function TabletLayout({ activeCategory, setActiveCategory,
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
-}
     activeCategory?: string;
     setActiveCategory?: (c: string) => void;
     darkMode?: boolean;
-    setDarkMode?: (d: boolean) => void;) {
+    setDarkMode?: (d: boolean) => void;
+}) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...rest] = newsFeed;
@@ -859,11 +861,11 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
-}
     activeCategory?: string;
     setActiveCategory?: (c: string) => void;
     darkMode?: boolean;
-    setDarkMode?: (d: boolean) => void;) {
+    setDarkMode?: (d: boolean) => void;
+}) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...grid] = newsFeed;
@@ -1289,7 +1291,7 @@ function ScrollToTop() {
 
 
 function MarketSection() {
-  const [activeMarketTab, setActiveMarketTab] = React.useState<'gold' | 'fx' | 'petrol'>('gold');
+  const [activeMarketTab, setActiveMarketTab] = useState<'gold' | 'fx' | 'petrol'>('gold');
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [goldData, setGoldData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{ real: number[], forecast: number[] }>({ real: [], forecast: [] });
@@ -1654,13 +1656,13 @@ function MarketSection() {
 
 
 export default function App() {
-  const [darkMode, setDarkMode] = React.useState(() => {
+  const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const root = window.document.documentElement;
     if (darkMode) {
       root.classList.add('dark');
