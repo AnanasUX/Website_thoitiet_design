@@ -1077,56 +1077,56 @@ export const RSS_FEEDS_DB = [
   { category: "Thời sự", name: "Lao Động", url: "https://laodong.vn/rss/thoi-su.rss" },
 
   // Công nghệ
-  { category: "Công nghệ", name: "VnExpress Số Hóa", url: "https://vnexpress.net/rss/so-hoa.rss" },
-  { category: "Công nghệ", name: "Thanh Niên Công nghệ", url: "https://thanhnien.vn/rss/cong-nghe-game.rss" },
+  { category: "Công nghệ", name: "VnExpress • Số Hóa", url: "https://vnexpress.net/rss/so-hoa.rss" },
+  { category: "Công nghệ", name: "Thanh Niên • Công nghệ", url: "https://thanhnien.vn/rss/cong-nghe-game.rss" },
   { category: "Công nghệ", name: "GenK", url: "https://genk.vn/rss/home.rss" },
   { category: "Công nghệ", name: "ICTNews", url: "https://vietnamnet.vn/rss/cong-nghe.rss" },
-  { category: "Công nghệ", name: "Dân Trí Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
-  { category: "Công nghệ", name: "Tuổi Trẻ Công nghệ", url: "https://tuoitre.vn/rss/cong-nghe.rss" },
+  { category: "Công nghệ", name: "Dân Trí • Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
+  { category: "Công nghệ", name: "Tuổi Trẻ • Công nghệ", url: "https://tuoitre.vn/rss/cong-nghe.rss" },
 
   // AI
   
-  { category: "AI", name: "Dân Trí Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
+  { category: "AI", name: "Dân Trí • Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
   
 
   // Giới trẻ
-  { category: "Giới trẻ", name: "Tuổi Trẻ Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
-  { category: "Giới trẻ", name: "Thanh Niên Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
-  { category: "Giới trẻ", name: "Dân Trí Nhịp sống trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
+  { category: "Giới trẻ", name: "Tuổi Trẻ • Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
+  { category: "Giới trẻ", name: "Thanh Niên • Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
+  { category: "Giới trẻ", name: "Dân Trí • Nhịp sống trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
   { category: "Giới trẻ", name: "Kenh14", url: "https://kenh14.vn/rss/home.rss" },
 
   // Giáo dục
-  { category: "Giáo dục", name: "VnExpress Giáo dục", url: "https://vnexpress.net/rss/giao-duc.rss" },
-  { category: "Giáo dục", name: "Tuổi Trẻ Giáo dục", url: "https://tuoitre.vn/rss/giao-duc.rss" },
-  { category: "Giáo dục", name: "Thanh Niên Giáo dục", url: "https://thanhnien.vn/rss/giao-duc.rss" },
-  { category: "Giáo dục", name: "Dân Trí Giáo dục", url: "https://dantri.com.vn/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "VnExpress • Giáo dục", url: "https://vnexpress.net/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "Tuổi Trẻ • Giáo dục", url: "https://tuoitre.vn/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "Thanh Niên • Giáo dục", url: "https://thanhnien.vn/rss/giao-duc.rss" },
+  { category: "Giáo dục", name: "Dân Trí • Giáo dục", url: "https://dantri.com.vn/rss/giao-duc.rss" },
 
   // Kinh tế
   { category: "Kinh tế", name: "VnEconomy", url: "https://vneconomy.vn/rss/home.rss" },
   { category: "Kinh tế", name: "CafeF", url: "https://cafef.vn/rss/home.rss" },
   { category: "Kinh tế", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
-  { category: "Kinh tế", name: "VnExpress Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
+  { category: "Kinh tế", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
 
   // Startup
   { category: "Startup", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
-  { category: "Startup", name: "VnExpress Startup", url: "https://vnexpress.net/rss/startup.rss" },
+  { category: "Startup", name: "VnExpress • Startup", url: "https://vnexpress.net/rss/startup.rss" },
   { category: "Startup", name: "Diễn đàn Doanh nghiệp", url: "https://diendandoanhnghiep.vn/rss/khoi-nghiep.rss" },
 
   // Giải trí
-  { category: "Giải trí", name: "VnExpress Giải trí", url: "https://vnexpress.net/rss/giai-tri.rss" },
-  { category: "Giải trí", name: "Tuổi Trẻ Giải trí", url: "https://tuoitre.vn/rss/giai-tri.rss" },
-  { category: "Giải trí", name: "Thanh Niên Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "VnExpress • Giải trí", url: "https://vnexpress.net/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Tuổi Trẻ • Giải trí", url: "https://tuoitre.vn/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Thanh Niên • Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Ngôi Sao", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
 
   // Du lịch
-  { category: "Du lịch", name: "VnExpress Du lịch", url: "https://vnexpress.net/rss/du-lich.rss" },
-  { category: "Du lịch", name: "Tuổi Trẻ Du lịch", url: "https://tuoitre.vn/rss/du-lich.rss" },
-  { category: "Du lịch", name: "Thanh Niên Du lịch", url: "https://thanhnien.vn/rss/du-lich.rss" },
+  { category: "Du lịch", name: "VnExpress • Du lịch", url: "https://vnexpress.net/rss/du-lich.rss" },
+  { category: "Du lịch", name: "Tuổi Trẻ • Du lịch", url: "https://tuoitre.vn/rss/du-lich.rss" },
+  { category: "Du lịch", name: "Thanh Niên • Du lịch", url: "https://thanhnien.vn/rss/du-lich.rss" },
 
   // Thể thao
-  { category: "Thể thao", name: "VnExpress Thể thao", url: "https://vnexpress.net/rss/the-thao.rss" },
-  { category: "Thể thao", name: "Tuổi Trẻ Thể thao", url: "https://tuoitre.vn/rss/the-thao.rss" },
-  { category: "Thể thao", name: "Thanh Niên Thể thao", url: "https://thanhnien.vn/rss/the-thao.rss" },
+  { category: "Thể thao", name: "VnExpress • Thể thao", url: "https://vnexpress.net/rss/the-thao.rss" },
+  { category: "Thể thao", name: "Tuổi Trẻ • Thể thao", url: "https://tuoitre.vn/rss/the-thao.rss" },
+  { category: "Thể thao", name: "Thanh Niên • Thể thao", url: "https://thanhnien.vn/rss/the-thao.rss" },
   { category: "Thể thao", name: "BongdaPlus", url: "https://bongdaplus.vn/rss/home.rss" }
 ];
 
