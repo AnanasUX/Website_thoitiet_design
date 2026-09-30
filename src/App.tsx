@@ -638,7 +638,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       .then(res => res.json())
       .then(data => {
          const parser = new DOMParser();
-         const doc = parser.parseFromString(data.contents, "text/html");
+         const doc = parser.parseFromString(data.contents || "", "text/html");
          
          const selectors = [
             '.fck_detail', '.singular-content', '.dt-news__content', 
