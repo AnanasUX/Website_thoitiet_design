@@ -646,19 +646,20 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
             📍 {WEATHER.location}
           </p>
-          <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
+          <div className="flex items-center mt-1">
+            <div className="bg-[#f4f6fa] flex items-center px-2 py-0.5 rounded-full">
             <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
               {shortDateStr} · {timeStr}
             </p>
           </div>
-        
-          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
+            <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             )}
           </button>
+          </div>
 
         </div>
       </div>
@@ -743,19 +744,20 @@ function TabletLayout({ activeCategory, setActiveCategory,
             📍 {WEATHER.location}
           </p>
         </div>
-        <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
+        <div className="flex items-center">
+            <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
           <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
             {dateStr} · {timeStr}
           </p>
         </div>
-      
-          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
+            <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             )}
           </button>
+          </div>
 
         </div>
 
@@ -879,19 +881,20 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
-          <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
+          <div className="flex items-center">
+            <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
             <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
           </div>
-        
-          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
+            <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-8 h-8 rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             )}
           </button>
+          </div>
 
         </div>
 
