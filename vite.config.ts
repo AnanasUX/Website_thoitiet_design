@@ -18,7 +18,16 @@ export default defineConfig(({ mode }) => {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
     },
-    plugins: [
+    server: {
+    proxy: {
+      '/api/phuquy': {
+        target: 'https://phuquygroup.vn',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/phuquy/, '')
+      }
+    }
+  },
+  plugins: [
     VitePWA({ registerType: 'autoUpdate', manifest: { name: 'Thời Tiết AnX', short_name: 'AnX', theme_color: '#ffffff', icons: [{ src: '/vite.svg', sizes: '192x192', type: 'image/svg+xml' }, { src: '/vite.svg', sizes: '512x512', type: 'image/svg+xml' }] } }),
 react(),
       tailwindcss(),
