@@ -1,5 +1,5 @@
 ﻿import urllib.request
-url = "https://thingproxy.freeboard.io/fetch/https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history"
+url = "https://api.allorigins.win/raw?url=" + urllib.parse.quote("https://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f")
 req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
 try:
     with urllib.request.urlopen(req, timeout=10) as response:

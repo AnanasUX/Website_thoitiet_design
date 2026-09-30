@@ -1,6 +1,6 @@
 ﻿import urllib.request
 import json
-url = "https://api.codetabs.com/v1/proxy?quest=https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history"
+url = "https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history"
 req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
 try:
     with urllib.request.urlopen(req) as response:

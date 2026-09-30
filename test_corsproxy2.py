@@ -1,17 +1,9 @@
 ﻿import urllib.request
-import urllib.parse
-
-urls = [
-    "https://vietnamnet.vn/rss/tin-moi-nhat.rss",
-    "https://laodong.vn/rss/home.rss",
-    "https://vtv.vn/trong-nuoc.rss",
-    "https://plo.vn/rss/thoi-su-c2.rss"
-]
-for u in urls:
-    url = f"https://corsproxy.io/?{urllib.parse.quote(u)}"
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        res = urllib.request.urlopen(req)
-        print(f"OK: {u} - {len(res.read())}")
-    except Exception as e:
-        print(f"ERR: {u} - {e}")
+import json
+url = "https://corsproxy.io/?" + urllib.parse.quote("https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history")
+req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+try:
+    with urllib.request.urlopen(req) as response:
+        print(response.read().decode()[:100])
+except Exception as e:
+    print(e)

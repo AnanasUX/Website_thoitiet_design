@@ -1,13 +1,12 @@
 ﻿import urllib.request
-import json
 import urllib.parse
-import sys
-
-sys.stdout.reconfigure(encoding='utf-8')
-url = "https://vnexpress.net/rss/tin-moi-nhat.rss"
-proxy = f"https://api.allorigins.win/get?url={urllib.parse.quote(url)}"
-req = urllib.request.Request(proxy, headers={'User-Agent': 'Mozilla/5.0'})
-res = urllib.request.urlopen(req)
-data = json.loads(res.read().decode('utf-8'))
-xml = data['contents']
-print(xml[:500])
+import json
+url = "https://api.allorigins.win/get?url=" + urllib.parse.quote("https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history")
+req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+try:
+    with urllib.request.urlopen(req) as response:
+        data = json.loads(response.read().decode())
+        content = json.loads(data['contents'])
+        print("Success! Got", len(content.get('data', [])), "items.")
+except Exception as e:
+    print(e)
