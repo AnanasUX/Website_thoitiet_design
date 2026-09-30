@@ -634,11 +634,26 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     if (!article.link) return;
     setIsLoadingFull(true);
     setFullContent('');
-    fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(article.link)}`)
-      .then(res => res.json())
-      .then(data => {
+    // Fast fallback proxy chain for fetching article content
+    const fetchHtml = async () => {
+      const url = encodeURIComponent(article.link);
+      try {
+        const res = await fetch(`https://corsproxy.io/?url=${url}`);
+        if (res.ok) return await res.text();
+      } catch (e) {}
+      try {
+        const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${url}`);
+        if (res.ok) return await res.text();
+      } catch (e) {}
+      const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
+      const data = await res.json();
+      return data.contents || "";
+    };
+
+    fetchHtml()
+      .then(rawHtml => {
          const parser = new DOMParser();
-         const doc = parser.parseFromString(data.contents || "", "text/html");
+         const doc = parser.parseFromString(rawHtml || "", "text/html");
          
          const selectors = [
             '.fck_detail', '.singular-content', '.dt-news__content', 
