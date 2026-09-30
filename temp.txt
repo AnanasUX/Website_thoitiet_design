@@ -1,58 +1,1184 @@
-function DesktopLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory, darkMode, setDarkMode,
-    condKey,
-  liveData,
-  liveNews,
-  liveOverrides,
-}: {
-  isFetchingCategory?: boolean;
-    condKey: ConditionKey;
-  liveData?: Record<ConditionKey, WeatherEntry>;
-  liveNews?: LiveNewsItem[];
-  liveOverrides?: LiveOverrides;
-    activeCategory?: string;
-    setActiveCategory?: (c: string) => void;
-    darkMode?: boolean;
-    setDarkMode?: (d: boolean) => void;
-}) {
-  const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
-  const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
-  const [featured, ...grid] = newsFeed;
-  const now = useCurrentTime();
-  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-    const dayName = days[now.getDay()];
-    const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
-  const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
-  return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
-        <div className="flex gap-[var(--grid-gap)] items-center">
-          <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
-          <div className="flex items-center">
-            <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
-            <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
-              {dateStr} · {timeStr}
-            </p>
-          </div>
-            <button onClick={() => setDarkMode(!darkMode)} style={{ minHeight: "32px", minWidth: "32px", padding: 0 }} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
-            {darkMode ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            )}
-          </button>
-          </div>
+useEffect(() => {
+    let isMounted = true;
+    const fetchGold = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000); 
+        
+        const [pqRes, yhRes] = await Promise.allSettled([
+          fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history'), { signal: controller.signal }),
+          fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1h&range=2d'), { signal: controller.signal })
+        ]);
+        
+        clearTimeout(timeoutId);
+        if (!isMounted) return;
 
+        let finalData = [];
+        let sjcPrice = 14250000;
+
+        if (pqRes.status === 'fulfilled') {
+          const pqJson = await pqRes.value.json();
+          if (pqJson && pqJson.data) {
+            const keys = ['24K', 'NPQ', 'SJC'];
+            const filtered = pqJson.data.filter((item: any) => keys.includes(item.productType));
+            if (filtered.length > 0) {
+              const fallback = [
+                { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13650000, priceOut: 14150000 },
+                { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13950000, priceOut: 14250000 },
+                { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 13950000, priceOut: 14250000 }
+              ];
+              finalData = keys.map(k => filtered.find((i:any) => i.productType === k) || fallback.find((i:any) => i.productType === k));
+              const sjc = finalData.find((i: any) => i.productType === 'SJC') || finalData[0];
+              sjcPrice = sjc.priceOut;
+            }
+          }
+        }
+        
+        if (finalData.length > 0) {
+          setGoldData(finalData);
+        } else {
+          setGoldData(prev => prev.length ? prev : [
+            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13650000, priceOut: 14150000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13950000, priceOut: 14250000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 13950000, priceOut: 14250000 }
+          ]);
+        }
+
+        let realArray: number[] = [];
+        if (yhRes.status === 'fulfilled') {
+          const yhJson = await yhRes.value.json();
+          if (yhJson?.chart?.result?.[0]?.indicators?.quote?.[0]?.close) {
+             const closes = yhJson.chart.result[0].indicators.quote[0].close.filter((c:any) => c !== null);
+             const currentHour = new Date().getHours();
+             // We need currentHour + 1 points for today
+             const needed = currentHour + 1;
+             const sliced = closes.slice(-needed);
+             if (sliced.length === needed) {
+                const ratio = sjcPrice / sliced[sliced.length - 1];
+                realArray = sliced.map((p:number) => Math.round((p * ratio)/10000)*10000);
+             }
+          }
+        }
+
+        if (realArray.length > 0) {
+           const currentHour = new Date().getHours();
+           const forecastArray = new Array(25).fill(0);
+           for (let i=0; i<=currentHour; i++) {
+              forecastArray[i] = Math.round((realArray[i] * (1 + (Math.random()*0.002 - 0.001)))/10000)*10000;
+           }
+           for (let i=currentHour+1; i<25; i++) {
+              const trend = Math.random() > 0.5 ? 1 : -1;
+              const change = forecastArray[i-1] * (Math.random() * 0.004 * trend);
+              forecastArray[i] = Math.round((forecastArray[i-1] + change)/10000)*10000;
+           }
+           setChartData({ real: realArray, forecast: forecastArray });
+        } else {
+           setChartData(prev => prev.real.length ? prev : generateDynamicData(sjcPrice));
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        if (isMounted) {
+          setGoldData(prev => prev.length ? prev : [
+            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13650000, priceOut: 14150000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 13950000, priceOut: 14250000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 13950000, priceOut: 14250000 }
+          ]);
+          setChartData(prev => prev.real.length ? prev : generateDynamicData(14250000));
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchGold();
+    const intervalId = setInterval(fetchGold, 60000); 
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-sm border border-[#e3e7ef]">
+        <div className="w-full h-[40px] bg-slate-100 animate-pulse rounded-md"></div>
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          <div className="h-[80px] bg-slate-100 animate-pulse rounded-xl"></div>
+          <div className="h-[80px] bg-slate-100 animate-pulse rounded-xl"></div>
+          <div className="h-[80px] bg-slate-100 animate-pulse rounded-xl"></div>
         </div>
-
+        <div className="w-full h-[120px] bg-slate-100 animate-pulse rounded-xl mt-2"></div>
       </div>
+    );
+  }
 
-      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
-        {/* Weather column */}
-        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+  const rawReal = chartData.real;
+  const rawForecast = chartData.forecast;
+  const displayMax = Math.max(...rawReal);
+  const displayMin = Math.min(...rawReal);
+  const axisMax = Math.max(...rawReal, ...rawForecast);
+  const axisMin = Math.min(...rawReal, ...rawForecast);
+  const r = axisMax - axisMin || 1;
+  
+  const ptsReal = rawReal.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - axisMin) / r) * 55 
+  }));
+  const ptsForecast = rawForecast.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - axisMin) / r) * 55 
+  }));
+
+  const pathReal = ptsReal.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
+  const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
+
+  return (
+    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
+      
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1 mb-1">
+          <button onClick={() => setActiveMarketTab('gold')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'gold' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Giá Vàng</button>
+          <button onClick={() => setActiveMarketTab('fx')} className={`px-3 py-1.5 rounded-full text-[12px] sm:text-[14px] font-semibold transition-colors whitespace-nowrap ${activeMarketTab === 'fx' ? 'bg-[#182033] text-white dark:bg-[#f5f5f7] dark:text-black' : 'bg-[#f4f6fa] text-[#5f687b]'}`}>Ngoại Tệ</button>
+          
+        </div>
+        
+        <div className={activeMarketTab === 'gold' ? 'block' : 'hidden'}>
+<div className="flex items-center justify-between w-full mb-1">
+        <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
+        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
+          <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
+        {goldData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
+            <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
+            </div>
+            <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
+              <p className="font-semibold text-[#ef4444] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceOut.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="w-full flex flex-col mt-2 bg-gradient-to-r from-[#f0f4ff] to-[#f8fafc] rounded-[8px] border border-[#e3e7ef] overflow-hidden">
+        <div className="w-full flex items-center justify-between p-2 sm:p-3 border-b border-[#e3e7ef]/50">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></div>
+            <p className="text-[12px] sm:text-[14px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
+          </div>
+          {rawReal.length > 1 && rawReal[rawReal.length - 1] < rawReal[0] ? (
+                <p className="text-[12px] sm:text-[14px] font-bold text-[#ef4444] flex items-center gap-1">
+                  SUY GIẢM
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 18l-9.5-9.5-5 5L1 6"></path><path d="M17 18h6v-6"></path></svg>
+                </p>
+              ) : (
+                <p className="text-[12px] sm:text-[14px] font-bold text-[#16a34a] flex items-center gap-1">
+                  TĂNG TRƯỞNG
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"></path><path d="M17 6h6v6"></path></svg>
+                </p>
+              )}
         </div>
 
-        {/* News column */}
-        <div className="flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden">
-      <
+        <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-[11px] sm:text-[12px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY) - {new Date().toLocaleDateString('vi-VN')}</p>
+            <div className="flex gap-2 text-[10px] sm:text-[11px] font-bold">
+              <span className="text-[#5f687b]">H: {displayMax.toLocaleString('vi-VN')}</span>
+              <span className="text-[#5f687b]">L: {displayMin.toLocaleString('vi-VN')}</span>
+            </div>
+          </div>
+          
+          <div 
+            className="w-full h-[65px] relative mt-1 border-l border-b border-[#e3e7ef]/50 cursor-crosshair"
+            onMouseMove={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              let x = e.clientX - rect.left;
+              if (x < 0) x = 0;
+              if (x > rect.width) x = rect.width;
+              const closestIdx = Math.round((x / rect.width) * (rawForecast.length - 1));
+              setHoverIdx(closestIdx);
+            }}
+            onMouseLeave={() => setHoverIdx(null)}
+          >
+            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" className="overflow-visible pointer-events-none">
+              {/* Grid Lines */}
+              {[1, 2, 3, 4, 5].map(i => (
+                <line key={`v-${i}`} x1={i * 50} y1="0" x2={i * 50} y2="65" stroke="#e3e7ef" strokeWidth="0.5" strokeDasharray="2 2" />
+              ))}
+              {[1, 2, 3].map(i => (
+                <line key={`h-${i}`} x1="0" y1={i * 16.25} x2="300" y2={i * 16.25} stroke="#e3e7ef" strokeWidth="0.5" />
+              ))}
+              
+              <path d={pathForecast} fill="none" stroke="#f7a928" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3 3" opacity="0.8" />
+              <path d={pathReal} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            
+            {hoverIdx !== null && (
+              <>
+                <div 
+                  className="absolute top-0 bottom-0 border-l border-dashed border-[#182033]/40 z-10 pointer-events-none" 
+                  style={{ left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%` }}
+                ></div>
+                <div 
+                  className="absolute top-[-25px] bg-[#182033] text-white text-[9px] sm:text-[10px] px-2 py-1.5 rounded-[6px] z-20 pointer-events-none whitespace-nowrap shadow-md flex flex-col gap-0.5"
+                  style={{ 
+                    left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%`, 
+                    transform: hoverIdx > rawForecast.length / 2 ? 'translateX(calc(-100% - 6px))' : 'translateX(6px)' 
+                  }}
+                >
+                  <p className="text-[#f7a928] font-mono border-b border-white/20 pb-0.5 mb-0.5 text-center">
+                    {hoverIdx.toString().padStart(2, '0')}:00
+                  </p>
+                  {hoverIdx < rawReal.length && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-[#ef4444] font-bold">Thực tế:</span>
+                      <span className="font-bold">{rawReal[hoverIdx].toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-3">
+                    <span className="text-[#f7a928] font-bold">Dự báo:</span>
+                    <span className="font-bold">{rawForecast[hoverIdx].toLocaleString('vi-VN')}đ</span>
+                  </div>
+                </div>
+                
+                {/* Dots on lines */}
+                {hoverIdx < rawReal.length && (
+                  <div 
+                    className="absolute w-2.5 h-2.5 bg-[#ef4444] rounded-full z-20 pointer-events-none border-2 border-white shadow-sm"
+                    style={{ 
+                      left: `calc(${(hoverIdx / (rawForecast.length - 1)) * 100}% - 5px)`, 
+                      top: `calc(${(ptsReal[hoverIdx].y / 65) * 100}% - 5px)` 
+                    }}
+                  ></div>
+                )}
+                <div 
+                  className="absolute w-2 h-2 bg-[#f7a928] rounded-full z-20 pointer-events-none shadow-sm"
+                  style={{ 
+                    left: `calc(${(hoverIdx / (rawForecast.length - 1)) * 100}% - 4px)`, 
+                    top: `calc(${(ptsForecast[hoverIdx].y / 65) * 100}% - 4px)` 
+                  }}
+                ></div>
+              </>
+            )}
+          </div>
+          
+          <div className="flex justify-between text-[8px] sm:text-[9px] text-[#5f687b] mt-1 font-medium px-[2px]">
+            <span>00:00</span>
+            <span>04:00</span>
+            <span>08:00</span>
+            <span>12:00</span>
+            <span>16:00</span>
+            <span>20:00</span>
+            <span>23:59</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        {activeMarketTab === 'fx' && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between w-full mb-1">
+              <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Tỷ giá Ngoại tệ (Vietcombank)</h2>
+            </div>
+            {[
+              { code: 'USD', name: 'Đô la Mỹ', buy: '24.450', sell: '24.820' },
+              { code: 'EUR', name: 'Euro', buy: '26.850', sell: '27.450' },
+              { code: 'JPY', name: 'Yên Nhật', buy: '168.50', sell: '175.20' }
+            ].map((item, idx) => (
+              <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="font-bold text-[#182033] text-[14px]">{item.code} <span className="font-normal text-[12px] text-[#5f687b]">({item.name})</span></p>
+                </div>
+                <div className="flex justify-between items-center w-full mt-1">
+                  <p className="text-[#5f687b] text-[12px]">Mua tiền mặt</p>
+                  <p className="font-semibold text-[#16a34a] text-[14px]">{item.buy}</p>
+                </div>
+                <div className="flex justify-between items-center w-full mt-1">
+                  <p className="text-[#5f687b] text-[12px]">Bán ra</p>
+                  <p className="font-semibold text-[#ef4444] text-[14px]">{item.sell}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+              </div>
+  );
+}
+
+
+
+export default function App() {
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (darkMode) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
+
+  useEffect(() => {
+    const handleWheel = (e: any) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+    const handleKeydown = (e: any) => {
+      if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('wheel', handleWheel, { passive: false });
+    document.addEventListener('keydown', handleKeydown, { passive: false });
+    return () => {
+      document.removeEventListener('wheel', handleWheel);
+      document.removeEventListener('keydown', handleKeydown);
+    };
+  }, []);
+
+
+
+  const [condKey, setCondKey] = useState<ConditionKey>("mua-nho");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
+  const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
+  const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
+  const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isFetchingCategory, setIsFetchingCategory] = useState(false);
+    const fullNewsPool = useRef<any[]>([]);
+    const [hasMoreNews, setHasMoreNews] = useState(true);
+  const loadingRef = useRef(false);
+
+    const fetchMoreNews = useCallback(async () => {
+    if (loadingRef.current || !hasMoreNews) return;
+    loadingRef.current = true;
+    setIsLoadingMore(true);
+    
+    await new Promise(res => setTimeout(res, 800));
+    
+    try {
+      const getUniqueKey = (item: any) => {
+        if (item.author) return item.author.trim().toLowerCase();
+        return item.link ? item.link.split('?')[0].replace(/^https?:\/\//, '') : Math.random().toString();
+      };
+      
+      const existingKeys = new Set((liveNews || []).map(getUniqueKey));
+      
+      const trulyNewItems = (fullNewsPool.current || []).filter(item => !existingKeys.has(getUniqueKey(item)));
+      
+      if (trulyNewItems.length === 0) {
+        setHasMoreNews(false);
+        return;
+      }
+      
+      const picked = trulyNewItems.slice(0, 15); // Lấy theo thứ tự đã mix sẵn
+      
+      if (trulyNewItems.length <= 10) {
+        setHasMoreNews(false);
+      }
+      
+      setLiveNews(prev => {
+        const next = [...(prev || []), ...picked];
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      loadingRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, [liveNews, hasMoreNews]);
+
+  
+  
+
+
+
+  
+  useEffect(() => {
+    let isCancelled = false;
+    let timer: any;
+    
+    const fetchCategoryNews = async (isBackground = false) => {
+      if (!isBackground) setIsFetchingCategory(true);
+      try {
+        const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
+        if (catFeeds.length === 0) return;
+        
+        // Fetch up to 10 feeds from this category
+        const selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 15);
+        
+        const promises = selectedFeeds.map(feed => 
+          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
+            .then(r => r.json())
+            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+            .catch(() => [])
+        );
+        
+        const results = await Promise.all(promises);
+        if (isCancelled) return;
+        
+        
+        const mappedFeeds = results.map(feedArticles => {
+          return feedArticles.map((item: any) => {
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
+            }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+            
+            if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
+              imageUrl = ""; 
+            }
+            
+            // QUAN TRỌNG: Loại bỏ bài viết nếu không có ảnh
+            if (!imageUrl || imageUrl.trim() === "") return null;
+            
+            let cleanDesc = "";
+            if (item.description) {
+               cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+               cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+            }
+            
+            if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
+               cleanDesc = "";
+            }
+            
+            return {
+              img: imageUrl,
+              logo: getNewspaperLogo(item.link || ""),
+              fallbackImg: imageUrl,
+              author: decodeHTMLEntities(item.title ?? "Tin tức"),
+              src: item.source || item._sourceName || "Tin tức",
+              body: decodeHTMLEntities(cleanDesc),
+              link: item.link
+            };
+          }).filter(Boolean); // Remove nulls (articles without images)
+        });
+        
+        // Remove empty feeds
+        let validFeeds = mappedFeeds.filter(f => f.length > 0);
+        
+        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú
+        // Chỉ lấy bài viết trong vòng 24h qua (mới nhất trong ngày)
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        
+        let recentFeeds = validFeeds.map(feed => {
+            return feed.filter(item => new Date(item.pubDate || 0).getTime() > oneDayAgo);
+        }).filter(feed => feed.length > 0);
+        
+        // Nếu số lượng bài quá ít do lọc 24h, fallback về lấy tất cả
+        if (recentFeeds.flat().length < 15) {
+            recentFeeds = validFeeds;
+        }
+
+        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú nguồn (chống hiện tượng 1 báo chiếm sóng)
+        const mixedNews = [];
+        while(recentFeeds.length > 0) {
+           // Đảo lộn thứ tự các nguồn báo
+           recentFeeds.sort(() => 0.5 - Math.random());
+           for (let i = recentFeeds.length - 1; i >= 0; i--) {
+               const feed = recentFeeds[i];
+               // Bốc ngẫu nhiên từ 1 đến 4 bài của nguồn này
+               const takeCount = Math.floor(Math.random() * 4) + 1;
+               const taken = feed.splice(0, takeCount);
+               mixedNews.push(...taken);
+               if (feed.length === 0) {
+                   recentFeeds.splice(i, 1);
+               }
+           }
+        }
+        
+        if (!isBackground) {
+          fullNewsPool.current = mixedNews;
+          setLiveNews(mixedNews.slice(0, 15));
+        } else {
+          const existingLinks = new Set(fullNewsPool.current.map(n => n.link));
+          const newItems = mixedNews.filter(n => !existingLinks.has(n.link));
+          if (newItems.length > 0) {
+            fullNewsPool.current = [...newItems, ...fullNewsPool.current];
+            setLiveNews((prev: any) => {
+              const current = prev || [];
+              const uniqueNew = newItems.filter(n => !current.find((c: any) => c.link === n.link));
+              return [...uniqueNew, ...current];
+            });
+          }
+        }
+        setHasMoreNews(fullNewsPool.current.length > 10);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!isBackground) setIsFetchingCategory(false);
+      }
+    };
+    
+    fetchCategoryNews(false);
+    timer = setInterval(() => { fetchCategoryNews(true); }, 2 * 60 * 1000);
+    return () => { isCancelled = true; clearInterval(timer); };
+  }, [activeCategory]);
+
+
+  const tapCount = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Load live data: ?data=<base64json> (bot-embedded) hoặc ?api=<url> (fetch) ───
+  useEffect(() => {
+    const loadData = () => {
+    const params  = new URLSearchParams(window.location.search);
+    const rawData = params.get("data");   // base64 JSON từ bot
+    const cData   = params.get("cdata");  // zlib compressed base64 JSON từ bot
+    const apiUrl  = params.get("api");    // URL API fallback
+
+    function processJson(json: Record<string, unknown>) {
+      const w    = (json.weather as Record<string, unknown>) ?? {};
+      const cur  = (w.current  as Record<string, unknown>) ?? {};
+      const fore = (w.forecast_3h as Record<string, unknown>) ?? {};
+      const status: string = (w.status as string) ?? "BINH_THUONG";
+      const key  = mapBotStatusToCondKey(status);
+      setCondKey(key);
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      let rawLoc = json.location;
+      if (typeof rawLoc === 'object' && rawLoc !== null && (rawLoc as any).name) {
+          rawLoc = (rawLoc as any).name;
+      }
+      const locStr = (typeof rawLoc === 'string' ? rawLoc : "Hà Nội");
+      const loc = locStr.split(",")[0].trim();
+      const pm25Val = Number(cur.pm25 ?? 15);
+      const icon    = pm25Icon(pm25Val);
+      const windMs  = Number(cur.wind_speed ?? 0);
+      const wind    = windMs > 0 ? `${Math.round(windMs * 3.6)} km/h` : "—";
+      const forecastText = `~${(fore.temp as number) ?? cur.temp}°C | ${WEATHER_THEMES[key].label} | Mưa: ${(fore.pop as number) ?? 0}%`;
+
+      const entry: Partial<WeatherEntry> = {
+        time:           timeStr,
+        location:       loc,
+        locationFull:   locStr,
+        temp:           `${cur.temp}°C`,
+        feelsLike:      `${cur.feels_like}°C`,
+        conditionLabel: (cur.desc as string) ?? WEATHER_THEMES[key].label,
+        humidity:       `${cur.humidity ?? 60}%`,
+        pm25:           `${pm25Val} µg/m³ ${icon}`,
+        wind,
+        forecastText,
+        ...(cur.pressure !== undefined && { pressure: `${cur.pressure} hPa` }),
+        ...(cur.visibility !== undefined && { visibility: `${Number(cur.visibility)/1000} km` }),
+        ...(cur.clouds !== undefined && { clouds: `${cur.clouds}%` }),
+        ...(cur.uvIndex !== undefined && { uvIndex: `${cur.uvIndex}` }),
+        ...(cur.dewPoint !== undefined && { dewPoint: `${cur.dewPoint}°C` }),
+        ...(cur.sunrise !== undefined && { sunrise: `${cur.sunrise}` }),
+        ...(cur.sunset !== undefined && { sunset: `${cur.sunset}` }),
+        ...(cur.tempMin !== undefined && { tempMin: `${cur.tempMin}°C` }),
+        ...(cur.tempMax !== undefined && { tempMax: `${cur.tempMax}°C` }),
+        ...(w.hourlyForecast !== undefined && { hourlyForecast: w.hourlyForecast as any }),
+        ...(w.dailyForecast !== undefined && { dailyForecast: w.dailyForecast as any }),
+        ...(w.weekRange !== undefined && { weekRange: w.weekRange as string })
+      };
+
+      setLiveData(prev => {
+        const base = prev ? prev[key] : DEFAULT_WEATHER_DATA[key];
+        const merged: WeatherEntry = { ...base, ...entry };
+        const newData = { ...(prev || DEFAULT_WEATHER_DATA) };
+        (Object.keys(newData) as ConditionKey[]).forEach((k) => { newData[k] = merged; });
+        return newData;
+      });
+
+      const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string }>;
+      if (Array.isArray(newsArr) && newsArr.length > 0) {
+          const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
+          const allMapped: LiveNewsItem[] = newsArr.map((item, i) => ({
+            img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
+            logo: getNewspaperLogo(item.link || ""),
+            fallbackImg: images[i % images.length],
+            author: decodeHTMLEntities(item.title       ?? "Tin tức"),
+            src:    item.source      ?? "Tin tức",
+            body:   decodeHTMLEntities(item.description ?? ""),
+            link:   item.link,
+          }));
+          
+          fullNewsPool.current = allMapped;
+          
+          const shuffledPool = [...allMapped].sort(() => Math.random() - 0.5);
+          setLiveNews(shuffledPool.slice(0, 15));
+        }
+
+      // Store dynamic overrides in React state (not mutating WEATHER_THEMES)
+      setLiveOverrides({
+        warningText: (json.warningText as string) || undefined,
+        suggestionItems: (Array.isArray(json.suggestionItems) && json.suggestionItems.length > 0) ? (json.suggestionItems as string[]) : undefined,
+        floodItems: (Array.isArray(json.floodItems) && json.floodItems.length > 0) ? (json.floodItems as string[]) : undefined,
+        routeItems: (Array.isArray(json.routeItems) && json.routeItems.length > 0) ? (json.routeItems as string[]) : undefined,
+        weatherNews: (Array.isArray(json.weatherNews) && json.weatherNews.length > 0) ? (json.weatherNews as any) : undefined,
+      });
+
+      setApiStatus("ok");
+    }
+
+    // ── Ưu tiên ?data= (bot đã fetch sẵn, decode base64 là dùng được luôn) ──
+    
+    // 🟢 Ưu tiên ?cdata= (bot đã nén zlib + base64) 🟢
+    if (cData) {
+      (async () => {
+        try {
+          setApiStatus("loading");
+          const b64 = cData.replace(/-/g, "+").replace(/_/g, "/");
+          const binaryStr = atob(b64);
+          const bytes = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+          }
+          const ds = new DecompressionStream("deflate");
+          const writer = ds.writable.getWriter();
+          writer.write(bytes);
+          writer.close();
+          const reader = ds.readable.getReader();
+          const chunks = [];
+          let totalLen = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            totalLen += value.length;
+          }
+          const decompressed = new Uint8Array(totalLen);
+          let offset = 0;
+          for (const chunk of chunks) {
+            decompressed.set(chunk, offset);
+            offset += chunk.length;
+          }
+          const decodedStr = new TextDecoder("utf-8").decode(decompressed);
+          const json = JSON.parse(decodedStr);
+          processJson(json);
+        } catch (e) {
+          console.error(e);
+          setApiStatus("error");
+        }
+      })();
+      return;
+    }
+
+    if (rawData) {
+      try {
+        setApiStatus("loading");
+        // base64url → base64 chuẩn rồi decode
+        const b64 = rawData.replace(/-/g, "+").replace(/_/g, "/");
+        const binaryStr = atob(b64);
+        const bytes = new Uint8Array([...binaryStr].map((char) => char.charCodeAt(0)));
+        const decodedStr = new TextDecoder("utf-8").decode(bytes);
+        const json = JSON.parse(decodedStr) as Record<string, unknown>;
+        processJson(json);
+      } catch {
+        setApiStatus("error");
+      }
+      return;
+    }
+
+    // ── Fallback: ?api=URL (fetch trực tiếp từ bot API) ──
+
+    // Nếu không có dữ liệu từ Bot và không có apiUrl, trang web tự động fetch dữ liệu thực tế
+    if (!cData && !rawData && !apiUrl) {
+        setApiStatus("loading");
+        
+        const doFetch = (lat: number, lon: number, locationNameStr: string | null = null) => {
+          const apiKey = "a201c471567522a7d0b7a0567ad245fe";
+          
+          // Fetch from ALL feeds to get the absolute newest articles across the board
+          const shuffledFeeds = [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 5);
+          
+          const newsPromises = shuffledFeeds.map(feed => 
+            fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
+              .then(r => r.json())
+              .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+              .catch(() => [])
+          );
+
+          Promise.all([
+            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
+            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
+            fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
+            Promise.all(newsPromises),
+            fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=thời+tiết+hà+nội&hl=vi&gl=VN&ceid=VN:vi'))
+              .then(r => r.json())
+              .then(data => data.items || [])
+              .catch(() => []),
+            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`)
+              .then(r => r.json())
+              .catch(() => null),
+            fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 }))
+          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw, geoReverse, uviRes]) => {
+          const c_temp = Math.round(weather.main?.temp || 0);
+          const feels_like = Math.round(weather.main?.feels_like || 0);
+          const humidity = weather.main?.humidity || 0;
+          const c_desc = weather.weather?.[0]?.description || "";
+          const iconCode = weather.weather?.[0]?.icon || "";
+          const c_icon = iconCode.includes("d") ? "☀️" : "🌙";
+          
+          const n_item = forecast.list?.[0] || {};
+          const n_temp = Math.round(n_item.main?.temp || c_temp);
+          const n_pop = Math.round((n_item.pop || 0) * 100);
+          const n_desc = n_item.weather?.[0]?.description || c_desc;
+          
+          const pm25 = aqi.list?.[0]?.components?.pm2_5 || 0;
+          const aqi_level = aqi.list?.[0]?.main?.aqi || 1;
+          
+          const nowSec = Math.floor(Date.now() / 1000);
+          const points = [
+            { dt: nowSec, temp: c_temp, pop: (n_item.pop || 0), icon: iconCode || "01d" },
+            ...(forecast.list || []).map((item: any) => ({
+              dt: item.dt, temp: item.main?.temp || 0, pop: item.pop || 0, icon: item.weather?.[0]?.icon || "01d"
+            }))
+          ];
+          
+          let startHourSec = nowSec - (nowSec % 3600);
+          let interpolatedHourly: any[] = [];
+          
+          for (let i = 0; i < 24; i++) {
+            const targetSec = startHourSec + i * 3600;
+            let p0 = points[0];
+            let p1 = points[1] || points[0];
+            for (let j = 0; j < points.length - 1; j++) {
+              if (points[j].dt <= targetSec && points[j+1].dt >= targetSec) { p0 = points[j]; p1 = points[j+1]; break; }
+              else if (points[j].dt > targetSec) { p0 = points[0]; p1 = points[1] || points[0]; break; }
+              else if (j === points.length - 2) { p0 = points[j]; p1 = points[j+1]; }
+            }
+            let fraction = 0;
+            if (p1.dt > p0.dt) fraction = Math.max(0, Math.min(1, (targetSec - p0.dt) / (p1.dt - p0.dt)));
+            const stepTemp = p0.temp + (p1.temp - p0.temp) * fraction;
+            const stepPop = p0.pop + (p1.pop - p0.pop) * fraction;
+            const icon = fraction < 0.5 ? p0.icon : p1.icon;
+            interpolatedHourly.push({
+              time: `${new Date(targetSec * 1000).getHours()}h`,
+              icon: icon,
+              temp: Math.round(stepTemp),
+              pop: Math.round(stepPop * 100)
+            });
+          }
+          
+          let trang_thai = "NANG";
+          if (n_pop > 50) trang_thai = "MUA";
+          else if (c_temp >= 35 || feels_like >= 35) trang_thai = "NANG_GAT";
+          
+          // Combine all news, sort by newest (pubDate), and take top 10
+          let allNews = newsArrays.flat().sort((a, b) => {
+            const dateA = new Date(a.pubDate || 0).getTime();
+            const dateB = new Date(b.pubDate || 0).getTime();
+            return dateB - dateA;
+          });
+          const rawItems = allNews;
+          
+          // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
+          const baseNewsItems = rawItems.map((item: any) => {
+            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+            if (!imageUrl && item.description) {
+              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch) imageUrl = imgMatch[1];
+            }
+            if (!imageUrl && item.content) {
+              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+              if (imgMatch2) imageUrl = imgMatch2[1];
+            }
+            
+            if (imageUrl) {
+              imageUrl = imageUrl.replace(/&amp;/g, '&');
+            }
+            
+                          let cleanDesc = "";
+              if (item.description && typeof item.description === 'string') {
+                  cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+                  cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+              } else if (item.content && typeof item.content === 'string') {
+                  cleanDesc = item.content.replace(/<[^>]+>/g, '').trim();
+                  cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+              }
+              
+              return {
+                title: decodeHTMLEntities(item.title),
+                link: item.link,
+                source: item.source || item._sourceName || "Báo Mới",
+                time: new Date(item.pubDate || Date.now()).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
+                image: imageUrl,
+                description: decodeHTMLEntities(cleanDesc)
+              };
+          });
+
+
+          const weatherNews = weatherNewsRaw.slice(0, 3).map((item: any) => {
+            const titleMatch = item.title ? item.title.match(/(.+) - (.+)/) : null;
+            const title = decodeHTMLEntities(titleMatch ? titleMatch[1] : item.title);
+            const source = titleMatch ? titleMatch[2] : (item.source || "Google News");
+            return { title, link: item.link, source };
+          });
+
+          let resolvedLocation = locationNameStr;
+          if (!resolvedLocation) {
+             let bestLocality = geoReverse?.locality;
+             if (geoReverse?.localityInfo?.administrative) {
+                 const admin6s = geoReverse.localityInfo.administrative.filter((a: any) => a.adminLevel === 6 || a.adminLevel === 7 || a.adminLevel === 8);
+                 if (admin6s.length > 0) {
+                     bestLocality = admin6s[0].name;
+                 }
+             }
+             if (bestLocality) {
+                 bestLocality = bestLocality.replace(/ \(phường\)/i, "").replace(/ \(xã\)/i, "");
+                 resolvedLocation = `${bestLocality}, ${geoReverse.principalSubdivision || 'VN'}`;
+             } else if (geoReverse?.city) {
+                 resolvedLocation = `${geoReverse.city}, VN`;
+             } else {
+                 resolvedLocation = (weather.name || "Hà Nội") + ", VN";
+             }
+          }
+
+          let dewPoint = c_temp;
+          if (humidity > 0) {
+            const a = 17.27, b = 237.7;
+            const alpha = ((a * c_temp) / (b + c_temp)) + Math.log(humidity / 100.0);
+            dewPoint = Math.round((b * alpha) / (a - alpha));
+          }
+
+          
+          
+          const now = new Date();
+          const dayOfWeek = now.getDay() || 7; // 1 (Mon) to 7 (Sun)
+          const monday = new Date(now);
+          monday.setDate(now.getDate() - dayOfWeek + 1);
+          monday.setHours(0, 0, 0, 0);
+          
+          const sunday = new Date(monday);
+          sunday.setDate(monday.getDate() + 6);
+          sunday.setHours(23, 59, 59, 999);
+
+          const fmtDate = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+          const weekRange = `${fmtDate(monday)} - ${fmtDate(sunday)}`;
+
+          const dailyMap: Record<number, any> = {};
+          if (forecast && forecast.list) {
+            forecast.list.forEach((item: any) => {
+              const date = new Date(item.dt * 1000);
+              
+              // Only include days that fall within the current week (Monday to Sunday)
+              // If it's next week, ignore it.
+              if (date.getTime() > sunday.getTime()) return;
+
+              const dateStr = date.getDate();
+              if (!dailyMap[dateStr]) {
+                dailyMap[dateStr] = {
+                  date: date,
+                  tempMin: item.main.temp_min,
+                  tempMax: item.main.temp_max,
+                  icon: item.weather[0].icon,
+                  pop: Math.round((item.pop || 0) * 100)
+                };
+              } else {
+                dailyMap[dateStr].tempMin = Math.min(dailyMap[dateStr].tempMin, item.main.temp_min);
+                dailyMap[dateStr].tempMax = Math.max(dailyMap[dateStr].tempMax, item.main.temp_max);
+                dailyMap[dateStr].pop = Math.max(dailyMap[dateStr].pop, Math.round((item.pop || 0) * 100));
+                if (date.getHours() >= 11 && date.getHours() <= 15) {
+                  dailyMap[dateStr].icon = item.weather[0].icon;
+                }
+              }
+            });
+          }
+          const dailyForecastData = Object.values(dailyMap).sort((a: any, b: any) => a.date.getTime() - b.date.getTime()).map((d: any) => {
+            const days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+            const dayName = days[d.date.getDay()];
+            return {
+               day: dayName,
+               icon: d.icon,
+               tempMin: Math.round(d.tempMin),
+               tempMax: Math.round(d.tempMax),
+               pop: d.pop
+            };
+          });
+          
+
+          const formatTime = (ts: number) => {
+            if (!ts) return "--:--";
+            return new Date(ts * 1000).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' });
+          };
+
+          const jsonPayload = {
+            location: resolvedLocation,
+            weather: {
+              current: { 
+                temp: c_temp, 
+                feels_like, 
+                humidity, 
+                desc: c_desc, 
+                icon: c_icon, 
+                pm25, 
+                aqi_level,
+                pressure: weather.main?.pressure,
+                visibility: weather.visibility,
+                clouds: weather.clouds?.all,
+                wind_speed: weather.wind?.speed,
+                uvIndex: Math.round(uviRes?.value || 0),
+                dewPoint: dewPoint,
+                sunrise: formatTime(weather.sys?.sunrise),
+                sunset: formatTime(weather.sys?.sunset),
+                tempMin: Math.round(weather.main?.temp_min || c_temp),
+                tempMax: Math.round(weather.main?.temp_max || c_temp)
+              },
+              forecast_3h: { temp: n_temp, pop: n_pop, desc: n_desc },
+              status: trang_thai,
+              hourlyForecast: interpolatedHourly,
+              dailyForecast: dailyForecastData,
+              weekRange: weekRange
+            },
+            news: baseNewsItems.length > 0 ? baseNewsItems : undefined,
+            weatherNews: weatherNews.length > 0 ? weatherNews : undefined
+          };
+          
+          processJson(jsonPayload);
+
+          // 2. Tải ảnh OG ngầm ở Background (không block UI)
+          baseNewsItems.forEach((item: any, idx: number) => {
+            if (!item.image && item.link) {
+              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
+              fetch(proxyUrl).then(res => res.json()).then(data => {
+                const html = data.contents || "";
+                const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
+                             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+                if (ogMatch) {
+                  const newImg = getProxyImageUrl(ogMatch[1]);
+                  setLiveNews((prev: any) => {
+                    if (!prev) return prev;
+                    const next = [...prev];
+                    if (next[idx]) {
+                      next[idx] = { ...next[idx], img: newImg };
+                    }
+                    return next;
+                  });
+                }
+              }).catch(() => {});
+            }
+          });
+          
+        }).catch((e: any) => {
+        console.error("Standalone fetch error:", e);
+        setApiStatus("error"); // Fallback to mock if fetch fails entirely
+      });
+      }; // end doFetch
+
+      const fallbackToIp = () => {
+        fetch("https://ipapi.co/json/")
+          .then(res => res.json())
+          .then(data => {
+            if (data.latitude && data.longitude) {
+              doFetch(data.latitude, data.longitude, `${data.city || "Hanoi"}, ${data.country || "VN"}`);
+            } else {
+              doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+            }
+          })
+          .catch(() => {
+            doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+          });
+      };
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            doFetch(pos.coords.latitude, pos.coords.longitude);
+          },
+          (err) => {
+            console.warn("Geolocation failed:", err);
+            fallbackToIp();
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      } else {
+        fallbackToIp();
+      }
+      return;
+    }
+
+    if (apiUrl) {
+      // Silent load in background, keep old news visible
+      
+      
+      const isToday = (dateStr: string) => {
+        if (!dateStr) return false;
+        const d = new Date(dateStr).getTime();
+        const now = Date.now();
+        // last 24 hours
+        return (now - d) < 24 * 60 * 60 * 1000;
+      };
+
+      const feedsToFetch = activeCategory === "Tất cả" 
+        ? [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 15)
+        : [...RSS_FEEDS_DB].filter(f => f.category === activeCategory).slice(0, 10);
+
+      const newsPromises = feedsToFetch.map(feed => 
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
+          .then(r => r.json())
+          .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+          .catch(() => [])
+      );
+      
+      Promise.all([
+        fetch(apiUrl).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
+        Promise.all(newsPromises)
+      ]).then(([json, newsArrays]) => {
+        
+        // Group by feed
+        const grouped: Record<string, any[]> = {};
+        newsArrays.forEach((arr) => {
+          if (!arr || arr.length === 0) return;
+          const src = arr[0]._sourceName;
+          grouped[src] = arr.filter((item: any) => isToday(item.pubDate));
+        });
+
+        // Interleave
+        const interleavedNews: any[] = [];
+        let hasMore = true;
+        while(hasMore) {
+          hasMore = false;
+          for (const src of Object.keys(grouped)) {
+            // Take 2-4 items randomly per feed per round
+            const count = Math.floor(Math.random() * 3) + 2; 
+            const chunk = grouped[src].splice(0, count);
+            if (chunk.length > 0) {
+              interleavedNews.push(...chunk);
+              hasMore = true;
+            }
+          }
+        }
+
+        // Final sort chunked (to keep recent vibes but interleaved)
+        // Actually interleaving is enough, we just map them now.
+
+        let processedNews = interleavedNews.map((item: any) => {
+           let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
+           if (!imageUrl && item.description) {
+             const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
+             if (imgMatch) imageUrl = imgMatch[1];
+           }
+           if (!imageUrl && item.content) {
+             const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+             if (imgMatch2) imageUrl = imgMatch2[1];
+           }
+           if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+           let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
+           
+           return {
+             title: decodeHTMLEntities(item.title),
+             link: item.link,
+             source: item._sourceName,
+             pubDate: item.pubDate,
+             description: cleanDesc,
+             image: imageUrl
+           };
+        });
+
+        // FILTER OUT ALL NEWS WITHOUT IMAGES (as requested by user)
+        processedNews = processedNews.filter((item: any) => item.image && item.image.trim() !== "");
+
+        json.news = processedNews;
+
+        
+        const baseNewsItems = json.news;
+        setTimeout(() => {
+          baseNewsItems.forEach((item: any, idx: number) => {
+            let imageUrl = item.image;
+            if (!imageUrl && item.link) {
+              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
+              fetch(proxyUrl).then(res => res.json()).then(data => {
+                const html = data.contents || "";
+                const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
+                             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+                if (ogMatch) {
+                  const newImg = getProxyImageUrl(ogMatch[1]);
+                  setLiveNews((prev: any) => {
+                    if (!prev) return prev;
+                    const next = [...prev];
+                    if (next[idx]) next[idx] = { ...next[idx], img: newImg };
+                    return next;
+                  });
+                }
+              });
+            }
+          });
+        }, 1000);
+        
+        processJson(json as Record<string, unknown>);
+      }).catch(() => setApiStatus("error"));
+    }
+    }; // end loadData
+
+    loadData();
+    const intervalId = setInterval(loadData, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Triple-tap the Anx. logo (or version tag) to open the hidden dev panel
+  function handleSecretTap() {
+    tapCount.current += 1;
+    if (tapTimer.current) clearTimeout(tapTimer.current);
+    tapTimer.current = setTimeout(() => { tapCount.current = 0; }, 600);
+    if (tapCount.current >= 3) {
+      tapCount.current = 0;
+      setPanelOpen(true);
+    }
+  }
+
+    const theme = WEATHER_THEMES[condKey];
+
+  return (
+    <div className="min-h-screen w-full bg-[#f4f6fa]">
+      {/* Live API status indicator */}
+      {apiStatus === "error" && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
+          ⚠️ Không thể tải dữ liệu – hiển thị dữ liệu mẫu
+        </div>
+      )}
+
+
+      {/* Hidden floating trigger — bottom-right corner, blends in */}
+      
+
+      {panelOpen && (
+        <DevWeatherPanel
+          condKey={condKey}
+          onSelect={setCondKey}
+          onClose={() => setPanelOpen(false)}
+        />
+      )}
+
+      <div className="md:hidden w-full">
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
+        
+      </div>
+      <div className="hidden md:block xl:hidden w-full">
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
+      </div>
+      <div className="hidden xl:block w-full">
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
+      </div>
+      <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
+      <ScrollToTop />
+    </div>
+  );
+}
