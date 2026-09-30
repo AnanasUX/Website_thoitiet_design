@@ -1,0 +1,76 @@
+return () => { isMounted = false; };
+  }, []);
+
+  
+
+  const displayData = goldData.length ? goldData : [
+    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 },
+    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 },
+    { productTypeName: 'Đang tải...', priceIn: 0, priceOut: 0 }
+  ];
+
+  const hasChart = chartData.real.length > 0;
+  const rawReal = hasChart ? chartData.real.filter(v => v > 0) : new Array(12).fill(0);
+  const rawForecast = hasChart ? chartData.forecast : new Array(25).fill(0);
+
+  const axisMin = hasChart ? Math.min(...chartData.real, ...chartData.forecast) * 0.999 : 0;
+  const axisMax = hasChart ? Math.max(...chartData.real, ...chartData.forecast) * 1.001 : 1;
+  const r = axisMax - axisMin || 1;
+
+  
+  
+  
+
+  const ptsReal = rawReal.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - axisMin) / r) * 55 
+  }));
+  const ptsForecast = rawForecast.map((v, i) => ({ 
+    x: (i / (rawForecast.length - 1)) * 300, 
+    y: 60 - ((v - axisMin) / r) * 55 
+  }));
+
+  const pathReal = ptsReal.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
+  const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
+
+  return (
+    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out ${loading ? 'opacity-70' : 'opacity-100'}`}>
+      <div className="flex items-center justify-between w-full mb-1">
+        <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
+        <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
+          <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
+        {displayData.map((item, idx) => (
+          <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
+            <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
+            </div>
+            <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
+              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
+              <p className="font-semibold text-[#ef4444] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceOut.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Chart */}
+      <div className="w-full mt-4 bg-[#f8fafc] border border-[#e3e7ef] rounded-[12px] p-2 relative h-[90px] overflow-hidden">
+        {/* Tooltip on hover */}
+        {hoverIdx !== null && hoverIdx < rawForecast.length && (
+          <div className="absolute z-10 bg-[#182033] text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-full"
+               style={{ 
+                 left: `calc(0.5rem + (100% - 1rem) * ${hoverIdx / (rawForecast.length - 1)})`,
+                 top: hoverIdx < rawReal.length ? `calc(0.5rem + ${ptsReal[hoverIdx].y}px)` : `calc(0.5rem + ${ptsForecast[hoverIdx].y}px)`
+               }}>
+            {`${hoverIdx}:00 - ${((hoverIdx < rawReal.length ? rawReal[hoverIdx] : rawForecast[hoverIdx])/1000000).toFixed(2)} Tr`}
+          </div>
+        )}
+        
+        <div className="relative w-full h-[65px]">
+          

@@ -1445,22 +1445,35 @@ function MarketSection() {
       </div>
       
       {/* Chart */}
-      <div className="w-full mt-4 bg-[#f8fafc] border border-[#e3e7ef] rounded-[12px] p-2 relative h-[90px] overflow-hidden">
-        {/* Tooltip on hover */}
-        {hoverIdx !== null && hoverIdx < rawForecast.length && (
-          <div className="absolute z-10 bg-[#182033] text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-full"
-               style={{ 
-                 left: `calc(0.5rem + (100% - 1rem) * ${hoverIdx / (rawForecast.length - 1)})`,
-                 top: hoverIdx < rawReal.length ? `calc(0.5rem + ${ptsReal[hoverIdx].y}px)` : `calc(0.5rem + ${ptsForecast[hoverIdx].y}px)`
-               }}>
-            {`${hoverIdx}:00 - ${((hoverIdx < rawReal.length ? rawReal[hoverIdx] : rawForecast[hoverIdx])/1000000).toFixed(2)} Tr`}
-          </div>
-        )}
+      <div className="w-full mt-4 bg-[#f8fafc] border border-[#e3e7ef] rounded-[12px] p-2 relative flex flex-col gap-2 overflow-hidden">
         
+        {/* Legend */}
+        <div className="flex items-center justify-end gap-3 px-1 w-full">
+          <div className="flex items-center gap-1.5">
+             <div className="w-3 h-0.5 bg-[#16a34a]"></div>
+             <span className="text-[9px] text-[#5f687b] font-bold uppercase tracking-wider">Thực tế</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+             <div className="w-3 h-[1px] border-t-2 border-dashed border-[#94a3b8]"></div>
+             <span className="text-[9px] text-[#5f687b] font-bold uppercase tracking-wider">Dự kiến</span>
+          </div>
+        </div>
+
         <div className="relative w-full h-[65px]">
+          {/* Tooltip on hover */}
+          {hoverIdx !== null && hoverIdx < rawForecast.length && (
+            <div className="absolute z-10 bg-[#182033] text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg pointer-events-none transform -translate-x-1/2 -translate-y-[120%]"
+                 style={{ 
+                   left: `${(hoverIdx / (rawForecast.length - 1)) * 100}%`,
+                   top: hoverIdx < rawReal.length ? `${ptsReal[hoverIdx].y}px` : `${ptsForecast[hoverIdx].y}px`
+                 }}>
+              {`${hoverIdx}:00 - ${((hoverIdx < rawReal.length ? rawReal[hoverIdx] : rawForecast[hoverIdx])/1000000).toFixed(2)} Tr`}
+            </div>
+          )}
+
           <svg viewBox="0 0 300 65" className="absolute top-0 left-0 w-full h-[65px] overflow-visible preserve-3d" preserveAspectRatio="none">
              {/* Forecast line (dashed) */}
-             <path d={pathForecast} fill="none" stroke="#e3e7ef" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+             <path d={pathForecast} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
              {/* Real line (solid green) */}
              <path d={pathReal} fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
              
