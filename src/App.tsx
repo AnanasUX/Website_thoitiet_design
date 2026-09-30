@@ -1636,8 +1636,8 @@ function MarketSection() {
               <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá Xăng Dầu (Petrolimex)</h2>
             </div>
             {[
-              { name: 'Xăng E10', price: '21.320' },
-              { name: 'Xăng E5', price: '20.420' },
+              { name: 'Xăng E10', price: '27.080' },
+              { name: 'Xăng E5', price: '26.390' },
               { name: 'Dầu DO 0,05S-II', price: '18.770' }
             ].map((item, idx) => (
               <div key={idx} className="flex justify-between items-center border border-[#e3e7ef] rounded-[12px] p-3 bg-[#f8fafc]">
