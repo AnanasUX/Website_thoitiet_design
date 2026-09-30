@@ -375,12 +375,14 @@ function WeatherSection({
   liveData,
   liveOverrides,
   darkMode,
+  isLoading,
 }: {
   compact?: boolean;
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveOverrides?: LiveOverrides;
   darkMode?: boolean;
+  isLoading?: boolean;
 }) {
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
