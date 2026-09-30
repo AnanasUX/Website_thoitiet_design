@@ -399,7 +399,8 @@ function WeatherSection({
     <div className="flex flex-col gap-4 w-full">
       {/* Hero card */}
       <div
-        className="hero-gradient flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02]"
+        className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02]"
+          style={{ background: darkMode ? "linear-gradient(21deg, rgb(23, 43, 115) 0%, rgb(18, 28, 48) 50%, rgb(41, 76, 194) 100%)" : "linear-gradient(21deg, rgb(72, 141, 203) 0%, rgb(51, 106, 214) 50%, rgb(79, 196, 255) 100%)" }}
           
       >
         <p className="font-semibold text-[13px] text-white whitespace-nowrap">
@@ -653,7 +654,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
             </p>
           </div>
           </div>
-          <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-[32px] h-[32px] min-w-[32px] min-h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
+          <button onClick={() => setDarkMode(!darkMode)} style={{ minHeight: "32px", minWidth: "32px", padding: 0 }} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
@@ -666,7 +667,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
-          <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
+          <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
@@ -749,7 +750,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             {dateStr} · {timeStr}
           </p>
         </div>
-            <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-[32px] h-[32px] min-w-[32px] min-h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
+            <button onClick={() => setDarkMode(!darkMode)} style={{ minHeight: "32px", minWidth: "32px", padding: 0 }} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
@@ -763,7 +764,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
+          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
         {/* News panel */}
@@ -886,7 +887,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               {dateStr} · {timeStr}
             </p>
           </div>
-            <button onClick={() => setDarkMode(!darkMode)} className="ml-2 w-[32px] h-[32px] min-w-[32px] min-h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
+            <button onClick={() => setDarkMode(!darkMode)} style={{ minHeight: "32px", minWidth: "32px", padding: 0 }} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
@@ -902,7 +903,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
+          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
         {/* News column */}
