@@ -618,6 +618,9 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 
 
 function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { article: any, allNews: any[], onClose: () => void, onSelectRelated: (item: any) => void }) {
+  const [fullContent, setFullContent] = useState<string>('');
+  const [isLoadingFull, setIsLoadingFull] = useState(false);
+
   const related = useMemo(() => {
     return allNews.filter((n: any) => n.link !== article.link).sort(() => 0.5 - Math.random()).slice(0, 3);
   }, [article, allNews]);
@@ -626,6 +629,71 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'auto'; };
   }, []);
+
+  useEffect(() => {
+    if (!article.link) return;
+    setIsLoadingFull(true);
+    setFullContent('');
+    fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(article.link)}`)
+      .then(res => res.json())
+      .then(data => {
+         const parser = new DOMParser();
+         const doc = parser.parseFromString(data.contents, "text/html");
+         
+         const selectors = [
+            '.fck_detail', '.singular-content', '.dt-news__content', 
+            '.detail-cmain', '.detail-content', '.maincontent', 
+            'article', '.post-content', '.entry-content', '.content-detail'
+         ];
+         let mainNode = null;
+         for (const sel of selectors) {
+            mainNode = doc.querySelector(sel);
+            if (mainNode) break;
+         }
+         if (!mainNode) mainNode = doc.body;
+
+         const elements = mainNode.querySelectorAll('p, img, h1, h2, h3');
+         let html = '';
+         elements.forEach(el => {
+            if (el.tagName === 'P') {
+               const txt = el.textContent?.trim() || "";
+               if (txt.length > 20 && !txt.toLowerCase().includes('đọc thêm') && !txt.toLowerCase().includes('tin liên quan')) {
+                  html += `<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${txt}</p>`;
+               }
+            } else if (el.tagName === 'IMG') {
+               let src = el.getAttribute('data-src') || el.getAttribute('src');
+               if (src && !src.startsWith('http')) {
+                   // attempt to resolve relative urls
+                   try {
+                     const url = new URL(src, article.link);
+                     src = url.href;
+                   } catch(e) {}
+               }
+               if (src && !src.includes('logo') && !src.includes('icon') && !src.startsWith('data:')) {
+                  html += `<div class="my-6 rounded-xl overflow-hidden shadow-sm"><img src="${src}" alt="" class="w-full object-cover" /></div>`;
+               }
+            } else if (el.tagName.startsWith('H')) {
+               const txt = el.textContent?.trim() || "";
+               if (txt.length > 10) {
+                   html += `<h3 class="font-bold text-[#182033] text-[20px] mt-8 mb-3">${txt}</h3>`;
+               }
+            }
+         });
+         
+         if (html.length > 100) {
+            setFullContent(html);
+         } else {
+            setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body}</p>`);
+         }
+      })
+      .catch(err => {
+         console.error(err);
+         setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body}</p>`);
+      })
+      .finally(() => {
+         setIsLoadingFull(false);
+      });
+  }, [article.link, article.body]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
@@ -648,7 +716,18 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
            <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full" referrerPolicy="no-referrer" src={article.img} data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
         </div>
 
-        <p className="font-normal text-[#334155] text-[16px] md:text-[18px] leading-relaxed mt-4 whitespace-pre-wrap">{article.body}</p>
+        {isLoadingFull ? (
+           <div className="flex flex-col gap-4 mt-6 animate-pulse">
+              <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+              <div className="h-4 bg-[#e3e7ef] rounded w-11/12"></div>
+              <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+              <div className="h-[200px] bg-[#e3e7ef] rounded w-full my-4"></div>
+              <div className="h-4 bg-[#e3e7ef] rounded w-10/12"></div>
+              <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+           </div>
+        ) : (
+           <div className="mt-6" dangerouslySetInnerHTML={{ __html: fullContent }} />
+        )}
 
         <a href={article.link} target="_blank" rel="noopener noreferrer" className="mt-4 bg-[#f4f6fa] hover:bg-[#e3e7ef] text-[#182033] font-bold text-center py-3 rounded-xl transition-colors">
           Đọc bài viết gốc trên {article.src.split(' ')[0]}
