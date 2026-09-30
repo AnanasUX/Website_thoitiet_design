@@ -434,7 +434,7 @@ function WeatherSection({
 
       {/* Forecast */}
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ (HOURLY)</p>
+        <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <HourlyTemperatureChart hourlyData={WEATHER.hourlyForecast || []} />
           ) : (
