@@ -2615,7 +2615,7 @@ useEffect(() => {
     }; // end loadData
 
     loadData();
-    const intervalId = setInterval(loadData, 5 * 60 * 1000); // 5 minutes
+    const intervalId = setInterval(loadData, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
     return () => clearInterval(intervalId);
   }, []);
 
