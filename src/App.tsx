@@ -646,15 +646,15 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
-          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">Thời tiết</p>
+          <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
           <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
                   <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
-        <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
-          Tin Tức Mới Nhất
+        <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+            Tin Tức Mới Nhất
         </p>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
@@ -749,7 +749,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
           <MarketSection />
           <div className="flex flex-col gap-[2px] items-start">
-            <p className="font-bold text-[#182033] text-[20px] tracking-[-0.3px]">Tin tức</p>
+            <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Tin tức</p>
             <p className="font-normal text-[#5f687b] text-[12px]">
               {WEATHER.location} · {newsFeed.length} bài mới nhất
             </p>
@@ -863,7 +863,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <MarketSection />
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
-          <p className="font-semibold leading-[26px] text-[#182033] text-[20px]">
+          <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
             Tin Tức Mới Nhất
           </p>
           <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
@@ -1173,7 +1173,7 @@ export function getNewspaperLogo(url: string) {
   try {
     const domain = new URL(url).hostname;
     if (domain.includes('dantri.com.vn')) {
-      return 'https://cdn.dantri.com.vn/dantri-favicon.ico';
+      return 'https://dantri.com.vn/favicon.ico';
     }
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   } catch (e) {
@@ -1412,7 +1412,7 @@ function MarketSection() {
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full mb-1">
-        <h2 className="font-semibold leading-[26px] text-[#182033] text-[16px] md:text-[18px]">Giá vàng Phú Quý</h2>
+        <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
