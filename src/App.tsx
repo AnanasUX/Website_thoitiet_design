@@ -1412,7 +1412,7 @@ function MarketSection() {
   return (
     <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef]">
       <div className="flex items-center justify-between w-full mb-1">
-        <h2 className="font-semibold leading-[26px] text-[#182033] text-[20px]">Giá vàng Phú Quý</h2>
+        <h2 className="font-semibold leading-[26px] text-[#182033] text-[16px] md:text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
@@ -1439,15 +1439,15 @@ function MarketSection() {
         <div className="w-full flex items-center justify-between p-2 sm:p-3 border-b border-[#e3e7ef]/50">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></div>
-            <p className="text-[11px] sm:text-[13px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
+            <p className="text-[12px] sm:text-[14px] font-bold text-[#182033]">Chỉ số thị trường (Trend):</p>
           </div>
           {rawReal.length > 1 && rawReal[rawReal.length - 1] < rawReal[0] ? (
-                <p className="text-[11px] sm:text-[13px] font-bold text-[#ef4444] flex items-center gap-1">
+                <p className="text-[12px] sm:text-[14px] font-bold text-[#ef4444] flex items-center gap-1">
                   SUY GIẢM
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 18l-9.5-9.5-5 5L1 6"></path><path d="M17 18h6v-6"></path></svg>
                 </p>
               ) : (
-                <p className="text-[11px] sm:text-[13px] font-bold text-[#16a34a] flex items-center gap-1">
+                <p className="text-[12px] sm:text-[14px] font-bold text-[#16a34a] flex items-center gap-1">
                   TĂNG TRƯỞNG
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"></path><path d="M17 6h6v6"></path></svg>
                 </p>
@@ -1456,8 +1456,8 @@ function MarketSection() {
 
         <div className="flex flex-col p-2 sm:p-3 bg-white w-full border-t border-white">
           <div className="flex justify-between items-center mb-1">
-            <p className="text-[10px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY) - {new Date().toLocaleDateString('vi-VN')}</p>
-            <div className="flex gap-2 text-[9px] font-bold">
+            <p className="text-[11px] sm:text-[12px] font-bold text-[#5f687b]">BIỂU ĐỒ BIẾN ĐỘNG (INTRA-DAY) - {new Date().toLocaleDateString('vi-VN')}</p>
+            <div className="flex gap-2 text-[10px] sm:text-[11px] font-bold">
               <span className="text-[#5f687b]">H: {displayMax.toLocaleString('vi-VN')}</span>
               <span className="text-[#5f687b]">L: {displayMin.toLocaleString('vi-VN')}</span>
             </div>
