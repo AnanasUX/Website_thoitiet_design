@@ -377,7 +377,11 @@ function WeatherSection({
   condKey: ConditionKey;
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveOverrides?: LiveOverrides;
-}) {
+}
+    activeCategory?: string;
+    setActiveCategory?: (c: string) => void;
+    darkMode?: boolean;
+    setDarkMode?: (d: boolean) => void;) {
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
 
@@ -610,7 +614,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 }
 
 function MobileLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory,
+  isFetchingCategory, darkMode, setDarkMode,
     condKey,
   liveData,
   liveNews,
@@ -621,7 +625,11 @@ function MobileLayout({ activeCategory, setActiveCategory,
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
-}) {
+}
+    activeCategory?: string;
+    setActiveCategory?: (c: string) => void;
+    darkMode?: boolean;
+    setDarkMode?: (d: boolean) => void;) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const now = useCurrentTime();
@@ -699,7 +707,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
 // ── Tablet Layout ────────────────────────────────────────────────────────────
 
 function TabletLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory,
+  isFetchingCategory, darkMode, setDarkMode,
     condKey,
   liveData,
   liveNews,
@@ -710,7 +718,11 @@ function TabletLayout({ activeCategory, setActiveCategory,
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
-}) {
+}
+    activeCategory?: string;
+    setActiveCategory?: (c: string) => void;
+    darkMode?: boolean;
+    setDarkMode?: (d: boolean) => void;) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...rest] = newsFeed;
@@ -836,7 +848,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
 // ── Desktop Layout ───────────────────────────────────────────────────────────
 
 function DesktopLayout({ activeCategory, setActiveCategory,
-  isFetchingCategory,
+  isFetchingCategory, darkMode, setDarkMode,
     condKey,
   liveData,
   liveNews,
@@ -847,7 +859,11 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   liveData?: Record<ConditionKey, WeatherEntry>;
   liveNews?: LiveNewsItem[];
   liveOverrides?: LiveOverrides;
-}) {
+}
+    activeCategory?: string;
+    setActiveCategory?: (c: string) => void;
+    darkMode?: boolean;
+    setDarkMode?: (d: boolean) => void;) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
   const [featured, ...grid] = newsFeed;
@@ -2491,14 +2507,14 @@ export default function App() {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} liveOverrides={liveOverrides} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} liveOverrides={liveOverrides} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} liveOverrides={liveOverrides} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
