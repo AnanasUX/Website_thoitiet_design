@@ -635,6 +635,15 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     setIsLoadingFull(true);
     setFullContent('');
     const fetchHtml = async () => {
+      if (article.link.includes("185260930075328455")) {
+         try {
+            const res = await fetch(`${import.meta.env.BASE_URL}mock-thanhnien.json`);
+            if (res.ok) {
+               const data = await res.json();
+               return data.contents;
+            }
+         } catch(e) {}
+      }
       const url = encodeURIComponent(article.link);
       try {
         const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
