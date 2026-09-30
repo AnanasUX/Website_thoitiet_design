@@ -1570,7 +1570,8 @@ function MarketSection() {
       }
     };
     fetchMarket();
-    return () => { isMounted = false; };
+    const intervalId = setInterval(fetchMarket, 60000);
+    return () => { isMounted = false; clearInterval(intervalId); };
   }, []);
 
   
