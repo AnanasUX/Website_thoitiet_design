@@ -1525,7 +1525,42 @@ export default function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+    // Force Fullscreen on first user interaction (browser security requires a gesture)
   useEffect(() => {
+    const enterFullscreen = () => {
+      const elem = document.documentElement as any;
+      if (!document.fullscreenElement) {
+        try {
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {});
+          } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+          } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+          }
+        } catch (e) {
+          console.warn("Fullscreen request failed", e);
+        }
+      }
+    };
+
+    const handleInteraction = () => {
+      enterFullscreen();
+      // Remove listeners after first successful attempt
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+
+    return () => {
+      window.removeEventListener('click', handleInteraction);
+      window.removeEventListener('touchstart', handleInteraction);
+    };
+  }, []);
+
+useEffect(() => {
     const root = window.document.documentElement;
     if (darkMode) {
       root.classList.add('dark');
