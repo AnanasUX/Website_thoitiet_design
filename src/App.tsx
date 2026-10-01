@@ -648,10 +648,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       }
       const url = encodeURIComponent(article.link);
       try {
-        const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
+        const WORKER_URL = 'https://gold-api.mrkun28.workers.dev';
+        const res = await fetch(`${WORKER_URL}?url=${url}`);
         if (res.ok) {
-           const data = await res.json();
-           return data.contents || "";
+           return await res.text();
         }
       } catch (e) {}
       return "";
