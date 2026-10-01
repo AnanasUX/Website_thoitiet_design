@@ -1525,9 +1525,8 @@ function MarketSection() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000); 
         
-        // THAY URL BẰNG LINK CLOUDFLARE WORKER CỦA BẠN VÀO ĐÂY (VÍ DỤ: 'https://gold-proxy.ten-ban.workers.dev')
-        // Nếu để trống, nó sẽ dùng tạm allorigins (sẽ bị lỗi như hiện tại)
-        const WORKER_URL = ''; 
+        // THAY URL BẰNG LINK CLOUDFLARE WORKER CỦA BẠN VÀO ĐÂY
+        const WORKER_URL = 'https://gold-api.mrkun28.workers.dev'; 
         const fetchUrl = WORKER_URL 
             ? WORKER_URL 
             : 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://be.phuquy.com.vn/jewelry/product-payment-service/api/sync-price-history/get-sync-table-history?_t=' + Date.now());
