@@ -665,33 +665,117 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       return html;
     };
     
+    // ── Hàm cào bài viết trực tiếp qua Worker Proxy (client-side DOMParser) ──
+    const scrapeViaProxy = async (articleUrl: string) => {
+      try {
+        const PROXY = 'https://gold-api.mrkun28.workers.dev/proxy?url=';
+        const res = await fetch(PROXY + encodeURIComponent(articleUrl));
+        if (!res.ok) return null;
+        const html = await res.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Xóa các phần tử không liên quan
+        doc.querySelectorAll('script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, .social, .comment, iframe, .banner').forEach(el => el.remove());
+        
+        // Tìm vùng nội dung chính theo thứ tự ưu tiên cho từng tờ báo
+        const contentSelectors = [
+          // VnExpress
+          'article.fck_detail',
+          '.fck_detail',
+          // Thanh Niên
+          '[data-role="content"]',
+          '.detail-cmain',
+          // Tuổi Trẻ
+          '#main-detail-body',
+          '.detail-content [data-role="content"]',
+          // Dân Trí
+          '.singular-content',
+          '.e-magazine__body',
+          // Zing/ZNews
+          '.the-article-body',
+          // CafeF / GenK
+          '.knc-content',
+          // Generic
+          'article',
+          '.post-content',
+          '.entry-content',
+          '.article-content',
+          '.article-body',
+        ];
+        
+        let contentEl: Element | null = null;
+        for (const sel of contentSelectors) {
+          const el = doc.querySelector(sel);
+          if (el && el.textContent && el.textContent.trim().length > 200) {
+            contentEl = el;
+            break;
+          }
+        }
+        
+        if (!contentEl) return null;
+        
+        // Trích xuất đoạn văn (paragraphs)
+        const paragraphs: string[] = [];
+        contentEl.querySelectorAll('p').forEach(p => {
+          const text = (p.textContent || '').trim();
+          if (text.length > 20 && !text.startsWith('Ảnh:') && !text.startsWith('Video:')) {
+            paragraphs.push(text);
+          }
+        });
+        
+        // Trích xuất headings
+        const headings: string[] = [];
+        contentEl.querySelectorAll('h2, h3').forEach(h => {
+          const text = (h.textContent || '').trim();
+          if (text.length > 5 && text.length < 200) headings.push(text);
+        });
+        
+        // Trích xuất ảnh
+        const images: string[] = [];
+        contentEl.querySelectorAll('img').forEach(img => {
+          const src = img.getAttribute('data-src') || img.getAttribute('src') || '';
+          if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon') && !src.includes('1x1') && !src.includes('pixel') && !src.includes('data:image')) {
+            images.push(src);
+          }
+        });
+        
+        // Trích xuất captions
+        const captions: string[] = [];
+        contentEl.querySelectorAll('figcaption').forEach(cap => {
+          const text = (cap.textContent || '').trim();
+          if (text.length > 3) captions.push(text);
+        });
+        
+        if (paragraphs.length === 0) return null;
+        
+        return { paragraphs, headings, images, captions };
+      } catch (err) {
+        console.warn('[Scrape] Error:', err);
+        return null;
+      }
+    };
+    
     // Nếu bot đã cào sẵn nội dung chi tiết → Hiển thị ngay lập tức
     if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
-      setFullContent(renderContent(article.fullContent));
-      setIsLoadingFull(false);
-    } else {
-      // Fallback: Fetch on-demand from Cloudflare Worker
-      setIsLoadingFull(true);
-      let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim().split('?')[0];
-      fetch('https://new-bot.mrkun28.workers.dev/api/scrape?url=' + encodeURIComponent(cleanLink))
-        .then(r => r.json())
-        .then(data => {
-            if (data && data.success && data.data) {
-                const html = renderContent(data.data);
-                if (html) {
-                    setFullContent(html);
-                    setIsLoadingFull(false);
-                    return;
-                }
-            }
-            setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
-            setIsLoadingFull(false);
-        })
-        .catch(() => {
-            setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
-            setIsLoadingFull(false);
-        });
+      const html = renderContent(article.fullContent);
+      if (html) { setFullContent(html); setIsLoadingFull(false); return; }
     }
+    
+    // Fallback: Fetch HTML bài viết qua Worker Proxy rồi parse bằng DOMParser
+    setIsLoadingFull(true);
+    let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+    
+    scrapeViaProxy(cleanLink).then(data => {
+      if (data) {
+        const html = renderContent(data);
+        if (html) { setFullContent(html); setIsLoadingFull(false); return; }
+      }
+      // Cuối cùng: hiển thị body từ RSS
+      setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
+      setIsLoadingFull(false);
+    });
   }, [article.link, article.body, article.fullContent]);
 
   return (
