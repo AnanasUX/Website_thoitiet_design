@@ -859,6 +859,11 @@ function MobileLayout({ activeCategory, setActiveCategory,
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
               )}
             </div>
+            {userRole && userRole.picture && (
+              <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
+                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" />
+              </div>
+            )}
         </div>
       </div>
 
@@ -1731,7 +1736,14 @@ export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   
   // Trạng thái quản lý quyền người dùng (Role Management)
-  const [userRole, setUserRole] = useState<any>(null);
+  const [userRole, setUserRole] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem('user_auth');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Kích hoạt Google One Tap Login (Popup từ dưới lên)
   useGoogleOneTapLogin({
