@@ -543,7 +543,7 @@ function WeatherSection({
                   <div className="flex flex-col gap-[2px]">
                     <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#0a84ff] hover:underline line-clamp-2">
                       {news.title}
-                    </div>
+                    </a>
                     <span className="text-[#5f687b] text-[11px]">{news.source}</span>
                   </div>
                 </div>
