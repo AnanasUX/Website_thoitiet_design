@@ -16,8 +16,8 @@ import './index.css'
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-// BẠN CẦN ĐIỀN GOOGLE CLIENT ID VÀO ĐÂY ĐỂ ĐĂNG NHẬP HOẠT ĐỘNG
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com';
+// ĐÃ ĐIỀN GOOGLE CLIENT ID THẬT TỪ ẢNH CHỤP
+const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
