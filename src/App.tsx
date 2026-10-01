@@ -1692,7 +1692,8 @@ export default function App() {
   });
   const handleArticleSelect = (article: any) => {
     // Ghép dữ liệu chi tiết từ bot đã cào sẵn
-    const preCrawled = preCrawledRef.current.get(article.link);
+    let cleanLink = article.link ? article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim().split('?')[0] : '';
+    const preCrawled = preCrawledRef.current.get(cleanLink);
     const enriched = preCrawled 
       ? { ...article, fullContent: preCrawled.fullContent }
       : article;
@@ -2610,7 +2611,11 @@ useEffect(() => {
       .then((data: any) => {
         if (data.success && data.articles) {
           data.articles.forEach((a: any) => {
-            if (a.link) preCrawledRef.current.set(a.link, a);
+            if (a.link) {
+              let c = a.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+              c = c.split('?')[0];
+              preCrawledRef.current.set(c, a);
+            }
           });
           console.log(`[News Bot] Pre-crawled ${data.articles.length} articles`);
         }
