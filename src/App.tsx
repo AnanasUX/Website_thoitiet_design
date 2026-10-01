@@ -1727,6 +1727,28 @@ function toSlug(str: string) {
 
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  
+  // Trạng thái quản lý quyền người dùng (Role Management)
+  const [userRole, setUserRole] = useState<any>(null);
+
+  // Kích hoạt Google One Tap Login (Popup từ dưới lên)
+  useGoogleOneTapLogin({
+    onSuccess: credentialResponse => {
+      if (credentialResponse.credential) {
+        const decoded = jwtDecode(credentialResponse.credential);
+        console.log("Đăng nhập Google thành công:", decoded);
+        
+        // Lưu section phiên đăng nhập
+        localStorage.setItem('user_auth', JSON.stringify(decoded));
+        
+        // Cấp quyền dựa trên logic (Phân quyền hiển thị ở đây)
+        setUserRole(decoded);
+      }
+    },
+    onError: () => {
+      console.log('Login Failed');
+    },
+  });
   const handleArticleSelect = (article: any) => {
     setSelectedArticle(article);
     if (article) {
@@ -2481,6 +2503,12 @@ useEffect(() => {
         fetch("https://ipapi.co/json/")
           .then(res => res.json())
           .then(data => {
+            // LƯU SESSION COOKIE IP NGƯỜI DÙNG NHƯ YÊU CẦU
+            if (data.ip) {
+              localStorage.setItem('user_session_ip', data.ip);
+              document.cookie = `user_session_ip=${data.ip}; path=/; max-age=31536000`;
+            }
+
             if (data.latitude && data.longitude) {
               doFetch(data.latitude, data.longitude, `${data.city || "Hanoi"}, ${data.country || "VN"}`);
             } else {

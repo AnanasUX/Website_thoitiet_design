@@ -14,8 +14,17 @@ import App from './App'
 import ErrorBoundary from './ErrorBoundary.jsx'
 import './index.css'
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+// BẠN CẦN ĐIỀN GOOGLE CLIENT ID VÀO ĐÂY ĐỂ ĐĂNG NHẬP HOẠT ĐỘNG
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ErrorBoundary><App /></ErrorBoundary>
+    <ErrorBoundary>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <App />
+      </GoogleOAuthProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )
