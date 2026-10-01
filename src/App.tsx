@@ -1567,11 +1567,11 @@ function MarketSection() {
       } catch (err) {
         if (isMounted) {
           setGoldData([
-            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
-            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
-            { productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
+            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14050000, priceOut: 14350000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 14050000, priceOut: 14380000 }
           ]);
-          setChartData(prev => prev.real.length ? prev : generateDynamicData(14410000));
+          setChartData(prev => prev.real.length ? prev : generateDynamicData(14350000));
           setLoading(false);
         }
       }
@@ -1584,9 +1584,9 @@ function MarketSection() {
   
 
   const displayData = goldData.length ? goldData : [
-    { productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
-            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
-            { productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
+    { productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14050000, priceOut: 14350000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 14050000, priceOut: 14380000 }
   ];
 
   const hasChart = chartData.real.length > 0;
