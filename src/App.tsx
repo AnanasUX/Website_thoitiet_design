@@ -763,22 +763,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       if (html) { setFullContent(html); setIsLoadingFull(false); return; }
     }
     
-    // Fallback: Fetch HTML bài viết qua Worker Proxy rồi parse bằng DOMParser
-    setIsLoadingFull(true);
+    // Không có nội dung pre-crawled → chuyển thẳng sang trang gốc
     let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
-    
-    scrapeViaProxy(cleanLink).then(data => {
-      if (data) {
-        const html = renderContent(data);
-        if (html) { setFullContent(html); setIsLoadingFull(false); return; }
-      }
-      // Không cào được → chuyển thẳng sang trang gốc
-      window.open(cleanLink, '_blank');
-      onClose();
-    }).catch(() => {
-      window.open(cleanLink, '_blank');
-      onClose();
-    });
+    onClose();
+    window.location.href = cleanLink;
   }, [article.link, article.body, article.fullContent]);
 
   return (
