@@ -635,21 +635,17 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   useEffect(() => {
     if (!article.link) return;
     
-    // Nếu bot đã cào sẵn nội dung chi tiết → Hiển thị ngay lập tức
-    if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
+    const renderContent = (fc: any) => {
+      if (!fc || !fc.paragraphs || fc.paragraphs.length === 0) return null;
       let html = '';
-      const fc = article.fullContent;
       let imgIdx = 0;
       
-      // Render heading nếu có
       fc.headings?.forEach((h: string) => {
         html += `<h2 class="font-bold text-[#182033] text-[20px] md:text-[22px] mt-8 mb-4">${h}</h2>`;
       });
       
-      // Render paragraphs xen kẽ với ảnh
       fc.paragraphs.forEach((p: string, i: number) => {
         html += `<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${p}</p>`;
-        // Chèn ảnh sau mỗi 2-3 đoạn văn
         if ((i + 1) % 3 === 0 && imgIdx < (fc.images?.length || 0)) {
           html += `<img src="${fc.images[imgIdx]}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
           if (fc.captions && fc.captions[imgIdx]) {
@@ -659,7 +655,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
       });
       
-      // Render ảnh còn lại
       while (imgIdx < (fc.images?.length || 0)) {
         html += `<img src="${fc.images[imgIdx]}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
         if (fc.captions && fc.captions[imgIdx]) {
@@ -667,13 +662,35 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
         imgIdx++;
       }
-      
-      setFullContent(html);
+      return html;
+    };
+    
+    // Nếu bot đã cào sẵn nội dung chi tiết → Hiển thị ngay lập tức
+    if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
+      setFullContent(renderContent(article.fullContent));
       setIsLoadingFull(false);
     } else {
-      // Fallback: Hiển thị mô tả ngắn từ RSS
-      setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
-      setIsLoadingFull(false);
+      // Fallback: Fetch on-demand from Cloudflare Worker
+      setIsLoadingFull(true);
+      let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim().split('?')[0];
+      fetch('https://new-bot.mrkun28.workers.dev/api/scrape?url=' + encodeURIComponent(cleanLink))
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.success && data.data) {
+                const html = renderContent(data.data);
+                if (html) {
+                    setFullContent(html);
+                    setIsLoadingFull(false);
+                    return;
+                }
+            }
+            setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
+            setIsLoadingFull(false);
+        })
+        .catch(() => {
+            setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
+            setIsLoadingFull(false);
+        });
     }
   }, [article.link, article.body, article.fullContent]);
 

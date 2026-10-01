@@ -220,7 +220,22 @@ export default {
     const path = url.pathname;
 
     try {
-      // API: /api/news - Trả về toàn bộ tin tức đã cào xong (có cache 5 phút)
+      // API: /api/scrape - Cào trực tiếp 1 bài viết theo URL (On-demand)
+        if (path === '/api/scrape') {
+          const targetUrl = url.searchParams.get('url');
+          if (!targetUrl) {
+            return new Response(JSON.stringify({ success: false, error: 'Missing url parameter' }), {
+              headers: { 'Content-Type': 'application/json;charset=UTF-8', ...CORS_HEADERS }
+            });
+          }
+          
+          const detail = await scrapeArticle(targetUrl);
+          return new Response(JSON.stringify({ success: !!detail, data: detail }), {
+            headers: { 'Content-Type': 'application/json;charset=UTF-8', ...CORS_HEADERS, 'Cache-Control': 'public, max-age=3600' }
+          });
+        }
+        
+        // API: /api/news - Trả về toàn bộ tin tức đã cào xong (có cache 5 phút)
       if (path === '/api/news' || path === '/') {
         const category = url.searchParams.get('category') || '';
         const cacheKey = `news_${category || 'all'}`;
