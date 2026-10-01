@@ -1535,9 +1535,9 @@ function MarketSection() {
             const filtered = pqJson.data.filter((item: any) => keys.includes(item.productType));
             if (filtered.length > 0) {
               const fallback = [
-                { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
-                { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
-                { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
+                { productType: '24K', productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
+                { productType: 'NPQ', productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14050000, priceOut: 14350000 },
+                { productType: 'SJC', productTypeName: 'Vàng miếng SJC', priceIn: 14050000, priceOut: 14380000 }
               ];
               finalGoldData = keys.map(k => filtered.find((i:any) => i.productType === k) || fallback.find((i:any) => i.productType === k));
               const npq = finalGoldData.find((i: any) => i.productType === 'NPQ') || finalGoldData[1];
@@ -1548,9 +1548,9 @@ function MarketSection() {
         
         if (finalGoldData.length === 0) {
            finalGoldData = [
-            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13780000, priceOut: 14280000 },
-            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14080000, priceOut: 14380000 },
-            { productTypeName: 'Vàng miếng SJC', priceIn: 14080000, priceOut: 14410000 }
+            { productTypeName: 'Vàng trang sức 999.9', priceIn: 13750000, priceOut: 14250000 },
+            { productTypeName: 'Nhẫn tròn Phú Quý 999.9', priceIn: 14050000, priceOut: 14350000 },
+            { productTypeName: 'Vàng miếng SJC', priceIn: 14050000, priceOut: 14380000 }
           ];
         }
 
