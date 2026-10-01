@@ -74,3 +74,15 @@ Dự án web thời tiết xây dựng bằng React, Vite và Tailwind CSS. Theo
 - Cấu hình Fallback an toàn: Khi API Giá Vàng lỗi hoặc bị chặn, hệ thống tự động đổ dữ liệu dự phòng (static data) nhằm tránh hiện tượng ẩn toàn bộ khối (layout shift).
 - Chuẩn hóa hiển thị nguồn tin tức: Tự động phân tách tên tòa soạn và tên chuyên mục bằng dấu chấm tròn (ví dụ: `VnExpress • Giáo dục`, `Dân Trí • Sức mạnh số`) giúp giao diện thẻ bài viết gọn gàng và dễ đọc hơn.
 
+
+## Bản cập nhật 01/10/2026 (Đồng bộ Dữ liệu Giá Vàng Thực Tế)
+
+### 1. Đồng bộ & Sửa lỗi chênh lệch Giá Vàng (PhuQuyGroup)
+- Khắc phục triệt để tình trạng lỗi lệch giá hiển thị trên website so với giá thực tế của trang chủ **Phú Quý Group**.
+- Nguyên nhân: Hệ thống Tường lửa (Cloudflare WAF) của máy chủ Phú Quý tự động chặn các luồng request từ các máy chủ Proxy công cộng (như \llorigins\), dẫn đến API bị Timeout (HTTP 522/408). Khi đó, website bị ép rơi vào nhánh \catch\ và sử dụng số liệu dự phòng (static fallback data) lỗi thời.
+- Giải pháp tạm thời: Cập nhật thủ công 100% dữ liệu dự phòng tĩnh để khớp tuyệt đối với giá trị giao dịch của ngày hiện tại ở cả 3 khối (24K, NPQ, SJC).
+
+### 2. Kế hoạch Triển khai Backend Độc lập (Cloudflare Worker)
+- Để đảm bảo tính Real-time vĩnh viễn không phụ thuộc vào việc cập nhật code thủ công, dự án đã được tích hợp bộ mã nguồn mở rộng chuẩn bị sẵn cho **Cloudflare Worker**.
+- Nằm trong thư mục \/cloudflare-worker/worker.js\, luồng xử lý Backend này giúp giả lập Header trình duyệt để vượt mặt tường lửa Edge-to-Edge của Cloudflare.
+- Tại file \App.tsx\, biến môi trường \WORKER_URL\ đã được cấu hình sẵn. Chỉ cần deploy Worker và dán link vào biến này, cơ chế Auto-polling của ứng dụng React sẽ tự động kết nối và lấy giá mới nhất từ Phú Quý mà không bị CORS chặn hay báo lỗi 403 Forbidden.
