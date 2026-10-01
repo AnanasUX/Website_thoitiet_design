@@ -543,7 +543,7 @@ function WeatherSection({
                   <div className="flex flex-col gap-[2px]">
                     <a href={news.link} target="_blank" rel="noopener noreferrer" className="font-medium text-[#0a84ff] hover:underline line-clamp-2">
                       {news.title}
-                    </a>
+                    </div>
                     <span className="text-[#5f687b] text-[11px]">{news.source}</span>
                   </div>
                 </div>
@@ -883,9 +883,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
       </div>
           {isFetchingCategory ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
-              <a
-              key={i}
-              href={item.link ?? "#"} target={item.link ? "_blank" : undefined} rel="noopener noreferrer" className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+              <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full">
@@ -898,7 +896,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
               </div>
-            </a>
+            </div>
           ))}
           </>)}
         </div>
@@ -1002,8 +1000,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           {isFetchingCategory ? <NewsSkeleton /> : (<>
           {/* Featured article */}
           {featured && (
-            <a
-              href={featured.link ?? "#"} target={featured.link ? "_blank" : undefined} rel="noopener noreferrer" className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -1025,14 +1022,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
                   </div>
                 </div>
               </div>
-            </a>
+            </div>
           )}
 
           {/* Remaining articles */}
           {rest.map((item, i) => (
-            <a
-              key={i}
-              href={item.link ?? "#"} target={item.link ? "_blank" : undefined} rel="noopener noreferrer" className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -1044,7 +1039,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
                 <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
                 <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
               </div>
-            </a>
+            </div>
           ))}
           </>)}
         </div>
@@ -1136,8 +1131,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {isFetchingCategory ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
           {featured && (
-            <a
-              href={featured.link ?? "#"} target={featured.link ? "_blank" : undefined} rel="noopener noreferrer" className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
@@ -1159,15 +1153,13 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               {featured.body && (
                 <p className="font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
               )}
-            </a>
+            </div>
           )}
 
           {/* News grid */}
             <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
               {grid.map((item, i) => (
-                <a
-                  key={i}
-                  href={item.link ?? "#"} target={item.link ? "_blank" : undefined} rel="noopener noreferrer" className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+                <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
                 <div className="h-[140px] relative w-full overflow-hidden">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
@@ -1181,7 +1173,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                   <p className="font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
                   <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
           </>)}
@@ -2725,7 +2717,14 @@ useEffect(() => {
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
 
-
+      {selectedArticle && (
+        <NewsDetailView 
+          article={selectedArticle} 
+          allNews={liveNews} 
+          onClose={closeArticle} 
+          onSelectRelated={handleArticleSelect} 
+        />
+      )}
     </div>
   );
 }
