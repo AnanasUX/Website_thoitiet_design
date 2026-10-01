@@ -569,7 +569,7 @@ function WeatherSection({
 }
 
 // ── Live news item type ───────────────────────────────────────────────────────
-type LiveNewsItem = { img: string; fallbackImg?: string; logo?: string; author: string; src: string; body: string; link?: string };
+type LiveNewsItem = { img: string; fallbackImg?: string; logo?: string; author: string; src: string; body: string; link?: string; fullContent?: { paragraphs: string[]; images: string[]; captions: string[]; headings: string[] } | null };
 
 // ── Default mock news articles ────────────────────────────────────────────────
 const DEFAULT_NEWS_FEED: LiveNewsItem[] = [
@@ -634,122 +634,48 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
   useEffect(() => {
     if (!article.link) return;
-    setIsLoadingFull(true);
-    setFullContent('');
-    const fetchHtml = async () => {
-      if (article.link.includes("185260930075328455")) {
-         try {
-            const res = await fetch(`${import.meta.env.BASE_URL}mock-thanhnien.json`);
-            if (res.ok) {
-               const data = await res.json();
-               return data.contents;
-            }
-         } catch(e) {}
-      }
-      const url = encodeURIComponent(article.link);
-      try {
-        const WORKER_URL = 'https://gold-api.mrkun28.workers.dev';
-        const res = await fetch(`${WORKER_URL}?url=${url}`);
-        if (res.ok) {
-           return await res.text();
-        }
-      } catch (e) {}
-      return "";
-    };
-
-    fetchHtml()
-      .then(rawHtml => {
-         const parser = new DOMParser();
-         const doc = parser.parseFromString(rawHtml || "", "text/html");
-         
-         const selectors = [
-            '.fck_detail', '.singular-content', '.dt-news__content', 
-            '.detail-cmain', '.detail-content', '.maincontent', 
-            'article', '.post-content', '.entry-content', '.content-detail'
-         ];
-         let mainNode = null;
-         for (const sel of selectors) {
-            mainNode = doc.querySelector(sel);
-            if (mainNode) break;
-         }
-         if (!mainNode) mainNode = doc.body;
-
-         // Remove garbage elements
-         const badSelectors = [
-           'script', 'style', 'iframe', 'nav', 'header', 'footer', 
-           '.box-tin-lien-quan', '.tin-lien-quan', '.related-news', 
-           'aside', '.banner', '.ads', '.ad-container', 'form',
-           '.social-share', '.author-info', 'button', '.breadcrumb',
-           '#header', '#footer', '.comment-section'
-         ];
-         badSelectors.forEach(sel => {
-            mainNode?.querySelectorAll(sel).forEach(n => n.remove());
-         });
-
-         // Process images
-         mainNode.querySelectorAll('img').forEach(img => {
-            let src = img.getAttribute('data-src') || img.getAttribute('data-original') || img.getAttribute('src');
-            if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-                try { src = new URL(src, article.link).href; } catch(e){}
-            }
-            if (src && (src.includes('logo') || src.includes('icon'))) {
-               img.remove();
-            } else {
-               img.setAttribute('src', src || "");
-               img.removeAttribute('data-src');
-               img.removeAttribute('srcset');
-               img.className = "w-full h-auto object-cover rounded-xl my-5 shadow-sm";
-            }
-         });
-
-         // Process paragraphs and text formatting
-         mainNode.querySelectorAll('p').forEach(p => {
-            p.className = "mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]";
-         });
-         
-         mainNode.querySelectorAll('a').forEach(a => {
-            a.setAttribute('target', '_blank');
-            a.className = "text-[#0a84ff] hover:underline";
-         });
-
-         mainNode.querySelectorAll('h1, h2, h3, h4').forEach(h => {
-            h.className = "font-bold text-[#182033] text-[20px] md:text-[22px] mt-8 mb-4";
-         });
-         
-         mainNode.querySelectorAll('ul, ol').forEach(list => {
-            list.className = "pl-6 mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px] list-outside";
-            if (list.tagName === 'UL') list.classList.add('list-disc');
-            if (list.tagName === 'OL') list.classList.add('list-decimal');
-         });
-
-         mainNode.querySelectorAll('li').forEach(li => {
-            li.className = "mb-2";
-         });
-
-         mainNode.querySelectorAll('figcaption, .fig, .caption').forEach(cap => {
-            cap.className = "text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic";
-         });
-
-         mainNode.querySelectorAll('blockquote').forEach(bq => {
-            bq.className = "border-l-4 border-[#0a84ff] pl-4 py-1 my-6 italic text-[#5f687b] bg-[#f4f6fa] rounded-r-lg";
-         });
-
-         const html = mainNode.innerHTML.trim();
-         
-         if (html.length > 200) {
-            setFullContent(html);
-         } else {
-            setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body}</p>`);
-         }
-      })
-      .catch(err => {
-         console.error(err);
-         setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body}</p>`);
-      })
-      .finally(() => {
-         setIsLoadingFull(false);
+    
+    // Nếu bot đã cào sẵn nội dung chi tiết → Hiển thị ngay lập tức
+    if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
+      let html = '';
+      const fc = article.fullContent;
+      let imgIdx = 0;
+      
+      // Render heading nếu có
+      fc.headings?.forEach((h: string) => {
+        html += `<h2 class="font-bold text-[#182033] text-[20px] md:text-[22px] mt-8 mb-4">${h}</h2>`;
       });
-  }, [article.link, article.body]);
+      
+      // Render paragraphs xen kẽ với ảnh
+      fc.paragraphs.forEach((p: string, i: number) => {
+        html += `<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${p}</p>`;
+        // Chèn ảnh sau mỗi 2-3 đoạn văn
+        if ((i + 1) % 3 === 0 && imgIdx < (fc.images?.length || 0)) {
+          html += `<img src="${fc.images[imgIdx]}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
+          if (fc.captions && fc.captions[imgIdx]) {
+            html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
+          }
+          imgIdx++;
+        }
+      });
+      
+      // Render ảnh còn lại
+      while (imgIdx < (fc.images?.length || 0)) {
+        html += `<img src="${fc.images[imgIdx]}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
+        if (fc.captions && fc.captions[imgIdx]) {
+          html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
+        }
+        imgIdx++;
+      }
+      
+      setFullContent(html);
+      setIsLoadingFull(false);
+    } else {
+      // Fallback: Hiển thị mô tả ngắn từ RSS
+      setFullContent(`<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${article.body || 'Nội dung bài viết chưa được thu thập. Vui lòng bấm "Xem bài viết gốc" bên dưới.'}</p>`);
+      setIsLoadingFull(false);
+    }
+  }, [article.link, article.body, article.fullContent]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
@@ -1765,9 +1691,14 @@ export default function App() {
     },
   });
   const handleArticleSelect = (article: any) => {
-    setSelectedArticle(article);
-    if (article) {
-      const slug = toSlug(article.author);
+    // Ghép dữ liệu chi tiết từ bot đã cào sẵn
+    const preCrawled = preCrawledRef.current.get(article.link);
+    const enriched = preCrawled 
+      ? { ...article, fullContent: preCrawled.fullContent }
+      : article;
+    setSelectedArticle(enriched);
+    if (enriched) {
+      const slug = toSlug(enriched.author);
       window.history.pushState({ articleSlug: slug }, '', `/Website_thoitiet_design/chi-tiet-${slug}`);
     }
   };
@@ -1889,6 +1820,7 @@ useEffect(() => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
   const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
+  const preCrawledRef = useRef<Map<string, any>>(new Map());
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -2668,6 +2600,22 @@ useEffect(() => {
     loadData();
     const intervalId = setInterval(loadData, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
     return () => clearInterval(intervalId);
+  }, []);
+
+  // ── Pre-fetch bài viết chi tiết từ News Bot Worker ──
+  useEffect(() => {
+    const NEWS_BOT_URL = 'https://new-bot.mrkun28.workers.dev/api/news';
+    fetch(NEWS_BOT_URL)
+      .then(r => r.json())
+      .then((data: any) => {
+        if (data.success && data.articles) {
+          data.articles.forEach((a: any) => {
+            if (a.link) preCrawledRef.current.set(a.link, a);
+          });
+          console.log(`[News Bot] Pre-crawled ${data.articles.length} articles`);
+        }
+      })
+      .catch(err => console.warn('[News Bot] Failed:', err));
   }, []);
 
   // Triple-tap the Anx. logo (or version tag) to open the hidden dev panel
