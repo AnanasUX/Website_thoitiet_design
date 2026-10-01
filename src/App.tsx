@@ -816,6 +816,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   liveNews,
   liveOverrides,
   onArticleClick,
+  userRole,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -828,8 +829,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
     darkMode?: boolean;
     setDarkMode?: (d: boolean) => void;
     onArticleClick?: (article: any) => void;
-    onArticleClick?: (article: any) => void;
-    onArticleClick?: (article: any) => void;
+    userRole?: any;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -916,6 +916,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
   liveNews,
   liveOverrides,
   onArticleClick,
+  userRole,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -928,8 +929,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     darkMode?: boolean;
     setDarkMode?: (d: boolean) => void;
     onArticleClick?: (article: any) => void;
-    onArticleClick?: (article: any) => void;
-    onArticleClick?: (article: any) => void;
+    userRole?: any;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1057,6 +1057,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   liveNews,
   liveOverrides,
   onArticleClick,
+  userRole,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -1069,8 +1070,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     darkMode?: boolean;
     setDarkMode?: (d: boolean) => void;
     onArticleClick?: (article: any) => void;
-    onArticleClick?: (article: any) => void;
-    onArticleClick?: (article: any) => void;
+    userRole?: any;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
