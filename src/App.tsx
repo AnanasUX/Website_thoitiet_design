@@ -1150,7 +1150,14 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
         {/* News column */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
-      <MarketSection />
+      <div className="flex gap-[var(--grid-gap)] w-full items-stretch">
+        <div className="flex-[5] min-w-0">
+          <MarketSection />
+        </div>
+        <div className="flex-[3] min-w-[250px]">
+          <CalendarSection />
+        </div>
+      </div>
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
@@ -1525,6 +1532,19 @@ function ScrollToTop() {
 
 
 
+
+function CalendarSection() {
+  return (
+    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-2 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] overflow-hidden">
+      <iframe 
+        src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FHo_Chi_Minh&bgcolor=%23ffffff&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0&src=ZW4udmlldG5hbWVzZSNob2xpZGF5QGdyb3VwLnYuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%230B8043" 
+        style={{ borderWidth: 0, width: '100%', height: '100%' }} 
+        frameBorder="0" 
+        scrolling="no">
+      </iframe>
+    </div>
+  );
+}
 
 function MarketSection() {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
