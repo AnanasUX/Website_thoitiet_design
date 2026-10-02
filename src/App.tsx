@@ -841,6 +841,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onArticleClick,
   userRole,
   onLoginSuccess,
+  onLogout,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -952,6 +953,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onArticleClick,
   userRole,
   onLoginSuccess,
+  onLogout,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -1108,6 +1110,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onArticleClick,
   userRole,
   onLoginSuccess,
+  onLogout,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
