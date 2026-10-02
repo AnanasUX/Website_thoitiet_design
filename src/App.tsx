@@ -423,9 +423,7 @@ function WeatherSection({
             { label: "💨 Gió", value: WEATHER.wind },
             { label: "💧 Độ ẩm", value: WEATHER.humidity },
             { label: "🌫️ Bụi PM2.5", value: WEATHER.pm25 },
-            { label: "👁️ Tầm nhìn", value: WEATHER.visibility },
-            { label: "⏬ Áp suất", value: WEATHER.pressure },
-            { label: "☀️ UV Index", value: WEATHER.uvIndex }
+            { label: "👁️ Tầm nhìn", value: WEATHER.visibility }
           ].map((stat, idx) => (
             <div key={idx} className="bg-[rgba(255,255,255,0.09)] border border-[rgba(255,255,255,0.2)] flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-xl">
               <p className="font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
