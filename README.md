@@ -86,3 +86,21 @@ Dự án web thời tiết xây dựng bằng React, Vite và Tailwind CSS. Theo
 - Để đảm bảo tính Real-time vĩnh viễn không phụ thuộc vào việc cập nhật code thủ công, dự án đã được tích hợp bộ mã nguồn mở rộng chuẩn bị sẵn cho **Cloudflare Worker**.
 - Nằm trong thư mục \/cloudflare-worker/worker.js\, luồng xử lý Backend này giúp giả lập Header trình duyệt để vượt mặt tường lửa Edge-to-Edge của Cloudflare.
 - Tại file \App.tsx\, biến môi trường \WORKER_URL\ đã được cấu hình sẵn. Chỉ cần deploy Worker và dán link vào biến này, cơ chế Auto-polling của ứng dụng React sẽ tự động kết nối và lấy giá mới nhất từ Phú Quý mà không bị CORS chặn hay báo lỗi 403 Forbidden.
+
+## Bản cập nhật 02/10/2026 (Tích hợp Google OAuth & Quản lý Lịch)
+
+### 1. Đăng nhập/Đăng xuất Google (OAuth 2.0)
+- Tích hợp luồng xác thực Google OAuth 2.0 (Implicit Grant) an toàn qua popup, cho phép người dùng đăng nhập trực tiếp trên website.
+- Giao diện tài khoản (User Avatar Menu): Nâng cấp Avatar góc phải với Menu Dropdown hiển thị Tên tài khoản, Email và chức năng **Đăng xuất**.
+- Lưu trữ phiên đăng nhập bền vững thông qua `localStorage` và `Cookie` (giữ phiên lưu trong 1 năm).
+
+### 2. Đồng bộ Google Calendar (Lịch cá nhân)
+- Tích hợp quyền đọc lịch (`calendar.readonly`) để lấy và hiển thị các sự kiện (events) vào lưới lịch (Calendar Grid) tương ứng theo từng ngày.
+- Xử lý thông minh trạng thái quyền (Scopes): 
+  - Hiển thị Skeleton Loading tinh tế trong quá trình fetch dữ liệu.
+  - Tự động nhận diện và thông báo người dùng cấp quyền nếu phiên đăng nhập cũ bị thiếu quyền Lịch.
+  - Phân biệt rõ ràng 3 trạng thái: Chưa đăng nhập, Chờ xác minh quyền (Cảnh báo đỏ) và Đồng bộ thành công.
+
+### 3. Chính sách Bảo mật & Tuân thủ Google
+- Bổ sung trang **Chính sách Bảo mật (Privacy Policy)** đầy đủ điều khoản (thu thập dữ liệu, quyền lợi, cách sử dụng) để tuân thủ quy định kiểm duyệt của hệ thống Google Cloud Console.
+- Xây dựng Footer toàn cầu (Global Footer) tại cuối trang giúp truy cập nhanh tới Chính sách bảo mật, hỗ trợ cho quá trình gửi ứng dụng cho Google xét duyệt.

@@ -1,4 +1,4 @@
-﻿HỆ THỐNG ANX - QUẢN LÝ TIỀN PHÒNG & THÔNG TIN THÔNG MINH
+HỆ THỐNG ANX - QUẢN LÝ TIỀN PHÒNG & THÔNG TIN THÔNG MINH
 MASTER SYSTEM PROMPT CHO AI
 ĐỌC TÀI LIỆU NÀY
 Hỡi AI, nếu bạn đang đọc tài liệu này, bạn đang được chỉ định đóng vai trò là Senior Full-stack Developer phụ trách bảo trì và nâng cấp "Hệ thống Quản lý Tiền phòng & Điện nước AnX". 
@@ -185,7 +185,8 @@ Giao diện Web (React):
 * Giải nén LZString từ URL param, merge với defaultData
 * Hiển thị: Thông tin thời tiết chi tiết + Danh sách tin tức
 Cơ chế an toàn: Nếu thiếu dữ liệu nào → dùng defaultData (không crash)
-- Chế Độ Độc Lập (Standalone Real-time): Website (https://ananasux.github.io/Website_thoitiet_design/) có khả năng hoạt động độc lập mà không cần Bot cung cấp payload. 
+- Chế Độ Độc Lập (Standalone Real-time): Website (https://ananasux.github.io/Website_thoitiet_design/) có khả năng hoạt động độc lập mà không cần Bot cung cấp payload.
+- Xác thực & Cá nhân hóa: Tích hợp Đăng nhập/Đăng xuất Google (OAuth 2.0) trực tiếp trên Web, đồng bộ dữ liệu sự kiện Google Calendar cá nhân (kèm trang Chính sách Bảo mật chuẩn).
 - Trộn tin tức ngẫu nhiên (Mix RSS): Tự động chọn ngẫu nhiên 2 nguồn báo từ danh sách 11 trang báo lớn (Dân Trí, VnExpress, Tuổi Trẻ, Thanh Niên...) mỗi lần F5, tải tin qua rss2json, xáo trộn (shuffle) và lấy 10 tin mới nhất để đảm bảo sự đa dạng thông tin.
 - Cơ chế xử lý ảnh & Vượt Hotlinking: Tải ảnh OpenGraph ngầm (Lazy-load Background) qua mạng lưới CORS Proxy allorigins.win để không block giao diện. Bắt buộc sử dụng thẻ <meta name="referrer" content="no-referrer"> và thuộc tính referrerPolicy="no-referrer" để vượt qua lớp bảo vệ chống câu trộm băng thông (Hotlinking) của các tòa soạn, đảm bảo ảnh luôn hiển thị 100%.
 Luồng xử lý:
