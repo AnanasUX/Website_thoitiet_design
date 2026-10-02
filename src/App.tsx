@@ -1089,6 +1089,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   liveOverrides,
   onArticleClick,
   userRole,
+  onLoginSuccess,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -1102,6 +1103,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     setDarkMode?: (d: boolean) => void;
     onArticleClick?: (article: any) => void;
     userRole?: any;
+    onLoginSuccess?: (res: any) => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
