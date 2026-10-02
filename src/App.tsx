@@ -855,6 +855,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
     onArticleClick?: (article: any) => void;
     userRole?: any;
     onLoginSuccess?: (res: any) => void;
+    onLogout?: () => void;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -885,9 +886,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
               )}
             </div>
             {userRole && userRole.picture ? (
-              <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
-                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
+              <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
             ) : (
               <CustomLoginButton onLoginSuccess={onLoginSuccess} />
             )}
@@ -967,6 +966,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     onArticleClick?: (article: any) => void;
     userRole?: any;
     onLoginSuccess?: (res: any) => void;
+    onLogout?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1000,9 +1000,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
               )}
             </div>
             {userRole && userRole.picture ? (
-              <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
-                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
+              <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
             ) : (
               <CustomLoginButton onLoginSuccess={onLoginSuccess} />
             )}
@@ -1124,6 +1122,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     onArticleClick?: (article: any) => void;
     userRole?: any;
     onLoginSuccess?: (res: any) => void;
+    onLogout?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1153,9 +1152,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             )}
           </div>
           {userRole && userRole.picture ? (
-            <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
-              <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            </div>
+            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
           )}
@@ -2107,6 +2104,33 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
   );
 }
 
+function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="relative ml-2 shrink-0">
+      <div onClick={() => setIsOpen(!isOpen)} className="w-[32px] h-[32px] rounded-full overflow-hidden border border-[rgba(255,255,255,0.2)] cursor-pointer hover:ring-2 hover:ring-[#3a7bd5] transition-all">
+        <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+      </div>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[400]" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-[#e3e7ef] py-2 z-[500] flex flex-col overflow-hidden">
+            <div className="px-4 py-2 border-b border-[#e3e7ef] flex flex-col mb-1">
+              <span className="text-[13px] font-semibold text-[#182033] line-clamp-1">{userRole.name}</span>
+              <span className="text-[11px] text-[#5f687b] line-clamp-1">{userRole.email}</span>
+            </div>
+            <button onClick={() => { setIsOpen(false); onLogout(); }} className="px-4 py-2 text-left text-[13px] text-[#ef4444] hover:bg-[#fef2f2] font-medium transition-colors w-full flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Đăng xuất
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Privacy Policy Page ────────────────────────────────────────────────────
 function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
   return (
@@ -2332,6 +2356,12 @@ export default function App() {
       }
     }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user_auth');
+    document.cookie = "user_auth=; path=/; max-age=0";
+    setUserRole(null);
+  };
 
   const handleArticleSelect = (article: any) => {
     // Ghép dữ liệu chi tiết từ bot đã cào sẵn
@@ -3301,14 +3331,14 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
