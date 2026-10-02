@@ -396,8 +396,10 @@ function WeatherSection({
   const showFlood = liveOverrides ? (liveOverrides.floodItems != null && liveOverrides.floodItems.length > 0) : baseTheme.showFlood;
   const showRouteAdvisory = liveOverrides ? (liveOverrides.routeItems != null && liveOverrides.routeItems.length > 0) : baseTheme.showRouteAdvisory;
 
+  if (isLoading) return <WeatherSectionSkeleton />;
+
   return (
-    <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out ${isLoading ? 'opacity-80' : 'opacity-100'}`}>
+    <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
       {/* Hero card */}
       <div
         className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] lg:h-[400px] lg:justify-between"
@@ -1461,6 +1463,83 @@ export function decodeHTMLEntities(text: string) {
 }
 
 
+// ── Per-Section Skeleton Components ─────────────────────────────────────────
+function SkeletonBox({ className }: { className?: string }) {
+  return <div className={`bg-gradient-to-r from-[#e3e7ef] via-[#f4f6fa] to-[#e3e7ef] animate-pulse rounded ${className}`} style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite ease-in-out' }} />;
+}
+
+function WeatherSectionSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-4 p-6 rounded-2xl lg:h-[400px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
+        <SkeletonBox className="w-32 h-4 bg-white/30 rounded-xl" />
+        <div className="flex flex-col gap-2">
+          <SkeletonBox className="w-40 h-14 bg-white/30 rounded-xl" />
+          <SkeletonBox className="w-28 h-5 bg-white/30 rounded-xl" />
+          <SkeletonBox className="w-24 h-4 bg-white/20 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-2 gap-2 w-full">
+          {[1,2,3,4].map(i => (
+            <SkeletonBox key={i} className="h-14 bg-white/20 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MarketSectionSkeleton() {
+  return (
+    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] lg:h-[400px]">
+      <div className="flex items-center justify-between w-full mb-1">
+        <SkeletonBox className="w-36 h-6" />
+        <SkeletonBox className="w-12 h-5 rounded-full" />
+      </div>
+      <div className="grid grid-cols-3 gap-2 w-full mt-1">
+        {[1,2,3].map(i => (
+          <div key={i} className="flex flex-col gap-2 p-3 border border-[#e3e7ef] rounded-xl bg-[#f8fafc]">
+            <SkeletonBox className="w-full h-4" />
+            <SkeletonBox className="w-3/4 h-4" />
+            <SkeletonBox className="w-1/2 h-3" />
+            <SkeletonBox className="w-1/2 h-3" />
+          </div>
+        ))}
+      </div>
+      <div className="w-full mt-4 bg-[#f8fafc] border border-[#e3e7ef] rounded-xl p-3 flex flex-col gap-2">
+        <SkeletonBox className="w-full h-[65px] rounded-xl" />
+        <div className="flex justify-between mt-1">
+          {[1,2,3,4,5,6,7].map(i => <SkeletonBox key={i} className="w-6 h-3" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CalendarSectionSkeleton() {
+  return (
+    <div className="w-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px]">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col gap-2">
+          <SkeletonBox className="w-28 h-5" />
+          <SkeletonBox className="w-40 h-3" />
+        </div>
+        <div className="flex gap-1">
+          <SkeletonBox className="w-7 h-7 rounded-lg" />
+          <SkeletonBox className="w-7 h-7 rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
+        {[1,2,3,4,5,6,7].map(i => <SkeletonBox key={i} className="h-6" />)}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5 flex-1">
+        {Array.from({ length: 35 }).map((_, i) => (
+          <SkeletonBox key={i} className="rounded-lg min-h-[36px]" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function NewsSkeleton() {
   return (
     <div className="flex flex-col gap-[14px] w-full">
@@ -1561,6 +1640,7 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
   // map: day (number) -> array of event titles
   const [events, setEvents] = useState<Record<number, string[]>>({});
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -1588,8 +1668,11 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
         setEvents(map);
       })
       .catch(() => {})
-      .finally(() => setLoadingEvents(false));
+      .finally(() => { setLoadingEvents(false); setInitialLoaded(true); });
   }, [accessToken, year, month]);
+
+  // Show skeleton only on first load when we have a token
+  if (accessToken && !initialLoaded && loadingEvents) return <CalendarSectionSkeleton />;
 
   const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
   const getFirstDayOfMonth = (y: number, m: number) => new Date(y, m, 1).getDay();
@@ -1803,8 +1886,10 @@ function MarketSection() {
   const pathReal = ptsReal.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
   const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
 
+  if (loading && goldData.length === 0) return <MarketSectionSkeleton />;
+
   return (
-    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between ${loading ? 'opacity-70' : 'opacity-100'}`}>
+    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between opacity-100`}>
       <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
