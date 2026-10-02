@@ -1154,9 +1154,16 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         <div className="flex-[5] min-w-0">
           <MarketSection />
         </div>
-        <div className="flex-[3] min-w-[250px]">
-          <CalendarSection />
-        </div>
+        {userRole && userRole.email ? (
+          <div className="flex-[3] min-w-[250px]">
+            <CalendarSection userEmail={userRole.email} />
+          </div>
+        ) : (
+          <div className="flex-[3] min-w-[250px] mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân của bạn</p>
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
@@ -1533,11 +1540,12 @@ function ScrollToTop() {
 
 
 
-function CalendarSection() {
+function CalendarSection({ userEmail }: { userEmail: string }) {
+  const encodedEmail = encodeURIComponent(userEmail);
   return (
     <div className="w-full h-full min-h-[300px] mb-6 bg-white p-2 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] overflow-hidden">
       <iframe 
-        src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FHo_Chi_Minh&bgcolor=%23ffffff&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0&src=ZW4udmlldG5hbWVzZSNob2xpZGF5QGdyb3VwLnYuY2FsZW5kYXIuZ29vZ2xlLmNvbQ&color=%230B8043" 
+        src={`https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FHo_Chi_Minh&bgcolor=%23ffffff&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0&src=${encodedEmail}&color=%233a7bd5`} 
         style={{ borderWidth: 0, width: '100%', height: '100%' }} 
         frameBorder="0" 
         scrolling="no">
