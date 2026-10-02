@@ -1762,10 +1762,15 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
 
       {/* Footer: Calendar Sync Status */}
       <div className="mt-3 pt-3 border-t border-[#f1f5f9] flex items-center gap-2">
-        {!accessToken ? (
+        {!userEmail ? (
           <>
             <div className="w-1.5 h-1.5 rounded-full bg-[#94a3b8] shrink-0"></div>
             <p className="text-[#94a3b8] text-[11px] leading-tight">Chưa đăng nhập để đồng bộ Lịch</p>
+          </>
+        ) : !accessToken ? (
+          <>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] shrink-0"></div>
+            <p className="text-[#94a3b8] text-[11px] leading-tight">Vui lòng <span className="font-semibold text-[#f7a928]">đăng xuất và đăng nhập lại</span> để cấp quyền xem Lịch</p>
           </>
         ) : hasScopeError ? (
           <>
@@ -2316,6 +2321,7 @@ export default function App() {
           })
             .then(r => r.json())
             .then(userInfo => {
+              userInfo._access_token = accessToken;
               const authStr = JSON.stringify(userInfo);
               localStorage.setItem('user_auth', authStr);
               document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
