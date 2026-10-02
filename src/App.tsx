@@ -1541,15 +1541,96 @@ function ScrollToTop() {
 
 
 function CalendarSection({ userEmail }: { userEmail: string }) {
-  const encodedEmail = encodeURIComponent(userEmail);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  
+  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay(); // 0 is Sunday
+  
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  
+  const daysInMonth = getDaysInMonth(year, month);
+  let firstDay = getFirstDayOfMonth(year, month);
+  firstDay = firstDay === 0 ? 6 : firstDay - 1; // Convert to Monday=0, Sunday=6
+  
+  const days = [];
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+  
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+  
+  const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+
+  // Dummy events for demonstration
+  const events: Record<number, string> = {
+    5: "Họp giao ban đầu tuần",
+    15: "Sinh nhật sếp",
+    22: "Deadline dự án thời tiết",
+  };
+  
   return (
-    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-2 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] overflow-hidden">
-      <iframe 
-        src={`https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Asia%2FHo_Chi_Minh&bgcolor=%23ffffff&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0&src=${encodedEmail}&color=%233a7bd5`} 
-        style={{ borderWidth: 0, width: '100%', height: '100%' }} 
-        frameBorder="0" 
-        scrolling="no">
-      </iframe>
+    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="font-semibold text-[#182033] text-[16px]">{monthNames[month]}, {year}</h2>
+          <p className="text-[#5f687b] text-[12px] truncate max-w-[150px]" title={userEmail}>{userEmail}</p>
+        </div>
+        <div className="flex gap-1">
+          <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-7 gap-1 text-center mb-2">
+        {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => (
+          <div key={d} className="text-[#5f687b] text-[12px] font-semibold">{d}</div>
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-7 gap-1 flex-1">
+        {days.map((day, idx) => {
+          const isToday = isCurrentMonth && day === today.getDate();
+          const hasEvent = day && events[day];
+          
+          return (
+            <div key={idx} className={`relative flex flex-col items-center justify-center p-1 rounded-lg min-h-[40px] transition-colors
+              ${day ? 'cursor-pointer hover:bg-[#f4f6fa]' : ''} 
+              ${isToday ? 'bg-[#3a7bd5] text-white hover:bg-[#2b68c2] font-bold' : 'text-[#182033]'}
+            `}>
+              <span className={`text-[14px] ${isToday ? 'text-white' : ''}`}>{day || ''}</span>
+              {hasEvent && !isToday && (
+                <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#f7a928]"></div>
+              )}
+              {hasEvent && isToday && (
+                <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-white"></div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      <div className="mt-5 pt-4 border-t border-[#e3e7ef]">
+        <h3 className="text-[#5f687b] text-[11px] uppercase tracking-wider font-bold mb-3">Ghi chú sắp tới</h3>
+        <div className="flex flex-col gap-3">
+          {Object.entries(events).map(([d, title]) => (
+            <div key={d} className="flex items-center gap-3">
+              <div className="bg-[#fff4e5] w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+                <span className="text-[#f7a928] text-[14px] font-bold">{d}</span>
+              </div>
+              <p className="text-[#182033] text-[13px] line-clamp-1 font-medium">{title}</p>
+            </div>
+          )).slice(0, 2)}
+        </div>
+      </div>
     </div>
   );
 }
