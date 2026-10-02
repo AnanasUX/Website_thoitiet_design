@@ -1784,7 +1784,7 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
     const top = window.screenY + (window.outerHeight - h) / 2;
     const popup = window.open(authUrl, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
 
-    // Poll the popup for the redirect with access_token in hash
+    // Fallback polling (in case postMessage fails)
     const timer = setInterval(async () => {
       try {
         if (!popup || popup.closed) {
@@ -1796,24 +1796,39 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
           clearInterval(timer);
           const hash = popup.location.hash.substring(1);
           popup.close();
-          const params = new URLSearchParams(hash);
-          const accessToken = params.get('access_token');
-          if (accessToken) {
-            // Fetch user info from Google
-            const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }).then(r => r.json());
-
-            const authStr = JSON.stringify(userInfo);
-            localStorage.setItem('user_auth', authStr);
-            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-            onLoginSuccess(userInfo);
-          }
+          handleToken(hash);
         }
-      } catch (_) {
-        // Cross-origin error — popup hasn't redirected yet, keep polling
+      } catch (_) {}
+    }, 500);
+
+    const handleToken = async (hash: string) => {
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        try {
+          const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }).then(r => r.json());
+
+          const authStr = JSON.stringify(userInfo);
+          localStorage.setItem('user_auth', authStr);
+          document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+          onLoginSuccess(userInfo);
+        } catch (err) {
+          console.error(err);
+        }
       }
-    }, 300);
+    };
+
+    const messageListener = (event: MessageEvent) => {
+      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
+        window.removeEventListener('message', messageListener);
+        clearInterval(timer);
+        if (popup) popup.close();
+        handleToken(event.data.hash.substring(1));
+      }
+    };
+    window.addEventListener('message', messageListener);
   };
 
   return (
@@ -1848,24 +1863,34 @@ export default function App() {
   // Handle OAuth2 redirect callback (access_token in URL hash)
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash && hash.includes('access_token=') && !userRole) {
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-      if (accessToken) {
-        // Clean URL hash immediately
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-        // Fetch user info
-        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-          .then(r => r.json())
-          .then(userInfo => {
-            const authStr = JSON.stringify(userInfo);
-            localStorage.setItem('user_auth', authStr);
-            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-            setUserRole(userInfo);
+    if (hash && hash.includes('access_token=')) {
+      if (window.opener) {
+        // We are inside the popup window. Send the token to the parent window and close.
+        window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
+        window.close();
+        return; // Dừng luôn không load gì thêm ở popup
+      }
+
+      // Nếu không phải popup (người dùng redirect thẳng), tự xử lý ở đây
+      if (!userRole) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          // Clean URL hash immediately
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          // Fetch user info
+          fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${accessToken}` },
           })
-          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
+            .then(r => r.json())
+            .then(userInfo => {
+              const authStr = JSON.stringify(userInfo);
+              localStorage.setItem('user_auth', authStr);
+              document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+              setUserRole(userInfo);
+            })
+            .catch(err => console.error("Lỗi lấy thông tin Google:", err));
+        }
       }
     }
   }, []);
