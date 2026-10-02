@@ -1641,6 +1641,7 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
   const [events, setEvents] = useState<Record<number, string[]>>({});
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [hasScopeError, setHasScopeError] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -1649,13 +1650,20 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
   useEffect(() => {
     if (!accessToken) return;
     setLoadingEvents(true);
+    setHasScopeError(false);
     const timeMin = new Date(year, month, 1).toISOString();
     const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
     fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=100`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     )
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) {
+          if (r.status === 403 || r.status === 401) setHasScopeError(true);
+          throw new Error('API Error');
+        }
+        return r.json();
+      })
       .then(data => {
         const map: Record<number, string[]> = {};
         (data.items || []).forEach((ev: any) => {
@@ -1752,12 +1760,26 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
         })}
       </div>
 
-      {/* Footer: pending Google app verification for calendar sync */}
+      {/* Footer: Calendar Sync Status */}
       <div className="mt-3 pt-3 border-t border-[#f1f5f9] flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse shrink-0"></div>
-        <p className="text-[#94a3b8] text-[11px] leading-tight">
-          Đồng bộ sự kiện Google Calendar — <span className="text-[#f7a928] font-semibold">đang chờ xác minh app</span>
-        </p>
+        {!accessToken ? (
+          <>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#94a3b8] shrink-0"></div>
+            <p className="text-[#94a3b8] text-[11px] leading-tight">Chưa đăng nhập để đồng bộ Lịch</p>
+          </>
+        ) : hasScopeError ? (
+          <>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse shrink-0"></div>
+            <p className="text-[#94a3b8] text-[11px] leading-tight">
+              Đồng bộ Lịch — <span className="text-[#f7a928] font-semibold">đang chờ xác minh app (yêu cầu cấp quyền)</span>
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse shrink-0"></div>
+            <p className="text-[#10b981] text-[11px] leading-tight font-semibold">Đã đồng bộ với Google Calendar</p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -2014,9 +2036,8 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
   const handleLogin = () => {
     // Build Google OAuth2 URL (implicit grant — returns access_token directly)
     const redirectUri = window.location.origin + window.location.pathname;
-    // NOTE: calendar.readonly scope removed — pending Google app verification.
-    // Once approved, restore: 'openid email profile https://www.googleapis.com/auth/calendar.readonly'
-    const scope = 'openid email profile';
+    // NOTE: calendar.readonly added back to fetch events. Unverified accounts will see a Google Warning screen.
+    const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
 
     // Open popup for Google login
