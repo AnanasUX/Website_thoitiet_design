@@ -1602,7 +1602,7 @@ function CalendarSection({ userEmail }: { userEmail: string }) {
           const hasEvent = day && events[day];
           
           return (
-            <div key={idx} className={`relative flex flex-col items-center justify-center p-1 rounded-lg min-h-[40px] transition-colors
+            <div key={idx} className={`relative flex flex-col items-center justify-center p-1 rounded-lg min-h-[40px] transition-colors group
               ${day ? 'cursor-pointer hover:bg-[#f4f6fa]' : ''} 
               ${isToday ? 'bg-[#3a7bd5] text-white hover:bg-[#2b68c2] font-bold' : 'text-[#182033]'}
             `}>
@@ -1613,23 +1613,17 @@ function CalendarSection({ userEmail }: { userEmail: string }) {
               {hasEvent && isToday && (
                 <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-white"></div>
               )}
+              {hasEvent && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:flex flex-col items-center z-10 w-max max-w-[180px]">
+                  <div className="bg-[#182033] text-white text-[12px] py-1.5 px-2.5 rounded shadow-lg text-center leading-tight whitespace-normal">
+                    {hasEvent}
+                  </div>
+                  <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#182033]"></div>
+                </div>
+              )}
             </div>
           );
         })}
-      </div>
-      
-      <div className="mt-5 pt-4 border-t border-[#e3e7ef]">
-        <h3 className="text-[#5f687b] text-[11px] uppercase tracking-wider font-bold mb-3">Ghi chú sắp tới</h3>
-        <div className="flex flex-col gap-3">
-          {Object.entries(events).map(([d, title]) => (
-            <div key={d} className="flex items-center gap-3">
-              <div className="bg-[#fff4e5] w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
-                <span className="text-[#f7a928] text-[14px] font-bold">{d}</span>
-              </div>
-              <p className="text-[#182033] text-[13px] line-clamp-1 font-medium">{title}</p>
-            </div>
-          )).slice(0, 2)}
-        </div>
       </div>
     </div>
   );
