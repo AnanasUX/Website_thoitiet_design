@@ -1201,10 +1201,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11">
-                  <p className="font-bold text-[#ff315f] text-[15.84px]">
-                    📰
-                  </p>
+                <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11 border border-gray-100">
+                  <img alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
