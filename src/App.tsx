@@ -900,6 +900,16 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
+          {userRole && userRole.email ? (
+            <div className="w-full">
+              <CalendarSection userEmail={userRole.email} />
+            </div>
+          ) : (
+            <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
+            </div>
+          )}
                   <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
             Tin Tức Mới Nhất
@@ -1019,6 +1029,16 @@ function TabletLayout({ activeCategory, setActiveCategory,
       </div>
 
           <MarketSection />
+          {userRole && userRole.email ? (
+            <div className="w-full">
+              <CalendarSection userEmail={userRole.email} />
+            </div>
+          ) : (
+            <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
+            </div>
+          )}
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Tin tức</p>
             <p className="font-normal text-[#5f687b] text-[12px]">
