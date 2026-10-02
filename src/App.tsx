@@ -902,7 +902,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-              <CalendarSection userEmail={userRole.email} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1031,7 +1031,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-              <CalendarSection userEmail={userRole.email} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1174,7 +1174,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
         {userRole && userRole.email ? (
           <div className="flex-[3] min-w-[250px]">
-            <CalendarSection userEmail={userRole.email} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} />
           </div>
         ) : (
           <div className="flex-[3] min-w-[250px] mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1556,91 +1556,123 @@ function ScrollToTop() {
 
 
 
-function CalendarSection({ userEmail }: { userEmail: string }) {
+function CalendarSection({ userEmail, accessToken }: { userEmail: string; accessToken?: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay(); // 0 is Sunday
-  
+  // map: day (number) -> array of event titles
+  const [events, setEvents] = useState<Record<number, string[]>>({});
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  
+
+  // Fetch Google Calendar events whenever month/year or token changes
+  useEffect(() => {
+    if (!accessToken) return;
+    setLoadingEvents(true);
+    const timeMin = new Date(year, month, 1).toISOString();
+    const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+    fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=100`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    )
+      .then(r => r.json())
+      .then(data => {
+        const map: Record<number, string[]> = {};
+        (data.items || []).forEach((ev: any) => {
+          const start = ev.start?.dateTime || ev.start?.date;
+          if (!start) return;
+          const d = new Date(start).getDate();
+          if (!map[d]) map[d] = [];
+          map[d].push(ev.summary || '(Không có tiêu đề)');
+        });
+        setEvents(map);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingEvents(false));
+  }, [accessToken, year, month]);
+
+  const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+  const getFirstDayOfMonth = (y: number, m: number) => new Date(y, m, 1).getDay();
+
   const daysInMonth = getDaysInMonth(year, month);
   let firstDay = getFirstDayOfMonth(year, month);
-  firstDay = firstDay === 0 ? 6 : firstDay - 1; // Convert to Monday=0, Sunday=6
-  
-  const days = [];
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push(i);
-  }
-  
+  firstDay = firstDay === 0 ? 6 : firstDay - 1; // Mon=0 … Sun=6
+
+  const days: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
-  
-  const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+  const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
-  // Dummy events for demonstration
-  const events: Record<number, string> = {
-    5: "Họp giao ban đầu tuần",
-    15: "Sinh nhật sếp",
-    22: "Deadline dự án thời tiết",
-  };
-  
   return (
-    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px] lg:justify-between">
-      <div className="flex items-center justify-between mb-4">
+    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="font-semibold text-[#182033] text-[16px]">{monthNames[month]}, {year}</h2>
-          <p className="text-[#5f687b] text-[12px] truncate max-w-[150px]" title={userEmail}>{userEmail}</p>
+          <h2 className="font-semibold text-[#182033] text-[15px]">{monthNames[month]}, {year}</h2>
+          <p className="text-[#5f687b] text-[11px] truncate max-w-[160px]" title={userEmail}>{userEmail}</p>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          {loadingEvents && (
+            <div className="w-3 h-3 rounded-full border-2 border-[#3a7bd5] border-t-transparent animate-spin mr-1"></div>
+          )}
           <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
       </div>
-      
-      <div className="grid grid-cols-7 gap-1 text-center mb-2">
-        {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => (
-          <div key={d} className="text-[#5f687b] text-[12px] font-semibold">{d}</div>
+
+      {/* Day-of-week header */}
+      <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
+        {['T2','T3','T4','T5','T6','T7','CN'].map(d => (
+          <div key={d} className="text-[#94a3b8] text-[11px] font-semibold py-1">{d}</div>
         ))}
       </div>
-      
-      <div className="grid grid-cols-7 gap-1 flex-1">
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-0.5 flex-1">
         {days.map((day, idx) => {
           const isToday = isCurrentMonth && day === today.getDate();
-          const hasEvent = day && events[day];
-          
+          const dayEvents = day ? (events[day] || []) : [];
+          const hasEvent = dayEvents.length > 0;
+
           return (
-            <div key={idx} className={`relative flex flex-col items-center justify-center p-1 rounded-lg min-h-[40px] transition-colors group
-              ${day ? 'cursor-pointer hover:bg-[#f4f6fa]' : ''} 
-              ${isToday ? 'bg-[#3a7bd5] text-white hover:bg-[#2b68c2] font-bold' : 'text-[#182033]'}
+            <div key={idx} className={`relative flex flex-col items-center justify-center rounded-lg min-h-[36px] transition-colors group
+              ${day ? 'cursor-pointer hover:bg-[#f4f6fa]' : ''}
+              ${isToday ? 'bg-[#3a7bd5] hover:bg-[#2b68c2] font-bold' : ''}
             `}>
-              <span className={`text-[14px] ${isToday ? 'text-white' : ''}`}>{day || ''}</span>
-              {hasEvent && !isToday && (
-                <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#f7a928]"></div>
-              )}
-              {hasEvent && isToday && (
-                <div className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-white"></div>
-              )}
+              <span className={`text-[13px] leading-none ${isToday ? 'text-white' : 'text-[#182033]'}`}>{day || ''}</span>
               {hasEvent && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:flex flex-col items-center z-10 w-max max-w-[180px]">
-                  <div className="bg-[#182033] text-white text-[12px] py-1.5 px-2.5 rounded shadow-lg text-center leading-tight whitespace-normal">
-                    {hasEvent}
+                <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isToday ? 'bg-white' : 'bg-[#f7a928]'}`}></div>
+              )}
+              {/* Tooltip */}
+              {hasEvent && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center z-50 w-max max-w-[200px] pointer-events-none">
+                  <div className="bg-[#182033] text-white text-[11px] py-2 px-3 rounded-lg shadow-xl flex flex-col gap-1 text-left" style={{ fontFamily: 'inherit' }}>
+                    {dayEvents.map((title, ti) => (
+                      <div key={ti} className="flex items-start gap-1.5">
+                        <span className="text-[#f7a928] mt-0.5 shrink-0">•</span>
+                        <span className="leading-tight">{title}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-[#182033]"></div>
+                  <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-[#182033]"></div>
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Footer: show count if not logged in yet */}
+      {!accessToken && (
+        <p className="text-center text-[11px] text-[#94a3b8] mt-3">Đăng nhập để đồng bộ sự kiện</p>
+      )}
     </div>
   );
 }
@@ -1894,7 +1926,7 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
   const handleLogin = () => {
     // Build Google OAuth2 URL (implicit grant — returns access_token directly)
     const redirectUri = window.location.origin + window.location.pathname;
-    const scope = 'openid email profile';
+    const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
 
     // Open popup for Google login
@@ -1929,6 +1961,8 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
             headers: { Authorization: `Bearer ${accessToken}` },
           }).then(r => r.json());
 
+          // Persist access_token alongside profile so CalendarSection can use it
+          userInfo._access_token = accessToken;
           const authStr = JSON.stringify(userInfo);
           localStorage.setItem('user_auth', authStr);
           document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
