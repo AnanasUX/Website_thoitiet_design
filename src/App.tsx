@@ -2081,8 +2081,176 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
   );
 }
 
+// ── Privacy Policy Page ────────────────────────────────────────────────────
+function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[300] bg-[#f4f6fa] overflow-y-auto">
+      {/* Header */}
+      <div className="sticky top-0 bg-white border-b border-[#e3e7ef] px-6 py-4 flex items-center justify-between shadow-sm z-10">
+        <div className="flex items-center gap-3">
+          <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-[#f4f6fa] text-[#182033] flex items-center gap-2 transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span className="font-semibold text-[15px]">Quay lại</span>
+          </button>
+        </div>
+        <p className="font-bold text-[#182033] text-[15px]">Anx. — Chính sách Bảo mật</p>
+        <div className="w-20" />
+      </div>
+
+      {/* Content */}
+      <div className="max-w-3xl mx-auto px-6 py-10 flex flex-col gap-8">
+
+        {/* Hero */}
+        <div className="bg-white rounded-2xl p-8 shadow-[0px_4px_12px_0px_rgba(23,33,51,0.08)] border border-[#e3e7ef]">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#3a7bd5] flex items-center justify-center shrink-0">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h1 className="font-bold text-[#182033] text-[22px]">Chính sách Bảo mật</h1>
+              <p className="text-[#5f687b] text-[13px]">Privacy Policy — Anx. Weather & News</p>
+            </div>
+          </div>
+          <p className="text-[#5f687b] text-[14px] leading-relaxed">
+            Chúng tôi cam kết bảo vệ quyền riêng tư của bạn. Tài liệu này giải thích cách ứng dụng <strong>Anx.</strong> ({window.location.origin}) thu thập, sử dụng và bảo vệ thông tin của bạn.
+          </p>
+          <p className="text-[#94a3b8] text-[12px] mt-3">Cập nhật lần cuối: Tháng 10, 2026</p>
+        </div>
+
+        {/* Section helper */}
+        {[
+          {
+            icon: '📋',
+            title: '1. Thông tin chúng tôi thu thập',
+            content: (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <p className="font-semibold text-[#182033] text-[14px] mb-1">a) Thông tin tài khoản Google (khi bạn đăng nhập)</p>
+                  <ul className="list-disc list-inside text-[#5f687b] text-[14px] flex flex-col gap-1 ml-2">
+                    <li>Địa chỉ email</li>
+                    <li>Tên hiển thị</li>
+                    <li>Ảnh đại diện (avatar)</li>
+                    <li>Google User ID (định danh tài khoản)</li>
+                  </ul>
+                  <p className="text-[#94a3b8] text-[12px] mt-2 italic">Chúng tôi <strong>không</strong> thu thập mật khẩu Google của bạn.</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#182033] text-[14px] mb-1">b) Dữ liệu sử dụng tự động</p>
+                  <ul className="list-disc list-inside text-[#5f687b] text-[14px] flex flex-col gap-1 ml-2">
+                    <li>Vị trí địa lý (chỉ dùng để lấy dữ liệu thời tiết — yêu cầu sự cho phép của bạn)</li>
+                    <li>Cài đặt giao diện (chế độ tối/sáng, danh mục tin tức)</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#182033] text-[14px] mb-1">c) Dữ liệu Google Calendar (sắp ra mắt)</p>
+                  <ul className="list-disc list-inside text-[#5f687b] text-[14px] flex flex-col gap-1 ml-2">
+                    <li>Tiêu đề sự kiện, ngày giờ bắt đầu/kết thúc từ Google Calendar của bạn</li>
+                    <li>Chỉ đọc lịch chính (primary calendar), không chỉnh sửa hay xóa</li>
+                    <li>Tính năng này sẽ được bật sau khi hoàn tất xét duyệt của Google</li>
+                  </ul>
+                </div>
+              </div>
+            )
+          },
+          {
+            icon: '🎯',
+            title: '2. Mục đích sử dụng thông tin',
+            content: (
+              <ul className="list-disc list-inside text-[#5f687b] text-[14px] flex flex-col gap-2 ml-2">
+                <li>Hiển thị tên, ảnh đại diện và email của bạn trên giao diện ứng dụng</li>
+                <li>Cá nhân hóa trải nghiệm người dùng (giao diện, lịch cá nhân)</li>
+                <li>Duy trì phiên đăng nhập trong trình duyệt của bạn</li>
+                <li>Hiển thị sự kiện Google Calendar trực quan trên widget lịch (khi được duyệt)</li>
+                <li>Chúng tôi <strong>không</strong> bán, cho thuê hay chia sẻ thông tin của bạn cho bên thứ ba vì mục đích thương mại</li>
+              </ul>
+            )
+          },
+          {
+            icon: '💾',
+            title: '3. Lưu trữ dữ liệu',
+            content: (
+              <div className="flex flex-col gap-3">
+                <p className="text-[#5f687b] text-[14px]">Thông tin đăng nhập của bạn được lưu <strong>cục bộ trên trình duyệt</strong> của bạn thông qua:</p>
+                <ul className="list-disc list-inside text-[#5f687b] text-[14px] flex flex-col gap-1 ml-2">
+                  <li><code className="bg-[#f8fafc] px-1.5 py-0.5 rounded text-[13px]">localStorage</code> — lưu thông tin profile</li>
+                  <li><code className="bg-[#f8fafc] px-1.5 py-0.5 rounded text-[13px]">Cookie</code> — duy trì phiên đăng nhập</li>
+                </ul>
+                <p className="text-[#5f687b] text-[14px]">Dữ liệu <strong>không được gửi lên máy chủ của chúng tôi</strong>. Mọi xử lý diễn ra hoàn toàn ở phía trình duyệt của bạn (client-side only).</p>
+                <p className="text-[#5f687b] text-[14px]">Bạn có thể xóa dữ liệu bất cứ lúc nào bằng cách đăng xuất hoặc xóa dữ liệu trình duyệt.</p>
+              </div>
+            )
+          },
+          {
+            icon: '🔗',
+            title: '4. Dịch vụ bên thứ ba',
+            content: (
+              <div className="flex flex-col gap-3">
+                <p className="text-[#5f687b] text-[14px]">Ứng dụng kết nối với các API bên thứ ba sau:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { name: 'Google OAuth 2.0', purpose: 'Xác thực đăng nhập', link: 'https://policies.google.com/privacy' },
+                    { name: 'Google Calendar API', purpose: 'Đọc sự kiện lịch (sắp ra mắt)', link: 'https://policies.google.com/privacy' },
+                    { name: 'OpenWeatherMap', purpose: 'Dữ liệu thời tiết thực tế', link: 'https://openweathermap.org/privacy-policy' },
+                    { name: 'BigDataCloud / Open-Meteo', purpose: 'Geocoding & dự báo thời tiết', link: 'https://www.bigdatacloud.com/privacy' },
+                  ].map(s => (
+                    <div key={s.name} className="bg-[#f8fafc] border border-[#e3e7ef] rounded-xl p-3">
+                      <p className="font-semibold text-[#182033] text-[13px]">{s.name}</p>
+                      <p className="text-[#5f687b] text-[12px]">{s.purpose}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          },
+          {
+            icon: '🛡️',
+            title: '5. Quyền của bạn',
+            content: (
+              <ul className="list-disc list-inside text-[#5f687b] text-[14px] flex flex-col gap-2 ml-2">
+                <li><strong>Quyền truy cập:</strong> Bạn có thể xem thông tin đang được lưu thông qua giao diện ứng dụng</li>
+                <li><strong>Quyền xóa:</strong> Đăng xuất sẽ xóa toàn bộ dữ liệu cá nhân khỏi trình duyệt</li>
+                <li><strong>Quyền thu hồi:</strong> Bạn có thể thu hồi quyền truy cập của ứng dụng tại <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener" className="text-[#3a7bd5] underline">myaccount.google.com/permissions</a></li>
+                <li><strong>Quyền từ chối vị trí:</strong> Bạn có thể từ chối cấp quyền vị trí, ứng dụng sẽ dùng dữ liệu thời tiết mặc định</li>
+              </ul>
+            )
+          },
+          {
+            icon: '📞',
+            title: '6. Liên hệ',
+            content: (
+              <div className="flex flex-col gap-2 text-[#5f687b] text-[14px]">
+                <p>Nếu bạn có bất kỳ câu hỏi nào về chính sách bảo mật này, vui lòng liên hệ:</p>
+                <div className="bg-[#f8fafc] border border-[#e3e7ef] rounded-xl p-4 flex flex-col gap-1">
+                  <p className="font-semibold text-[#182033]">Anx. — Nhà phát triển</p>
+                  <p>Website: <a href="https://ananasux.github.io/Website_thoitiet_design" className="text-[#3a7bd5] underline">ananasux.github.io/Website_thoitiet_design</a></p>
+                  <p>GitHub: <a href="https://github.com/AnanasUX" className="text-[#3a7bd5] underline" target="_blank" rel="noopener">github.com/AnanasUX</a></p>
+                </div>
+              </div>
+            )
+          },
+        ].map(section => (
+          <div key={section.title} className="bg-white rounded-2xl p-6 shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef]">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-[20px]">{section.icon}</span>
+              <h2 className="font-bold text-[#182033] text-[16px]">{section.title}</h2>
+            </div>
+            {section.content}
+          </div>
+        ))}
+
+        {/* Footer */}
+        <div className="text-center text-[#94a3b8] text-[12px] pb-4">
+          <p>© 2026 Anx. — Mọi quyền được bảo lưu.</p>
+          <p className="mt-1">Chính sách này có thể được cập nhật theo thời gian. Phiên bản hiện tại: <strong>1.0</strong></p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   
   // Trạng thái quản lý quyền người dùng (Role Management)
   const [userRole, setUserRole] = useState<any>(() => {
@@ -3125,6 +3293,22 @@ useEffect(() => {
           onClose={closeArticle} 
           onSelectRelated={handleArticleSelect} 
         />
+      )}
+
+      {/* Site Footer */}
+      <footer className="w-full border-t border-[#e3e7ef] bg-white py-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[12px] text-[#94a3b8]">
+        <p>© 2026 <span className="font-semibold text-[#5f687b]">Anx.</span> — Thời tiết &amp; Tin tức</p>
+        <div className="flex items-center gap-4">
+          <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
+            Chính sách Bảo mật
+          </button>
+          <a href="https://github.com/AnanasUX" target="_blank" rel="noopener" className="hover:text-[#3a7bd5] transition-colors">GitHub</a>
+        </div>
+      </footer>
+
+      {/* Privacy Policy Overlay */}
+      {showPrivacyPolicy && (
+        <PrivacyPolicyPage onClose={() => setShowPrivacyPolicy(false)} />
       )}
     </div>
   );
