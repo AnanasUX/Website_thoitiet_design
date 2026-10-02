@@ -400,7 +400,7 @@ function WeatherSection({
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out ${isLoading ? 'opacity-80' : 'opacity-100'}`}>
       {/* Hero card */}
       <div
-        className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02]"
+        className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] lg:h-[400px] lg:justify-between"
           style={{ background: darkMode ? "linear-gradient(21deg, rgb(23, 43, 115) 0%, rgb(18, 28, 48) 50%, rgb(41, 76, 194) 100%)" : "linear-gradient(21deg, rgb(72, 141, 203) 0%, rgb(51, 106, 214) 50%, rgb(79, 196, 255) 100%)" }}
           
       >
@@ -1115,7 +1115,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
         </div>
@@ -1142,7 +1142,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
       </div>
 
-      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
+      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
@@ -1574,7 +1574,7 @@ function CalendarSection({ userEmail }: { userEmail: string }) {
   };
   
   return (
-    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col">
+    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px] lg:justify-between">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="font-semibold text-[#182033] text-[16px]">{monthNames[month]}, {year}</h2>
@@ -1762,7 +1762,7 @@ function MarketSection() {
   const pathForecast = ptsForecast.map((p, i) => i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`).join(" ");
 
   return (
-    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out ${loading ? 'opacity-70' : 'opacity-100'}`}>
+    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between ${loading ? 'opacity-70' : 'opacity-100'}`}>
       <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
