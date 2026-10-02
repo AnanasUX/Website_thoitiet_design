@@ -1752,10 +1752,13 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
         })}
       </div>
 
-      {/* Footer: show count if not logged in yet */}
-      {!accessToken && (
-        <p className="text-center text-[11px] text-[#94a3b8] mt-3">Đăng nhập để đồng bộ sự kiện</p>
-      )}
+      {/* Footer: pending Google app verification for calendar sync */}
+      <div className="mt-3 pt-3 border-t border-[#f1f5f9] flex items-center gap-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse shrink-0"></div>
+        <p className="text-[#94a3b8] text-[11px] leading-tight">
+          Đồng bộ sự kiện Google Calendar — <span className="text-[#f7a928] font-semibold">đang chờ xác minh app</span>
+        </p>
+      </div>
     </div>
   );
 }
@@ -2011,7 +2014,9 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
   const handleLogin = () => {
     // Build Google OAuth2 URL (implicit grant — returns access_token directly)
     const redirectUri = window.location.origin + window.location.pathname;
-    const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
+    // NOTE: calendar.readonly scope removed — pending Google app verification.
+    // Once approved, restore: 'openid email profile https://www.googleapis.com/auth/calendar.readonly'
+    const scope = 'openid email profile';
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
 
     // Open popup for Google login
