@@ -3,8 +3,7 @@
 // Ví dụ: https://website.../  ?api=https%3A%2F%2Fbot-server%2Fapi%2Fdaily-news
 // Nếu không có ?api thì dùng mock data (chế độ preview thiết kế)
 
-import { useGoogleOneTapLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
+
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
@@ -841,6 +840,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   liveOverrides,
   onArticleClick,
   userRole,
+  onLoginSuccess,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -854,6 +854,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
     setDarkMode?: (d: boolean) => void;
     onArticleClick?: (article: any) => void;
     userRole?: any;
+    onLoginSuccess?: (res: any) => void;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -883,10 +884,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
               )}
             </div>
-            {userRole && userRole.picture && (
+            {userRole && userRole.picture ? (
               <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
-                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" />
+                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
+            ) : (
+              <CustomLoginButton onLoginSuccess={onLoginSuccess} />
             )}
         </div>
       </div>
@@ -939,6 +942,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
   liveOverrides,
   onArticleClick,
   userRole,
+  onLoginSuccess,
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -952,6 +956,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     setDarkMode?: (d: boolean) => void;
     onArticleClick?: (article: any) => void;
     userRole?: any;
+    onLoginSuccess?: (res: any) => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -984,10 +989,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
               )}
             </div>
-            {userRole && userRole.picture && (
+            {userRole && userRole.picture ? (
               <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
-                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" />
+                <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
+            ) : (
+              <CustomLoginButton onLoginSuccess={onLoginSuccess} />
             )}
           </div>
 
@@ -1123,10 +1130,12 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             )}
           </div>
-          {userRole && userRole.picture && (
+          {userRole && userRole.picture ? (
             <div className="ml-2 w-[32px] h-[32px] rounded-full overflow-hidden border border-[#e3e7ef] shrink-0">
-              <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" />
+              <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
+          ) : (
+            <CustomLoginButton onLoginSuccess={onLoginSuccess} />
           )}
         </div>
       </div>
@@ -1757,37 +1766,108 @@ function toSlug(str: string) {
     .replace(/^-+|-+$/g, '');
 }
 
+
+const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
+
+function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => void }) {
+  const handleLogin = () => {
+    // Build Google OAuth2 URL (implicit grant — returns access_token directly)
+    const redirectUri = window.location.origin + window.location.pathname;
+    const scope = 'openid email profile';
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
+
+    // Open popup for Google login
+    const w = 500, h = 600;
+    const left = window.screenX + (window.outerWidth - w) / 2;
+    const top = window.screenY + (window.outerHeight - h) / 2;
+    const popup = window.open(authUrl, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
+
+    // Poll the popup for the redirect with access_token in hash
+    const timer = setInterval(async () => {
+      try {
+        if (!popup || popup.closed) {
+          clearInterval(timer);
+          return;
+        }
+        const popupUrl = popup.location.href;
+        if (popupUrl.includes('access_token=')) {
+          clearInterval(timer);
+          const hash = popup.location.hash.substring(1);
+          popup.close();
+          const params = new URLSearchParams(hash);
+          const accessToken = params.get('access_token');
+          if (accessToken) {
+            // Fetch user info from Google
+            const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }).then(r => r.json());
+
+            const authStr = JSON.stringify(userInfo);
+            localStorage.setItem('user_auth', authStr);
+            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+            onLoginSuccess(userInfo);
+          }
+        }
+      } catch (_) {
+        // Cross-origin error — popup hasn't redirected yet, keep polling
+      }
+    }, 300);
+  };
+
+  return (
+    <div onClick={handleLogin} title="Đăng nhập Google" role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center hover:opacity-80 transition-all shrink-0 aspect-square cursor-pointer" style={{ backgroundColor: '#3a7bd5', color: '#ffffff' }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    </div>
+  );
+}
+
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   
   // Trạng thái quản lý quyền người dùng (Role Management)
   const [userRole, setUserRole] = useState<any>(() => {
     try {
-      const saved = localStorage.getItem('user_auth');
+      let saved = localStorage.getItem('user_auth');
+      if (!saved) {
+        // Fallback to cookie if localStorage is empty
+        const match = document.cookie.match(new RegExp('(^| )user_auth=([^;]+)'));
+        if (match) saved = decodeURIComponent(match[2]);
+      }
       return saved ? JSON.parse(saved) : null;
-    } catch {
+    } catch (e) {
+      console.error("Lỗi khi đọc user_auth:", e);
       return null;
     }
   });
 
-  // Kích hoạt Google One Tap Login (Popup từ dưới lên)
-  useGoogleOneTapLogin({
-    onSuccess: credentialResponse => {
-      if (credentialResponse.credential) {
-        const decoded = jwtDecode(credentialResponse.credential);
-        console.log("Đăng nhập Google thành công:", decoded);
-        
-        // Lưu section phiên đăng nhập
-        localStorage.setItem('user_auth', JSON.stringify(decoded));
-        
-        // Cấp quyền dựa trên logic (Phân quyền hiển thị ở đây)
-        setUserRole(decoded);
+  // (Đã gỡ bỏ useGoogleOneTapLogin để tránh tình trạng popup tự động hiện lên liên tục gây khó chịu)
+  // Chỉ sử dụng nút Đăng nhập thủ công ở trên Header.
+
+  // Handle OAuth2 redirect callback (access_token in URL hash)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=') && !userRole) {
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        // Clean URL hash immediately
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Fetch user info
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then(r => r.json())
+          .then(userInfo => {
+            const authStr = JSON.stringify(userInfo);
+            localStorage.setItem('user_auth', authStr);
+            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+            setUserRole(userInfo);
+          })
+          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
       }
-    },
-    onError: () => {
-      console.log('Login Failed');
-    },
-  });
+    }
+  }, []);
+
   const handleArticleSelect = (article: any) => {
     // Ghép dữ liệu chi tiết từ bot đã cào sẵn
     let cleanLink = article.link ? article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim().split('?')[0] : '';
@@ -2756,14 +2836,14 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
