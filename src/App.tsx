@@ -897,7 +897,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
-          <WeatherSection condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
@@ -918,7 +918,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
         </p>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
-          {isFetchingCategory ? <NewsSkeleton /> : (<>
+          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
               <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
@@ -1013,7 +1013,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
         {/* News panel */}
@@ -1048,7 +1048,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             </p>
           </div>
 
-          {isFetchingCategory ? <NewsSkeleton /> : (<>
+          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured article */}
           {featured && (
             <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
@@ -1165,7 +1165,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
-          <WeatherSection compact condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
         {/* News column */}
@@ -1197,7 +1197,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
 
-          {isFetchingCategory ? <NewsSkeleton /> : (<>
+          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
           {featured && (
             <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
