@@ -1642,6 +1642,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [hasScopeError, setHasScopeError] = useState(false);
+  const [activeTooltipDay, setActiveTooltipDay] = useState<number | null>(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -1709,10 +1710,10 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
           {loadingEvents && (
             <div className="w-3 h-3 rounded-full border-2 border-[#3a7bd5] border-t-transparent animate-spin mr-1"></div>
           )}
-          <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
+          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month - 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
+          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month + 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
