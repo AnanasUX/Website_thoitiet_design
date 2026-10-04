@@ -904,7 +904,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={handleLogout} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1033,7 +1033,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={handleLogout} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1635,7 +1635,7 @@ function ScrollToTop() {
 
 
 
-function CalendarSection({ userEmail, accessToken }: { userEmail: string; accessToken?: string }) {
+function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail: string; accessToken?: string; onTokenExpired?: () => void }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   // map: day (number) -> array of event titles
   const [events, setEvents] = useState<Record<number, string[]>>({});
