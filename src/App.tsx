@@ -904,7 +904,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={handleLogout} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onLogout} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1033,7 +1033,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={handleLogout} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onLogout} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1176,7 +1176,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
         {userRole && userRole.email ? (
           <div className="flex-[3] min-w-[250px]">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onLogout} />
           </div>
         ) : (
           <div className="flex-[3] min-w-[250px] mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1660,7 +1660,12 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
     )
       .then(r => {
         if (!r.ok) {
-          if (r.status === 403 || r.status === 401) setHasScopeError(true);
+          if (r.status === 401) {
+            setHasScopeError(true);
+            if (onTokenExpired) onTokenExpired();
+          } else if (r.status === 403) {
+            setHasScopeError(true);
+          }
           throw new Error('API Error');
         }
         return r.json();
@@ -1699,7 +1704,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   return (
-    <div className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
+    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -1734,7 +1739,14 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
           const hasEvent = dayEvents.length > 0;
 
           return (
-            <div key={idx} className={`relative flex flex-col items-center justify-center rounded-lg min-h-[36px] transition-colors group
+            <div key={idx} 
+                 onClick={(e) => { 
+                   if (hasEvent) {
+                     e.stopPropagation();
+                     setActiveTooltipDay(activeTooltipDay === day ? null : day);
+                   }
+                 }}
+                 className={`relative flex flex-col items-center justify-center rounded-lg min-h-[36px] transition-colors group
               ${day ? 'cursor-pointer hover:bg-[#f4f6fa]' : ''}
               ${isToday ? 'bg-[#3a7bd5] hover:bg-[#2b68c2] font-bold' : ''}
             `}>
@@ -1744,8 +1756,8 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
               )}
               {/* Tooltip */}
               {hasEvent && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center z-50 w-max max-w-[200px] pointer-events-none">
-                  <div className="bg-[#182033] text-white text-[11px] py-2 px-3 rounded-lg shadow-xl flex flex-col gap-1 text-left" style={{ fontFamily: 'inherit' }}>
+                <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 ${activeTooltipDay === day ? 'flex' : 'hidden md:group-hover:flex'} flex-col items-center z-50 w-max max-w-[200px]`}>
+                  <div className="bg-[#182033] text-white text-[11px] py-2 px-3 rounded-lg shadow-xl flex flex-col gap-1 text-left pointer-events-auto" style={{ fontFamily: 'inherit' }}>
                     {dayEvents.map((title, ti) => (
                       <div key={ti} className="flex items-start gap-1.5">
                         <span className="text-[#f7a928] mt-0.5 shrink-0">•</span>
