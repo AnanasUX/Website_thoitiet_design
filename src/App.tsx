@@ -909,7 +909,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
-        <LiveTimelineSection news={newsFeed} onArticleClick={onArticleClick} />
+        
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
@@ -1031,7 +1031,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
-          <LiveTimelineSection news={newsFeed} onArticleClick={onArticleClick} />
+          
         </div>
 
         {/* News panel */}
@@ -1190,7 +1190,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
-          <LiveTimelineSection news={newsFeed} onArticleClick={onArticleClick} />
+          
         </div>
 
         {/* News column */}
