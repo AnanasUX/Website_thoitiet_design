@@ -915,7 +915,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
             <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
           ) : (
-            <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-full bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
             </div>
@@ -1051,7 +1051,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
           ) : (
-            <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
+            <div className="w-full bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
             </div>
@@ -1201,7 +1201,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
           </div>
         ) : (
-          <div className="flex-[3] min-w-[250px] mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
+          <div className="flex-[3] min-w-[250px] bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân của bạn</p>
           </div>
@@ -1411,30 +1411,30 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
         Tin nóng
       </div>
-      <div className="flex-1 overflow-hidden h-full flex items-center relative pl-4" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)' }}>
-        <div className="animate-marquee whitespace-nowrap flex items-center gap-12 text-[14px] font-medium min-w-full hover:[animation-play-state:paused]">
+      <div className="flex-1 overflow-hidden h-full flex items-center relative pl-3" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)' }}>
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-8 text-[13.5px] font-medium min-w-full hover:[animation-play-state:paused]">
           {topNews.map((n, i) => (
-            <span key={i} className="flex items-center gap-3 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
+            <span key={i} className="flex items-center gap-2.5 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
               {n.author}
             </span>
           ))}
-          <span className="flex items-center gap-3 text-[#0055D4] font-semibold cursor-pointer">
+          <span className="flex items-center gap-2.5 text-[#0055D4] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
              Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
           </span>
-          <span className="flex items-center gap-3 text-[#10b981] font-semibold cursor-pointer">
+          <span className="flex items-center gap-2.5 text-[#10b981] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
              VN-Index: 1250.32 (+5.2 điểm)
           </span>
           {/* Duplicate to create infinite marquee effect without gap */}
           {topNews.map((n, i) => (
-            <span key={'dup-'+i} className="flex items-center gap-3 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
+            <span key={'dup-'+i} className="flex items-center gap-2.5 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
               {n.author}
             </span>
           ))}
-          <span className="flex items-center gap-3 text-[#0055D4] font-semibold cursor-pointer">
+          <span className="flex items-center gap-2.5 text-[#0055D4] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
              Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
           </span>
@@ -1447,28 +1447,28 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
 function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], onArticleClick?: (article: any) => void }) {
   const recentNews = news.slice(0, 5);
   return (
-    <div className="w-full bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col mb-[var(--grid-gap)] relative overflow-hidden group">
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#e3e7ef]">
+    <div className="w-full bg-white p-4 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col relative overflow-hidden group">
+      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#e3e7ef]">
         <div className="relative flex items-center justify-center w-2.5 h-2.5">
           <div className="absolute w-full h-full bg-[#0055D4] rounded-full animate-ping opacity-75"></div>
           <div className="relative w-1.5 h-1.5 bg-[#0055D4] rounded-full"></div>
         </div>
-        <h2 className="font-bold text-[#182033] text-[16px]">Tin mới cập nhật</h2>
+        <h2 className="font-bold text-[#182033] text-[15px]">Tin mới cập nhật</h2>
       </div>
 
-      <div className="flex flex-col relative before:absolute before:left-[5px] before:top-2 before:bottom-2 before:w-[1px] before:bg-[#e3e7ef]">
+      <div className="flex flex-col relative before:absolute before:left-[4px] before:top-1.5 before:bottom-1.5 before:w-[1px] before:bg-[#e3e7ef]">
         {recentNews.map((item, idx) => {
           const pubDateStr = (item as any).pubDate || "";
           const timeMatch = pubDateStr.match(/(\d{2}:\d{2})/);
           const time = timeMatch ? timeMatch[1] : "Vừa xong";
           return (
-            <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-6 pb-5 last:pb-0 group/item cursor-pointer">
-              <div className="absolute left-[1px] top-1.5 w-[9px] h-[9px] rounded-full bg-white border-2 border-[#0055D4] group-hover/item:bg-[#0055D4] transition-all z-10"></div>
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-[12px] font-semibold text-[#0055D4]">{time}</p>
-                <p className="text-[11px] text-[#5f687b] opacity-80">{item.src}</p>
+            <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-5 pb-3.5 last:pb-0 group/item cursor-pointer">
+              <div className="absolute left-[0px] top-1 w-[9px] h-[9px] rounded-full bg-white border-2 border-[#0055D4] group-hover/item:bg-[#0055D4] transition-all z-10"></div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <p className="text-[11.5px] font-semibold text-[#0055D4]">{time}</p>
+                <p className="text-[10.5px] text-[#5f687b] opacity-80">{item.src}</p>
               </div>
-              <h3 className="text-[14px] font-medium text-[#182033] leading-snug group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
+              <h3 className="text-[13.5px] font-medium text-[#182033] leading-snug group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
             </div>
           );
         })}
@@ -1608,7 +1608,7 @@ function WeatherSectionSkeleton() {
 
 function MarketSectionSkeleton() {
   return (
-    <div className="w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] lg:h-[400px]">
+    <div className="w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] lg:h-[400px]">
       <div className="flex items-center justify-between w-full mb-1">
         <SkeletonBox className="w-36 h-6" />
         <SkeletonBox className="w-12 h-5 rounded-full" />
@@ -1635,7 +1635,7 @@ function MarketSectionSkeleton() {
 
 function CalendarSectionSkeleton() {
   return (
-    <div className="w-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px]">
+    <div className="w-full min-h-[300px] bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col lg:h-[400px]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-2">
           <SkeletonBox className="w-28 h-5" />
@@ -1819,7 +1819,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   return (
-    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] mb-6 bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
+    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -2047,9 +2047,9 @@ function MarketSection() {
   if (loading && goldData.length === 0) return <MarketSectionSkeleton />;
 
   return (
-    <div className={`w-full flex flex-col gap-3 mb-6 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between opacity-100`}>
+    <div className={`w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between opacity-100`}>
       <div className="flex items-center justify-between w-full mb-1">
-        <h2 className="font-semibold leading-[26px] text-[#182033] text-[18px]">Giá vàng Phú Quý</h2>
+        <h2 className="font-bold leading-[26px] text-[#182033] text-[16px]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
           <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
