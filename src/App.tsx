@@ -1021,7 +1021,6 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </div>
 
         </div>
-      </div>
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
