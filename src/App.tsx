@@ -842,6 +842,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
   userRole,
   onLoginSuccess,
   onLogout,
+  onTokenExpired,
+  onRelogin
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -857,6 +859,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
     userRole?: any;
     onLoginSuccess?: (res: any) => void;
     onLogout?: () => void;
+    onTokenExpired?: () => void;
+    onRelogin?: () => void;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -904,7 +908,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onLogout} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -954,6 +958,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
   userRole,
   onLoginSuccess,
   onLogout,
+  onTokenExpired,
+  onRelogin
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -969,6 +975,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
     userRole?: any;
     onLoginSuccess?: (res: any) => void;
     onLogout?: () => void;
+    onTokenExpired?: () => void;
+    onRelogin?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1033,7 +1041,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onLogout} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
           ) : (
             <div className="w-full mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1111,6 +1119,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   userRole,
   onLoginSuccess,
   onLogout,
+  onTokenExpired,
+  onRelogin
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -1126,6 +1136,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     userRole?: any;
     onLoginSuccess?: (res: any) => void;
     onLogout?: () => void;
+    onTokenExpired?: () => void;
+    onRelogin?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1176,7 +1188,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
         {userRole && userRole.email ? (
           <div className="flex-[3] min-w-[250px]">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onLogout} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
           </div>
         ) : (
           <div className="flex-[3] min-w-[250px] mb-6 bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
@@ -1635,7 +1647,7 @@ function ScrollToTop() {
 
 
 
-function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail: string; accessToken?: string; onTokenExpired?: () => void }) {
+function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: { userEmail: string; accessToken?: string; onTokenExpired?: () => void; onRelogin?: () => void }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   // map: day (number) -> array of event titles
   const [events, setEvents] = useState<Record<number, string[]>>({});
@@ -1783,7 +1795,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired }: { userEmail
         ) : !accessToken ? (
           <>
             <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] shrink-0"></div>
-            <p className="text-[#94a3b8] text-[11px] leading-tight">Vui lòng <span className="font-semibold text-[#f7a928]">đăng xuất và đăng nhập lại</span> để cấp quyền xem Lịch</p>
+            <p className="text-[#94a3b8] text-[11px] leading-tight">Phiên hết hạn, <span onClick={onRelogin} className="font-semibold text-[#f7a928] cursor-pointer hover:underline">nhấn vào đây để đăng nhập lại</span></p>
           </>
         ) : hasScopeError ? (
           <>
@@ -2050,68 +2062,70 @@ function toSlug(str: string) {
 
 const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
 
-function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => void }) {
-  const handleLogin = () => {
-    // Build Google OAuth2 URL (implicit grant — returns access_token directly)
-    const redirectUri = window.location.origin + window.location.pathname;
-    // NOTE: calendar.readonly added back to fetch events. Unverified accounts will see a Google Warning screen.
-    const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
+export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string) {
+  const redirectUri = window.location.origin + window.location.pathname;
+  const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
+  let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
+  if (loginHint) {
+    authUrl += `&login_hint=${encodeURIComponent(loginHint)}`;
+  } else {
+    authUrl += `&prompt=select_account`;
+  }
 
-    // Open popup for Google login
-    const w = 500, h = 600;
-    const left = window.screenX + (window.outerWidth - w) / 2;
-    const top = window.screenY + (window.outerHeight - h) / 2;
-    const popup = window.open(authUrl, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
+  const w = 500, h = 600;
+  const left = window.screenX + (window.outerWidth - w) / 2;
+  const top = window.screenY + (window.outerHeight - h) / 2;
+  const popup = window.open(authUrl, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
 
-    // Fallback polling (in case postMessage fails)
-    const timer = setInterval(async () => {
+  const handleToken = async (hash: string) => {
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
+    if (accessToken) {
       try {
-        if (!popup || popup.closed) {
-          clearInterval(timer);
-          return;
-        }
-        const popupUrl = popup.location.href;
-        if (popupUrl.includes('access_token=')) {
-          clearInterval(timer);
-          const hash = popup.location.hash.substring(1);
-          popup.close();
-          handleToken(hash);
-        }
-      } catch (_) {}
-    }, 500);
+        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }).then(r => r.json());
 
-    const handleToken = async (hash: string) => {
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
-      if (accessToken) {
-        try {
-          const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }).then(r => r.json());
-
-          // Persist access_token alongside profile so CalendarSection can use it
-          userInfo._access_token = accessToken;
-          const authStr = JSON.stringify(userInfo);
-          localStorage.setItem('user_auth', authStr);
-          document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-          onLoginSuccess(userInfo);
-        } catch (err) {
-          console.error(err);
-        }
+        userInfo._access_token = accessToken;
+        const authStr = JSON.stringify(userInfo);
+        localStorage.setItem('user_auth', authStr);
+        document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+        onSuccess(userInfo);
+      } catch (err) {
+        console.error(err);
       }
-    };
-
-    const messageListener = (event: MessageEvent) => {
-      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
-        window.removeEventListener('message', messageListener);
-        clearInterval(timer);
-        if (popup) popup.close();
-        handleToken(event.data.hash.substring(1));
-      }
-    };
-    window.addEventListener('message', messageListener);
+    }
   };
+
+  const timer = setInterval(async () => {
+    try {
+      if (!popup || popup.closed) {
+        clearInterval(timer);
+        return;
+      }
+      const popupUrl = popup.location.href;
+      if (popupUrl.includes('access_token=')) {
+        clearInterval(timer);
+        const hash = popup.location.hash.substring(1);
+        popup.close();
+        handleToken(hash);
+      }
+    } catch (_) {}
+  }, 500);
+
+  const messageListener = (event: MessageEvent) => {
+    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
+      window.removeEventListener('message', messageListener);
+      clearInterval(timer);
+      if (popup) popup.close();
+      handleToken(event.data.hash.substring(1));
+    }
+  };
+  window.addEventListener('message', messageListener);
+}
+
+function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => void }) {
+  const handleLogin = () => doGoogleLogin(onLoginSuccess);
 
   return (
     <div onClick={handleLogin} title="Đăng nhập Google" role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center hover:opacity-80 transition-all shrink-0 aspect-square cursor-pointer" style={{ backgroundColor: '#3a7bd5', color: '#ffffff' }}>
@@ -2377,6 +2391,21 @@ export default function App() {
     localStorage.removeItem('user_auth');
     document.cookie = "user_auth=; path=/; max-age=0";
     setUserRole(null);
+  };
+
+  const handleTokenExpired = () => {
+    if (userRole) {
+      const updated = { ...userRole };
+      delete updated._access_token;
+      setUserRole(updated);
+      const authStr = JSON.stringify(updated);
+      localStorage.setItem('user_auth', authStr);
+      document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+    }
+  };
+
+  const handleRelogin = () => {
+    doGoogleLogin(setUserRole, userRole?.email);
   };
 
   const handleArticleSelect = (article: any) => {
@@ -3347,14 +3376,14 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} />
         
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} />
       </div>
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
