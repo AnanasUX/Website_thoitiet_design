@@ -1449,7 +1449,8 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
 
       <div className="flex flex-col relative before:absolute before:left-[4px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#ff315f] before:via-[#e3e7ef] before:to-transparent">
         {recentNews.map((item, idx) => {
-          const timeMatch = item.pubDate.match(/(\d{2}:\d{2})/);
+          const pubDateStr = (item as any).pubDate || "";
+          const timeMatch = pubDateStr.match(/(\d{2}:\d{2})/);
           const time = timeMatch ? timeMatch[1] : "Vừa xong";
           return (
             <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-5 pb-5 last:pb-0 group/item cursor-pointer">
