@@ -690,6 +690,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           '#main-detail-body',
           '.detail-content [data-role="content"]',
           // Dân Trí
+          '#articleContent',
           '.singular-content',
           '.e-magazine__body',
           // Zing/ZNews
@@ -1680,6 +1681,7 @@ export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
   try {
     const domain = new URL(url).hostname;
+    if (domain.includes('dantri')) return 'https://dantri.com.vn/favicon.ico';
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   } catch (e) {
     return "";
@@ -2725,7 +2727,7 @@ useEffect(() => {
         if (activeCategory === "Tất cả" || activeCategory === "Thời sự") {
            selectedFeeds = [
              { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://vnexpress.net/rss/tin-noi-bat.rss", isHot: true },
-             { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://dantri.com.vn/rss/tin-noi-bat.rss", isHot: true },
+             { category: "Trang chủ", name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss", isHot: true },
              ...selectedFeeds
            ];
         }
@@ -2752,6 +2754,9 @@ useEffect(() => {
               if (imgMatch2) imageUrl = imgMatch2[1];
             }
             if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+            
+            if (item.link) item.link = item.link.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://dantri.com.vn');
+            if (imageUrl) imageUrl = imageUrl.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://icdn.dantri.com.vn');
             
             if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
               imageUrl = ""; 
