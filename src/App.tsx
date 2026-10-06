@@ -1666,9 +1666,6 @@ export function getNewspaperLogo(url: string) {
   if (!url || typeof url !== 'string') return "";
   try {
     const domain = new URL(url).hostname;
-    if (domain.includes('dantri.com.vn')) {
-      return 'https://dantri.com.vn/favicon.ico';
-    }
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   } catch (e) {
     return "";
@@ -2606,22 +2603,33 @@ useEffect(() => {
   }, [darkMode]);
 
 
+  const lastActivityRef = useRef(Date.now());
+
   useEffect(() => {
     const handleWheel = (e: any) => {
+      lastActivityRef.current = Date.now();
       if (e.ctrlKey) {
         e.preventDefault();
       }
     };
     const handleKeydown = (e: any) => {
+      lastActivityRef.current = Date.now();
       if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) {
         e.preventDefault();
       }
     };
+    const updateActivity = () => { lastActivityRef.current = Date.now(); };
     document.addEventListener('wheel', handleWheel, { passive: false });
     document.addEventListener('keydown', handleKeydown, { passive: false });
+    document.addEventListener('mousemove', updateActivity, { passive: true });
+    document.addEventListener('touchstart', updateActivity, { passive: true });
+    document.addEventListener('scroll', updateActivity, { passive: true });
     return () => {
       document.removeEventListener('wheel', handleWheel);
       document.removeEventListener('keydown', handleKeydown);
+      document.removeEventListener('mousemove', updateActivity);
+      document.removeEventListener('touchstart', updateActivity);
+      document.removeEventListener('scroll', updateActivity);
     };
   }, []);
 
@@ -2818,7 +2826,13 @@ useEffect(() => {
     };
     
     fetchCategoryNews(false);
-    timer = setInterval(() => { fetchCategoryNews(true); }, 2 * 60 * 1000);
+    timer = setInterval(() => { 
+      const idleTime = Date.now() - lastActivityRef.current;
+      // Chỉ tự động tải thêm tin tức nếu người dùng không tương tác trong vòng 30 giây (idle)
+      if (idleTime > 30000) {
+        fetchCategoryNews(true); 
+      }
+    }, 2 * 60 * 1000);
     return () => { isCancelled = true; clearInterval(timer); };
   }, [activeCategory]);
 
