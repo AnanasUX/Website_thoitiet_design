@@ -2512,41 +2512,42 @@ export default function App() {
   };
 
   
-  // Tự động silent-refresh token nếu đã đăng nhập nhưng token hết hạn
+  
+  const silentLogin = useGoogleLogin({
+    onSuccess: (tokenResponse: any) => {
+      const accessToken = tokenResponse.access_token;
+      if (accessToken) {
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then(r => r.json())
+          .then(userInfo => {
+            userInfo._access_token = accessToken;
+            const authStr = JSON.stringify(userInfo);
+            localStorage.setItem('user_auth', authStr);
+            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+            setUserRole(userInfo);
+          })
+          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
+      }
+    },
+    onError: (errorResponse: any) => {
+      console.log('Silent login error', errorResponse);
+    },
+    scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly'
+  });
+
+  // Check for expired token on load or silently refresh
   useEffect(() => {
     if (userRole && userRole.email && !userRole._access_token) {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      const redirectUri = window.location.origin + window.location.pathname;
-      const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
-      iframe.src = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
-      document.body.appendChild(iframe);
-
-      const handleMessage = (e: MessageEvent) => {
-        if (e.data && e.data.type === 'GOOGLE_LOGIN_SUCCESS') {
-           const hash = e.data.hash;
-           const params = new URLSearchParams(hash.substring(1));
-           const accessToken = params.get('access_token');
-           if (accessToken) {
-             const updated = { ...userRole, _access_token: accessToken };
-             setUserRole(updated);
-             const authStr = JSON.stringify(updated);
-             localStorage.setItem('user_auth', authStr);
-             document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-           }
-           window.removeEventListener('message', handleMessage);
-           setTimeout(() => { if (document.body.contains(iframe)) document.body.removeChild(iframe); }, 1000);
-        }
-      };
-      window.addEventListener('message', handleMessage);
-      
-      // Cleanup fallback after 5s just in case
-      setTimeout(() => { 
-          window.removeEventListener('message', handleMessage);
-          if (document.body.contains(iframe)) document.body.removeChild(iframe);
-      }, 5000);
+      try {
+        silentLogin({ prompt: 'none', hint: userRole.email } as any);
+      } catch (e) {
+         console.error('Silent login exception', e);
+      }
     }
   }, [userRole]);
+
 
   const handleRelogin = () => {
     doGoogleLogin(setUserRole, userRole?.email);
