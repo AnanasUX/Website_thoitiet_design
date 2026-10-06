@@ -898,11 +898,15 @@ function MobileLayout({ activeCategory, setActiveCategory,
         </div>
       </div>
 
+      <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
+
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
           <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
+
+        <LiveTimelineSection news={newsFeed} onArticleClick={onArticleClick} />
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
@@ -1017,11 +1021,15 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </div>
 
         </div>
+      </div>
+
+      <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <LiveTimelineSection news={newsFeed} onArticleClick={onArticleClick} />
         </div>
 
         {/* News panel */}
@@ -1174,10 +1182,13 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
       </div>
 
+      <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
+
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <LiveTimelineSection news={newsFeed} onArticleClick={onArticleClick} />
         </div>
 
         {/* News column */}
@@ -1386,6 +1397,73 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
   );
 }
 
+
+// ── Live Components ────────────────────────────────────────────────────────────
+
+function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liveData?: any, condKey?: string }) {
+  const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey || 'HaNoi'];
+  const topNews = news.slice(0, 5);
+  
+  if (!news.length) return null;
+
+  return (
+    <div className="w-full bg-[#182033] text-white flex items-center h-[40px] overflow-hidden relative shadow-sm z-[90]">
+      <div className="bg-[#ff315f] text-white font-bold text-[12px] px-4 py-1 flex items-center shrink-0 z-10 h-full tracking-wider uppercase">
+        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
+        Tin nóng
+      </div>
+      <div className="flex-1 overflow-hidden h-full flex items-center relative" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-10 text-[13px] font-medium min-w-full">
+          {topNews.map((n, i) => (
+            <span key={i} className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5f687b]"></span>
+              {n.title}
+            </span>
+          ))}
+          <span className="flex items-center gap-3 text-[#3a7bd5]">
+             <span className="w-1.5 h-1.5 rounded-full bg-[#3a7bd5]"></span>
+             Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
+          </span>
+          <span className="flex items-center gap-3 text-[#10b981]">
+             <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+             VN-Index: 1250.32 (+5.2 điểm)
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], onArticleClick?: (article: any) => void }) {
+  const recentNews = news.slice(0, 5);
+  return (
+    <div className="w-full bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col mb-[var(--grid-gap)] relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#ff315f]/5 to-transparent rounded-bl-full pointer-events-none"></div>
+      
+      <div className="flex items-center gap-2 mb-5">
+        <div className="relative flex items-center justify-center w-2.5 h-2.5">
+          <div className="absolute w-full h-full bg-[#ff315f] rounded-full animate-ping opacity-75"></div>
+          <div className="relative w-1.5 h-1.5 bg-[#ff315f] rounded-full"></div>
+        </div>
+        <h2 className="font-bold text-[#182033] text-[16px] uppercase tracking-wide">Trực tiếp sự kiện</h2>
+      </div>
+
+      <div className="flex flex-col relative before:absolute before:left-[4px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#ff315f] before:via-[#e3e7ef] before:to-transparent">
+        {recentNews.map((item, idx) => {
+          const timeMatch = item.pubDate.match(/(\d{2}:\d{2})/);
+          const time = timeMatch ? timeMatch[1] : "Vừa xong";
+          return (
+            <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-5 pb-5 last:pb-0 group/item cursor-pointer">
+              <div className="absolute left-[0px] top-1.5 w-[10px] h-[10px] rounded-full bg-white border-2 border-[#ff315f] group-hover/item:bg-[#ff315f] group-hover/item:shadow-[0_0_8px_rgba(255,49,95,0.5)] transition-all z-10"></div>
+              <p className="text-[11px] font-bold text-[#ff315f] mb-1 tracking-wider">{time}</p>
+              <h3 className="text-[14px] font-semibold text-[#182033] leading-snug group-hover/item:text-[#3a7bd5] transition-colors line-clamp-2">{item.title}</h3>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export const NEWS_CATEGORIES = ["Tất cả", "Thời sự", "Công nghệ", "AI", "Giới trẻ", "Giáo dục", "Kinh tế", "Startup", "Giải trí", "Du lịch", "Thể thao"];
 
