@@ -1456,7 +1456,7 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
           <div className="absolute w-full h-full bg-[#0055D4] rounded-full animate-ping opacity-75"></div>
           <div className="relative w-1.5 h-1.5 bg-[#0055D4] rounded-full"></div>
         </div>
-        <h2 className="font-bold text-[#182033] text-[length:var(--font-h3)]">Tin mới cập nhật</h2>
+        <h2 className="font-bold text-[#182033] text-[length:var(--font-h5)]">Tin mới cập nhật</h2>
       </div>
 
       <div className="flex flex-col relative before:absolute before:left-[4px] before:top-1.5 before:bottom-1.5 before:w-[1px] before:bg-[#e3e7ef]">
@@ -1471,7 +1471,7 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
                 <p className="text-[length:var(--font-caption)] font-semibold text-[#0055D4]">{time}</p>
                 <p className="text-[length:var(--font-caption)] text-[#5f687b] opacity-80">{item.src}</p>
               </div>
-              <h3 className="text-[length:var(--font-body)] font-medium text-[#182033] leading-[1.5] group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
+              <h3 className="text-[length:var(--font-small)] font-medium text-[#182033] leading-[1.4] group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
             </div>
           );
         })}
