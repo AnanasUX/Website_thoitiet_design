@@ -667,10 +667,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     // ── Hàm cào bài viết trực tiếp qua Worker Proxy (client-side DOMParser) ──
     const scrapeViaProxy = async (articleUrl: string) => {
       try {
-        const PROXY = 'https://gold-api.mrkun28.workers.dev/proxy?url=';
+        const PROXY = 'https://api.allorigins.win/get?url=';
         const res = await fetch(PROXY + encodeURIComponent(articleUrl));
         if (!res.ok) return null;
-        const html = await res.text();
+        const data = await res.json();
+        const html = data.contents;
+        if (!html) return null;
         
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -764,7 +766,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     }
     
     // Không có nội dung pre-crawled → chuyển thẳng sang trang gốc
-    let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+    let cleanLink = article.link.replace(/<\![^\u0000-\uFFFF]CDATA[^\u0000-\uFFFF]/g, '').replace(/\]\]>/g, '').trim();
     onClose();
     window.location.href = cleanLink;
   }, [article.link, article.body, article.fullContent]);
@@ -806,7 +808,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
 
         {/* Nút xem bài viết gốc */}
-        <a href={article.link?.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim()} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mt-6 py-3 px-6 rounded-xl bg-[#182033] text-white font-bold text-[15px] hover:bg-[#2a3550] transition-colors w-full">
+        <a href={article.link?.replace(/<\![^\u0000-\uFFFF]CDATA[^\u0000-\uFFFF]/g, '').replace(/\]\]>/g, '').trim()} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 mt-6 py-3 px-6 rounded-xl bg-[#182033] text-white font-bold text-[15px] hover:bg-[#2a3550] transition-colors w-full">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           Xem bài viết gốc
         </a>
@@ -1454,7 +1456,7 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
           <div className="absolute w-full h-full bg-[#0055D4] rounded-full animate-ping opacity-75"></div>
           <div className="relative w-1.5 h-1.5 bg-[#0055D4] rounded-full"></div>
         </div>
-        <h2 className="font-bold text-[#182033] text-[15px]">Tin mới cập nhật</h2>
+        <h2 className="font-bold text-[#182033] text-[length:var(--font-h3)]">Tin mới cập nhật</h2>
       </div>
 
       <div className="flex flex-col relative before:absolute before:left-[4px] before:top-1.5 before:bottom-1.5 before:w-[1px] before:bg-[#e3e7ef]">
@@ -1466,10 +1468,10 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
             <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-5 pb-3.5 last:pb-0 group/item cursor-pointer">
               <div className="absolute left-[0px] top-1 w-[9px] h-[9px] rounded-full bg-white border-2 border-[#0055D4] group-hover/item:bg-[#0055D4] transition-all z-10"></div>
               <div className="flex items-center gap-2 mb-0.5">
-                <p className="text-[11.5px] font-semibold text-[#0055D4]">{time}</p>
-                <p className="text-[10.5px] text-[#5f687b] opacity-80">{item.src}</p>
+                <p className="text-[length:var(--font-caption)] font-semibold text-[#0055D4]">{time}</p>
+                <p className="text-[length:var(--font-caption)] text-[#5f687b] opacity-80">{item.src}</p>
               </div>
-              <h3 className="text-[13.5px] font-medium text-[#182033] leading-snug group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
+              <h3 className="text-[length:var(--font-body)] font-medium text-[#182033] leading-[1.5] group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
             </div>
           );
         })}
@@ -1551,7 +1553,7 @@ export const RSS_FEEDS_DB = [
 export function decodeHTMLEntities(text: string) {
   if (!text) return "";
   try {
-    let decoded = text.replace(/<\!\[CDATA\[(.*?)\]\]>/gs, '$1');
+    let decoded = text.replace(/<\![^\u0000-\uFFFF]CDATA[^\u0000-\uFFFF](.*?)\]\]>/gs, '$1');
     decoded = decoded.replace(/&amp;/g, '&'); 
     const doc = new DOMParser().parseFromString(decoded, "text/html");
     Array.from(doc.querySelectorAll('script, style, noscript, iframe')).forEach(el => el.remove());
@@ -1573,7 +1575,7 @@ export function decodeHTMLEntities(text: string) {
                      .replace(/&nbsp;/g, " ")
                      .replace(/\r?\n|\r/g, " ")
                      .replace(/\s+/g, " ")
-                     .replace(/[^\x00-\xFFFF]/g, "") // remove extremely weird unicode blocks if needed
+                       .replace(/[^\u0000-\uFFFF]/g, "") // remove extremely weird unicode blocks if needed
                      .trim();
     return decoded;
   } catch(e) {
@@ -2515,7 +2517,7 @@ export default function App() {
 
   const handleArticleSelect = (article: any) => {
     // Ghép dữ liệu chi tiết từ bot đã cào sẵn
-    let cleanLink = article.link ? article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim().split('?')[0] : '';
+    let cleanLink = article.link ? article.link.replace(/<\![^\u0000-\uFFFF]CDATA[^\u0000-\uFFFF]/g, '').replace(/\]\]>/g, '').trim().split('?')[0] : '';
     const preCrawled = preCrawledRef.current.get(cleanLink);
     const enriched = preCrawled 
       ? { ...article, fullContent: preCrawled.fullContent }
@@ -3463,7 +3465,7 @@ useEffect(() => {
         if (data.success && data.articles) {
           data.articles.forEach((a: any) => {
             if (a.link) {
-              let c = a.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+              let c = a.link.replace(/<\![^\u0000-\uFFFF]CDATA[^\u0000-\uFFFF]/g, '').replace(/\]\]>/g, '').trim();
               c = c.split('?')[0];
               preCrawledRef.current.set(c, a);
             }
