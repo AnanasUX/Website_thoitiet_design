@@ -1406,26 +1406,37 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
   if (!news.length) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-[#182033] text-white flex items-center h-[40px] overflow-hidden shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-[999]">
-      <div className="bg-[#ff315f] text-white font-bold text-[12px] px-4 py-1 flex items-center shrink-0 z-10 h-full tracking-wider uppercase">
+    <div className="fixed bottom-0 left-0 w-full bg-white text-[#182033] flex items-center h-[40px] overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-[999] border-t border-[#e3e7ef]">
+      <div className="bg-[#ff315f] text-white font-bold text-[12px] px-4 py-1 flex items-center justify-center shrink-0 z-20 h-full tracking-wider uppercase relative shadow-[2px_0_8px_rgba(0,0,0,0.05)]">
         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
         Tin nóng
       </div>
-      <div className="flex-1 overflow-hidden h-full flex items-center relative" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
-        <div className="animate-marquee whitespace-nowrap flex items-center gap-10 text-[13px] font-medium min-w-full">
+      <div className="flex-1 overflow-hidden h-full flex items-center relative pl-4" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)' }}>
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-12 text-[14px] font-medium min-w-full hover:[animation-play-state:paused]">
           {topNews.map((n, i) => (
-            <span key={i} className="flex items-center gap-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5f687b]"></span>
-              {n.title}
+            <span key={i} className="flex items-center gap-3 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
+              {n.author}
             </span>
           ))}
-          <span className="flex items-center gap-3 text-[#3a7bd5]">
-             <span className="w-1.5 h-1.5 rounded-full bg-[#3a7bd5]"></span>
+          <span className="flex items-center gap-3 text-[#0055D4] font-semibold cursor-pointer">
+             <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
              Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
           </span>
-          <span className="flex items-center gap-3 text-[#10b981]">
+          <span className="flex items-center gap-3 text-[#10b981] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
              VN-Index: 1250.32 (+5.2 điểm)
+          </span>
+          {/* Duplicate to create infinite marquee effect without gap */}
+          {topNews.map((n, i) => (
+            <span key={'dup-'+i} className="flex items-center gap-3 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
+              {n.author}
+            </span>
+          ))}
+          <span className="flex items-center gap-3 text-[#0055D4] font-semibold cursor-pointer">
+             <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
+             Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
           </span>
         </div>
       </div>
@@ -1436,27 +1447,28 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
 function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], onArticleClick?: (article: any) => void }) {
   const recentNews = news.slice(0, 5);
   return (
-    <div className="w-full bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] border border-[#e3e7ef] flex flex-col mb-[var(--grid-gap)] relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#ff315f]/5 to-transparent rounded-bl-full pointer-events-none"></div>
-      
-      <div className="flex items-center gap-2 mb-5">
+    <div className="w-full bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col mb-[var(--grid-gap)] relative overflow-hidden group">
+      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#e3e7ef]">
         <div className="relative flex items-center justify-center w-2.5 h-2.5">
-          <div className="absolute w-full h-full bg-[#ff315f] rounded-full animate-ping opacity-75"></div>
-          <div className="relative w-1.5 h-1.5 bg-[#ff315f] rounded-full"></div>
+          <div className="absolute w-full h-full bg-[#0055D4] rounded-full animate-ping opacity-75"></div>
+          <div className="relative w-1.5 h-1.5 bg-[#0055D4] rounded-full"></div>
         </div>
-        <h2 className="font-bold text-[#182033] text-[16px] uppercase tracking-wide">Trực tiếp sự kiện</h2>
+        <h2 className="font-bold text-[#182033] text-[16px]">Tin mới cập nhật</h2>
       </div>
 
-      <div className="flex flex-col relative before:absolute before:left-[4px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-[#ff315f] before:via-[#e3e7ef] before:to-transparent">
+      <div className="flex flex-col relative before:absolute before:left-[5px] before:top-2 before:bottom-2 before:w-[1px] before:bg-[#e3e7ef]">
         {recentNews.map((item, idx) => {
           const pubDateStr = (item as any).pubDate || "";
           const timeMatch = pubDateStr.match(/(\d{2}:\d{2})/);
           const time = timeMatch ? timeMatch[1] : "Vừa xong";
           return (
-            <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-5 pb-5 last:pb-0 group/item cursor-pointer">
-              <div className="absolute left-[0px] top-1.5 w-[10px] h-[10px] rounded-full bg-white border-2 border-[#ff315f] group-hover/item:bg-[#ff315f] group-hover/item:shadow-[0_0_8px_rgba(255,49,95,0.5)] transition-all z-10"></div>
-              <p className="text-[11px] font-bold text-[#ff315f] mb-1 tracking-wider">{time}</p>
-              <h3 className="text-[14px] font-semibold text-[#182033] leading-snug group-hover/item:text-[#3a7bd5] transition-colors line-clamp-2">{item.title}</h3>
+            <div key={idx} onClick={() => onArticleClick && onArticleClick(item)} className="relative pl-6 pb-5 last:pb-0 group/item cursor-pointer">
+              <div className="absolute left-[1px] top-1.5 w-[9px] h-[9px] rounded-full bg-white border-2 border-[#0055D4] group-hover/item:bg-[#0055D4] transition-all z-10"></div>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-[12px] font-semibold text-[#0055D4]">{time}</p>
+                <p className="text-[11px] text-[#5f687b] opacity-80">{item.src}</p>
+              </div>
+              <h3 className="text-[14px] font-medium text-[#182033] leading-snug group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
             </div>
           );
         })}
@@ -1541,11 +1553,13 @@ export function decodeHTMLEntities(text: string) {
     let decoded = text.replace(/<\!\[CDATA\[(.*?)\]\]>/gs, '$1');
     decoded = decoded.replace(/&amp;/g, '&'); 
     const doc = new DOMParser().parseFromString(decoded, "text/html");
-    decoded = doc.documentElement.textContent || "";
+    Array.from(doc.querySelectorAll('script, style, noscript, iframe')).forEach(el => el.remove());
+    decoded = doc.body.textContent || "";
     // If still double encoded somehow
     if (decoded.includes('&')) {
        const doc2 = new DOMParser().parseFromString(decoded, "text/html");
-       decoded = doc2.documentElement.textContent || "";
+       Array.from(doc2.querySelectorAll('script, style, noscript, iframe')).forEach(el => el.remove());
+       decoded = doc2.body.textContent || "";
     }
     // Deep clean specific problematic sequences
     decoded = decoded.replace(/&#34;/g, '"')
