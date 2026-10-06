@@ -1406,7 +1406,7 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
   if (!news.length) return null;
 
   return (
-    <div className="w-full bg-[#182033] text-white flex items-center h-[40px] overflow-hidden relative shadow-sm z-[90]">
+    <div className="fixed bottom-0 left-0 w-full bg-[#182033] text-white flex items-center h-[40px] overflow-hidden shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-[999]">
       <div className="bg-[#ff315f] text-white font-bold text-[12px] px-4 py-1 flex items-center shrink-0 z-10 h-full tracking-wider uppercase">
         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
         Tin nóng
@@ -1538,7 +1538,8 @@ export const RSS_FEEDS_DB = [
 export function decodeHTMLEntities(text: string) {
   if (!text) return "";
   try {
-    let decoded = text.replace(/&amp;/g, '&'); // Fix double encoded first
+    let decoded = text.replace(/<\!\[CDATA\[(.*?)\]\]>/gs, '$1');
+    decoded = decoded.replace(/&amp;/g, '&'); 
     const doc = new DOMParser().parseFromString(decoded, "text/html");
     decoded = doc.documentElement.textContent || "";
     // If still double encoded somehow
@@ -1546,9 +1547,22 @@ export function decodeHTMLEntities(text: string) {
        const doc2 = new DOMParser().parseFromString(decoded, "text/html");
        decoded = doc2.documentElement.textContent || "";
     }
+    // Deep clean specific problematic sequences
+    decoded = decoded.replace(/&#34;/g, '"')
+                     .replace(/&quot;/g, '"')
+                     .replace(/&#39;/g, "'")
+                     .replace(/&#8230;/g, "...")
+                     .replace(/&apos;/g, "'")
+                     .replace(/&lt;/g, "<")
+                     .replace(/&gt;/g, ">")
+                     .replace(/&nbsp;/g, " ")
+                     .replace(/\r?\n|\r/g, " ")
+                     .replace(/\s+/g, " ")
+                     .replace(/[^\x00-\xFFFF]/g, "") // remove extremely weird unicode blocks if needed
+                     .trim();
     return decoded;
   } catch(e) {
-    return text;
+    return text.replace(/<[^>]+>/g, '').trim();
   }
 }
 
@@ -2683,19 +2697,26 @@ useEffect(() => {
         const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
         if (catFeeds.length === 0) return;
         
-        // Fetch up to 10 feeds from this category
-        const selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 15);
+        let selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 12);
+        
+        // Luôn nhét thêm feed Tin Nổi Bật nếu đang ở mục Tất cả hoặc Thời sự
+        if (activeCategory === "Tất cả" || activeCategory === "Thời sự") {
+           selectedFeeds = [
+             { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://vnexpress.net/rss/tin-noi-bat.rss", isHot: true },
+             { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://dantri.com.vn/rss/tin-noi-bat.rss", isHot: true },
+             ...selectedFeeds
+           ];
+        }
         
         const promises = selectedFeeds.map(feed => 
           fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
             .then(r => r.json())
-            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
+            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name, _isHot: (feed as any).isHot })))
             .catch(() => [])
         );
         
         const results = await Promise.all(promises);
         if (isCancelled) return;
-        
         
         const mappedFeeds = results.map(feedArticles => {
           return feedArticles.map((item: any) => {
@@ -2714,13 +2735,11 @@ useEffect(() => {
               imageUrl = ""; 
             }
             
-            // QUAN TRỌNG: Loại bỏ bài viết nếu không có ảnh
             if (!imageUrl || imageUrl.trim() === "") return null;
             
             let cleanDesc = "";
             if (item.description) {
                cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
-               cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
             }
             
             if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
@@ -2734,43 +2753,46 @@ useEffect(() => {
               author: decodeHTMLEntities(item.title ?? "Tin tức"),
               src: item.source || item._sourceName || "Tin tức",
               body: decodeHTMLEntities(cleanDesc),
-              link: item.link
+              link: item.link,
+              pubDate: item.pubDate,
+              _isHot: item._isHot
             };
-          }).filter(Boolean); // Remove nulls (articles without images)
+          }).filter(Boolean);
         });
         
-        // Remove empty feeds
         let validFeeds = mappedFeeds.filter(f => f.length > 0);
-        
-        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú
-        // Chỉ lấy bài viết trong vòng 24h qua (mới nhất trong ngày)
         const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
         
         let recentFeeds = validFeeds.map(feed => {
-            return feed.filter(item => new Date(item.pubDate || 0).getTime() > oneDayAgo);
+            return feed.filter((item: any) => new Date(item.pubDate || 0).getTime() > oneDayAgo);
         }).filter(feed => feed.length > 0);
         
-        // Nếu số lượng bài quá ít do lọc 24h, fallback về lấy tất cả
         if (recentFeeds.flat().length < 15) {
             recentFeeds = validFeeds;
         }
 
-        // Bốc ngẫu nhiên theo tỉ lệ 1, 2, 3, 4 bài từ mỗi nguồn để tạo sự phong phú nguồn (chống hiện tượng 1 báo chiếm sóng)
-        const mixedNews = [];
+        const hotNews: any[] = [];
+        const normalNews: any[] = [];
+
         while(recentFeeds.length > 0) {
-           // Đảo lộn thứ tự các nguồn báo
            recentFeeds.sort(() => 0.5 - Math.random());
            for (let i = recentFeeds.length - 1; i >= 0; i--) {
                const feed = recentFeeds[i];
-               // Bốc ngẫu nhiên từ 1 đến 4 bài của nguồn này
                const takeCount = Math.floor(Math.random() * 4) + 1;
                const taken = feed.splice(0, takeCount);
-               mixedNews.push(...taken);
+               
+               taken.forEach((item: any) => {
+                   if (item._isHot) hotNews.push(item);
+                   else normalNews.push(item);
+               });
+
                if (feed.length === 0) {
                    recentFeeds.splice(i, 1);
                }
            }
         }
+        
+        const mixedNews = [...hotNews, ...normalNews];
         
         if (!isBackground) {
           fullNewsPool.current = mixedNews;
@@ -2782,7 +2804,7 @@ useEffect(() => {
             fullNewsPool.current = [...newItems, ...fullNewsPool.current];
             setLiveNews((prev: any) => {
               const current = prev || [];
-              const uniqueNew = newItems.filter(n => !current.find((c: any) => c.link === n.link));
+              const uniqueNew = newItems.filter((n: any) => !current.find((c: any) => c.link === n.link));
               return [...uniqueNew, ...current];
             });
           }
@@ -3433,7 +3455,7 @@ useEffect(() => {
     const theme = WEATHER_THEMES[condKey];
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f6fa]">
+    <div className="min-h-screen w-full bg-[#f4f6fa] pb-[40px]">
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
