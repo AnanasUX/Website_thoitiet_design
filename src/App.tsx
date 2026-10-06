@@ -1410,34 +1410,34 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white text-[#182033] flex items-center h-[40px] overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-[999] border-t border-[#e3e7ef]">
-      <div className="bg-[#ff315f] text-white font-bold text-[12px] px-4 py-1 flex items-center justify-center shrink-0 z-20 h-full tracking-wider uppercase relative shadow-[2px_0_8px_rgba(0,0,0,0.05)]">
+      <div className="bg-[#ff315f] text-white font-bold text-[length:var(--font-caption)] px-4 py-1 flex items-center justify-center shrink-0 z-20 h-full tracking-wider uppercase relative shadow-[2px_0_8px_rgba(0,0,0,0.05)]">
         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
         Tin nóng
       </div>
       <div className="flex-1 overflow-hidden h-full flex items-center relative pl-3" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)' }}>
-        <div className="animate-marquee whitespace-nowrap flex items-center gap-8 text-[13.5px] font-medium min-w-full hover:[animation-play-state:paused]">
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-5 text-[length:var(--font-body)] font-medium min-w-full hover:[animation-play-state:paused]">
           {topNews.map((n, i) => (
-            <span key={i} className="flex items-center gap-2.5 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
+            <span key={i} className="flex items-center gap-2 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
               {n.author}
             </span>
           ))}
-          <span className="flex items-center gap-2.5 text-[#0055D4] font-semibold cursor-pointer">
+          <span className="flex items-center gap-2 text-[#0055D4] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
              Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
           </span>
-          <span className="flex items-center gap-2.5 text-[#10b981] font-semibold cursor-pointer">
+          <span className="flex items-center gap-2 text-[#10b981] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
              VN-Index: 1250.32 (+5.2 điểm)
           </span>
           {/* Duplicate to create infinite marquee effect without gap */}
           {topNews.map((n, i) => (
-            <span key={'dup-'+i} className="flex items-center gap-2.5 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
+            <span key={'dup-'+i} className="flex items-center gap-2 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
               {n.author}
             </span>
           ))}
-          <span className="flex items-center gap-2.5 text-[#0055D4] font-semibold cursor-pointer">
+          <span className="flex items-center gap-2 text-[#0055D4] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
              Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
           </span>
@@ -2053,20 +2053,20 @@ function MarketSection() {
   return (
     <div className={`w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between opacity-100`}>
       <div className="flex items-center justify-between w-full mb-1">
-        <h2 className="font-bold leading-[26px] text-[#182033] text-[16px]">Giá vàng Phú Quý</h2>
+        <h2 className="font-bold leading-[26px] text-[#182033] text-[length:var(--font-h4)]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse mr-1"></div>
-          <p className="font-bold text-[10px] text-[#f7a928]">LIVE</p>
+          <p className="font-bold text-[length:var(--font-caption)] text-[#f7a928]">LIVE</p>
         </div>
       </div>
       
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
         {displayData.map((item, idx) => (
           <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
-            <p className="font-bold text-[#182033] text-[11px] sm:text-[14px] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <p className="font-bold text-[#182033] text-[length:var(--font-caption)] sm:text-[length:var(--font-body)] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
-              <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Mua</p>
-              <p className="font-semibold text-[#16a34a] text-[12px] sm:text-[14px] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
+              <p className="text-[#5f687b] text-[10px] sm:text-[length:var(--font-caption)]">Mua</p>
+              <p className="font-semibold text-[#16a34a] text-[length:var(--font-caption)] sm:text-[length:var(--font-body)] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
             </div>
             <div className="flex justify-between items-center w-full mt-0.5 sm:mt-1 gap-0.5 sm:gap-1">
               <p className="text-[#5f687b] text-[10px] sm:text-[12px]">Bán</p>
