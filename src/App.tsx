@@ -794,7 +794,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
   return (
     <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
-      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-[#e3e7ef] px-4 py-3 flex items-center justify-between w-full md:max-w-3xl z-10">
+      <div className="sticky top-0 bg-[inherit] border-b border-[#e3e7ef] px-4 py-3 flex items-center justify-between w-full md:max-w-3xl z-10">
         <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-[#f4f6fa] text-[#182033] flex items-center gap-2">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
            <span className="font-bold text-[16px]">Quay lại</span>
