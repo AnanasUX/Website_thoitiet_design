@@ -3615,6 +3615,7 @@ useEffect(() => {
 
       {selectedArticle && (
         <NewsDetailView 
+          key={selectedArticle.link}
           article={selectedArticle} 
           allNews={liveNews} 
           onClose={closeArticle} 
