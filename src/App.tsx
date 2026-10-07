@@ -670,6 +670,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlStr, 'text/html');
 
+      // Tiêu đề gốc của chính trang chi tiết
+      const pageTitle = (
+        doc.querySelector('h1')?.textContent ||
+        doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+        ''
+      ).replace(/\s+/g, ' ').trim();
+
       doc.querySelectorAll('script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, .social, .comment, iframe, .banner').forEach(el => el.remove());
 
       const contentSelectors = [
@@ -775,6 +782,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       };
 
       processNode(mainContent);
+
+      if (pageTitle) {
+        const norm = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        const filtered = blocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
+        return [{ type: 'title', content: pageTitle }, ...filtered];
+      }
       return blocks;
     };
 
@@ -805,7 +818,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
     let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
     scrapeViaProxy(cleanLink).then(blocks => {
-         if (blocks && blocks.length > 0) {
+         if (blocks && blocks.some((b: any) => b.type !== 'title')) {
             setContentBlocks(blocks);
             setFullContent("RICH_RENDER"); 
          } else {
@@ -829,12 +842,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
            <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || article.img} data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
            <p className="font-medium text-[#5f687b] text-[14px]">{article.src}</p>
         </div>
-        
-        <h1 className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3] mt-1">{article.author}</h1>
-        
-        <div className="w-full h-[250px] md:h-[400px] mt-2 relative rounded-[12px] overflow-hidden">
-           <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full" referrerPolicy="no-referrer" src={article.img} data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
-        </div>
 
         {isLoadingFull ? (
            <div className="flex flex-col gap-4 mt-6 animate-pulse">
@@ -852,8 +859,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
              <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
            </div>
         ) : fullContent === "RICH_RENDER" && contentBlocks && contentBlocks.length > 0 ? (
-           <div className="mt-6 flex flex-col gap-4">
+           <div className="mt-2 flex flex-col gap-4">
              {contentBlocks.map((block: any, idx: number) => {
+               if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
                if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                if (block.type === 'heading') return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] font-bold mt-4 mb-2" />;
                if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
