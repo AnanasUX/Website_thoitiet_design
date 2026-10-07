@@ -684,6 +684,25 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         if (mainContent) break;
       }
       
+      // Fallback linh động (Heuristic): Tự động tìm vùng nội dung chính dựa trên mật độ thẻ <p>
+      // Giải quyết vấn đề "mỗi trang có cách lấy khác nhau"
+      if (!mainContent) {
+        let maxScore = 0;
+        doc.querySelectorAll('div, article, section, main').forEach(el => {
+          const pCount = el.querySelectorAll('p').length;
+          const aCount = el.querySelectorAll('a').length;
+          // Điểm = số đoạn văn trừ đi điểm phạt nếu có quá nhiều link (menu/footer)
+          const score = pCount - (aCount * 0.4);
+          
+          if (el.tagName.toLowerCase() === 'body') return;
+          
+          if (score > maxScore && pCount >= 3) {
+            maxScore = score;
+            mainContent = el;
+          }
+        });
+      }
+      
       if (!mainContent) mainContent = doc.body;
 
       const blocks: any[] = [];
