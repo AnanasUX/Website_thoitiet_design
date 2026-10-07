@@ -757,7 +757,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
     const scrapeViaProxy = async (articleUrl: string) => {
       try {
-        const PROXY = 'https://api.allorigins.win/get?url=';
+        const PROXY = 'https://new-bot.mrkun28.workers.dev/?url=';
         const res = await fetch(PROXY + encodeURIComponent(articleUrl));
         if (!res.ok) return null;
         const data = await res.json();
@@ -786,8 +786,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           article.contentBlocks = blocks;
           setFullContent("RICH_RENDER"); 
        } else {
-          onClose();
-          window.location.href = cleanLink;
+          setFullContent("ERROR");
        }
        setIsLoadingFull(false);
     });
