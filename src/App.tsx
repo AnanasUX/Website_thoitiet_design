@@ -2191,7 +2191,8 @@ function toSlug(str: string) {
 const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
 
 export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string) {
-  const redirectUri = window.location.origin + window.location.pathname;
+  const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+    const redirectUri = window.location.origin + basePath;
   const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
   let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
   if (loginHint) {
@@ -2543,7 +2544,8 @@ export default function App() {
   useEffect(() => {
     if (userRole && userRole.email && !userRole._access_token) {
       if (!sessionStorage.getItem('google_silent_failed')) {
-        const redirectUri = window.location.origin + window.location.pathname;
+        const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+    const redirectUri = window.location.origin + basePath;
         const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
         window.location.replace(authUrl);
