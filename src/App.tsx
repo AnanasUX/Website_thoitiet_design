@@ -822,8 +822,32 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               <div className="h-4 bg-[#e3e7ef] rounded w-10/12"></div>
               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
            </div>
+        ) : fullContent === "ERROR" ? (
+           <div className="mt-6 flex flex-col items-center justify-center p-8 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-center" style={{ backgroundColor: 'inherit' }}>
+             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+             <p className="text-[#475569] text-[16px] font-bold mb-2">Không thể tự động bóc tách bài viết</p>
+             <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
+           </div>
+        ) : fullContent === "RICH_RENDER" && article.contentBlocks ? (
+           <div className="mt-6 flex flex-col gap-4">
+             {article.contentBlocks.map((block: any, idx: number) => {
+               if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
+               if (block.type === 'heading') return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] font-bold mt-4 mb-2" />;
+               if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
+               if (block.type === 'image') return (
+                 <figure key={idx} className="my-5 w-full">
+                   <img src={block.src} alt={block.caption} className="w-full h-auto object-cover rounded-xl shadow-sm" loading="lazy" />
+                   {block.caption && <figcaption className="text-center text-[14px] mt-2 italic" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
+                 </figure>
+               );
+               if (block.type === 'video') return (
+                 <video key={idx} controls src={block.src} className="w-full rounded-xl my-5 shadow-sm" />
+               );
+               return null;
+             })}
+           </div>
         ) : (
-           <div className="mt-6" dangerouslySetInnerHTML={{ __html: fullContent }} />
+           <div className="mt-6 text-[17px] leading-relaxed font-sans detail-html-content" dangerouslySetInnerHTML={{ __html: fullContent }} />
         )}
 
 
