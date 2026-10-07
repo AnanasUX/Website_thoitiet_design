@@ -1409,13 +1409,13 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
   if (!news.length) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white text-[#182033] flex items-center h-[40px] overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-[999] border-t border-[#e3e7ef]">
-      <div className="bg-[#ff315f] text-white font-bold text-[length:var(--font-caption)] px-4 py-1 flex items-center justify-center shrink-0 z-20 h-full tracking-wider uppercase relative shadow-[2px_0_8px_rgba(0,0,0,0.05)]">
+    <div className="fixed bottom-0 left-0 w-full bg-white text-[#182033] flex items-center h-[32px] overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-[999] border-t border-[#e3e7ef]">
+      <div className="bg-[#ff315f] text-white font-bold text-[12px] px-3 py-1 flex items-center justify-center shrink-0 z-20 h-full tracking-wider uppercase relative shadow-[2px_0_8px_rgba(0,0,0,0.05)]">
         <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
         Tin nóng
       </div>
       <div className="flex-1 overflow-hidden h-full flex items-center relative pl-3" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)' }}>
-        <div className="animate-marquee whitespace-nowrap flex items-center gap-5 text-[length:var(--font-body)] font-medium min-w-full hover:[animation-play-state:paused]">
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-6 text-[13px] font-medium min-w-full hover:[animation-play-state:paused]">
           {topNews.map((n, i) => (
             <span key={i} className="flex items-center gap-2 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
