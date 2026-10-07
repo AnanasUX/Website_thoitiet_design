@@ -12,11 +12,14 @@ export default defineConfig(({ mode }) => {
   // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === 'development'
 
-  const appBase = process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/Website_thoitiet_design/'
+  const isAppBuild = process.env.BUILD_TARGET === 'app'
+  const appBase = isAppBuild ? './' : (process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/Website_thoitiet_design/')
+  const outDir = isAppBuild ? 'dist-app' : 'dist'
 
   return {
     base: appBase,
     build: {
+      outDir,
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
     },

@@ -19,3 +19,10 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+# App & Android build outputs
+dist-app/
+release-apk/
+android/.gradle/
+android/build/
+android/app/build/
