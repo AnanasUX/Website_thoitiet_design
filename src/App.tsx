@@ -621,6 +621,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { article: any, allNews: any[], onClose: () => void, onSelectRelated: (item: any) => void }) {
   const [fullContent, setFullContent] = useState<string>('');
   const [isLoadingFull, setIsLoadingFull] = useState(false);
+  const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
 
   const related = useMemo(() => {
     return allNews.filter((n: any) => n.link !== article.link).sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -804,12 +805,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
     let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
     scrapeViaProxy(cleanLink).then(blocks => {
-       if (blocks && blocks.length > 0) {
-          article.contentBlocks = blocks;
-          setFullContent("RICH_RENDER"); 
-       } else {
-          setFullContent("ERROR");
-       }
+         if (blocks && blocks.length > 0) {
+            setContentBlocks(blocks);
+            setFullContent("RICH_RENDER"); 
+         } else {
+            setFullContent("ERROR");
+         }
        setIsLoadingFull(false);
     });
   }, [article.link, article.body, article.fullContent]);
