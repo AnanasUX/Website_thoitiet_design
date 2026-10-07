@@ -665,110 +665,132 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
     
     // ── Hàm cào bài viết trực tiếp qua Worker Proxy (client-side DOMParser) ──
+    const parseHTMLToBlocks = (htmlStr: string, baseUrl: string) => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlStr, 'text/html');
+
+      doc.querySelectorAll('script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, .social, .comment, iframe, .banner').forEach(el => el.remove());
+
+      const contentSelectors = [
+        'article.fck_detail', '.fck_detail', '[data-role="content"]', '.detail-cmain',
+        '#main-detail-body', '.detail-content [data-role="content"]', '#articleContent', 
+        '.singular-content', '.e-magazine__body', '.the-article-body', '.knc-content', 
+        'article', '.post-content', '.entry-content', '.article-content'
+      ];
+
+      let mainContent = null;
+      for (const sel of contentSelectors) {
+        mainContent = doc.querySelector(sel);
+        if (mainContent) break;
+      }
+      
+      if (!mainContent) mainContent = doc.body;
+
+      const blocks: any[] = [];
+      const processNode = (node: Node) => {
+        if (!node) return;
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent?.trim();
+          if (text) blocks.push({ type: 'text', content: text, tag: 'p' });
+          return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        const el = node as HTMLElement;
+        const tag = el.tagName.toLowerCase();
+
+        if (tag === 'script' || tag === 'style' || el.style.display === 'none') return;
+
+        if (tag === 'figure' || tag === 'picture') {
+          const img = el.querySelector('img');
+          if (img) {
+            let src = img.getAttribute('data-src') || img.getAttribute('data-original') || img.getAttribute('src');
+            if (src && !src.startsWith('data:')) {
+              if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
+              const caption = el.querySelector('figcaption')?.textContent?.trim() || img.getAttribute('alt') || '';
+              blocks.push({ type: 'image', src, caption });
+            }
+          }
+          return;
+        }
+
+        if (tag === 'img') {
+          let src = el.getAttribute('data-src') || el.getAttribute('data-original') || el.getAttribute('src');
+          if (src && !src.startsWith('data:')) {
+            if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
+            blocks.push({ type: 'image', src, caption: el.getAttribute('alt') || '' });
+          }
+          return;
+        }
+
+        if (tag === 'video') {
+          let src = el.getAttribute('src');
+          if (!src) {
+            const source = el.querySelector('source');
+            if (source) src = source.getAttribute('src');
+          }
+          if (src) {
+             if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
+             blocks.push({ type: 'video', src });
+          }
+          return;
+        }
+
+        if (tag === 'p' || tag.startsWith('h') || tag === 'blockquote') {
+          const imgs = el.querySelectorAll('img, video');
+          if (imgs.length > 0) {
+            Array.from(el.childNodes).forEach(processNode);
+          } else {
+            const html = el.innerHTML.trim();
+            if (html && el.textContent?.trim()) {
+              blocks.push({ type: tag === 'blockquote' ? 'quote' : (tag.startsWith('h') ? 'heading' : 'text'), content: html, tag });
+            }
+          }
+          return;
+        }
+
+        Array.from(el.childNodes).forEach(processNode);
+      };
+
+      processNode(mainContent);
+      return blocks;
+    };
+
     const scrapeViaProxy = async (articleUrl: string) => {
       try {
         const PROXY = 'https://api.allorigins.win/get?url=';
         const res = await fetch(PROXY + encodeURIComponent(articleUrl));
         if (!res.ok) return null;
         const data = await res.json();
-        const html = data.contents;
-        if (!html) return null;
+        if (!data.contents) return null;
         
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Xóa các phần tử không liên quan
-        doc.querySelectorAll('script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, .social, .comment, iframe, .banner').forEach(el => el.remove());
-        
-        // Tìm vùng nội dung chính theo thứ tự ưu tiên cho từng tờ báo
-        const contentSelectors = [
-          // VnExpress
-          'article.fck_detail',
-          '.fck_detail',
-          // Thanh Niên
-          '[data-role="content"]',
-          '.detail-cmain',
-          // Tuổi Trẻ
-          '#main-detail-body',
-          '.detail-content [data-role="content"]',
-          // Dân Trí
-          '#articleContent',
-          '.singular-content',
-          '.e-magazine__body',
-          // Zing/ZNews
-          '.the-article-body',
-          // CafeF / GenK
-          '.knc-content',
-          // Generic
-          'article',
-          '.post-content',
-          '.entry-content',
-          '.article-content',
-          '.article-body',
-        ];
-        
-        let contentEl: Element | null = null;
-        for (const sel of contentSelectors) {
-          const el = doc.querySelector(sel);
-          if (el && el.textContent && el.textContent.trim().length > 200) {
-            contentEl = el;
-            break;
-          }
-        }
-        
-        if (!contentEl) return null;
-        
-        // Trích xuất đoạn văn (paragraphs)
-        const paragraphs: string[] = [];
-        contentEl.querySelectorAll('p').forEach(p => {
-          const text = (p.textContent || '').trim();
-          if (text.length > 20 && !text.startsWith('Ảnh:') && !text.startsWith('Video:')) {
-            paragraphs.push(text);
-          }
-        });
-        
-        // Trích xuất headings
-        const headings: string[] = [];
-        contentEl.querySelectorAll('h2, h3').forEach(h => {
-          const text = (h.textContent || '').trim();
-          if (text.length > 5 && text.length < 200) headings.push(text);
-        });
-        
-        // Trích xuất ảnh
-        const images: string[] = [];
-        contentEl.querySelectorAll('img').forEach(img => {
-          const src = img.getAttribute('data-src') || img.getAttribute('src') || '';
-          if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('icon') && !src.includes('1x1') && !src.includes('pixel') && !src.includes('data:image')) {
-            images.push(src);
-          }
-        });
-        
-        // Trích xuất captions
-        const captions: string[] = [];
-        contentEl.querySelectorAll('figcaption').forEach(cap => {
-          const text = (cap.textContent || '').trim();
-          if (text.length > 3) captions.push(text);
-        });
-        
-        if (paragraphs.length === 0) return null;
-        
-        return { paragraphs, headings, images, captions };
+        return parseHTMLToBlocks(data.contents, articleUrl);
       } catch (err) {
         console.warn('[Scrape] Error:', err);
         return null;
       }
     };
     
-    // Nếu bot đã cào sẵn nội dung chi tiết → Hiển thị ngay lập tức
     if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
       const html = renderContent(article.fullContent);
       if (html) { setFullContent(html); setIsLoadingFull(false); return; }
     }
     
-    // Không có nội dung pre-crawled → chuyển thẳng sang trang gốc
+    if (article.contentBlocks && article.contentBlocks.length > 0) {
+       setIsLoadingFull(false);
+       return; 
+    }
+
     let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
-    onClose();
-    window.location.href = cleanLink;
+    scrapeViaProxy(cleanLink).then(blocks => {
+       if (blocks && blocks.length > 0) {
+          article.contentBlocks = blocks;
+          setFullContent("RICH_RENDER"); 
+       } else {
+          onClose();
+          window.location.href = cleanLink;
+       }
+       setIsLoadingFull(false);
+    });
   }, [article.link, article.body, article.fullContent]);
 
   return (
