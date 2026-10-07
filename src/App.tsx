@@ -2458,38 +2458,42 @@ export default function App() {
   // (Đã gỡ bỏ useGoogleOneTapLogin để tránh tình trạng popup tự động hiện lên liên tục gây khó chịu)
   // Chỉ sử dụng nút Đăng nhập thủ công ở trên Header.
 
-  // Handle OAuth2 redirect callback (access_token in URL hash)
+  // Handle OAuth2 redirect callback (access_token or error in URL hash)
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash && hash.includes('access_token=')) {
+    if (hash && (hash.includes('access_token=') || hash.includes('error='))) {
       if (window.opener) {
-        // We are inside the popup window. Send the token to the parent window and close.
         window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
         window.close();
-        return; // Dừng luôn không load gì thêm ở popup
+        return;
       }
 
-      // Nếu không phải popup (người dùng redirect thẳng), tự xử lý ở đây
-      if (!userRole) {
-        const params = new URLSearchParams(hash.substring(1));
-        const accessToken = params.get('access_token');
-        if (accessToken) {
-          // Clean URL hash immediately
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          // Fetch user info
-          fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${accessToken}` },
+      const params = new URLSearchParams(hash.substring(1));
+      const error = params.get('error');
+      const accessToken = params.get('access_token');
+      
+      // Clean URL hash immediately
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+      if (error) {
+         sessionStorage.setItem('google_silent_failed', '1');
+         return;
+      }
+
+      if (accessToken) {
+        sessionStorage.removeItem('google_silent_failed');
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+          .then(r => r.json())
+          .then(userInfo => {
+            userInfo._access_token = accessToken;
+            const authStr = JSON.stringify(userInfo);
+            localStorage.setItem('user_auth', authStr);
+            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+            setUserRole(userInfo);
           })
-            .then(r => r.json())
-            .then(userInfo => {
-              userInfo._access_token = accessToken;
-              const authStr = JSON.stringify(userInfo);
-              localStorage.setItem('user_auth', authStr);
-              document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-              setUserRole(userInfo);
-            })
-            .catch(err => console.error("Lỗi lấy thông tin Google:", err));
-        }
+          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
       }
     }
   }, []);
@@ -2513,37 +2517,15 @@ export default function App() {
 
   
   
-  const silentLogin = useGoogleLogin({
-    onSuccess: (tokenResponse: any) => {
-      const accessToken = tokenResponse.access_token;
-      if (accessToken) {
-        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-          .then(r => r.json())
-          .then(userInfo => {
-            userInfo._access_token = accessToken;
-            const authStr = JSON.stringify(userInfo);
-            localStorage.setItem('user_auth', authStr);
-            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-            setUserRole(userInfo);
-          })
-          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
-      }
-    },
-    onError: (errorResponse: any) => {
-      console.log('Silent login error', errorResponse);
-    },
-    scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly'
-  });
-
-  // Check for expired token on load or silently refresh
+  
+  // Check for expired token on load or silently refresh using top-level redirect
   useEffect(() => {
     if (userRole && userRole.email && !userRole._access_token) {
-      try {
-        silentLogin({ prompt: 'none', hint: userRole.email } as any);
-      } catch (e) {
-         console.error('Silent login exception', e);
+      if (!sessionStorage.getItem('google_silent_failed')) {
+        const redirectUri = window.location.origin + window.location.pathname;
+        const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
+        window.location.replace(authUrl);
       }
     }
   }, [userRole]);
