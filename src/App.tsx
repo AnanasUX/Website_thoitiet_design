@@ -797,7 +797,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       if (html) { setFullContent(html); setIsLoadingFull(false); return; }
     }
     
-    if (article.contentBlocks && article.contentBlocks.length > 0) {
+    if (contentBlocks && contentBlocks.length > 0) {
        setIsLoadingFull(false);
        return; 
     }
@@ -850,9 +850,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
              <p className="text-[#475569] text-[16px] font-bold mb-2">Không thể tự động bóc tách bài viết</p>
              <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
            </div>
-        ) : fullContent === "RICH_RENDER" && article.contentBlocks ? (
+        ) : fullContent === "RICH_RENDER" && contentBlocks && contentBlocks.length > 0 ? (
            <div className="mt-6 flex flex-col gap-4">
-             {article.contentBlocks.map((block: any, idx: number) => {
+             {contentBlocks.map((block: any, idx: number) => {
                if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                if (block.type === 'heading') return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] font-bold mt-4 mb-2" />;
                if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
