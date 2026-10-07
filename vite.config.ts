@@ -12,23 +12,82 @@ export default defineConfig(({ mode }) => {
   // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
   const emitSourcemaps = mode === 'development'
 
+  const appBase = process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/Website_thoitiet_design/'
+
   return {
-    base: process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/Website_thoitiet_design/',
+    base: appBase,
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
     },
     server: {
-    proxy: {
-      '/api/phuquy': {
-        target: 'https://phuquygroup.vn',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/phuquy/, '')
+      proxy: {
+        '/api/phuquy': {
+          target: 'https://phuquygroup.vn',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/phuquy/, '')
+        }
       }
-    }
-  },
-  plugins: [
-    VitePWA({ registerType: 'autoUpdate', manifest: { name: 'Thời Tiết AnX', short_name: 'AnX', theme_color: '#ffffff', icons: [{ src: '/vite.svg', sizes: '192x192', type: 'image/svg+xml' }, { src: '/vite.svg', sizes: '512x512', type: 'image/svg+xml' }] } }),
+    },
+    plugins: [
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icons/*.png'],
+        manifest: {
+          name: 'Thời Tiết & Tin Tức AnX',
+          short_name: 'AnX App',
+          description: 'Ứng dụng theo dõi thời tiết, tin tức và giá vàng thời gian thực',
+          theme_color: '#182033',
+          background_color: '#182033',
+          display: 'standalone',
+          display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
+          orientation: 'portrait',
+          scope: appBase,
+          start_url: appBase,
+          icons: [
+            {
+              src: 'icons/icon-192x192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'icons/icon-512x512.png',
+              sizes: '512x512',
+              type: 'image/png'
+            },
+            {
+              src: 'icons/icon-maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
+            }
+          ]
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          globIgnores: ['**/fonts/**', 'mock-thanhnien.json'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          navigateFallback: `${appBase}index.html`,
+          navigateFallbackDenylist: [/^\/api/, /^https?:\/\//],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/(new-bot|gold-api)\.mrkun28\.workers\.dev\/.*/i,
+              handler: 'NetworkOnly'
+            },
+            {
+              urlPattern: /^https:\/\/api\.rss2json\.com\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'rss-feeds-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 300
+                }
+              }
+            }
+          ]
+        }
+      }),
 react(),
       tailwindcss(),
       figmaSiteConfiguration(siteConfiguration),

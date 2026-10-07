@@ -2308,6 +2308,127 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string)
   window.addEventListener('message', messageListener);
 }
 
+
+function InstallAppButton() {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const isStandaloneMode = 
+      window.matchMedia('(display-mode: standalone)').matches || 
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://');
+    
+    setIsStandalone(isStandaloneMode);
+    if (isStandaloneMode) return;
+
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(ios);
+    if (ios) {
+      setCanInstall(true);
+    }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    const media = window.matchMedia('(display-mode: standalone)');
+    const handleMedia = (e: any) => {
+      setIsStandalone(e.matches);
+      if (e.matches) setCanInstall(false);
+    };
+    media.addEventListener('change', handleMedia);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      media.removeEventListener('change', handleMedia);
+    };
+  }, []);
+
+  if (isStandalone || !canInstall) return null;
+
+  const handleInstall = async () => {
+    if (isIOS) {
+      setShowIOSModal(true);
+      return;
+    }
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setCanInstall(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      setShowIOSModal(true);
+    }
+  };
+
+  return (
+    <>
+      <button
+        onClick={handleInstall}
+        title="Cài đặt App lên màn hình chính"
+        className="ml-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-white text-[12px] font-semibold shadow-sm transition-all active:scale-95 shrink-0 bg-gradient-to-r from-[#0055D4] to-[#00a2ff] hover:opacity-90"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span className="hidden sm:inline">Cài App</span>
+        <span className="sm:hidden">App</span>
+      </button>
+
+      {showIOSModal && (
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowIOSModal(false)}>
+          <div className="bg-white text-[#182033] rounded-2xl p-5 max-w-sm w-full shadow-2xl border border-gray-100" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-[#182033] flex items-center justify-center text-white font-bold text-base shadow-md">
+                  AnX
+                </div>
+                <div>
+                  <h3 className="font-bold text-[16px] leading-tight">Cài đặt ứng dụng AnX</h3>
+                  <p className="text-[12px] text-gray-500">Mở toàn màn hình như ứng dụng gốc</p>
+                </div>
+              </div>
+              <button onClick={() => setShowIOSModal(false)} className="p-1 rounded-full text-gray-400 hover:text-gray-600">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 text-[13px] text-gray-600">
+              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0">1</span>
+                <span>Chạm vào nút <b>Chia sẻ</b> (<svg className="inline w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>) trên thanh công cụ Safari.</span>
+              </div>
+              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0">2</span>
+                <span>Cuộn xuống và chọn <b>Thêm vào MH chính</b> (Add to Home Screen 📲).</span>
+              </div>
+              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0">3</span>
+                <span>Bấm <b>Thêm</b> ở góc trên bên phải để hoàn tất cài đặt!</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="mt-5 w-full py-2.5 rounded-xl bg-[#0055D4] text-white font-semibold text-[14px] hover:bg-blue-700 transition-colors"
+            >
+              Đã hiểu
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => void }) {
   const handleLogin = () => doGoogleLogin(onLoginSuccess);
 
