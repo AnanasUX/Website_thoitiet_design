@@ -675,7 +675,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         'article.fck_detail', '.fck_detail', '[data-role="content"]', '.detail-cmain',
         '#main-detail-body', '.detail-content [data-role="content"]', '#articleContent', 
         '.singular-content', '.e-magazine__body', '.the-article-body', '.knc-content', 
-        'article', '.post-content', '.entry-content', '.article-content'
+        '.post-content', '.entry-content', '.article-content',
+        '.maincontent', '.article__body', '.zce-content-body', '.cms-body', 
+        '.content-detail', '.detail-content-body', '.content-body', '.post-detail',
+        '.noidung', '.news-content', '.detail-content', 'article'
       ];
 
       let mainContent = null;
@@ -692,7 +695,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           const pCount = el.querySelectorAll('p').length;
           const aCount = el.querySelectorAll('a').length;
           // Điểm = số đoạn văn trừ đi điểm phạt nếu có quá nhiều link (menu/footer)
-          const score = pCount - (aCount * 0.4);
+          const score = pCount - (aCount * 0.2);
           
           if (el.tagName.toLowerCase() === 'body') return;
           
