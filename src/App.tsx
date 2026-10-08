@@ -1264,40 +1264,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
       </div>
 
           {/* ── YouTube Broadcast Desk Mobile ── */}
-          {activeCategory === "Bản tin TV" ? (
+          {activeCategory === "Bản tin TV" && (
             <YouTubeBroadcastPlayer
               liveNews={newsFeed}
               currentWeather={WEATHER}
               initialCategory="Thời sự 24h"
             />
-          ) : (
-            <div 
-              onClick={() => {
-                if (setActiveCategory) setActiveCategory("Bản tin TV");
-                setTimeout(() => {
-                  const el = document.getElementById("youtube-broadcast-section");
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }}
-              className="w-full bg-white p-3 rounded-[var(--card-radius)] border border-[#e3e7ef] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] hover:shadow-[0_8px_20px_rgba(23,33,51,0.12)] transition-all cursor-pointer flex items-center justify-between gap-2.5 group mb-2"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="size-9 rounded-full bg-[#ffe8ee] flex items-center justify-center text-[#ff315f] shrink-0 border border-gray-100">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="15" rx="2" />
-                    <polyline points="17 2 12 7 7 2" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-[13px] text-[#182033]">Bản Tin Truyền Hình 24H</span>
-                    <span className="px-1.5 py-0.2 rounded bg-[#ffe8ee] text-[#ff315f] text-[9px] font-bold uppercase">LIVE</span>
-                  </div>
-                  <p className="text-[11px] text-[#5f687b] line-clamp-1">VTV24, VTC Now, Tuổi Trẻ, Thanh Niên TV</p>
-                </div>
-              </div>
-              <svg className="text-[#ff315f] size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
           )}
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
@@ -1424,26 +1396,52 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
+      {activeCategory === "Bản tin TV" ? (
+        <div className="w-full max-w-[1200px] mx-auto px-[var(--page-padding)] py-[var(--section-gap)] flex flex-col gap-4">
+          <div className="flex items-center justify-between w-full mb-1">
+            <div className="flex gap-[10px] items-center">
+              <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+                Bản Tin Truyền Hình 24H
+              </p>
+              <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
+                <p className="font-bold text-[11px] text-white">LIVE</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
+              className="text-[13px] font-semibold text-[#5f687b] hover:text-[#ff315f] flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full transition-all cursor-pointer shadow-xs"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>Về Tin tức</span>
+            </button>
+          </div>
+
+          <YouTubeBroadcastPlayer
+            liveNews={newsFeed}
+            currentWeather={WEATHER}
+            initialCategory="Thời sự 24h"
+          />
+        </div>
+      ) : (
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
-          
         </div>
 
         {/* News panel */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
-      <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] mt-[-12px]">
-        {NEWS_CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+          <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] mt-[-12px]">
+            {NEWS_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
 
           <MarketSection />
           {userRole && userRole.email ? (
@@ -1458,52 +1456,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
           )}
           <div className="flex flex-col gap-[2px] items-start">
             <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-              {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin tức"}
+              Tin tức
             </p>
             <p className="font-normal text-[#5f687b] text-[12px]">
               {WEATHER.location} · {newsFeed.length} bài mới nhất
             </p>
           </div>
-
-          {/* ── YouTube Broadcast Desk Tablet ── */}
-          {activeCategory === "Bản tin TV" ? (
-            <YouTubeBroadcastPlayer
-              liveNews={newsFeed}
-              currentWeather={WEATHER}
-              initialCategory="Thời sự 24h"
-            />
-          ) : (
-            <div 
-              onClick={() => {
-                if (setActiveCategory) setActiveCategory("Bản tin TV");
-                setTimeout(() => {
-                  const el = document.getElementById("youtube-broadcast-section");
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }}
-              className="w-full bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] border border-[#e3e7ef] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] hover:shadow-[0_8px_20px_rgba(23,33,51,0.12)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between gap-3 group mb-2"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="size-10 rounded-full bg-[#ffe8ee] flex items-center justify-center text-[#ff315f] group-hover:scale-105 transition-transform shrink-0 border border-gray-100">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="15" rx="2" />
-                    <polyline points="17 2 12 7 7 2" />
-                  </svg>
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#182033] text-[14px]">Truyền Hình Bản Tin 24H</span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#ffe8ee] text-[#ff315f] text-[10px] font-bold tracking-wider uppercase">LIVE</span>
-                  </div>
-                  <p className="text-[#5f687b] text-[12px] line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ, Thanh Niên &amp; Dự báo thời tiết</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-[12px] font-semibold text-[#ff315f]">
-                <span>Xem ngay</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-              </div>
-            </div>
-          )}
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured article */}
@@ -1552,6 +1510,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </>)}
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -1645,11 +1604,37 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
+      {activeCategory === "Bản tin TV" ? (
+        <div className="w-full max-w-[1536px] mx-auto px-[var(--page-padding)] py-[var(--section-gap)] flex flex-col gap-4">
+          <div className="flex items-center justify-between w-full mb-1">
+            <div className="flex gap-[10px] items-center">
+              <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+                Bản Tin Truyền Hình 24H
+              </p>
+              <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
+                <p className="font-bold text-[11px] text-white">LIVE</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
+              className="text-[13px] font-semibold text-[#5f687b] hover:text-[#ff315f] flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full transition-all cursor-pointer shadow-xs"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span>Về Tin tức</span>
+            </button>
+          </div>
+
+          <YouTubeBroadcastPlayer
+            liveNews={newsFeed}
+            currentWeather={WEATHER}
+            initialCategory="Thời sự 24h"
+          />
+        </div>
+      ) : (
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
-          
         </div>
 
         {/* News column */}
@@ -1669,70 +1654,17 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         )}
       </div>
-      <div className="flex flex-col gap-2.5 w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-2 mt-[-12px]">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex gap-[10px] items-center">
-            <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-              {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
-            </p>
-            <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
-              <p className="font-bold text-[11px] text-white">LIVE</p>
-            </div>
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
+        <div className="flex gap-[10px] items-center">
+          <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+            Tin Tức Mới Nhất
+          </p>
+          <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
+            <p className="font-bold text-[11px] text-white">LIVE</p>
           </div>
-          <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
         </div>
-        <div className="flex overflow-x-auto gap-2 w-full pb-1 scrollbar-hide">
-          {NEWS_CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory && setActiveCategory(cat)}
-              className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all cursor-pointer ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:bg-[#f8fafc]'}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
-
-      {/* ── YouTube Broadcast Desk ── */}
-      {activeCategory === "Bản tin TV" ? (
-        <YouTubeBroadcastPlayer
-          liveNews={newsFeed}
-          currentWeather={WEATHER}
-          initialCategory="Thời sự 24h"
-        />
-      ) : (
-        <div 
-          onClick={() => {
-            if (setActiveCategory) setActiveCategory("Bản tin TV");
-            setTimeout(() => {
-              const el = document.getElementById("youtube-broadcast-section");
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }}
-          className="w-full bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] border border-[#e3e7ef] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] hover:shadow-[0_8px_20px_rgba(23,33,51,0.12)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between gap-3 group mb-2"
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="size-11 rounded-full bg-[#ffe8ee] flex items-center justify-center text-[#ff315f] group-hover:scale-105 transition-transform shrink-0 border border-gray-100">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="7" width="20" height="15" rx="2" />
-                <polyline points="17 2 12 7 7 2" />
-              </svg>
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-[#182033] text-[15px]">Truyền Hình Bản Tin 24H</span>
-                <span className="px-2 py-0.5 rounded-full bg-[#ffe8ee] text-[#ff315f] text-[10px] font-bold tracking-wider uppercase">LIVE</span>
-              </div>
-              <p className="text-[#5f687b] text-[13px] line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ, Thanh Niên &amp; Dự báo thời tiết</p>
-            </div>
-          </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-[#ff315f] group-hover:translate-x-1 transition-transform shrink-0">
-            <span>Xem ngay</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </div>
-        </div>
-      )}
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
@@ -1799,6 +1731,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
