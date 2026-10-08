@@ -1487,7 +1487,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
   useEffect(() => {
     // 1. Intersection Observer
     const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && !isLoading) {
+      if (entries[0].isIntersecting && !isLoading && hasMoreNews) {
         onTrigger();
       }
     }, { rootMargin: '150px' });
@@ -1495,7 +1495,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
     
     // 2. Backup scroll event
     const handleScroll = () => {
-      if (!targetRef.current || isLoading) return;
+      if (!targetRef.current || isLoading || !hasMoreNews) return;
       const rect = targetRef.current.getBoundingClientRect();
       // If the top of the trigger element is within 500px of the bottom of the viewport
       if (rect.top <= window.innerHeight + 500) {
@@ -1510,7 +1510,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('touchmove', handleScroll);
     };
-  }, [onTrigger, isLoading]);
+  }, [onTrigger, isLoading, hasMoreNews]);
   
   return (
     <div ref={targetRef} className="w-full flex flex-col items-center justify-center gap-4 py-8 pb-12">
@@ -1521,7 +1521,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
       >
         {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 15 bài..." : "↓ Tải thêm tin tức"}
       </button>
-      <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 15:33:35</div>
+      <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 10:30 (Tải tin đa nguồn)</div>
     </div>
   );
 }
@@ -2854,12 +2854,13 @@ useEffect(() => {
     loadingRef.current = true;
     setIsLoadingMore(true);
     
-    await new Promise(res => setTimeout(res, 800));
+    await new Promise(res => setTimeout(res, 400));
     
     try {
       const getUniqueKey = (item: any) => {
+        if (item.link) return item.link.split('?')[0].replace(/^https?:\/\//, '').toLowerCase();
         if (item.author) return item.author.trim().toLowerCase();
-        return item.link ? item.link.split('?')[0].replace(/^https?:\/\//, '') : Math.random().toString();
+        return Math.random().toString();
       };
       
       const existingKeys = new Set((liveNews || []).map(getUniqueKey));
@@ -2871,7 +2872,7 @@ useEffect(() => {
         return;
       }
       
-      const picked = trulyNewItems.slice(0, 15); // Lấy theo thứ tự đã mix sẵn
+      const picked = trulyNewItems.slice(0, 15); // Lấy tiếp 15 bài từ kho pool
       
       if (trulyNewItems.length <= 15) {
         setHasMoreNews(false);
@@ -2898,6 +2899,69 @@ useEffect(() => {
   useEffect(() => {
     let isCancelled = false;
     let timer: any;
+
+    const fetchSingleFeed = async (feed: { name: string; url: string; category?: string; isHot?: boolean }) => {
+      // 1. Thử rss2json trước (timeout 2.5s)
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+        if (data.status === "ok" && Array.isArray(data.items) && data.items.length > 0) {
+          return data.items.map((item: any) => ({
+            ...item,
+            _sourceName: feed.name,
+            _isHot: (feed as any).isHot
+          }));
+        }
+      } catch {}
+
+      // 2. Fallback sang Worker Proxy mrkun28 siêu tốc không bị chặn CORS/rate-limit
+      try {
+        const pUrl = `https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(feed.url)}`;
+        const res = await fetch(pUrl);
+        const data = await res.json();
+        if (data && data.contents) {
+          const xml = data.contents;
+          const items: any[] = [];
+          const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+          let match;
+          while ((match = itemRegex.exec(xml)) !== null) {
+            const itemXml = match[1];
+            const titleMatch = itemXml.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/i);
+            const linkMatch = itemXml.match(/<link>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/link>/i);
+            const descMatch = itemXml.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
+            const pubDateMatch = itemXml.match(/<pubDate>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/i);
+            const encMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
+            const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i);
+
+            const title = titleMatch ? titleMatch[1].trim() : "";
+            const link = linkMatch ? linkMatch[1].trim() : "";
+            const desc = descMatch ? descMatch[1].trim() : "";
+            const pubDate = pubDateMatch ? pubDateMatch[1].trim() : "";
+            const thumb = encMatch ? encMatch[1] : (mediaMatch ? mediaMatch[1] : "");
+
+            if (title && link) {
+              items.push({
+                title,
+                link,
+                description: desc,
+                pubDate,
+                thumbnail: thumb,
+                _sourceName: feed.name,
+                _isHot: (feed as any).isHot
+              });
+            }
+          }
+          return items;
+        }
+      } catch {}
+
+      return [];
+    };
     
     const fetchCategoryNews = async (isBackground = false) => {
       if (!isBackground) setIsFetchingCategory(true);
@@ -2909,18 +2973,11 @@ useEffect(() => {
           ? [
               { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://vnexpress.net/rss/tin-noi-bat.rss", isHot: true },
               { category: "Trang chủ", name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss", isHot: true },
-              ...[...catFeeds].sort(() => 0.5 - Math.random()).slice(0, 15)
+              ...[...catFeeds].sort(() => 0.5 - Math.random()).slice(0, 25)
             ]
           : [...catFeeds];
         
-        const promises = selectedFeeds.map(feed => 
-          fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
-            .then(r => r.json())
-            .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name, _isHot: (feed as any).isHot })))
-            .catch(() => [])
-        );
-        
-        const results = await Promise.all(promises);
+        const results = await Promise.all(selectedFeeds.map(fetchSingleFeed));
         if (isCancelled) return;
         
         const mappedFeeds = results.map(feedArticles => {
@@ -2971,24 +3028,25 @@ useEffect(() => {
         });
         
         let validFeeds = mappedFeeds.filter(f => f.length > 0);
-        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
         
-        let recentFeeds = validFeeds.map(feed => {
-            return feed.filter((item: any) => new Date(item.pubDate || 0).getTime() > oneDayAgo);
-        }).filter(feed => feed.length > 0);
-        
-        if (recentFeeds.flat().length < 15) {
-            recentFeeds = validFeeds;
-        }
+        // Sắp xếp bài viết trong từng feed theo thứ tự mới nhất
+        validFeeds.forEach(feed => {
+          feed.sort((a: any, b: any) => {
+            const timeA = new Date(a.pubDate || 0).getTime() || 0;
+            const timeB = new Date(b.pubDate || 0).getTime() || 0;
+            return timeB - timeA;
+          });
+        });
 
         const hotNews: any[] = [];
         const normalNews: any[] = [];
 
-        while(recentFeeds.length > 0) {
-           recentFeeds.sort(() => 0.5 - Math.random());
-           for (let i = recentFeeds.length - 1; i >= 0; i--) {
-               const feed = recentFeeds[i];
-               const takeCount = Math.floor(Math.random() * 4) + 1;
+        // Đan xen các nguồn báo để tạo độ phong phú và giữ bài mới ở trên
+        while(validFeeds.length > 0) {
+           validFeeds.sort(() => 0.5 - Math.random());
+           for (let i = validFeeds.length - 1; i >= 0; i--) {
+               const feed = validFeeds[i];
+               const takeCount = Math.floor(Math.random() * 3) + 2;
                const taken = feed.splice(0, takeCount);
                
                taken.forEach((item: any) => {
@@ -2997,7 +3055,7 @@ useEffect(() => {
                });
 
                if (feed.length === 0) {
-                   recentFeeds.splice(i, 1);
+                   validFeeds.splice(i, 1);
                }
            }
         }
@@ -3005,10 +3063,14 @@ useEffect(() => {
         const mixedNews = [...hotNews, ...normalNews];
         
         if (!isBackground) {
-          fullNewsPool.current = mixedNews;
-          setLiveNews(mixedNews.slice(0, 15));
+          // Bảo lưu các bài viết từ bot (nếu có) trên đầu trang
+          const existingLinks = new Set(mixedNews.map(n => n.link));
+          const botItems = (fullNewsPool.current || []).filter(n => (n as any)._isBot && !existingLinks.has(n.link));
+          const finalPool = [...botItems, ...mixedNews];
+          fullNewsPool.current = finalPool;
+          setLiveNews(finalPool.slice(0, 15));
         } else {
-          const existingLinks = new Set(fullNewsPool.current.map(n => n.link));
+          const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
           const newItems = mixedNews.filter(n => !existingLinks.has(n.link));
           if (newItems.length > 0) {
             fullNewsPool.current = [...newItems, ...fullNewsPool.current];
@@ -3116,12 +3178,20 @@ useEffect(() => {
             src:    item.source      ?? "Tin tức",
             body:   decodeHTMLEntities(item.description ?? ""),
             link:   item.link,
-          }));
+            _isBot: true,
+          } as any));
           
-          fullNewsPool.current = allMapped;
+          const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
+          const trulyNewBotItems = allMapped.filter(n => !n.link || !existingLinks.has(n.link));
           
-          const shuffledPool = [...allMapped].sort(() => Math.random() - 0.5);
-          setLiveNews(shuffledPool.slice(0, 15));
+          if (fullNewsPool.current.length === 0) {
+            fullNewsPool.current = allMapped;
+            setLiveNews(allMapped.slice(0, 15));
+          } else if (trulyNewBotItems.length > 0) {
+            fullNewsPool.current = [...trulyNewBotItems, ...fullNewsPool.current];
+            setLiveNews(prev => [...trulyNewBotItems, ...(prev || [])]);
+          }
+          setHasMoreNews(true);
         }
 
       // Store dynamic overrides in React state (not mutating WEATHER_THEMES)
@@ -3203,22 +3273,11 @@ useEffect(() => {
         
         const doFetch = (lat: number, lon: number, locationNameStr: string | null = null) => {
           const apiKey = "a201c471567522a7d0b7a0567ad245fe";
-          
-          // Fetch from ALL feeds to get the absolute newest articles across the board
-          const shuffledFeeds = [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 5);
-          
-          const newsPromises = shuffledFeeds.map(feed => 
-            fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
-              .then(r => r.json())
-              .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
-              .catch(() => [])
-          );
 
           Promise.all([
             fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
             fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
             fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()),
-            Promise.all(newsPromises),
             fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=thời+tiết+hà+nội&hl=vi&gl=VN&ceid=VN:vi'))
               .then(r => r.json())
               .then(data => data.items || [])
@@ -3227,7 +3286,7 @@ useEffect(() => {
               .then(r => r.json())
               .catch(() => null),
             fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 }))
-          ]).then(([weather, forecast, aqi, newsArrays, weatherNewsRaw, geoReverse, uviRes]) => {
+          ]).then(([weather, forecast, aqi, weatherNewsRaw, geoReverse, uviRes]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
           const feels_like = Math.round(weather.main?.feels_like || 0);
           const humidity = weather.main?.humidity || 0;
@@ -3280,48 +3339,7 @@ useEffect(() => {
           if (n_pop > 50) trang_thai = "MUA";
           else if (c_temp >= 35 || feels_like >= 35) trang_thai = "NANG_GAT";
           
-          // Combine all news, sort by newest (pubDate), and take top 10
-          let allNews = newsArrays.flat().sort((a, b) => {
-            const dateA = new Date(a.pubDate || 0).getTime();
-            const dateB = new Date(b.pubDate || 0).getTime();
-            return dateB - dateA;
-          });
-          const rawItems = allNews;
-          
-          // 1. Gửi dữ liệu ngay lập tức để UI render (chỉ trong 1-2s)
-          const baseNewsItems = rawItems.map((item: any) => {
-            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-            if (!imageUrl && item.description) {
-              const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (imgMatch) imageUrl = imgMatch[1];
-            }
-            if (!imageUrl && item.content) {
-              const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-              if (imgMatch2) imageUrl = imgMatch2[1];
-            }
-            
-            if (imageUrl) {
-              imageUrl = imageUrl.replace(/&amp;/g, '&');
-            }
-            
-                          let cleanDesc = "";
-              if (item.description && typeof item.description === 'string') {
-                  cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
-                  cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
-              } else if (item.content && typeof item.content === 'string') {
-                  cleanDesc = item.content.replace(/<[^>]+>/g, '').trim();
-                  cleanDesc = cleanDesc.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
-              }
-              
-              return {
-                title: decodeHTMLEntities(item.title),
-                link: item.link,
-                source: item.source || item._sourceName || "Báo Mới",
-                time: new Date(item.pubDate || Date.now()).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' }),
-                image: imageUrl,
-                description: decodeHTMLEntities(cleanDesc)
-              };
-          });
+
 
 
           const weatherNews = weatherNewsRaw.slice(0, 3).map((item: any) => {
@@ -3446,34 +3464,10 @@ useEffect(() => {
               dailyForecast: dailyForecastData,
               weekRange: weekRange
             },
-            news: baseNewsItems.length > 0 ? baseNewsItems : undefined,
             weatherNews: weatherNews.length > 0 ? weatherNews : undefined
           };
           
           processJson(jsonPayload);
-
-          // 2. Tải ảnh OG ngầm ở Background (không block UI)
-          baseNewsItems.forEach((item: any, idx: number) => {
-            if (!item.image && item.link) {
-              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
-              fetch(proxyUrl).then(res => res.json()).then(data => {
-                const html = data.contents || "";
-                const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
-                             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-                if (ogMatch) {
-                  const newImg = getProxyImageUrl(ogMatch[1]);
-                  setLiveNews((prev: any) => {
-                    if (!prev) return prev;
-                    const next = [...prev];
-                    if (next[idx]) {
-                      next[idx] = { ...next[idx], img: newImg };
-                    }
-                    return next;
-                  });
-                }
-              }).catch(() => {});
-            }
-          });
           
         }).catch((e: any) => {
         console.error("Standalone fetch error:", e);
@@ -3520,118 +3514,12 @@ useEffect(() => {
     }
 
     if (apiUrl) {
-      // Silent load in background, keep old news visible
-      
-      
-      const isToday = (dateStr: string) => {
-        if (!dateStr) return false;
-        const d = new Date(dateStr).getTime();
-        const now = Date.now();
-        // last 24 hours
-        return (now - d) < 24 * 60 * 60 * 1000;
-      };
-
-      const feedsToFetch = activeCategory === "Tất cả" 
-        ? [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 15)
-        : [...RSS_FEEDS_DB].filter(f => f.category === activeCategory);
-
-      const newsPromises = feedsToFetch.map(feed => 
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
-          .then(r => r.json())
-          .then(data => (data.items || []).map((item: any) => ({ ...item, _sourceName: feed.name })))
-          .catch(() => [])
-      );
-      
-      Promise.all([
-        fetch(apiUrl).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }),
-        Promise.all(newsPromises)
-      ]).then(([json, newsArrays]) => {
-        
-        // Group by feed
-        const grouped: Record<string, any[]> = {};
-        newsArrays.forEach((arr) => {
-          if (!arr || arr.length === 0) return;
-          const src = arr[0]._sourceName;
-          grouped[src] = arr.filter((item: any) => isToday(item.pubDate));
-        });
-
-        // Interleave
-        const interleavedNews: any[] = [];
-        let hasMore = true;
-        while(hasMore) {
-          hasMore = false;
-          for (const src of Object.keys(grouped)) {
-            // Take 2-4 items randomly per feed per round
-            const count = Math.floor(Math.random() * 3) + 2; 
-            const chunk = grouped[src].splice(0, count);
-            if (chunk.length > 0) {
-              interleavedNews.push(...chunk);
-              hasMore = true;
-            }
-          }
-        }
-
-        // Final sort chunked (to keep recent vibes but interleaved)
-        // Actually interleaving is enough, we just map them now.
-
-        let processedNews = interleavedNews.map((item: any) => {
-           let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-           if (!imageUrl && item.description) {
-             const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
-             if (imgMatch) imageUrl = imgMatch[1];
-           }
-           if (!imageUrl && item.content) {
-             const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
-             if (imgMatch2) imageUrl = imgMatch2[1];
-           }
-           if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
-           let cleanDesc = item.description ? item.description.replace(/<[^>]+>/g, '').trim() : "";
-           
-           return {
-             title: decodeHTMLEntities(item.title),
-             link: item.link,
-             source: item._sourceName,
-             pubDate: item.pubDate,
-             description: cleanDesc,
-             image: imageUrl
-           };
-        });
-
-        processedNews.forEach((item: any) => {
-          if (!item.image || item.image.trim() === "") {
-            item.image = DEFAULT_CAT_IMAGE[activeCategory] || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80";
-          }
-        });
-
-        json.news = processedNews;
-
-        
-        const baseNewsItems = json.news;
-        setTimeout(() => {
-          baseNewsItems.forEach((item: any, idx: number) => {
-            let imageUrl = item.image;
-            if (!imageUrl && item.link) {
-              const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.link)}`;
-              fetch(proxyUrl).then(res => res.json()).then(data => {
-                const html = data.contents || "";
-                const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) 
-                             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-                if (ogMatch) {
-                  const newImg = getProxyImageUrl(ogMatch[1]);
-                  setLiveNews((prev: any) => {
-                    if (!prev) return prev;
-                    const next = [...prev];
-                    if (next[idx]) next[idx] = { ...next[idx], img: newImg };
-                    return next;
-                  });
-                }
-              });
-            }
-          });
-        }, 1000);
-        
-        processJson(json as Record<string, unknown>);
-      }).catch(() => setApiStatus("error"));
+      fetch(apiUrl)
+        .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then((json) => {
+          processJson(json as Record<string, unknown>);
+        })
+        .catch(() => setApiStatus("error"));
     }
     }; // end loadData
 
