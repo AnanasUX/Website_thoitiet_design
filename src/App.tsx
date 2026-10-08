@@ -5,6 +5,7 @@
 
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { YouTubeBroadcastPlayer } from "./components/YouTubeBroadcastPlayer";
 
 const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
 
@@ -1068,8 +1069,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                     );
                   }
                   return (
-                    <figure key={idx} className="my-5 w-full">
-                      <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-md">
+                    <figure key={idx} className="my-6 w-full">
+                      <div className="w-full relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+                        <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold border border-white/10 pointer-events-none">
+                          <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                          <span>BẢN TIN TRUYỀN HÌNH</span>
+                        </div>
                         <video controls playsInline poster={block.poster} src={block.src} className="w-full h-full object-contain" />
                       </div>
                       {block.caption && <figcaption className="text-center text-[14px] mt-2 italic text-gray-600">{block.caption}</figcaption>}
@@ -1092,7 +1097,11 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                     );
                   }
                   return (
-                    <div key={idx} className="my-5 w-full aspect-video rounded-xl overflow-hidden shadow-md bg-black">
+                    <div key={idx} className="my-6 w-full relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-800">
+                      <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-[11px] font-bold border border-white/10 pointer-events-none">
+                        <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                        <span>BẢN TIN TRUYỀN HÌNH</span>
+                      </div>
                       <iframe
                         src={block.src}
                         className="w-full h-full border-0"
@@ -1180,6 +1189,20 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
         <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex items-center">
+          <button
+            onClick={() => {
+              if (setActiveCategory) setActiveCategory("Bản tin TV");
+              setTimeout(() => {
+                const el = document.getElementById("youtube-broadcast-section");
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            className="mr-2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white rounded-full text-[11px] font-bold shadow-sm active:scale-95 cursor-pointer"
+            title="Xem Bản tin TV 24h"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+            <span>Bản tin TV</span>
+          </button>
           <div className="flex flex-col items-end">
             <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
             📍 {WEATHER.location}
@@ -1229,10 +1252,45 @@ function MobileLayout({ activeCategory, setActiveCategory,
           )}
                   <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-            Tin Tức Mới Nhất
+            {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
         </p>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
+
+          {/* ── YouTube Broadcast Desk Mobile ── */}
+          {activeCategory === "Bản tin TV" ? (
+            <YouTubeBroadcastPlayer
+              liveNews={newsFeed}
+              currentWeather={WEATHER}
+              initialCategory="Thời sự 24h"
+            />
+          ) : (
+            <div 
+              onClick={() => {
+                if (setActiveCategory) setActiveCategory("Bản tin TV");
+                setTimeout(() => {
+                  const el = document.getElementById("youtube-broadcast-section");
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }}
+              className="w-full bg-gradient-to-r from-[#0a0f1d] via-[#111827] to-[#0a0f1d] p-3 rounded-[var(--card-radius)] border border-[#1e293b] shadow-md flex items-center justify-between gap-2.5 text-white mb-2 cursor-pointer hover:border-red-500/50 transition-all group"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
+                  <svg className="size-4 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-[12px] text-white">TRUYỀN HÌNH BẢN TIN 24H</span>
+                    <span className="px-1.5 py-0.2 rounded bg-red-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">LIVE</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 line-clamp-1">VTV24, VTC Now, Tuổi Trẻ, Thanh Niên &amp; Thời tiết trực tuyến</p>
+                </div>
+              </div>
+              <svg className="text-red-400 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          )}
+
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
               <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
@@ -1319,6 +1377,20 @@ function TabletLayout({ activeCategory, setActiveCategory,
             {dateStr} · {timeStr}
           </p>
         </div>
+        <button
+          onClick={() => {
+            if (setActiveCategory) setActiveCategory("Bản tin TV");
+            setTimeout(() => {
+              const el = document.getElementById("youtube-broadcast-section");
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
+          className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white rounded-full text-[12px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
+          title="Xem Bản tin Truyền hình YouTube 24h"
+        >
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+          <span>Bản tin TV</span>
+        </button>
             <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -1370,11 +1442,47 @@ function TabletLayout({ activeCategory, setActiveCategory,
             </div>
           )}
           <div className="flex flex-col gap-[2px] items-start">
-            <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Tin tức</p>
+            <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+              {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin tức"}
+            </p>
             <p className="font-normal text-[#5f687b] text-[12px]">
               {WEATHER.location} · {newsFeed.length} bài mới nhất
             </p>
           </div>
+
+          {/* ── YouTube Broadcast Desk Tablet ── */}
+          {activeCategory === "Bản tin TV" ? (
+            <YouTubeBroadcastPlayer
+              liveNews={newsFeed}
+              currentWeather={WEATHER}
+              initialCategory="Thời sự 24h"
+            />
+          ) : (
+            <div 
+              onClick={() => {
+                if (setActiveCategory) setActiveCategory("Bản tin TV");
+                setTimeout(() => {
+                  const el = document.getElementById("youtube-broadcast-section");
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }}
+              className="w-full bg-gradient-to-r from-[#0a0f1d] via-[#111827] to-[#0a0f1d] p-3 rounded-[var(--card-radius)] border border-[#1e293b] shadow-md flex items-center justify-between gap-3 text-white mb-2 cursor-pointer hover:border-red-500/50 transition-all group"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
+                  <svg className="size-4 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-[13px] text-white">TRUYỀN HÌNH BẢN TIN THỜI SỰ 24H</span>
+                    <span className="px-1.5 py-0.2 rounded bg-red-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">LIVE</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ, Thanh Niên TV &amp; Dự báo thời tiết</p>
+                </div>
+              </div>
+              <svg className="text-red-400 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          )}
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured article */}
@@ -1479,6 +1587,20 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               {dateStr} · {timeStr}
             </p>
           </div>
+          <button
+            onClick={() => {
+              if (setActiveCategory) setActiveCategory("Bản tin TV");
+              setTimeout(() => {
+                const el = document.getElementById("youtube-broadcast-section");
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            className="ml-3 flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white rounded-full text-[12px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
+            title="Xem Bản tin Truyền hình YouTube 24h"
+          >
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+            <span>Bản tin TV</span>
+          </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -1523,7 +1645,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-            Tin Tức Mới Nhất
+            {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
           </p>
           <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
             <p className="font-bold text-[11px] text-white">LIVE</p>
@@ -1531,6 +1653,43 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
         <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
       </div>
+
+      {/* ── YouTube Broadcast Desk ── */}
+      {activeCategory === "Bản tin TV" ? (
+        <YouTubeBroadcastPlayer
+          liveNews={newsFeed}
+          currentWeather={WEATHER}
+          initialCategory="Thời sự 24h"
+        />
+      ) : (
+        <div 
+          onClick={() => {
+            if (setActiveCategory) setActiveCategory("Bản tin TV");
+            setTimeout(() => {
+              const el = document.getElementById("youtube-broadcast-section");
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          }}
+          className="w-full bg-gradient-to-r from-[#0a0f1d] via-[#111827] to-[#0a0f1d] p-3.5 md:p-4 rounded-[var(--card-radius)] border border-[#1e293b] shadow-md flex items-center justify-between gap-3 text-white mb-2 cursor-pointer hover:border-red-500/50 transition-all group"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
+              <svg className="size-5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-[13px] md:text-[14px] text-white">TRUYỀN HÌNH BẢN TIN THỜI SỰ 24H</span>
+                <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">LIVE</span>
+              </div>
+              <p className="text-[12px] text-slate-400 line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ TV, Thanh Niên TV, Tiền Phong TV &amp; Dự báo thời tiết</p>
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5 text-[12px] font-bold text-red-400 group-hover:translate-x-1 transition-transform shrink-0">
+            <span>Xem ngay</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </div>
+      )}
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
@@ -1804,6 +1963,7 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
 
 export const NEWS_CATEGORIES = [
   "Tất cả",
+  "Bản tin TV",
   "Thời tiết",
   "Giá vàng",
   "Chính trị",
@@ -1816,6 +1976,7 @@ export const NEWS_CATEGORIES = [
 ];
 
 export const DEFAULT_CAT_IMAGE: Record<string, string> = {
+  "Bản tin TV": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80",
   "Thời tiết": "https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=80",
   "Giá vàng": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=80",
   "Chính trị": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=80",
@@ -1828,6 +1989,12 @@ export const DEFAULT_CAT_IMAGE: Record<string, string> = {
 };
 
 export const RSS_FEEDS_DB = [
+  // Bản tin TV
+  { category: "Bản tin TV", name: "Tuổi Trẻ • Video", url: "https://tuoitre.vn/rss/video.rss", isVideo: true },
+  { category: "Bản tin TV", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true },
+  { category: "Bản tin TV", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
+  { category: "Bản tin TV", name: "Dân Trí • Video", url: "https://dantri.com.vn/rss/video.rss", isVideo: true },
+
   // Thời tiết
   { category: "Thời tiết", name: "Tuổi Trẻ • Thời tiết", url: "https://tuoitre.vn/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
