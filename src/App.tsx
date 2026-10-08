@@ -751,7 +751,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         const tag = el.tagName.toLowerCase();
 
         if (tag === 'script' || tag === 'style' || el.style.display === 'none') return;
-        if (el.classList?.contains('readmore-body-box') || el.classList?.contains('article-relate') || el.classList?.contains('story__heading')) return;
+        if (el.classList?.contains('readmore-body-box') || el.classList?.contains('article-relate') || el.classList?.contains('story__heading') || el.classList?.contains('link-source-wrapper') || el.classList?.contains('link-source-detail')) return;
 
         if (tag === 'figure' || tag === 'picture') {
           const img = el.querySelector('img');
