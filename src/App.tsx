@@ -568,7 +568,7 @@ function WeatherSection({
 }
 
 // ── Live news item type ───────────────────────────────────────────────────────
-type LiveNewsItem = { img: string; fallbackImg?: string; logo?: string; author: string; src: string; body: string; link?: string; fullContent?: { paragraphs: string[]; images: string[]; captions: string[]; headings: string[] } | null };
+type LiveNewsItem = { img: string; fallbackImg?: string; logo?: string; author: string; src: string; body: string; link?: string; pubDate?: string; isVideo?: boolean; isShort?: boolean; videoSrc?: string; fullContent?: { paragraphs: string[]; images: string[]; captions: string[]; headings: string[] } | null };
 
 // ── Default mock news articles ────────────────────────────────────────────────
 const DEFAULT_NEWS_FEED: LiveNewsItem[] = [
@@ -667,8 +667,70 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     
     // ── Hàm cào bài viết trực tiếp qua Worker Proxy (client-side DOMParser) ──
     const parseHTMLToBlocks = (htmlStr: string, baseUrl: string) => {
+      // 1. Trích xuất VideoObject từ JSON-LD trước khi loại bỏ thẻ script
+      const extractedVideos: any[] = [];
+      const ldJsonMatches = htmlStr.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi) || [];
+      for (const s of ldJsonMatches) {
+        if (s.includes('VideoObject') || s.includes('contentUrl') || s.includes('embedUrl')) {
+          try {
+            const jsonText = s.replace(/<script[^>]*>|<\/script>/gi, '').trim();
+            const parsed = JSON.parse(jsonText);
+            const list = Array.isArray(parsed) ? parsed : [parsed];
+            for (const item of list) {
+              const obj = item['@type'] === 'VideoObject' ? item : (item.video || null);
+              if (obj && (obj.contentUrl || obj.embedUrl)) {
+                let vUrl = (obj.contentUrl || obj.embedUrl || '').trim();
+                if (vUrl.startsWith('//')) vUrl = 'https:' + vUrl;
+                const thumb = Array.isArray(obj.thumbnailUrl) ? obj.thumbnailUrl[0] : (obj.thumbnailUrl || '');
+                const duration = obj.duration || '';
+                const isShort = /PT(?:0M|1M|2M)/.test(duration) || /short|reel|tiktok/i.test(vUrl) || /1080-1920|crop.*1920|960-1280|720-1280/i.test(thumb) || /shorts/i.test(baseUrl);
+                if (vUrl && !extractedVideos.some(v => v.src === vUrl)) {
+                  extractedVideos.push({
+                    type: vUrl.includes('embed') || vUrl.includes('iframe') ? 'iframe' : 'video',
+                    src: vUrl,
+                    poster: thumb,
+                    caption: obj.name || '',
+                    isShort
+                  });
+                }
+              }
+            }
+          } catch(e) {}
+        }
+      }
+
+      // 2. Trích xuất nhúng TikTok blockquote
+      const tiktokCiteRegex = /<blockquote[^>]+class=["'][^"']*tiktok-embed[^"']*["'][^>]+cite=["']([^"']+)["']/gi;
+      let ttMatch;
+      while ((ttMatch = tiktokCiteRegex.exec(htmlStr)) !== null) {
+        const citeUrl = ttMatch[1];
+        const videoIdMatch = citeUrl.match(/\/video\/(\d+)/);
+        if (videoIdMatch) {
+          const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
+          if (!extractedVideos.some(v => v.src === embedUrl)) {
+            extractedVideos.push({
+              type: 'iframe',
+              src: embedUrl,
+              isShort: true,
+              caption: 'TikTok Video'
+            });
+          }
+        }
+      }
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlStr, 'text/html');
+
+      // Giữ lại các iframe video hợp lệ (YouTube, TikTok, Facebook, Vimeo)
+      doc.querySelectorAll('iframe').forEach(ifr => {
+        const src = (ifr.getAttribute('src') || ifr.getAttribute('data-src') || '').trim();
+        const isVideoIframe = /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
+        if (!isVideoIframe) {
+          ifr.remove();
+        } else {
+          ifr.setAttribute('data-keep-video', 'true');
+        }
+      });
 
       // Tiêu đề gốc của chính trang chi tiết
       const pageTitle = (
@@ -680,7 +742,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       // Pre-cleaning selector loại bỏ toàn bộ rác, quảng cáo, và các khối điều hướng/bài liên quan của Tuổi Trẻ, Tiền Phong,...
       doc.querySelectorAll(`
         script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, 
-        .social, .comment, iframe, .banner, .readmore-body-box, .return-thread-body-btn, 
+        .social, .comment, iframe:not([data-keep-video="true"]), .banner, .readmore-body-box, .return-thread-body-btn, 
         .readmore-body-btn, .box-author-detail, .article-relate, .article-related, .box-relate, 
         .relate-container, .story__heading, .box-topic, .topic-box, .detail-topic, .tag, .tags, 
         .txttag, .tag-container, .box-tag, .author-info, .bread-crumb, .breadcrumb, 
@@ -775,6 +837,18 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           return;
         }
 
+        if (tag === 'iframe') {
+          let src = (el.getAttribute('src') || el.getAttribute('data-src') || '').trim();
+          if (src) {
+            const isVideoIframe = /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
+            if (isVideoIframe) {
+              const isShort = /shorts|tiktok/i.test(src);
+              blocks.push({ type: 'iframe', src, isShort });
+            }
+          }
+          return;
+        }
+
         if (tag === 'video') {
           let src = el.getAttribute('src');
           if (!src) {
@@ -783,9 +857,45 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           }
           if (src) {
              if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
-             blocks.push({ type: 'video', src });
+             const poster = el.getAttribute('poster') || '';
+             const isShort = /shorts|tiktok|reels/i.test(src);
+             blocks.push({ type: 'video', src, poster, isShort });
           }
           return;
+        }
+
+        // Bóc tách container video đặc thù của báo chí (Thanh Niên, Tuổi Trẻ, GenK, Kenh14, Tiền Phong...)
+        const isVideoStream = el.getAttribute('type') === 'VideoStream' || el.hasAttribute('data-vid') || el.classList?.contains('cms-video') || el.classList?.contains('vne_video_player') || el.hasAttribute('data-video-src');
+        if (isVideoStream) {
+          const dataVid = el.getAttribute('data-vid') || el.getAttribute('data-video-src') || el.getAttribute('data-src') || '';
+          const dataThumb = el.getAttribute('data-thumb') || el.getAttribute('poster') || '';
+          const dataWidth = parseInt(el.getAttribute('data-width') || '0');
+          const dataHeight = parseInt(el.getAttribute('data-height') || '0');
+          const isShort = (dataHeight > dataWidth && dataWidth > 0) || /shorts|tiktok|reels/i.test(dataVid);
+
+          let cleanSrc = '';
+          if (dataVid && (dataVid.includes('.mp4') || dataVid.includes('mediacdn') || dataVid.includes('cdn'))) {
+            cleanSrc = dataVid.trim();
+            if (cleanSrc.startsWith('//')) cleanSrc = 'https:' + cleanSrc;
+            else if (!cleanSrc.startsWith('http')) cleanSrc = 'https://' + cleanSrc.replace(/^\/+/, '');
+          } else if (dataVid && dataVid.includes('vid=')) {
+            const vidParam = dataVid.match(/[?&]vid=([^&]+)/i);
+            if (vidParam) {
+              let dv = decodeURIComponent(vidParam[1]);
+              if (!dv.startsWith('http')) dv = 'https://' + dv.replace(/^\/+/, '');
+              cleanSrc = dv;
+            }
+          }
+
+          if (cleanSrc) {
+            blocks.push({
+              type: 'video',
+              src: cleanSrc,
+              poster: dataThumb,
+              isShort
+            });
+            return;
+          }
         }
 
         if (tag === 'p' || tag.startsWith('h') || tag === 'blockquote') {
@@ -810,6 +920,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       };
 
       processNode(mainContent);
+
+      // Chèn các video bóc tách được từ JSON-LD / schema nếu chưa có trong blocks
+      if (extractedVideos.length > 0) {
+        extractedVideos.forEach(v => {
+          if (!blocks.some(b => (b.type === 'video' || b.type === 'iframe') && b.src === v.src)) {
+            const firstContentIdx = blocks.findIndex(b => b.type === 'text' || b.type === 'heading');
+            if (firstContentIdx !== -1) {
+              blocks.splice(firstContentIdx + 1, 0, v);
+            } else {
+              blocks.unshift(v);
+            }
+          }
+        });
+      }
 
       const norm = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
       const isBoilerplate = (text: string) => {
@@ -922,9 +1046,62 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                    {block.caption && <figcaption className="text-center text-[14px] mt-2 italic" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
                  </figure>
                );
-               if (block.type === 'video') return (
-                 <video key={idx} controls src={block.src} className="w-full rounded-xl my-5 shadow-sm" />
-               );
+               if (block.type === 'video') {
+                  if (block.isShort) {
+                    return (
+                      <div key={idx} className="my-6 flex flex-col items-center justify-center w-full">
+                        <div className="relative w-full max-w-[340px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+                          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600/95 text-white text-[12px] font-bold backdrop-blur-md shadow-lg pointer-events-none">
+                            <svg className="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM10 17l-3.5-3.5 1.41-1.41L10 14.17l5.59-5.59L17 10l-7 7z"/></svg>
+                            <span>Video Short</span>
+                          </div>
+                          <video
+                            controls
+                            playsInline
+                            poster={block.poster}
+                            src={block.src}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        {block.caption && <p className="text-center text-[13px] text-gray-500 mt-2 italic max-w-[340px]">{block.caption}</p>}
+                      </div>
+                    );
+                  }
+                  return (
+                    <figure key={idx} className="my-5 w-full">
+                      <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-md">
+                        <video controls playsInline poster={block.poster} src={block.src} className="w-full h-full object-contain" />
+                      </div>
+                      {block.caption && <figcaption className="text-center text-[14px] mt-2 italic text-gray-600">{block.caption}</figcaption>}
+                    </figure>
+                  );
+                }
+                if (block.type === 'iframe') {
+                  if (block.isShort) {
+                    return (
+                      <div key={idx} className="my-6 flex flex-col items-center justify-center w-full">
+                        <div className="relative w-full max-w-[340px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+                          <iframe
+                            src={block.src}
+                            className="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={idx} className="my-5 w-full aspect-video rounded-xl overflow-hidden shadow-md bg-black">
+                      <iframe
+                        src={block.src}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  );
+                }
                return null;
              })}
            </div>
@@ -1070,6 +1247,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
+                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
+                    <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span>{item.isShort ? '⚡ Short' : '▶ Video'}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -1368,6 +1551,12 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
+                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
+                    <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span>{featured.isShort ? '⚡ Short' : '▶ Video'}</span>
+                  </div>
+                )}
               </div>
               {featured.body && (
                 <p className="font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
@@ -1382,6 +1571,12 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 >
                 <div className="h-[140px] relative w-full overflow-hidden">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                  {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
+                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-semibold backdrop-blur-md shadow-md">
+                      <svg className="size-2.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <span>{item.isShort ? '⚡ Short' : '▶ Video'}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
                   <div className="flex gap-2 items-center">
@@ -1697,7 +1892,11 @@ export const RSS_FEEDS_DB = [
   { category: "Giải trí", name: "Thanh Niên • Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Dân Trí • Giải trí", url: "https://dantri.com.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Ngôi Sao • Showbiz", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
-  { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" }
+  { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" },
+  { category: "Giải trí", name: "Tuổi Trẻ • Video", url: "https://tuoitre.vn/rss/video.rss", isVideo: true },
+  { category: "Giải trí", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true },
+  { category: "Giải trí", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
+  { category: "Đời sống", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true }
 ];
 
 
@@ -3013,6 +3212,8 @@ useEffect(() => {
                cleanDesc = "";
             }
             
+            const isVid = !!item._isVideo || /video/i.test(item.link || '') || /video/i.test(item.title || '') || (item.enclosure?.type && item.enclosure.type.includes('video'));
+            const isSh = isVid && (/short|tiktok|reel/i.test(item.link || '') || /short|tiktok|reel/i.test(item.title || ''));
             return {
               img: imageUrl,
               logo: getNewspaperLogo(item.link || ""),
@@ -3022,7 +3223,9 @@ useEffect(() => {
               body: decodeHTMLEntities(cleanDesc),
               link: item.link,
               pubDate: item.pubDate,
-              _isHot: item._isHot
+              _isHot: item._isHot,
+              isVideo: isVid,
+              isShort: isSh
             };
           }).filter(Boolean);
         });
