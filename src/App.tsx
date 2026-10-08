@@ -677,7 +677,15 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         ''
       ).replace(/\s+/g, ' ').trim();
 
-      doc.querySelectorAll('script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, .social, .comment, iframe, .banner').forEach(el => el.remove());
+      // Pre-cleaning selector loại bỏ toàn bộ rác, quảng cáo, và các khối điều hướng/bài liên quan của Tuổi Trẻ, Tiền Phong,...
+      doc.querySelectorAll(`
+        script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, 
+        .social, .comment, iframe, .banner, .readmore-body-box, .return-thread-body-btn, 
+        .readmore-body-btn, .box-author-detail, .article-relate, .article-related, .box-relate, 
+        .relate-container, .story__heading, .box-topic, .topic-box, .detail-topic, .tag, .tags, 
+        .txttag, .tag-container, .box-tag, .author-info, .bread-crumb, .breadcrumb, 
+        [type="RelatedOneNews"], .VCSortableInPreviewMode[type="RelatedOneNews"], .share, .like-fb
+      `).forEach(el => el.remove());
 
       const contentSelectors = [
         'article.fck_detail', '.fck_detail', '[data-role="content"]', '.detail-cmain',
@@ -696,13 +704,11 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       }
       
       // Fallback linh động (Heuristic): Tự động tìm vùng nội dung chính dựa trên mật độ thẻ <p>
-      // Giải quyết vấn đề "mỗi trang có cách lấy khác nhau"
       if (!mainContent) {
         let maxScore = 0;
         doc.querySelectorAll('div, article, section, main').forEach(el => {
           const pCount = el.querySelectorAll('p').length;
           const aCount = el.querySelectorAll('a').length;
-          // Điểm = số đoạn văn trừ đi điểm phạt nếu có quá nhiều link (menu/footer)
           const score = pCount - (aCount * 0.2);
           
           if (el.tagName.toLowerCase() === 'body') return;
@@ -715,6 +721,22 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       }
       
       if (!mainContent) mainContent = doc.body;
+
+      // Loại bỏ tiếp các khối điều hướng nếu còn sót bên trong mainContent
+      mainContent.querySelectorAll(`
+        .readmore-body-box, .return-thread-body-btn, .readmore-body-btn, .box-author-detail, 
+        .article-relate, .story__heading, .box-topic, .topic-box, .detail-topic, .txttag, 
+        [type="RelatedOneNews"], .VCSortableInPreviewMode[type="RelatedOneNews"]
+      `).forEach(el => el.remove());
+
+      // Hàm khử sạch inline styles làm nhảy kích thước font chữ
+      const sanitizeInnerHtml = (rawHtml: string) => {
+        return rawHtml
+          .replace(/\s*style="[^"]*"/gi, (match) => {
+            return match.replace(/(font-size|font-family|line-height|color)\s*:[^;"]+;?/gi, '');
+          })
+          .replace(/\s*style="\s*"/gi, '');
+      };
 
       const blocks: any[] = [];
       const processNode = (node: Node) => {
@@ -729,6 +751,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         const tag = el.tagName.toLowerCase();
 
         if (tag === 'script' || tag === 'style' || el.style.display === 'none') return;
+        if (el.classList?.contains('readmore-body-box') || el.classList?.contains('article-relate') || el.classList?.contains('story__heading')) return;
 
         if (tag === 'figure' || tag === 'picture') {
           const img = el.querySelector('img');
@@ -770,9 +793,14 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           if (imgs.length > 0) {
             Array.from(el.childNodes).forEach(processNode);
           } else {
-            const html = el.innerHTML.trim();
-            if (html && el.textContent?.trim()) {
-              blocks.push({ type: tag === 'blockquote' ? 'quote' : (tag.startsWith('h') ? 'heading' : 'text'), content: html, tag });
+            const cleanHtml = sanitizeInnerHtml(el.innerHTML.trim());
+            const textContent = el.textContent?.trim();
+            if (cleanHtml && textContent) {
+              blocks.push({ 
+                type: tag === 'blockquote' ? 'quote' : (tag.startsWith('h') ? 'heading' : 'text'), 
+                content: cleanHtml, 
+                tag 
+              });
             }
           }
           return;
@@ -783,12 +811,27 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       processNode(mainContent);
 
+      const norm = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+      const isBoilerplate = (text: string) => {
+        const t = text.toLowerCase().trim();
+        if (!t) return true;
+        if (t === 'đọc tiếp về trang chủ đề' || t.includes('về trang chủ đề') || t === 'trở lại chủ đề' || t === 'đọc tiếp') return true;
+        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(t)) return true;
+        if (/^theo\s+(nguồn|dân trí|tiền phong|vnexpress|thanh niên|tuổi trẻ|vtv|lao động|báo)/i.test(t)) return true;
+        return false;
+      };
+
+      const cleanedBlocks = blocks.filter(b => {
+        if (b.type === 'image' || b.type === 'video') return true;
+        const text = norm(b.content || '');
+        return !isBoilerplate(text);
+      });
+
       if (pageTitle) {
-        const norm = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-        const filtered = blocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
+        const filtered = cleanedBlocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
         return [{ type: 'title', content: pageTitle }, ...filtered];
       }
-      return blocks;
+      return cleanedBlocks;
     };
 
     const scrapeViaProxy = async (articleUrl: string) => {
@@ -863,7 +906,15 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
              {contentBlocks.map((block: any, idx: number) => {
                if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
                if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
-               if (block.type === 'heading') return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] font-bold mt-4 mb-2" />;
+               if (block.type === 'heading') {
+                 if (block.tag === 'h2') {
+                   return <h2 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] md:text-[22px] font-bold text-[#182033] mt-5 mb-2.5 leading-snug" />;
+                 }
+                 if (block.tag === 'h3') {
+                   return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[18px] md:text-[19px] font-bold text-[#182033] mt-4 mb-2 leading-snug" />;
+                 }
+                 return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
+               }
                if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
                if (block.type === 'image') return (
                  <figure key={idx} className="my-5 w-full">
@@ -1468,7 +1519,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
         disabled={isLoading || !hasMoreNews}
         className="px-[16px] py-[10px] bg-[#e3e7ef] text-[#182033] font-semibold rounded-[8px] min-h-[44px] active:scale-95 transition-transform disabled:opacity-50"
       >
-        {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 10 bài..." : "↓ Tải thêm tin tức"}
+        {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 15 bài..." : "↓ Tải thêm tin tức"}
       </button>
       <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 15:33:35</div>
     </div>
@@ -1556,72 +1607,97 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
   );
 }
 
-export const NEWS_CATEGORIES = ["Tất cả", "Thời sự", "Công nghệ", "AI", "Giới trẻ", "Giáo dục", "Kinh tế", "Startup", "Giải trí", "Du lịch", "Thể thao"];
+export const NEWS_CATEGORIES = [
+  "Tất cả",
+  "Thời tiết",
+  "Giá vàng",
+  "Chính trị",
+  "Đời sống",
+  "Con người",
+  "Doanh nghiệp",
+  "Công nghệ",
+  "Kỹ thuật khoa học",
+  "Giải trí"
+];
+
+export const DEFAULT_CAT_IMAGE: Record<string, string> = {
+  "Thời tiết": "https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=80",
+  "Giá vàng": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=80",
+  "Chính trị": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=80",
+  "Đời sống": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&auto=format&fit=crop&q=80",
+  "Con người": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=600&auto=format&fit=crop&q=80",
+  "Doanh nghiệp": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80",
+  "Công nghệ": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80",
+  "Kỹ thuật khoa học": "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=600&auto=format&fit=crop&q=80",
+  "Giải trí": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80"
+};
 
 export const RSS_FEEDS_DB = [
-  // Thời sự
-  { category: "Thời sự", name: "VnExpress", url: "https://vnexpress.net/rss/thoi-su.rss" },
-  { category: "Thời sự", name: "Tuổi Trẻ", url: "https://tuoitre.vn/rss/thoi-su.rss" },
-  { category: "Thời sự", name: "Thanh Niên", url: "https://thanhnien.vn/rss/thoi-su.rss" },
-  { category: "Thời sự", name: "VietnamNet", url: "https://vietnamnet.vn/rss/thoi-su.rss" },
-  { category: "Thời sự", name: "Dân Trí", url: "https://dantri.com.vn/rss/xa-hoi.rss" },
-  { category: "Thời sự", name: "VTV News", url: "https://vtv.vn/trong-nuoc.rss" },
-  { category: "Thời sự", name: "Tiền Phong", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
-  { category: "Thời sự", name: "Người Lao Động", url: "https://nld.com.vn/rss/thoi-su.rss" },
-  { category: "Thời sự", name: "Lao Động", url: "https://laodong.vn/rss/thoi-su.rss" },
+  // Thời tiết
+  { category: "Thời tiết", name: "Tuổi Trẻ • Thời tiết", url: "https://tuoitre.vn/rss/thoi-su.rss" },
+  { category: "Thời tiết", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
+  { category: "Thời tiết", name: "Tiền Phong • Xã hội", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
+  { category: "Thời tiết", name: "Thanh Niên • Thời sự", url: "https://thanhnien.vn/rss/thoi-su.rss" },
+  { category: "Thời tiết", name: "Dân Trí • Xã hội", url: "https://dantri.com.vn/rss/xa-hoi.rss" },
+
+  // Giá vàng
+  { category: "Giá vàng", name: "VnEconomy • Tài chính", url: "https://vneconomy.vn/rss/tai-chinh.rss" },
+  { category: "Giá vàng", name: "Dân Trí • Kinh doanh", url: "https://dantri.com.vn/rss/kinh-doanh.rss" },
+  { category: "Giá vàng", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
+  { category: "Giá vàng", name: "CafeF • Thị trường", url: "https://cafef.vn/rss/home.rss" },
+  { category: "Giá vàng", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
+
+  // Chính trị
+  { category: "Chính trị", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
+  { category: "Chính trị", name: "Tuổi Trẻ • Thời sự", url: "https://tuoitre.vn/rss/thoi-su.rss" },
+  { category: "Chính trị", name: "Thanh Niên • Thời sự", url: "https://thanhnien.vn/rss/thoi-su.rss" },
+  { category: "Chính trị", name: "VietnamNet • Thời sự", url: "https://vietnamnet.vn/rss/thoi-su.rss" },
+  { category: "Chính trị", name: "Lao Động", url: "https://laodong.vn/rss/thoi-su.rss" },
+  { category: "Chính trị", name: "Người Lao Động", url: "https://nld.com.vn/rss/thoi-su.rss" },
+  { category: "Chính trị", name: "Tiền Phong • Xã hội", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
+
+  // Đời sống
+  { category: "Đời sống", name: "VnExpress • Đời sống", url: "https://vnexpress.net/rss/doi-song.rss" },
+  { category: "Đời sống", name: "Tuổi Trẻ • Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
+  { category: "Đời sống", name: "Dân Trí • Đời sống", url: "https://dantri.com.vn/rss/doi-song.rss" },
+  { category: "Đời sống", name: "Thanh Niên • Đời sống", url: "https://thanhnien.vn/rss/doi-song.rss" },
+  { category: "Đời sống", name: "Tiền Phong • Nhịp sống", url: "https://tienphong.vn/rss/nhip-song-do-thi-116.rss" },
+
+  // Con người
+  { category: "Con người", name: "VnExpress • Tâm sự", url: "https://vnexpress.net/rss/tam-su.rss" },
+  { category: "Con người", name: "Dân Trí • Nhân ái", url: "https://dantri.com.vn/rss/tam-long-nhan-ai.rss" },
+  { category: "Con người", name: "Dân Trí • Giới trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
+  { category: "Con người", name: "Thanh Niên • Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
+  { category: "Con người", name: "Tuổi Trẻ • Gương sáng", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
+
+  // Doanh nghiệp
+  { category: "Doanh nghiệp", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
+  { category: "Doanh nghiệp", name: "VnEconomy • Doanh nghiệp", url: "https://vneconomy.vn/rss/doanh-nghiep.rss" },
+  { category: "Doanh nghiệp", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
+  { category: "Doanh nghiệp", name: "Diễn đàn Doanh nghiệp", url: "https://diendandoanhnghiep.vn/rss/home.rss" },
+  { category: "Doanh nghiệp", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
 
   // Công nghệ
   { category: "Công nghệ", name: "VnExpress • Số Hóa", url: "https://vnexpress.net/rss/so-hoa.rss" },
-  { category: "Công nghệ", name: "Thanh Niên • Công nghệ", url: "https://thanhnien.vn/rss/cong-nghe-game.rss" },
+  { category: "Công nghệ", name: "Thanh Niên • Công nghệ", url: "https://thanhnien.vn/rss/cong-nghe.rss" },
   { category: "Công nghệ", name: "GenK", url: "https://genk.vn/rss/home.rss" },
-  { category: "Công nghệ", name: "ICTNews", url: "https://vietnamnet.vn/rss/cong-nghe.rss" },
+  { category: "Công nghệ", name: "VietnamNet • Công nghệ", url: "https://vietnamnet.vn/rss/cong-nghe.rss" },
   { category: "Công nghệ", name: "Dân Trí • Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
   { category: "Công nghệ", name: "Tuổi Trẻ • Công nghệ", url: "https://tuoitre.vn/rss/cong-nghe.rss" },
 
-  // AI
-  
-  { category: "AI", name: "Dân Trí • Sức mạnh số", url: "https://dantri.com.vn/rss/suc-manh-so.rss" },
-  
-
-  // Giới trẻ
-  { category: "Giới trẻ", name: "Tuổi Trẻ • Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
-  { category: "Giới trẻ", name: "Thanh Niên • Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
-  { category: "Giới trẻ", name: "Dân Trí • Nhịp sống trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
-  { category: "Giới trẻ", name: "Kenh14", url: "https://kenh14.vn/rss/home.rss" },
-
-  // Giáo dục
-  { category: "Giáo dục", name: "VnExpress • Giáo dục", url: "https://vnexpress.net/rss/giao-duc.rss" },
-  { category: "Giáo dục", name: "Tuổi Trẻ • Giáo dục", url: "https://tuoitre.vn/rss/giao-duc.rss" },
-  { category: "Giáo dục", name: "Thanh Niên • Giáo dục", url: "https://thanhnien.vn/rss/giao-duc.rss" },
-  { category: "Giáo dục", name: "Dân Trí • Giáo dục", url: "https://dantri.com.vn/rss/giao-duc.rss" },
-
-  // Kinh tế
-  { category: "Kinh tế", name: "VnEconomy", url: "https://vneconomy.vn/rss/home.rss" },
-  { category: "Kinh tế", name: "CafeF", url: "https://cafef.vn/rss/home.rss" },
-  { category: "Kinh tế", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
-  { category: "Kinh tế", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
-
-  // Startup
-  { category: "Startup", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
-  { category: "Startup", name: "VnExpress • Startup", url: "https://vnexpress.net/rss/startup.rss" },
-  { category: "Startup", name: "Diễn đàn Doanh nghiệp", url: "https://diendandoanhnghiep.vn/rss/khoi-nghiep.rss" },
+  // Kỹ thuật khoa học
+  { category: "Kỹ thuật khoa học", name: "VnExpress • Khoa học", url: "https://vnexpress.net/rss/khoa-hoc.rss" },
+  { category: "Kỹ thuật khoa học", name: "Tuổi Trẻ • Khoa học", url: "https://tuoitre.vn/rss/khoa-hoc.rss" },
+  { category: "Kỹ thuật khoa học", name: "Dân Trí • Khoa học", url: "https://dantri.com.vn/rss/khoa-hoc.rss" },
+  { category: "Kỹ thuật khoa học", name: "VietnamNet • Khoa học", url: "https://vietnamnet.vn/rss/khoa-hoc.rss" },
 
   // Giải trí
   { category: "Giải trí", name: "VnExpress • Giải trí", url: "https://vnexpress.net/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Tuổi Trẻ • Giải trí", url: "https://tuoitre.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Thanh Niên • Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
-  { category: "Giải trí", name: "Ngôi Sao", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
-
-  // Du lịch
-  { category: "Du lịch", name: "VnExpress • Du lịch", url: "https://vnexpress.net/rss/du-lich.rss" },
-  { category: "Du lịch", name: "Tuổi Trẻ • Du lịch", url: "https://tuoitre.vn/rss/du-lich.rss" },
-  { category: "Du lịch", name: "Thanh Niên • Du lịch", url: "https://thanhnien.vn/rss/du-lich.rss" },
-
-  // Thể thao
-  { category: "Thể thao", name: "VnExpress • Thể thao", url: "https://vnexpress.net/rss/the-thao.rss" },
-  { category: "Thể thao", name: "Tuổi Trẻ • Thể thao", url: "https://tuoitre.vn/rss/the-thao.rss" },
-  { category: "Thể thao", name: "Thanh Niên • Thể thao", url: "https://thanhnien.vn/rss/the-thao.rss" },
-  { category: "Thể thao", name: "BongdaPlus", url: "https://bongdaplus.vn/rss/home.rss" }
+  { category: "Giải trí", name: "Dân Trí • Giải trí", url: "https://dantri.com.vn/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Ngôi Sao • Showbiz", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
+  { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" }
 ];
 
 
@@ -2104,6 +2180,13 @@ function MarketSection() {
             { productTypeName: 'Vàng miếng SJC', priceIn: 14050000, priceOut: 14380000 }
   ];
 
+  const formatGoldDisplayName = (name: string): string => {
+    if (!name) return name;
+    if (name.includes('Vàng trang sức')) return 'Vàng trang sức';
+    if (name.includes('Nhẫn tròn Phú Quý')) return 'Nhẫn tròn Phú Quý';
+    return name;
+  };
+
   const hasChart = chartData.real.length > 0;
   const rawReal = hasChart ? chartData.real.filter(v => v > 0) : new Array(12).fill(0);
   const rawForecast = hasChart ? chartData.forecast : new Array(25).fill(0);
@@ -2139,7 +2222,7 @@ function MarketSection() {
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full mt-1">
         {displayData.map((item, idx) => (
           <div key={idx} className="flex flex-col border border-[#e3e7ef] rounded-[8px] sm:rounded-[12px] p-1.5 sm:p-3 bg-[#f8fafc] w-full min-w-0 overflow-hidden">
-            <p className="font-bold text-[#182033] text-[length:var(--font-caption)] sm:text-[length:var(--font-body)] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={item.productTypeName}>{item.productTypeName}</p>
+            <p className="font-bold text-[#182033] text-[length:var(--font-caption)] sm:text-[length:var(--font-body)] line-clamp-1 sm:line-clamp-2 mb-1 sm:mb-2 leading-tight" title={formatGoldDisplayName(item.productTypeName)}>{formatGoldDisplayName(item.productTypeName)}</p>
             <div className="flex justify-between items-center w-full gap-0.5 sm:gap-1">
               <p className="text-[#5f687b] text-[10px] sm:text-[length:var(--font-caption)]">Mua</p>
               <p className="font-semibold text-[#16a34a] text-[length:var(--font-caption)] sm:text-[length:var(--font-body)] whitespace-nowrap tracking-tighter sm:tracking-normal">{item.priceIn.toLocaleString('vi-VN')}</p>
@@ -2790,7 +2873,7 @@ useEffect(() => {
       
       const picked = trulyNewItems.slice(0, 15); // Lấy theo thứ tự đã mix sẵn
       
-      if (trulyNewItems.length <= 10) {
+      if (trulyNewItems.length <= 15) {
         setHasMoreNews(false);
       }
       
@@ -2822,16 +2905,13 @@ useEffect(() => {
         const catFeeds = activeCategory === "Tất cả" ? RSS_FEEDS_DB : RSS_FEEDS_DB.filter(f => f.category === activeCategory);
         if (catFeeds.length === 0) return;
         
-        let selectedFeeds = catFeeds.sort(() => 0.5 - Math.random()).slice(0, 12);
-        
-        // Luôn nhét thêm feed Tin Nổi Bật nếu đang ở mục Tất cả hoặc Thời sự
-        if (activeCategory === "Tất cả" || activeCategory === "Thời sự") {
-           selectedFeeds = [
-             { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://vnexpress.net/rss/tin-noi-bat.rss", isHot: true },
-             { category: "Trang chủ", name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss", isHot: true },
-             ...selectedFeeds
-           ];
-        }
+        let selectedFeeds = activeCategory === "Tất cả"
+          ? [
+              { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://vnexpress.net/rss/tin-noi-bat.rss", isHot: true },
+              { category: "Trang chủ", name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss", isHot: true },
+              ...[...catFeeds].sort(() => 0.5 - Math.random()).slice(0, 15)
+            ]
+          : [...catFeeds];
         
         const promises = selectedFeeds.map(feed => 
           fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
@@ -2863,7 +2943,9 @@ useEffect(() => {
               imageUrl = ""; 
             }
             
-            if (!imageUrl || imageUrl.trim() === "") return null;
+            if (!imageUrl || imageUrl.trim() === "") {
+              imageUrl = DEFAULT_CAT_IMAGE[item.category || activeCategory] || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80";
+            }
             
             let cleanDesc = "";
             if (item.description) {
@@ -2937,7 +3019,7 @@ useEffect(() => {
             });
           }
         }
-        setHasMoreNews(fullNewsPool.current.length > 10);
+        setHasMoreNews(fullNewsPool.current.length > 15);
       } catch (e) {
         console.error(e);
       } finally {
@@ -3451,7 +3533,7 @@ useEffect(() => {
 
       const feedsToFetch = activeCategory === "Tất cả" 
         ? [...RSS_FEEDS_DB].sort(() => 0.5 - Math.random()).slice(0, 15)
-        : [...RSS_FEEDS_DB].filter(f => f.category === activeCategory).slice(0, 10);
+        : [...RSS_FEEDS_DB].filter(f => f.category === activeCategory);
 
       const newsPromises = feedsToFetch.map(feed => 
         fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url + (feed.url.includes("?") ? "&" : "?") + "rnd=" + Date.now())}`)
@@ -3515,8 +3597,11 @@ useEffect(() => {
            };
         });
 
-        // FILTER OUT ALL NEWS WITHOUT IMAGES (as requested by user)
-        processedNews = processedNews.filter((item: any) => item.image && item.image.trim() !== "");
+        processedNews.forEach((item: any) => {
+          if (!item.image || item.image.trim() === "") {
+            item.image = DEFAULT_CAT_IMAGE[activeCategory] || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80";
+          }
+        });
 
         json.news = processedNews;
 
