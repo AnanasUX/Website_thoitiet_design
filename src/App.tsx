@@ -1189,20 +1189,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
         <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex items-center">
-          <button
-            onClick={() => {
-              if (setActiveCategory) setActiveCategory("Bản tin TV");
-              setTimeout(() => {
-                const el = document.getElementById("youtube-broadcast-section");
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            className="mr-2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white rounded-full text-[11px] font-bold shadow-sm active:scale-95 cursor-pointer"
-            title="Xem Bản tin TV 24h"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-            <span>Bản tin TV</span>
-          </button>
           <div className="flex flex-col items-end">
             <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
             📍 {WEATHER.location}
@@ -1213,6 +1199,26 @@ function MobileLayout({ activeCategory, setActiveCategory,
             </p>
           </div>
           </div>
+          <button
+            onClick={() => {
+              if (setActiveCategory) {
+                setActiveCategory(activeCategory === "Bản tin TV" ? "Tất cả" : "Bản tin TV");
+              }
+              setTimeout(() => {
+                const el = document.getElementById("youtube-broadcast-section");
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            role="button"
+            tabIndex={0}
+            className={`ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all shrink-0 aspect-square cursor-pointer relative ${activeCategory === "Bản tin TV" ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] text-[#182033] hover:bg-[#e3e7ef]'}`}
+            title="Bản tin TV"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></svg>
+            {activeCategory !== "Bản tin TV" && (
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#ff315f]" />
+            )}
+          </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -1273,21 +1279,24 @@ function MobileLayout({ activeCategory, setActiveCategory,
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }, 100);
               }}
-              className="w-full bg-gradient-to-r from-[#0a0f1d] via-[#111827] to-[#0a0f1d] p-3 rounded-[var(--card-radius)] border border-[#1e293b] shadow-md flex items-center justify-between gap-2.5 text-white mb-2 cursor-pointer hover:border-red-500/50 transition-all group"
+              className="w-full bg-white p-3 rounded-[var(--card-radius)] border border-[#e3e7ef] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] hover:shadow-[0_8px_20px_rgba(23,33,51,0.12)] transition-all cursor-pointer flex items-center justify-between gap-2.5 group mb-2"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
-                  <svg className="size-4 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <div className="size-9 rounded-full bg-[#ffe8ee] flex items-center justify-center text-[#ff315f] shrink-0 border border-gray-100">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="7" width="20" height="15" rx="2" />
+                    <polyline points="17 2 12 7 7 2" />
+                  </svg>
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-extrabold text-[12px] text-white">TRUYỀN HÌNH BẢN TIN 24H</span>
-                    <span className="px-1.5 py-0.2 rounded bg-red-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">LIVE</span>
+                    <span className="font-bold text-[13px] text-[#182033]">Bản Tin Truyền Hình 24H</span>
+                    <span className="px-1.5 py-0.2 rounded bg-[#ffe8ee] text-[#ff315f] text-[9px] font-bold uppercase">LIVE</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-1">VTV24, VTC Now, Tuổi Trẻ, Thanh Niên &amp; Thời tiết trực tuyến</p>
+                  <p className="text-[11px] text-[#5f687b] line-clamp-1">VTV24, VTC Now, Tuổi Trẻ, Thanh Niên TV</p>
                 </div>
               </div>
-              <svg className="text-red-400 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <svg className="text-[#ff315f] size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </div>
           )}
 
@@ -1379,17 +1388,23 @@ function TabletLayout({ activeCategory, setActiveCategory,
         </div>
         <button
           onClick={() => {
-            if (setActiveCategory) setActiveCategory("Bản tin TV");
+            if (setActiveCategory) {
+              setActiveCategory(activeCategory === "Bản tin TV" ? "Tất cả" : "Bản tin TV");
+            }
             setTimeout(() => {
               const el = document.getElementById("youtube-broadcast-section");
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }, 100);
           }}
-          className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white rounded-full text-[12px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
-          title="Xem Bản tin Truyền hình YouTube 24h"
+          role="button"
+          tabIndex={0}
+          className={`ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all shrink-0 aspect-square cursor-pointer relative ${activeCategory === "Bản tin TV" ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] text-[#182033] hover:bg-[#e3e7ef]'}`}
+          title="Bản tin TV"
         >
-          <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-          <span>Bản tin TV</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></svg>
+          {activeCategory !== "Bản tin TV" && (
+            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#ff315f]" />
+          )}
         </button>
             <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
@@ -1466,21 +1481,27 @@ function TabletLayout({ activeCategory, setActiveCategory,
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }, 100);
               }}
-              className="w-full bg-gradient-to-r from-[#0a0f1d] via-[#111827] to-[#0a0f1d] p-3 rounded-[var(--card-radius)] border border-[#1e293b] shadow-md flex items-center justify-between gap-3 text-white mb-2 cursor-pointer hover:border-red-500/50 transition-all group"
+              className="w-full bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] border border-[#e3e7ef] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] hover:shadow-[0_8px_20px_rgba(23,33,51,0.12)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between gap-3 group mb-2"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
-                  <svg className="size-4 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <div className="size-10 rounded-full bg-[#ffe8ee] flex items-center justify-center text-[#ff315f] group-hover:scale-105 transition-transform shrink-0 border border-gray-100">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="7" width="20" height="15" rx="2" />
+                    <polyline points="17 2 12 7 7 2" />
+                  </svg>
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-extrabold text-[13px] text-white">TRUYỀN HÌNH BẢN TIN THỜI SỰ 24H</span>
-                    <span className="px-1.5 py-0.2 rounded bg-red-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">LIVE</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#182033] text-[14px]">Truyền Hình Bản Tin 24H</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#ffe8ee] text-[#ff315f] text-[10px] font-bold tracking-wider uppercase">LIVE</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ, Thanh Niên TV &amp; Dự báo thời tiết</p>
+                  <p className="text-[#5f687b] text-[12px] line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ, Thanh Niên &amp; Dự báo thời tiết</p>
                 </div>
               </div>
-              <svg className="text-red-400 size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              <div className="flex items-center gap-1 text-[12px] font-semibold text-[#ff315f]">
+                <span>Xem ngay</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
             </div>
           )}
 
@@ -1589,17 +1610,23 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
           <button
             onClick={() => {
-              if (setActiveCategory) setActiveCategory("Bản tin TV");
+              if (setActiveCategory) {
+                setActiveCategory(activeCategory === "Bản tin TV" ? "Tất cả" : "Bản tin TV");
+              }
               setTimeout(() => {
                 const el = document.getElementById("youtube-broadcast-section");
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }, 100);
             }}
-            className="ml-3 flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white rounded-full text-[12px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
-            title="Xem Bản tin Truyền hình YouTube 24h"
+            role="button"
+            tabIndex={0}
+            className={`ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all shrink-0 aspect-square cursor-pointer relative ${activeCategory === "Bản tin TV" ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] text-[#182033] hover:bg-[#e3e7ef]'}`}
+            title="Bản tin TV"
           >
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-            <span>Bản tin TV</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></svg>
+            {activeCategory !== "Bản tin TV" && (
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#ff315f]" />
+            )}
           </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
             {darkMode ? (
@@ -1642,16 +1669,29 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
-        <div className="flex gap-[10px] items-center">
-          <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-            {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
-          </p>
-          <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
-            <p className="font-bold text-[11px] text-white">LIVE</p>
+      <div className="flex flex-col gap-2.5 w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-2 mt-[-12px]">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-[10px] items-center">
+            <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+              {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
+            </p>
+            <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
+              <p className="font-bold text-[11px] text-white">LIVE</p>
+            </div>
           </div>
+          <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
         </div>
-        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+        <div className="flex overflow-x-auto gap-2 w-full pb-1 scrollbar-hide">
+          {NEWS_CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory && setActiveCategory(cat)}
+              className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all cursor-pointer ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:bg-[#f8fafc]'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── YouTube Broadcast Desk ── */}
@@ -1670,21 +1710,24 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }, 100);
           }}
-          className="w-full bg-gradient-to-r from-[#0a0f1d] via-[#111827] to-[#0a0f1d] p-3.5 md:p-4 rounded-[var(--card-radius)] border border-[#1e293b] shadow-md flex items-center justify-between gap-3 text-white mb-2 cursor-pointer hover:border-red-500/50 transition-all group"
+          className="w-full bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] border border-[#e3e7ef] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] hover:shadow-[0_8px_20px_rgba(23,33,51,0.12)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-between gap-3 group mb-2"
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500 group-hover:bg-red-600 group-hover:text-white transition-all shrink-0">
-              <svg className="size-5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <div className="size-11 rounded-full bg-[#ffe8ee] flex items-center justify-center text-[#ff315f] group-hover:scale-105 transition-transform shrink-0 border border-gray-100">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2" />
+                <polyline points="17 2 12 7 7 2" />
+              </svg>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-[13px] md:text-[14px] text-white">TRUYỀN HÌNH BẢN TIN THỜI SỰ 24H</span>
-                <span className="px-1.5 py-0.5 rounded bg-red-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">LIVE</span>
+                <span className="font-bold text-[#182033] text-[15px]">Truyền Hình Bản Tin 24H</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#ffe8ee] text-[#ff315f] text-[10px] font-bold tracking-wider uppercase">LIVE</span>
               </div>
-              <p className="text-[12px] text-slate-400 line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ TV, Thanh Niên TV, Tiền Phong TV &amp; Dự báo thời tiết</p>
+              <p className="text-[#5f687b] text-[13px] line-clamp-1 mt-0.5">Phát sóng trực tiếp VTV24, VTC Now, Tuổi Trẻ, Thanh Niên &amp; Dự báo thời tiết</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 text-[12px] font-bold text-red-400 group-hover:translate-x-1 transition-transform shrink-0">
+          <div className="hidden sm:flex items-center gap-1.5 text-[13px] font-semibold text-[#ff315f] group-hover:translate-x-1 transition-transform shrink-0">
             <span>Xem ngay</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>

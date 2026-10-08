@@ -231,42 +231,42 @@ export function YouTubeBroadcastPlayer({
       <div 
         ref={playerContainerRef} 
         id="youtube-broadcast-section"
-        className={`w-full transition-all duration-300 ${isTheater ? 'fixed inset-0 z-[250] bg-black/95 p-4 md:p-8 overflow-y-auto flex flex-col items-center justify-center' : 'mb-6'}`}
+        className={`w-full transition-all duration-300 ${isTheater ? 'fixed inset-0 z-[250] bg-black/95 p-4 md:p-8 overflow-y-auto flex flex-col items-center justify-center' : 'mb-5'}`}
       >
-        <div className={`w-full ${isTheater ? 'max-w-[1400px]' : 'max-w-full'} bg-gradient-to-b from-[#0a0f1d] via-[#111827] to-[#0a0f1d] rounded-2xl md:rounded-3xl border border-[#1e293b] shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden text-white`}>
+        <div className={`w-full ${isTheater ? 'max-w-[1400px]' : 'max-w-full'} bg-white dark:bg-[#1c1c1e] rounded-[var(--card-radius)] border border-[#e3e7ef] dark:border-[#38383a] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.08)] overflow-hidden`}>
           
           {/* ── Top Broadcast Header (Studio Banner) ── */}
-          <div className="px-4 py-3 md:px-6 md:py-3.5 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] border-b border-[#334155]/60 flex flex-wrap items-center justify-between gap-3">
+          <div className="px-4 py-3 md:px-5 md:py-3.5 bg-[#f8fafc] dark:bg-[#2c2c2e] border-b border-[#e3e7ef] dark:border-[#38383a] flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               {/* Pulsing Live Pill */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ef4444]/20 border border-[#ef4444]/40 text-[#ef4444] text-[11px] md:text-[12px] font-bold tracking-wider uppercase animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_8px_#ef4444]"></span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ffe8ee] text-[#ff315f] text-[11px] font-bold tracking-wider uppercase">
+                <span className="w-2 h-2 rounded-full bg-[#ff315f] animate-pulse"></span>
                 <span>{selectedVideo.badge}</span>
               </div>
               
               {/* Studio Title */}
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[14px] md:text-[16px] tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                    TRUYỀN HÌNH BẢN TIN 24H
+                  <span className="font-bold text-[15px] md:text-[16px] text-[#182033] dark:text-white">
+                    Truyền Hình Bản Tin 24H
                   </span>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-300 border border-blue-500/30 uppercase">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ffe8ee] text-[#ff315f] uppercase">
                     HD LIVE
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400 hidden sm:inline-block">
+                <span className="text-[11px] text-[#5f687b] hidden sm:inline-block">
                   Phát sóng trực tiếp từ các kênh tin tức chính thống Việt Nam
                 </span>
               </div>
             </div>
 
             {/* Right: Electronic TV Studio Clock & Quick Controls */}
-            <div className="flex items-center gap-2 sm:gap-4 ml-auto">
-              <div className="bg-black/40 border border-slate-700/60 px-3 py-1 rounded-lg flex flex-col items-end">
-                <span className="font-mono font-bold text-[13px] md:text-[15px] text-amber-400 tracking-wider">
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
+              <div className="bg-white dark:bg-black/40 border border-[#e3e7ef] dark:border-slate-700 px-3 py-1 rounded-lg flex flex-col items-end shadow-xs">
+                <span className="font-mono font-bold text-[13px] md:text-[14px] text-[#182033] dark:text-amber-400 tracking-wider">
                   {clock || '--:--:--'}
                 </span>
-                <span className="text-[9px] md:text-[10px] text-slate-400">
+                <span className="text-[9px] md:text-[10px] text-[#5f687b]">
                   {dateFormatted || 'Thời sự'}
                 </span>
               </div>
@@ -275,22 +275,22 @@ export function YouTubeBroadcastPlayer({
               <button
                 onClick={() => setShowTvOverlay(!showTvOverlay)}
                 title={showTvOverlay ? 'Tắt lớp đồ họa truyền hình' : 'Bật lớp đồ họa truyền hình'}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${showTvOverlay ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer ${showTvOverlay ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] dark:bg-slate-800 text-[#5f687b] border border-[#e3e7ef] dark:border-slate-700'}`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
-                <span className="hidden md:inline">{showTvOverlay ? 'Đồ họa TV: BẬT' : 'Đồ họa TV: TẮT'}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                <span className="hidden md:inline">{showTvOverlay ? 'Đồ họa TV' : 'Ẩn đồ họa'}</span>
               </button>
 
               {/* Theater Mode Button */}
               <button
                 onClick={() => setIsTheater(!isTheater)}
                 title={isTheater ? 'Thoát chế độ Rạp chiếu' : 'Chế độ Rạp chiếu toàn cảnh'}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[#f4f6fa] dark:bg-slate-800 hover:bg-[#e3e7ef] text-[#182033] dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer border border-[#e3e7ef] dark:border-slate-700"
               >
                 {isTheater ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                 )}
               </button>
 
@@ -298,18 +298,18 @@ export function YouTubeBroadcastPlayer({
               <button
                 onClick={handleToggleMini}
                 title="Thu nhỏ thành Mini-TV góc màn hình để vừa đọc báo vừa xem"
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-[#f4f6fa] dark:bg-slate-800 hover:bg-[#e3e7ef] text-[#182033] dark:text-slate-300 flex items-center justify-center transition-colors cursor-pointer border border-[#e3e7ef] dark:border-slate-700"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="11" y="11" width="8" height="8" rx="1"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="11" y="11" width="8" height="8" rx="1"/></svg>
               </button>
 
               {onClosePlayer && (
                 <button
                   onClick={onClosePlayer}
                   title="Đóng trình phát"
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-[#f4f6fa] dark:bg-slate-800 hover:bg-[#ffe8ee] text-[#5f687b] hover:text-[#ff315f] flex items-center justify-center transition-colors cursor-pointer border border-[#e3e7ef] dark:border-slate-700"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
               )}
             </div>
@@ -400,7 +400,7 @@ export function YouTubeBroadcastPlayer({
               </div>
 
               {/* Quick Input Bar under video: Dán link YouTube cá nhân */}
-              <div className="w-full bg-[#0b1329] border-t border-[#1e293b] p-3 px-4 flex flex-col sm:flex-row items-center gap-2">
+              <div className="w-full bg-[#f8fafc] dark:bg-[#182033] border-t border-[#e3e7ef] dark:border-slate-800 p-3 px-4 flex flex-col sm:flex-row items-center gap-2">
                 <form onSubmit={handleCustomSubmit} className="w-full flex items-center gap-2">
                   <div className="relative flex-1">
                     <input
@@ -408,34 +408,34 @@ export function YouTubeBroadcastPlayer({
                       value={customInput}
                       onChange={(e) => setCustomInput(e.target.value)}
                       placeholder="Dán link YouTube (video, livestream, shorts...) để phát dạng bản tin..."
-                      className="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3.5 py-2 text-[12px] md:text-[13px] text-white placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all pl-9"
+                      className="w-full bg-white dark:bg-slate-900 border border-[#e3e7ef] dark:border-slate-700 rounded-xl px-3.5 py-2 text-[12px] md:text-[13px] text-[#182033] dark:text-white placeholder-[#94a3b8] focus:outline-none focus:border-[#ff315f] focus:ring-1 focus:ring-[#ff315f] transition-all pl-9"
                     />
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   </div>
                   <button
                     type="submit"
-                    className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-4 py-2 rounded-xl text-[12px] md:text-[13px] font-bold shrink-0 transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                    className="bg-[#ff315f] hover:bg-[#e02650] text-white px-4 py-2 rounded-xl text-[12px] md:text-[13px] font-bold shrink-0 transition-all shadow-xs active:scale-95 flex items-center gap-1.5 cursor-pointer"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     <span>Phát bản tin</span>
                   </button>
                 </form>
                 {inputError && (
-                  <p className="text-red-400 text-[11px] font-medium w-full text-left">{inputError}</p>
+                  <p className="text-red-500 text-[11px] font-medium w-full text-left">{inputError}</p>
                 )}
               </div>
             </div>
 
             {/* Rundown & Playlist Sidebar (4 cols on Desktop) */}
-            <div className="lg:col-span-4 bg-[#0d1527] border-t lg:border-t-0 lg:border-l border-[#1e293b] flex flex-col h-full max-h-[560px]">
+            <div className="lg:col-span-4 bg-white dark:bg-[#1c1c1e] border-t lg:border-t-0 lg:border-l border-[#e3e7ef] dark:border-[#38383a] flex flex-col h-full max-h-[560px]">
               
               {/* Category Filter Tabs */}
-              <div className="p-3 border-b border-[#1e293b] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+              <div className="p-2.5 border-b border-[#e3e7ef] dark:border-[#38383a] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 bg-[#f8fafc] dark:bg-[#2c2c2e]">
                 {categories.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActiveTab(cat)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] md:text-[12px] font-semibold whitespace-nowrap transition-all cursor-pointer ${activeTab === cat ? 'bg-red-600 text-white shadow-sm' : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'}`}
+                    className={`px-3 py-1 rounded-full text-[11px] md:text-[12px] font-semibold whitespace-nowrap transition-all cursor-pointer ${activeTab === cat ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-white dark:bg-slate-800 text-[#5f687b] dark:text-slate-300 border border-[#e3e7ef] dark:border-slate-700 hover:bg-[#f4f6fa]'}`}
                   >
                     {cat}
                   </button>
@@ -443,26 +443,26 @@ export function YouTubeBroadcastPlayer({
               </div>
 
               {/* Playlist Header */}
-              <div className="px-4 py-2.5 bg-[#0f172a] border-b border-[#1e293b] flex items-center justify-between">
-                <span className="text-[12px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="px-4 py-2 bg-white dark:bg-[#1c1c1e] border-b border-[#e3e7ef] dark:border-[#38383a] flex items-center justify-between">
+                <span className="text-[12px] font-bold text-[#182033] dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
                   Lịch phát sóng ({filteredPlaylist.length})
                 </span>
-                <span className="text-[11px] text-slate-400">Tự động cập nhật</span>
+                <span className="text-[11px] text-[#5f687b]">Tự động cập nhật</span>
               </div>
 
               {/* Playlist Video Items */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-2 divide-y divide-slate-800/40">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1.5 divide-y divide-[#e3e7ef]/60 dark:divide-slate-800/60">
                 {filteredPlaylist.map((item) => {
                   const isCurrent = item.youtubeId === selectedVideo.youtubeId;
                   return (
                     <div
                       key={item.id}
                       onClick={() => setSelectedVideo(item)}
-                      className={`flex gap-3 p-2 rounded-xl transition-all cursor-pointer group pt-2.5 ${isCurrent ? 'bg-red-950/40 border border-red-500/40 shadow-inner' : 'hover:bg-slate-800/60 border border-transparent'}`}
+                      className={`flex gap-3 p-2 rounded-xl transition-all cursor-pointer group pt-2.5 ${isCurrent ? 'bg-[#fff1f4] dark:bg-red-950/30 border border-[#ff315f]/30' : 'hover:bg-[#f8fafc] dark:hover:bg-slate-800/60 border border-transparent'}`}
                     >
                       {/* Video Thumbnail with play icon */}
-                      <div className="relative w-[110px] sm:w-[120px] aspect-video rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-white/5">
+                      <div className="relative w-[110px] sm:w-[120px] aspect-video rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-black/10">
                         <img
                           src={item.thumbnail || `https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`}
                           alt={item.title}
@@ -471,7 +471,7 @@ export function YouTubeBroadcastPlayer({
                         />
                         {/* Play button overlay */}
                         <div className={`absolute inset-0 flex items-center justify-center bg-black/40 ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isCurrent ? 'bg-red-600 text-white animate-pulse' : 'bg-white/80 text-black'}`}>
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isCurrent ? 'bg-[#ff315f] text-white animate-pulse' : 'bg-white/80 text-black'}`}>
                             <svg className="size-3.5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                           </div>
                         </div>
@@ -484,23 +484,23 @@ export function YouTubeBroadcastPlayer({
 
                       {/* Video Information */}
                       <div className="flex flex-col flex-1 min-w-0 justify-between py-0.5">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${isCurrent ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'}`}>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${isCurrent ? 'bg-[#ff315f] text-white' : 'bg-[#f4f6fa] dark:bg-slate-800 text-[#5f687b] dark:text-slate-300'}`}>
                             {item.badge}
                           </span>
-                          <span className="text-[11px] text-slate-400 line-clamp-1">
+                          <span className="text-[11px] text-[#5f687b] line-clamp-1">
                             {item.channel}
                           </span>
                         </div>
-                        <p className={`text-[12px] leading-snug line-clamp-2 font-medium transition-colors ${isCurrent ? 'text-red-400 font-bold' : 'text-slate-200 group-hover:text-white'}`}>
+                        <p className={`text-[12px] leading-snug line-clamp-2 font-medium transition-colors ${isCurrent ? 'text-[#ff315f] font-bold' : 'text-[#182033] dark:text-slate-200 group-hover:text-[#ff315f]'}`}>
                           {item.title}
                         </p>
                         {isCurrent && (
-                          <div className="flex items-center gap-1.5 mt-1 text-red-500 text-[10px] font-bold">
+                          <div className="flex items-center gap-1.5 mt-1 text-[#ff315f] text-[10px] font-bold">
                             <span className="flex gap-0.5 items-end h-3">
-                              <span className="w-0.5 h-3 bg-red-500 animate-[bounce_1s_infinite_100ms]"></span>
-                              <span className="w-0.5 h-2 bg-red-500 animate-[bounce_1s_infinite_200ms]"></span>
-                              <span className="w-0.5 h-3.5 bg-red-500 animate-[bounce_1s_infinite_300ms]"></span>
+                              <span className="w-0.5 h-3 bg-[#ff315f] animate-[bounce_1s_infinite_100ms]"></span>
+                              <span className="w-0.5 h-2 bg-[#ff315f] animate-[bounce_1s_infinite_200ms]"></span>
+                              <span className="w-0.5 h-3.5 bg-[#ff315f] animate-[bounce_1s_infinite_300ms]"></span>
                             </span>
                             <span>ĐANG PHÁT TRÊN TV</span>
                           </div>
@@ -520,11 +520,11 @@ export function YouTubeBroadcastPlayer({
 
       {/* ── Floating Mini-TV (Khung truyền hình thu nhỏ góc màn hình khi cuộn trang) ── */}
       {isMini && (
-        <div className="fixed bottom-12 right-4 md:right-6 z-[995] w-[300px] sm:w-[360px] bg-[#0a0f1d] rounded-2xl border-2 border-red-600 shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden animate-in slide-in-from-bottom-6 duration-300">
+        <div className="fixed bottom-12 right-4 md:right-6 z-[995] w-[300px] sm:w-[360px] bg-[#0a0f1d] rounded-2xl border-2 border-[#ff315f] shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden animate-in slide-in-from-bottom-6 duration-300">
           {/* Mini-TV Header */}
-          <div className="px-3 py-1.5 bg-gradient-to-r from-red-600 to-slate-900 flex items-center justify-between text-white">
+          <div className="px-3 py-1.5 bg-[#182033] flex items-center justify-between text-white border-b border-white/10">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+              <span className="w-2 h-2 rounded-full bg-[#ff315f] animate-ping"></span>
               <span className="font-bold text-[11px] uppercase tracking-wider line-clamp-1">
                 {selectedVideo.channel}
               </span>
@@ -562,7 +562,7 @@ export function YouTubeBroadcastPlayer({
           </div>
 
           {/* Mini-TV Footer Title */}
-          <div className="px-3 py-1.5 bg-[#0d1527] border-t border-slate-800 text-[11px] text-slate-300 line-clamp-1">
+          <div className="px-3 py-1.5 bg-[#0f172a] text-[11px] text-slate-300 line-clamp-1 border-t border-white/10">
             {selectedVideo.title}
           </div>
         </div>
