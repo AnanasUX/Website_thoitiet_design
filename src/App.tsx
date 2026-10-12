@@ -378,6 +378,7 @@ function WeatherSection({
   liveOverrides,
   darkMode,
   isLoading,
+  onArticleClick,
 }: {
   compact?: boolean;
   condKey: ConditionKey;
@@ -385,6 +386,7 @@ function WeatherSection({
   liveOverrides?: LiveOverrides;
   darkMode?: boolean;
   isLoading?: boolean;
+  onArticleClick?: (article: any) => void;
 }) {
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
@@ -541,7 +543,23 @@ function WeatherSection({
                 <div key={i} className="flex gap-2 items-start">
                   <span className="text-[#0a84ff] font-bold mt-[1px]">›</span>
                   <div className="flex flex-col gap-[2px]">
-                    <div onClick={() => onArticleClick && onArticleClick(news)} role="button" tabIndex={0} className="font-medium text-[#0a84ff] hover:underline line-clamp-2 cursor-pointer">
+                    <div
+                      onClick={() => {
+                        if (onArticleClick) {
+                          onArticleClick({
+                            ...news,
+                            title: news.title || (news as any).author || "Tin tức",
+                            author: news.title || (news as any).author || "Tin tức",
+                            src: news.source || (news as any).src || "Thời tiết",
+                            link: news.link || (news as any).url,
+                            img: (news as any).image || (news as any).img || "",
+                          });
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      className="font-medium text-[#0a84ff] hover:underline line-clamp-2 cursor-pointer"
+                    >
                       {news.title}
                     </div>
                     <span className="text-[#5f687b] text-[11px]">{news.source}</span>
@@ -1032,9 +1050,15 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
        setIsLoadingFull(false);
     });
   }, [article.link, article.body, article.fullContent]);
+  const detailContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (detailContainerRef.current) {
+      detailContainerRef.current.scrollTop = 0;
+    }
+  }, [article.link]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
+    <div ref={detailContainerRef} className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
       <div className="sticky top-0 bg-[inherit] border-b border-[#e3e7ef] px-4 py-3 flex items-center justify-between w-full md:max-w-3xl z-10">
         <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-[#f4f6fa] text-[#182033] flex items-center gap-2">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -1168,7 +1192,11 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
            <h2 className="font-bold text-[#182033] text-[20px] mb-4">Bài viết liên quan</h2>
            <div className="flex flex-col gap-4">
              {related.map((item: any, i: number) => (
-                <div key={i} className="flex gap-4 cursor-pointer group" onClick={() => { window.scrollTo({top:0, behavior:'smooth'}); onSelectRelated(item); }}>
+                <div key={i} className="flex gap-4 cursor-pointer group" onClick={() => {
+                   if (detailContainerRef.current) detailContainerRef.current.scrollTo({top:0, behavior:'smooth'});
+                   window.scrollTo({top:0, behavior:'smooth'});
+                   onSelectRelated(item);
+                 }}>
                    <div className="flex-1 flex flex-col gap-2">
                       <p className="font-bold text-[#182033] text-[15px] line-clamp-3 group-hover:text-[#ff315f] transition-colors">{item.author}</p>
                       <p className="font-medium text-[#5f687b] text-[12px]">{item.src}</p>
@@ -1256,7 +1284,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
-          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
@@ -1492,7 +1520,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
-          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
         </div>
 
         {/* News panel */}
@@ -1680,7 +1708,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
-          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
         </div>
 
         {/* News column */}
@@ -3109,15 +3137,18 @@ export default function App() {
   };
 
   const handleArticleSelect = (article: any) => {
+    if (!article) return;
     // Ghép dữ liệu chi tiết từ bot đã cào sẵn
     let cleanLink = article.link ? article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim().split('?')[0] : '';
     const preCrawled = preCrawledRef.current.get(cleanLink);
     const enriched = preCrawled 
       ? { ...article, fullContent: preCrawled.fullContent }
-      : article;
+      : { ...article };
+    if (!enriched.author && enriched.title) enriched.author = enriched.title;
+    if (!enriched.title && enriched.author) enriched.title = enriched.author;
     setSelectedArticle(enriched);
     if (enriched) {
-      const slug = toSlug(enriched.author);
+      const slug = toSlug(enriched.author || enriched.title || 'bai-viet');
       window.history.pushState({ articleSlug: slug }, '', `/Website_thoitiet_design/chi-tiet-${slug}`);
     }
   };
