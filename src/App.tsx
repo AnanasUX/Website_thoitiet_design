@@ -1540,7 +1540,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
           {/* ── YouTube Broadcast Desk Mobile ── */}
           {activeCategory === "Bản tin TV" ? (
-            <div className="w-full flex flex-col gap-3">
+            <div className="w-full flex flex-col gap-4">
               <button
                 onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
                 className="self-start flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full text-[12px] font-semibold text-[#5f687b] hover:text-[#ff315f] shadow-xs cursor-pointer transition-all"
@@ -1554,6 +1554,33 @@ function MobileLayout({ activeCategory, setActiveCategory,
                 initialCategory="Thời sự 24h"
                 onClosePlayer={() => setActiveCategory && setActiveCategory("Tất cả")}
               />
+              <div className="w-full flex flex-col gap-3 mt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-[#182033] text-[15px] flex items-center gap-2">
+                    <span className="w-1.5 h-4 bg-red-600 rounded-full inline-block"></span>
+                    Bản tin video tự động cập nhật
+                  </h3>
+                  <span className="text-[11px] text-[#5f687b] font-medium">{newsFeed.length} bản tin</span>
+                </div>
+                {newsFeed.map((item, i) => (
+                  <div key={i} onClick={() => onArticleClick && onArticleClick(item)} className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer">
+                    <div className="flex flex-col gap-2 items-start w-full">
+                      <div className="flex gap-[10px] items-center w-full">
+                        <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+                        <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+                      </div>
+                      <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
+                    </div>
+                    <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                      <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
+                        <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <span>▶ Video</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
@@ -1660,7 +1687,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
       {activeCategory === "Bản tin TV" ? (
-        <div className="w-full max-w-[1200px] mx-auto px-[var(--page-padding)] py-[var(--section-gap)] flex flex-col gap-4">
+        <div className="w-full max-w-[1200px] mx-auto px-[var(--page-padding)] py-[var(--section-gap)] flex flex-col gap-6">
           <div className="flex items-center justify-between w-full mb-1">
             <div className="flex gap-[10px] items-center">
               <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
@@ -1684,6 +1711,37 @@ function TabletLayout({ activeCategory, setActiveCategory,
             currentWeather={WEATHER}
             initialCategory="Thời sự 24h"
           />
+
+          {/* Automated Video News Feed Section */}
+          <div className="w-full flex flex-col gap-4 mt-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[#182033] text-[18px] flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-red-600 rounded-full inline-block"></span>
+                Bản tin video tự động cập nhật từ các báo
+              </h3>
+              <span className="text-[12px] text-[#5f687b] font-medium">{newsFeed.length} video phát sóng</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {newsFeed.map((item, i) => (
+                <div key={i} onClick={() => onArticleClick && onArticleClick(item)} className="bg-white flex flex-col gap-3 p-3.5 rounded-2xl border border-[#e3e7ef] shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300 cursor-pointer group">
+                  <div className="h-[140px] relative rounded-xl w-full overflow-hidden bg-slate-900">
+                    <img alt="" className="absolute inset-0 object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                    <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-semibold backdrop-blur-md">
+                      <svg className="size-2.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <span>Video</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <img alt="" className="rounded-full size-4 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" />
+                      <span className="text-[11px] font-medium text-[#5f687b]">{item.src}</span>
+                    </div>
+                    <p className="font-semibold text-[#182033] text-[14px] line-clamp-2 group-hover:text-red-600 transition-colors leading-snug">{item.author}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
@@ -1872,6 +1930,40 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             currentWeather={WEATHER}
             initialCategory="Thời sự 24h"
           />
+
+          {/* Automated Video News Feed Section */}
+          <div className="w-full flex flex-col gap-4 mt-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[#182033] text-[18px] flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-red-600 rounded-full inline-block"></span>
+                Bản tin video tự động cập nhật từ các báo chính thống
+              </h3>
+              <span className="text-[12px] text-[#5f687b] font-medium">{newsFeed.length} video phát sóng</span>
+            </div>
+            <div className="grid grid-cols-3 gap-5">
+              {newsFeed.map((item, i) => (
+                <div key={i} onClick={() => onArticleClick && onArticleClick(item)} className="bg-white flex flex-col gap-3 p-4 rounded-2xl border border-[#e3e7ef] shadow-xs hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300 cursor-pointer group">
+                  <div className="h-[170px] relative rounded-xl w-full overflow-hidden bg-slate-900">
+                    <img alt="" className="absolute inset-0 object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 text-white text-[11px] font-semibold backdrop-blur-md">
+                      <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <span>▶ Video</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1 justify-between">
+                    <p className="font-bold text-[#182033] text-[15px] line-clamp-2 group-hover:text-red-600 transition-colors leading-snug">{item.author}</p>
+                    <div className="flex items-center justify-between text-[11px] text-[#5f687b] pt-1 border-t border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <img alt="" className="rounded-full size-4 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" />
+                        <span className="font-medium">{item.src}</span>
+                      </div>
+                      <span className="text-[#94a3b8]">Tự động cập nhật</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">

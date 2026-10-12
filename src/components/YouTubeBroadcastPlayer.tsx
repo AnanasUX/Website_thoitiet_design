@@ -244,8 +244,6 @@ export function YouTubeBroadcastPlayer({
     }
     return YOUTUBE_NEWS_DATABASE[0].youtubeId;
   });
-  const [customInput, setCustomInput] = useState<string>('');
-  const [inputError, setInputError] = useState<string>('');
   const [clock, setClock] = useState<string>('');
   const [dateFormatted, setDateFormatted] = useState<string>('');
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -337,29 +335,6 @@ export function YouTubeBroadcastPlayer({
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const handleCustomSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customInput.trim()) return;
-    const yId = extractYouTubeId(customInput);
-    if (!yId) {
-      setInputError('Link YouTube không hợp lệ. Vui lòng kiểm tra lại URL hoặc ID video.');
-      return;
-    }
-    setInputError('');
-    const newVideoItem: YouTubeNewsItem = {
-      id: `custom-${Date.now()}`,
-      title: `Bản tin Trực tuyến • Video YouTube (${yId})`,
-      channel: 'Kênh Người Dùng',
-      badge: 'TIÊU ĐIỂM',
-      youtubeId: yId,
-      category: 'Thời sự 24h',
-      duration: 'Phát sóng',
-      thumbnail: `https://i.ytimg.com/vi/${yId}/hqdefault.jpg`
-    };
-    setSelectedVideo(newVideoItem);
-    setCustomInput('');
-  };
 
   const categories = ['Tất cả', 'Thời sự 24h', 'Thời tiết TV', 'Tài chính & Vàng', 'Thế giới & Cuộc sống'];
 
@@ -513,7 +488,7 @@ export function YouTubeBroadcastPlayer({
                   key={currentVideoId}
                   ref={iframeRef}
                   title={selectedVideo.title}
-                  src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : ''}`}
+                  src={`https://www.youtube-nocookie.com/embed/${currentVideoId}?autoplay=1&mute=1&playsinline=1&rel=0`}
                   className="w-full h-full border-0 absolute inset-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   referrerPolicy="strict-origin-when-cross-origin"
@@ -657,30 +632,22 @@ export function YouTubeBroadcastPlayer({
                 )}
               </div>
 
-              {/* Quick Input Bar under video */}
-              <div className="w-full bg-[#0b1329] border-t border-[#1e293b] p-2.5 px-3 sm:px-4 flex flex-col sm:flex-row items-center gap-2">
-                <form onSubmit={handleCustomSubmit} className="w-full flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
-                      placeholder="Dán link YouTube (video, livestream, shorts...) để phát trực tiếp..."
-                      className="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3.5 py-2 text-[12px] md:text-[13px] text-white placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all pl-9"
-                    />
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                  </div>
+              {/* Automated Broadcast Bar under video */}
+              <div className="w-full bg-[#0b1329] border-t border-[#1e293b] py-2.5 px-3 sm:px-4 flex items-center justify-between gap-3 text-slate-300">
+                <div className="flex items-center gap-2 text-[12px] sm:text-[13px] font-medium text-slate-300 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span className="truncate">Hệ thống đang tự động tiếp sóng trực tiếp từ các đài truyền hình chính thống Việt Nam</span>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
                   <button
-                    type="submit"
-                    className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-white px-4 py-2 rounded-xl text-[12px] md:text-[13px] font-bold shrink-0 transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                    onClick={() => handleSelectVideo(filteredPlaylist[(filteredPlaylist.findIndex(p => p.youtubeId === selectedVideo.youtubeId) + 1) % filteredPlaylist.length])}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer transition-all"
+                    title="Chuyển sang bản tin tiếp theo trong luồng"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    <span>Phát bản tin</span>
+                    <span>Kênh kế tiếp</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
-                </form>
-                {inputError && (
-                  <p className="text-red-400 text-[11px] font-medium w-full text-left pl-1">{inputError}</p>
-                )}
+                </div>
               </div>
             </div>
 
