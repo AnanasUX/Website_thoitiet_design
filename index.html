@@ -41,7 +41,15 @@
     <script>
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
-          for (var r of regs) { r.update(); }
+          for (var r of regs) {
+            r.update();
+            if (r.waiting) {
+              r.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+          }
+        });
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          window.location.reload();
         });
       }
     </script>

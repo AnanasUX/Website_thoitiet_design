@@ -67,6 +67,8 @@ export default defineConfig(({ mode }) => {
           ]
         },
         workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           globIgnores: ['**/fonts/**', 'mock-thanhnien.json'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
