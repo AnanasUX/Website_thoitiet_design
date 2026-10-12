@@ -1422,42 +1422,38 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
-        <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
-        <div className="flex items-center">
-          <div className="flex flex-col items-end mr-1.5">
-            <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
-            📍 {WEATHER.location}
-          </p>
-            <div className="bg-[#f4f6fa] mt-0.5 flex items-center px-2 py-0.5 rounded-full">
-            <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
-              {shortDateStr} · {timeStr}
-            </p>
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-3.5 sm:px-4 w-full shrink-0 sticky top-0 z-[100]">
+        <div className="flex items-center gap-2 min-w-0">
+          <p className="font-extrabold text-[#ff315f] text-[19px] shrink-0">Anx.</p>
+          <div className="flex items-center gap-1 text-[#5f687b] text-[11px] truncate">
+            <span>📍</span>
+            <span className="font-semibold text-[#182033] truncate max-w-[110px]">{WEATHER.location.split(',')[0]}</span>
           </div>
-          </div>
+        </div>
 
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* Nút Video Shorts TikTok/Reels trên Mobile Header */}
           <button
             onClick={onOpenShorts}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-black text-[11px] shadow-sm active:scale-95 transition-all cursor-pointer mr-1 animate-pulse"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-extrabold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer"
             title="Xem Video Shorts 9:16 (TikTok & Reels)"
           >
-            <span>⚡</span>
-            <span>Shorts</span>
+            <span>⚡ Shorts</span>
           </button>
 
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[30px] h-[30px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
               )}
-            </div>
-            {userRole && userRole.picture ? (
-              <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
-            ) : (
-              <CustomLoginButton onLoginSuccess={onLoginSuccess} />
-            )}
+          </div>
+
+          {userRole && userRole.picture ? (
+            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
+          ) : (
+            <CustomLoginButton onLoginSuccess={onLoginSuccess} />
+          )}
         </div>
       </div>
 
@@ -2035,13 +2031,13 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
   if (!news.length) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white text-[#182033] flex items-center h-[32px] overflow-hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] z-[999] border-t border-[#e3e7ef]">
-      <div className="bg-[#ff315f] text-white font-bold text-[12px] px-3 py-1 flex items-center justify-center shrink-0 z-20 h-full tracking-wider uppercase relative shadow-[2px_0_8px_rgba(0,0,0,0.05)]">
-        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-2"></div>
+    <div className="w-full bg-white text-[#182033] flex items-center h-[32px] overflow-hidden border-b border-[#e3e7ef] z-20 shrink-0 select-none">
+      <div className="bg-[#ff315f] text-white font-bold text-[11px] px-3 py-1 flex items-center justify-center shrink-0 z-10 h-full tracking-wider uppercase shadow-xs">
+        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-1.5"></div>
         Tin nóng
       </div>
-      <div className="flex-1 overflow-hidden h-full flex items-center relative pl-3" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 2%, black 98%, transparent)' }}>
-        <div className="animate-marquee whitespace-nowrap flex items-center gap-6 text-[13px] font-medium min-w-full hover:[animation-play-state:paused]">
+      <div className="flex-1 overflow-hidden h-full flex items-center relative pl-2" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 1%, black 99%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 1%, black 99%, transparent)' }}>
+        <div className="animate-marquee whitespace-nowrap flex items-center gap-6 text-[12.5px] font-medium min-w-full hover:[animation-play-state:paused]">
           {topNews.map((n, i) => (
             <span key={i} className="flex items-center gap-2 cursor-pointer hover:text-[#0055D4] transition-colors" title={n.author}>
               <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f]"></span>
@@ -2443,8 +2439,12 @@ function ScrollToTop() {
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
   return isVisible ? (
-    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-[100] bg-white border border-[#e3e7ef] shadow-[0_8px_20px_rgba(23,33,51,0.2)] hover:-translate-y-1 transition-all duration-300 rounded-full size-12 flex items-center justify-center text-[#ff315f] group animate-fade-in">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-1 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
+    <button 
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+      className="fixed bottom-20 right-5 z-[80] bg-white border border-[#e3e7ef] shadow-[0_4px_16px_rgba(23,33,51,0.18)] hover:-translate-y-1 transition-all duration-300 rounded-full size-11 flex items-center justify-center text-[#ff315f] group cursor-pointer"
+      title="Cuộn lên đầu trang"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-0.5 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
     </button>
   ) : null;
 }
@@ -3266,28 +3266,6 @@ export default function App() {
     window.history.pushState({}, '', `/Website_thoitiet_design/`);
   };
 
-  // Auto-fullscreen on first user interaction
-  useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request failed:", err));
-      }
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('touchstart', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-    };
-    
-    document.addEventListener('click', handleFirstInteraction);
-    document.addEventListener('touchstart', handleFirstInteraction, { passive: true });
-    document.addEventListener('keydown', handleFirstInteraction);
-    
-    return () => {
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('touchstart', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-    };
-  }, []);
-
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
@@ -3305,41 +3283,6 @@ export default function App() {
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
-
-    // Force Fullscreen on first user interaction (browser security requires a gesture)
-  useEffect(() => {
-    const enterFullscreen = () => {
-      const elem = document.documentElement as any;
-      if (!document.fullscreenElement) {
-        try {
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(() => {});
-          } else if (elem.webkitRequestFullscreen) { /* Safari */
-            elem.webkitRequestFullscreen();
-          } else if (elem.msRequestFullscreen) { /* IE11 */
-            elem.msRequestFullscreen();
-          }
-        } catch (e) {
-          console.warn("Fullscreen request failed", e);
-        }
-      }
-    };
-
-    const handleInteraction = () => {
-      enterFullscreen();
-      // Remove listeners after first successful attempt
-      window.removeEventListener('click', handleInteraction);
-      window.removeEventListener('touchstart', handleInteraction);
-    };
-
-    window.addEventListener('click', handleInteraction);
-    window.addEventListener('touchstart', handleInteraction);
-
-    return () => {
-      window.removeEventListener('click', handleInteraction);
-      window.removeEventListener('touchstart', handleInteraction);
-    };
-  }, []);
 
 useEffect(() => {
     const root = window.document.documentElement;
@@ -4187,18 +4130,17 @@ useEffect(() => {
       </div>
 
       {/* Floating Action Button (FAB) - Xem Video Shorts TikTok/Reels */}
-      <div className="fixed bottom-6 right-6 z-[95] flex items-center group">
+      <div className="fixed bottom-5 right-5 z-[80] flex items-center group">
         <button
           onClick={() => setIsShortsOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full bg-gradient-to-r from-[#ff0050] via-[#833ab4] to-[#00f2fe] text-white font-black text-[12px] sm:text-[13px] shadow-[0_8px_25px_rgba(255,0,80,0.5)] hover:shadow-[0_10px_35px_rgba(0,242,254,0.6)] hover:scale-105 active:scale-95 transition-all cursor-pointer border-2 border-white/40 tracking-wider"
+          className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#ff0050] via-[#833ab4] to-[#00f2fe] text-white font-extrabold text-[12px] sm:text-[13px] shadow-[0_6px_20px_rgba(255,0,80,0.4)] hover:shadow-[0_8px_25px_rgba(0,242,254,0.5)] hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/30 tracking-wider"
           title="Xem Video Shorts 9:16 (TikTok & Reels)"
         >
-          <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white shrink-0 shadow-xs">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center text-white shrink-0 shadow-xs">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           </div>
           <span className="flex items-center gap-1">
             <span>⚡ Shorts</span>
-            <span className="hidden sm:inline text-[11px] font-bold text-white/80">9:16</span>
           </span>
         </button>
       </div>

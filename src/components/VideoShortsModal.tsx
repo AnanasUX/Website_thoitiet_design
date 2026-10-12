@@ -155,7 +155,8 @@ export function VideoShortsModal({
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likesMap, setLikesMap] = useState<Record<string, number>>({});
-  const [progress, setProgress] = useState<number>(0);
+  const [isBuffering, setIsBuffering] = useState<boolean>(false);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const [showHeartPop, setShowHeartPop] = useState<boolean>(false);
   const [showPlayPop, setShowPlayPop] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
@@ -247,7 +248,10 @@ export function VideoShortsModal({
     const validIdx = (idx + filteredPlaylist.length) % filteredPlaylist.length;
     setCurrentIndex(validIdx);
     setIsPlaying(true);
-    setProgress(0);
+    setIsBuffering(false);
+    if (progressBarRef.current) {
+      progressBarRef.current.style.width = '0%';
+    }
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(() => {});
@@ -262,11 +266,13 @@ export function VideoShortsModal({
     handleSelectIndex(currentIndex - 1);
   };
 
-  // Cập nhật progress bar
+  // Cập nhật progress bar trực tiếp qua DOM Ref (tránh re-render 60fps)
   const handleTimeUpdate = () => {
     if (videoRef.current && videoRef.current.duration) {
       const p = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(p);
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${p}%`;
+      }
     }
   };
 
@@ -275,9 +281,11 @@ export function VideoShortsModal({
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const pct = Math.max(0, Math.min(1, clickX / rect.width));
+    if (progressBarRef.current) {
+      progressBarRef.current.style.width = `${pct * 100}%`;
+    }
     if (videoRef.current && videoRef.current.duration) {
       videoRef.current.currentTime = pct * videoRef.current.duration;
-      setProgress(pct * 100);
     }
   };
 
@@ -462,7 +470,7 @@ export function VideoShortsModal({
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* HTML5 Native Video Stream */}
+          {/* HTML5 Native Video Stream (GPU Accelerated) */}
           <video
             ref={videoRef}
             key={currentShort.id || currentShort.videoUrl}
@@ -470,12 +478,37 @@ export function VideoShortsModal({
             poster={currentShort.thumbnail}
             playsInline
             autoPlay
+            preload="auto"
             muted={isMuted}
+            disablePictureInPicture
+            onWaiting={() => setIsBuffering(true)}
+            onPlaying={() => setIsBuffering(false)}
+            onCanPlay={() => setIsBuffering(false)}
             onTimeUpdate={handleTimeUpdate}
             onEnded={handleNextShort}
             onClick={handleVideoClick}
-            className="w-full h-full object-cover absolute inset-0 cursor-pointer"
+            className="w-full h-full object-cover absolute inset-0 cursor-pointer transform-gpu will-change-transform"
           />
+
+          {/* Buffering Loading Indicator */}
+          {isBuffering && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none bg-black/40 backdrop-blur-[2px]">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded-full border-4 border-white/20 border-t-red-500 animate-spin"></div>
+                <span className="text-white text-xs font-semibold drop-shadow">Đang tải video...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Invisible next video preload to eliminate lag on next swipe */}
+          {filteredPlaylist[(currentIndex + 1) % filteredPlaylist.length]?.videoUrl && (
+            <video
+              src={filteredPlaylist[(currentIndex + 1) % filteredPlaylist.length].videoUrl}
+              preload="auto"
+              muted
+              className="hidden"
+            />
+          )}
 
           {/* Double Tap Flying Heart Animation */}
           {showHeartPop && (
@@ -639,8 +672,9 @@ export function VideoShortsModal({
               className="w-full h-1.5 bg-white/20 hover:h-2.5 rounded-full cursor-pointer relative overflow-hidden transition-all mt-1"
             >
               <div 
-                className="h-full bg-gradient-to-r from-red-600 to-pink-500 rounded-full transition-all duration-100 relative"
-                style={{ width: `${progress}%` }}
+                ref={progressBarRef}
+                className="h-full bg-gradient-to-r from-red-600 to-pink-500 rounded-full relative"
+                style={{ width: '0%' }}
               >
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full shadow-md"></div>
               </div>
