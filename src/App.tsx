@@ -648,7 +648,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       fc.paragraphs.forEach((p: string, i: number) => {
         html += `<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${p}</p>`;
         if ((i + 1) % 3 === 0 && imgIdx < (fc.images?.length || 0)) {
-          html += `<img src="${fc.images[imgIdx]}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
+          html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
           if (fc.captions && fc.captions[imgIdx]) {
             html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
           }
@@ -657,7 +657,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       });
       
       while (imgIdx < (fc.images?.length || 0)) {
-        html += `<img src="${fc.images[imgIdx]}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
+        html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
         if (fc.captions && fc.captions[imgIdx]) {
           html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
         }
@@ -844,7 +844,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             if (src && !src.startsWith('data:')) {
               if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
               const caption = el.querySelector('figcaption')?.textContent?.trim() || img.getAttribute('alt') || '';
-              blocks.push({ type: 'image', src, caption });
+              blocks.push({ type: 'image', src: getProxyImageUrl(src), caption });
             }
           }
           return;
@@ -854,7 +854,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           let src = el.getAttribute('data-src') || el.getAttribute('data-original') || el.getAttribute('src');
           if (src && !src.startsWith('data:')) {
             if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
-            blocks.push({ type: 'image', src, caption: el.getAttribute('alt') || '' });
+            blocks.push({ type: 'image', src: getProxyImageUrl(src), caption: el.getAttribute('alt') || '' });
           }
           return;
         }
@@ -1044,46 +1044,46 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       <div className="p-5 w-full md:max-w-3xl flex flex-col gap-4 pb-12">
         <div className="flex items-center gap-3 w-full">
-           <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || article.img} data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
-           <p className="font-medium text-[#5f687b] text-[14px]">{article.src}</p>
-        </div>
+            <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || article.img} data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+            <p className="font-medium text-[#5f687b] text-[14px]">{article.src}</p>
+         </div>
 
-        {isLoadingFull ? (
-           <div className="flex flex-col gap-4 mt-6 animate-pulse">
-              <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
-              <div className="h-4 bg-[#e3e7ef] rounded w-11/12"></div>
-              <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
-              <div className="h-[200px] bg-[#e3e7ef] rounded w-full my-4"></div>
-              <div className="h-4 bg-[#e3e7ef] rounded w-10/12"></div>
-              <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
-           </div>
-        ) : fullContent === "ERROR" ? (
-           <div className="mt-6 flex flex-col items-center justify-center p-8 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-center" style={{ backgroundColor: 'inherit' }}>
-             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-             <p className="text-[#475569] text-[16px] font-bold mb-2">Không thể tự động bóc tách bài viết</p>
-             <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
-           </div>
-        ) : fullContent === "RICH_RENDER" && contentBlocks && contentBlocks.length > 0 ? (
-           <div className="mt-2 flex flex-col gap-4">
-             {contentBlocks.map((block: any, idx: number) => {
-               if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
-               if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
-               if (block.type === 'heading') {
-                 if (block.tag === 'h2') {
-                   return <h2 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] md:text-[22px] font-bold text-[#182033] mt-5 mb-2.5 leading-snug" />;
-                 }
-                 if (block.tag === 'h3') {
-                   return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[18px] md:text-[19px] font-bold text-[#182033] mt-4 mb-2 leading-snug" />;
-                 }
-                 return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
-               }
-               if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
-               if (block.type === 'image') return (
-                 <figure key={idx} className="my-5 w-full">
-                   <img src={block.src} alt={block.caption} className="w-full h-auto object-cover rounded-xl shadow-sm" loading="lazy" />
-                   {block.caption && <figcaption className="text-center text-[14px] mt-2 italic" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
-                 </figure>
-               );
+         {isLoadingFull ? (
+            <div className="flex flex-col gap-4 mt-6 animate-pulse">
+               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+               <div className="h-4 bg-[#e3e7ef] rounded w-11/12"></div>
+               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+               <div className="h-[200px] bg-[#e3e7ef] rounded w-full my-4"></div>
+               <div className="h-4 bg-[#e3e7ef] rounded w-10/12"></div>
+               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+            </div>
+         ) : fullContent === "ERROR" ? (
+            <div className="mt-6 flex flex-col items-center justify-center p-8 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-center" style={{ backgroundColor: 'inherit' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <p className="text-[#475569] text-[16px] font-bold mb-2">Không thể tự động bóc tách bài viết</p>
+              <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
+            </div>
+         ) : fullContent === "RICH_RENDER" && contentBlocks && contentBlocks.length > 0 ? (
+            <div className="mt-2 flex flex-col gap-4">
+              {contentBlocks.map((block: any, idx: number) => {
+                if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
+                if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
+                if (block.type === 'heading') {
+                  if (block.tag === 'h2') {
+                    return <h2 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] md:text-[22px] font-bold text-[#182033] mt-5 mb-2.5 leading-snug" />;
+                  }
+                  if (block.tag === 'h3') {
+                    return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[18px] md:text-[19px] font-bold text-[#182033] mt-4 mb-2 leading-snug" />;
+                  }
+                  return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
+                }
+                if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
+                if (block.type === 'image') return (
+                  <figure key={idx} className="my-5 w-full">
+                    <img src={block.src} alt={block.caption} className="w-full h-auto object-cover rounded-xl shadow-sm" loading="lazy" onError={(e) => { const el = e.currentTarget; if (!el.src.includes('unsplash.com')) el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; }} />
+                    {block.caption && <figcaption className="text-center text-[14px] mt-2 italic" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
+                  </figure>
+                );
                if (block.type === 'video') {
                   if (block.isShort) {
                     return (
@@ -1174,7 +1174,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                       <p className="font-medium text-[#5f687b] text-[12px]">{item.src}</p>
                    </div>
                    <div className="w-[100px] h-[75px] shrink-0 rounded-lg overflow-hidden relative">
-                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
                    </div>
                 </div>
              ))}
@@ -1364,14 +1364,14 @@ function MobileLayout({ activeCategory, setActiveCategory,
             >
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full">
-                    <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                    <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
                     <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
                   </div>
                   <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
               <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
                 {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
                   <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
                     <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1535,7 +1535,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
@@ -1562,7 +1562,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
@@ -1719,7 +1719,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11 border border-gray-100">
-                  <img alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                  <img alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
@@ -1730,7 +1730,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
                 {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
                   <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
                     <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1750,7 +1750,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
                 <div className="h-[140px] relative w-full overflow-hidden">
-                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } }} />
+                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
                   {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
                     <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-semibold backdrop-blur-md shadow-md">
                       <svg className="size-2.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -2234,20 +2234,21 @@ export function getProxyImageUrl(url: string) {
   if (!url || typeof url !== 'string') return "";
   let cleanUrl = url.trim();
   if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
+  if (!cleanUrl.startsWith("http")) return cleanUrl;
   
+  // Normalize Dantri .dev mirrors to official CDN
+  cleanUrl = cleanUrl.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://icdn.dantri.com.vn');
   if (cleanUrl.includes("dantri.dev")) {
-    cleanUrl = cleanUrl.replace("dantri.dev", "dantri.com.vn");
+    cleanUrl = cleanUrl.replace("dantri.dev", "icdn.dantri.com.vn");
   }
   
-  const bypassDomains = ['dantri.com.vn', 'tuoitre.vn', 'thanhnien.vn', 'vietnamnet.vn', 'vtv.vn'];
-  if (bypassDomains.some(d => cleanUrl.includes(d))) {
+  // Trusted CDNs that already permit cross-origin / never block hotlinking
+  if (cleanUrl.includes("wsrv.nl") || cleanUrl.includes("unsplash.com") || cleanUrl.includes("google.com/s2/favicons")) {
     return cleanUrl;
   }
   
-  if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
-  }
-  return cleanUrl;
+  // Route through wsrv.nl to bypass hotlinking/Referer blocking (e.g. Dantri 403) and cache safely
+  return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
 }
 
 
@@ -3325,12 +3326,8 @@ useEffect(() => {
             const pubDateMatch = itemXml.match(/<pubDate>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/i);
             const encMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
             const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i);
-
-            const title = titleMatch ? titleMatch[1].trim() : "";
-            const link = linkMatch ? linkMatch[1].trim() : "";
-            const desc = descMatch ? descMatch[1].trim() : "";
-            const pubDate = pubDateMatch ? pubDateMatch[1].trim() : "";
-            const thumb = encMatch ? encMatch[1] : (mediaMatch ? mediaMatch[1] : "");
+            const descImgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+            const thumb = encMatch ? encMatch[1] : (mediaMatch ? mediaMatch[1] : (descImgMatch ? descImgMatch[1] : ""));
 
             if (title && link) {
               items.push({
@@ -3368,29 +3365,38 @@ useEffect(() => {
         const results = await Promise.all(selectedFeeds.map(fetchSingleFeed));
         if (isCancelled) return;
         
+        const fallbackImages = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
         const mappedFeeds = results.map(feedArticles => {
-          return feedArticles.map((item: any) => {
-            let imageUrl = item.thumbnail || (item.enclosure && item.enclosure.link) || "";
-            if (!imageUrl && item.description) {
+          return feedArticles.map((item: any, idx: number) => {
+            let imageUrl = "";
+            if (typeof item.thumbnail === 'string' && item.thumbnail.startsWith('http')) imageUrl = item.thumbnail;
+            if (!imageUrl && typeof item.image === 'string' && item.image.startsWith('http')) imageUrl = item.image;
+            if (!imageUrl && item.enclosure && typeof item.enclosure.link === 'string' && item.enclosure.link.startsWith('http')) imageUrl = item.enclosure.link;
+            if (!imageUrl && typeof item.enclosure === 'string' && item.enclosure.startsWith('http')) imageUrl = item.enclosure;
+            if (!imageUrl && item.description && typeof item.description === 'string') {
               const imgMatch = item.description.match(/<img[^>]+src=["']([^"']+)["']/i);
               if (imgMatch) imageUrl = imgMatch[1];
             }
-            if (!imageUrl && item.content) {
+            if (!imageUrl && item.content && typeof item.content === 'string') {
               const imgMatch2 = item.content.match(/<img[^>]+src=["']([^"']+)["']/i);
               if (imgMatch2) imageUrl = imgMatch2[1];
             }
-            if (imageUrl) imageUrl = imageUrl.replace(/&amp;/g, '&');
+            if (imageUrl) {
+              imageUrl = imageUrl.replace(/&amp;/g, '&').trim();
+              imageUrl = imageUrl.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://icdn.dantri.com.vn');
+              imageUrl = imageUrl.replace('.dev', '.com.vn');
+            }
             
-            if (item.link) item.link = item.link.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://dantri.com.vn');
-            if (imageUrl) imageUrl = imageUrl.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://icdn.dantri.com.vn');
+            if (item.link) {
+              item.link = item.link.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://dantri.com.vn');
+            }
             
             if (imageUrl && (imageUrl.includes("1x1") || imageUrl.includes("pixel") || imageUrl.includes("favicon") || item.link?.includes("news.google.com"))) {
               imageUrl = ""; 
             }
             
-            if (!imageUrl || imageUrl.trim() === "") {
-              imageUrl = DEFAULT_CAT_IMAGE[item.category || activeCategory] || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80";
-            }
+            const catFallback = DEFAULT_CAT_IMAGE[item.category || activeCategory] || fallbackImages[idx % fallbackImages.length];
+            const finalImage = imageUrl ? getProxyImageUrl(imageUrl) : catFallback;
             
             let cleanDesc = "";
             if (item.description) {
@@ -3405,9 +3411,9 @@ useEffect(() => {
             const isSh = isVid && (/short|tiktok|reel/i.test(item.link || '') || /short|reel|tiktok/i.test(item.title || ''));
             const videoLink = (item.enclosure?.type?.includes('video') ? item.enclosure.link : '') || (item.videoUrl || '');
             return {
-              img: imageUrl,
+              img: finalImage,
               logo: getNewspaperLogo(item.link || ""),
-              fallbackImg: imageUrl,
+              fallbackImg: catFallback,
               author: decodeHTMLEntities(item.title ?? "Tin tức"),
               src: item.source || item._sourceName || "Tin tức",
               body: decodeHTMLEntities(cleanDesc),
