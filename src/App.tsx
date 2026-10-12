@@ -5,7 +5,7 @@
 
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { YouTubeBroadcastPlayer } from "./components/YouTubeBroadcastPlayer";
+import { VideoShortsModal } from "./components/VideoShortsModal";
 
 const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
 
@@ -1411,6 +1411,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
     onLogout?: () => void;
     onTokenExpired?: () => void;
     onRelogin?: () => void;
+    onOpenShorts?: () => void;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1423,17 +1424,28 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
         <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
         <div className="flex items-center">
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end mr-1.5">
             <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
             📍 {WEATHER.location}
           </p>
-            <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
+            <div className="bg-[#f4f6fa] mt-0.5 flex items-center px-2 py-0.5 rounded-full">
             <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
               {shortDateStr} · {timeStr}
             </p>
           </div>
           </div>
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+
+          {/* Nút Video Shorts TikTok/Reels trên Mobile Header */}
+          <button
+            onClick={onOpenShorts}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-black text-[11px] shadow-sm active:scale-95 transition-all cursor-pointer mr-1 animate-pulse"
+            title="Xem Video Shorts 9:16 (TikTok & Reels)"
+          >
+            <span>⚡</span>
+            <span>Shorts</span>
+          </button>
+
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
               ) : (
@@ -1469,42 +1481,10 @@ function MobileLayout({ activeCategory, setActiveCategory,
             </div>
           )}
 
-          {/* ── Banner Bản tin TV Trực tiếp (Mobile Quick Access) ── */}
-          {activeCategory !== "Bản tin TV" && (
-            <div
-              onClick={() => {
-                if (setActiveCategory) setActiveCategory("Bản tin TV");
-                setTimeout(() => {
-                  document.getElementById("youtube-broadcast-section")?.scrollIntoView({ behavior: 'smooth' });
-                }, 80);
-              }}
-              className="w-full bg-gradient-to-r from-[#182033] via-[#223358] to-[#182033] text-white rounded-2xl p-3 px-3.5 flex items-center justify-between cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99] border border-slate-700/60"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-[#ff315f] flex items-center justify-center text-white shrink-0 shadow-xs">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9.5px] font-black px-1.5 py-0.2 rounded bg-red-500/30 text-red-400 border border-red-500/30 uppercase tracking-wider">LIVE 24H</span>
-                    <span className="font-bold text-[13px] text-white truncate">Truyền Hình Bản Tin 24H</span>
-                  </div>
-                  <span className="text-[11px] text-slate-300 truncate">VTV24, VTC, HTV &amp; Dự báo thời tiết</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] font-bold text-[#ff315f] bg-white/10 px-2.5 py-1 rounded-full shrink-0">
-                <span>Xem TV</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-            </div>
-          )}
-
           {/* ── Category Bar Mobile: Sticky Category Row + Swipeable Pills ── */}
           <div className="flex flex-col gap-2 w-full sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-2 mt-[-8px]">
             <div className="flex items-center justify-between w-full">
-              <p className="font-bold text-[#182033] text-[17px]">
-                {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
-              </p>
+              <p className="font-bold text-[#182033] text-[17px]">Tin Tức Mới Nhất</p>
               <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
             </div>
             
@@ -1512,25 +1492,18 @@ function MobileLayout({ activeCategory, setActiveCategory,
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full pb-0.5">
               {NEWS_CATEGORIES.map(cat => {
                 const isActive = activeCategory === cat;
-                const isTv = cat === "Bản tin TV";
                 return (
                   <button
                     key={cat}
                     onClick={() => {
                       if (setActiveCategory) setActiveCategory(cat);
-                      if (isTv) {
-                        setTimeout(() => {
-                          document.getElementById("youtube-broadcast-section")?.scrollIntoView({ behavior: 'smooth' });
-                        }, 80);
-                      }
                     }}
                     className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
                       isActive
-                        ? (isTv ? 'bg-[#ff315f] text-white font-bold shadow-sm' : 'bg-[#182033] text-white font-bold shadow-sm')
-                        : (isTv ? 'bg-[#ffe8ee] text-[#ff315f] border border-[#ff315f]/30 font-bold' : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:bg-[#f4f6fa]')
+                        ? 'bg-[#182033] text-white font-bold shadow-sm'
+                        : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:bg-[#f4f6fa]'
                     }`}
                   >
-                    {isTv && <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f] animate-ping shrink-0" />}
                     <span>{cat}</span>
                   </button>
                 );
@@ -1538,51 +1511,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
             </div>
           </div>
 
-          {/* ── YouTube Broadcast Desk Mobile ── */}
-          {activeCategory === "Bản tin TV" ? (
-            <div className="w-full flex flex-col gap-4">
-              <button
-                onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
-                className="self-start flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full text-[12px] font-semibold text-[#5f687b] hover:text-[#ff315f] shadow-xs cursor-pointer transition-all"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                <span>Về Tin tức mới nhất</span>
-              </button>
-              <YouTubeBroadcastPlayer
-                liveNews={newsFeed}
-                currentWeather={WEATHER}
-                initialCategory="Thời sự 24h"
-                onClosePlayer={() => setActiveCategory && setActiveCategory("Tất cả")}
-              />
-              <div className="w-full flex flex-col gap-3 mt-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-[#182033] text-[15px] flex items-center gap-2">
-                    <span className="w-1.5 h-4 bg-red-600 rounded-full inline-block"></span>
-                    Bản tin video tự động cập nhật
-                  </h3>
-                  <span className="text-[11px] text-[#5f687b] font-medium">{newsFeed.length} bản tin</span>
-                </div>
-                {newsFeed.map((item, i) => (
-                  <div key={i} onClick={() => onArticleClick && onArticleClick(item)} className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer">
-                    <div className="flex flex-col gap-2 items-start w-full">
-                      <div className="flex gap-[10px] items-center w-full">
-                        <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
-                        <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
-                      </div>
-                      <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
-                    </div>
-                    <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                      <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
-                      <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
-                        <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        <span>▶ Video</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
+          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
               <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
@@ -1643,6 +1572,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     onLogout?: () => void;
     onTokenExpired?: () => void;
     onRelogin?: () => void;
+    onOpenShorts?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1663,87 +1593,39 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </p>
         </div>
         <div className="flex items-center">
-            <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full">
-          <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
-            {dateStr} · {timeStr}
-          </p>
-        </div>
-            <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
-              {darkMode ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-              )}
-            </div>
-            {userRole && userRole.picture ? (
-              <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
-            ) : (
-              <CustomLoginButton onLoginSuccess={onLoginSuccess} />
-            )}
+          <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full mr-2">
+            <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
+              {dateStr} · {timeStr}
+            </p>
           </div>
 
+          {/* Nút Video Shorts trên Tablet Header */}
+          <button
+            onClick={onOpenShorts}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-black text-[12px] shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer mr-2 shadow-red-500/20"
+            title="Xem Video Shorts 9:16 (TikTok & YouTube Shorts)"
+          >
+            <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <span>⚡ Shorts</span>
+          </button>
+
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+            {darkMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            )}
+          </div>
+          {userRole && userRole.picture ? (
+            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
+          ) : (
+            <CustomLoginButton onLoginSuccess={onLoginSuccess} />
+          )}
         </div>
+      </div>
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
-      {activeCategory === "Bản tin TV" ? (
-        <div className="w-full max-w-[1200px] mx-auto px-[var(--page-padding)] py-[var(--section-gap)] flex flex-col gap-6">
-          <div className="flex items-center justify-between w-full mb-1">
-            <div className="flex gap-[10px] items-center">
-              <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-                Bản Tin Truyền Hình 24H
-              </p>
-              <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
-                <p className="font-bold text-[11px] text-white">LIVE</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
-              className="text-[13px] font-semibold text-[#5f687b] hover:text-[#ff315f] flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full transition-all cursor-pointer shadow-xs"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              <span>Về Tin tức</span>
-            </button>
-          </div>
-
-          <YouTubeBroadcastPlayer
-            liveNews={newsFeed}
-            currentWeather={WEATHER}
-            initialCategory="Thời sự 24h"
-          />
-
-          {/* Automated Video News Feed Section */}
-          <div className="w-full flex flex-col gap-4 mt-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-[#182033] text-[18px] flex items-center gap-2">
-                <span className="w-1.5 h-5 bg-red-600 rounded-full inline-block"></span>
-                Bản tin video tự động cập nhật từ các báo
-              </h3>
-              <span className="text-[12px] text-[#5f687b] font-medium">{newsFeed.length} video phát sóng</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {newsFeed.map((item, i) => (
-                <div key={i} onClick={() => onArticleClick && onArticleClick(item)} className="bg-white flex flex-col gap-3 p-3.5 rounded-2xl border border-[#e3e7ef] shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-300 cursor-pointer group">
-                  <div className="h-[140px] relative rounded-xl w-full overflow-hidden bg-slate-900">
-                    <img alt="" className="absolute inset-0 object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
-                    <div className="absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-semibold backdrop-blur-md">
-                      <svg className="size-2.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                      <span>Video</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2">
-                      <img alt="" className="rounded-full size-4 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" />
-                      <span className="text-[11px] font-medium text-[#5f687b]">{item.src}</span>
-                    </div>
-                    <p className="font-semibold text-[#182033] text-[14px] line-clamp-2 group-hover:text-red-600 transition-colors leading-snug">{item.author}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
@@ -1831,7 +1713,6 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </>)}
         </div>
       </div>
-      )}
     </div>
   );
 }
@@ -1867,6 +1748,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     onLogout?: () => void;
     onTokenExpired?: () => void;
     onRelogin?: () => void;
+    onOpenShorts?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -1883,12 +1765,23 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
         </div>
         <div className="flex items-center">
-          <div className="bg-[#f4f6fa] flex items-center px-3 py-1 rounded-full">
+          <div className="bg-[#f4f6fa] flex items-center px-3 py-1 rounded-full mr-2">
             <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
           </div>
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+
+          {/* Nút Video Shorts trên Desktop Header */}
+          <button
+            onClick={onOpenShorts}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-black text-[13px] shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer mr-3 shadow-red-500/25"
+            title="Xem Video Shorts 9:16 (TikTok & YouTube Shorts)"
+          >
+            <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <span>⚡ Video Shorts 9:16</span>
+          </button>
+
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
@@ -1905,67 +1798,6 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
-      {activeCategory === "Bản tin TV" ? (
-        <div className="w-full max-w-[1536px] mx-auto px-[var(--page-padding)] py-[var(--section-gap)] flex flex-col gap-4">
-          <div className="flex items-center justify-between w-full mb-1">
-            <div className="flex gap-[10px] items-center">
-              <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-                Bản Tin Truyền Hình 24H
-              </p>
-              <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
-                <p className="font-bold text-[11px] text-white">LIVE</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
-              className="text-[13px] font-semibold text-[#5f687b] hover:text-[#ff315f] flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full transition-all cursor-pointer shadow-xs"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              <span>Về Tin tức</span>
-            </button>
-          </div>
-
-          <YouTubeBroadcastPlayer
-            liveNews={newsFeed}
-            currentWeather={WEATHER}
-            initialCategory="Thời sự 24h"
-          />
-
-          {/* Automated Video News Feed Section */}
-          <div className="w-full flex flex-col gap-4 mt-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-[#182033] text-[18px] flex items-center gap-2">
-                <span className="w-1.5 h-5 bg-red-600 rounded-full inline-block"></span>
-                Bản tin video tự động cập nhật từ các báo chính thống
-              </h3>
-              <span className="text-[12px] text-[#5f687b] font-medium">{newsFeed.length} video phát sóng</span>
-            </div>
-            <div className="grid grid-cols-3 gap-5">
-              {newsFeed.map((item, i) => (
-                <div key={i} onClick={() => onArticleClick && onArticleClick(item)} className="bg-white flex flex-col gap-3 p-4 rounded-2xl border border-[#e3e7ef] shadow-xs hover:-translate-y-1.5 hover:shadow-lg transition-all duration-300 cursor-pointer group">
-                  <div className="h-[170px] relative rounded-xl w-full overflow-hidden bg-slate-900">
-                    <img alt="" className="absolute inset-0 object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
-                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/75 text-white text-[11px] font-semibold backdrop-blur-md">
-                      <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                      <span>▶ Video</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 flex-1 justify-between">
-                    <p className="font-bold text-[#182033] text-[15px] line-clamp-2 group-hover:text-red-600 transition-colors leading-snug">{item.author}</p>
-                    <div className="flex items-center justify-between text-[11px] text-[#5f687b] pt-1 border-t border-slate-100">
-                      <div className="flex items-center gap-1.5">
-                        <img alt="" className="rounded-full size-4 object-cover" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" />
-                        <span className="font-medium">{item.src}</span>
-                      </div>
-                      <span className="text-[#94a3b8]">Tự động cập nhật</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
@@ -2066,7 +1898,6 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         </div>
       </div>
-      )}
     </div>
   );
 }
@@ -2274,7 +2105,6 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
 
 export const NEWS_CATEGORIES = [
   "Tất cả",
-  "Bản tin TV",
   "Thời tiết",
   "Giá vàng",
   "Chính trị",
@@ -2290,7 +2120,6 @@ export const DEFAULT_CAT_IMAGE: Record<string, string> = {
   "Tất cả": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70",
   "Trang chủ": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70",
   "Tin nổi bật": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=450&auto=format&fit=crop&q=70",
-  "Bản tin TV": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=450&auto=format&fit=crop&q=70",
   "Thời tiết": "https://images.unsplash.com/photo-1592210454359-9043f067919b?w=450&auto=format&fit=crop&q=70",
   "Giá vàng": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=450&auto=format&fit=crop&q=70",
   "Chính trị": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=450&auto=format&fit=crop&q=70",
@@ -2303,11 +2132,11 @@ export const DEFAULT_CAT_IMAGE: Record<string, string> = {
 };
 
 export const RSS_FEEDS_DB = [
-  // Bản tin TV
-  { category: "Bản tin TV", name: "Tuổi Trẻ • Video", url: "https://tuoitre.vn/rss/video.rss", isVideo: true },
-  { category: "Bản tin TV", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true },
-  { category: "Bản tin TV", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
-  { category: "Bản tin TV", name: "Dân Trí • Video", url: "https://dantri.com.vn/rss/video.rss", isVideo: true },
+  // Video Shorts tự động
+  { category: "Giải trí", name: "Tuổi Trẻ • Video", url: "https://tuoitre.vn/rss/video.rss", isVideo: true },
+  { category: "Giải trí", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true },
+  { category: "Giải trí", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
+  { category: "Giải trí", name: "Dân Trí • Video", url: "https://dantri.com.vn/rss/video.rss", isVideo: true },
 
   // Thời tiết & Môi trường
   { category: "Thời tiết", name: "Tuổi Trẻ • Thời sự", url: "https://tuoitre.vn/rss/thoi-su.rss" },
@@ -3313,6 +3142,7 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [isShortsOpen, setIsShortsOpen] = useState(false);
   
   // Trạng thái quản lý quyền người dùng (Role Management)
   const [userRole, setUserRole] = useState<any>(() => {
@@ -4344,15 +4174,39 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} />
-        
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
       </div>
+
+      {/* Floating Action Button (FAB) - Xem Video Shorts TikTok/Reels */}
+      <div className="fixed bottom-6 right-6 z-[95] flex items-center group">
+        <button
+          onClick={() => setIsShortsOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full bg-gradient-to-r from-[#ff0050] via-[#833ab4] to-[#00f2fe] text-white font-black text-[12px] sm:text-[13px] shadow-[0_8px_25px_rgba(255,0,80,0.5)] hover:shadow-[0_10px_35px_rgba(0,242,254,0.6)] hover:scale-105 active:scale-95 transition-all cursor-pointer border-2 border-white/40 tracking-wider"
+          title="Xem Video Shorts 9:16 (TikTok & Reels)"
+        >
+          <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white shrink-0 shadow-xs">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          <span className="flex items-center gap-1">
+            <span>⚡ Shorts</span>
+            <span className="hidden sm:inline text-[11px] font-bold text-white/80">9:16</span>
+          </span>
+        </button>
+      </div>
+
+      {/* Video Shorts Modal (Trải nghiệm TikTok / YouTube Shorts) */}
+      <VideoShortsModal
+        isOpen={isShortsOpen}
+        onClose={() => setIsShortsOpen(false)}
+        liveNews={liveNews}
+      />
+
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
       <ScrollToTop />
 
