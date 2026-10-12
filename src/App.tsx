@@ -2186,7 +2186,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
       >
         {!hasMoreNews ? "Đã tải hết tin tức hiện có" : isLoading ? "⏳ Đang tải thêm 15 bài..." : "↓ Tải thêm tin tức"}
       </button>
-      <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 10:30 (Tải tin đa nguồn)</div>
+      <div className="w-full text-center py-2 text-[10px] text-gray-400">Phiên bản: 15:30 (Truyền hình Tự động - HTML5 Native)</div>
     </div>
   );
 }

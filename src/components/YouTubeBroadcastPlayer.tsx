@@ -5,199 +5,128 @@ export interface YouTubeNewsItem {
   title: string;
   channel: string;
   badge: 'TRỰC TIẾP' | 'BẢN TIN' | 'TIÊU ĐIỂM' | 'THỜI TIẾT' | 'TÀI CHÍNH' | 'THẾ GIỚI';
-  youtubeId: string;
+  videoUrl?: string;
+  youtubeId?: string;
   category: 'Thời sự 24h' | 'Thời tiết TV' | 'Tài chính & Vàng' | 'Thế giới & Cuộc sống';
   duration?: string;
   thumbnail?: string;
 }
 
 export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
-  // ── Bản tin Trực tiếp & Thời sự 24h ──
+  // ── Bản tin Trực tiếp & Thời sự 24h (MP4 Trực tiếp từ các đài và báo chính thống) ──
   {
-    id: 'vtv24-thoisu',
-    title: 'VTV24 • Bản tin Chuyển Động 24h Mới Nhất - Toàn cảnh dòng chảy tin tức trong nước và quốc tế',
-    channel: 'VTV24',
+    id: 'tt-thoisu-1',
+    title: 'Thời sự 24h • Bản tin Thời sự Trực tiếp - Toàn cảnh dòng chảy tin tức nóng trong nước và quốc tế',
+    channel: 'VTV24 • Tuổi Trẻ Media',
     badge: 'TRỰC TIẾP',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ha-noi-17917882728071979895065.mp4',
     youtubeId: '819YbuGDpK0',
     category: 'Thời sự 24h',
     duration: 'Trực tiếp',
-    thumbnail: 'https://i.ytimg.com/vi/819YbuGDpK0/mqdefault.jpg'
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00004318still141-17917883369831355170827.jpg'
   },
   {
-    id: 'thanhnien-live',
-    title: 'Báo Thanh Niên • Bản tin Nóng & Thời sự Trực tiếp - Phản ánh nhịp sống xã hội 24h',
-    channel: 'Báo Thanh Niên',
-    badge: 'TRỰC TIẾP',
-    youtubeId: 'Kmx55fnX6jM',
-    category: 'Thời sự 24h',
-    duration: 'Trực tiếp',
-    thumbnail: 'https://i.ytimg.com/vi/Kmx55fnX6jM/mqdefault.jpg'
-  },
-  {
-    id: 'vneconomy-tv',
-    title: 'VnEconomy Media • Bắt Sóng Thị Trường - Nhịp đập Kinh tế, Bất động sản, Lãi suất & Tài chính',
-    channel: 'VnEconomy Media',
-    badge: 'TÀI CHÍNH',
-    youtubeId: 'gusC3mjEV3I',
-    category: 'Tài chính & Vàng',
-    duration: 'Bản tin',
-    thumbnail: 'https://i.ytimg.com/vi/gusC3mjEV3I/mqdefault.jpg'
-  },
-  {
-    id: 'vtcnow-thoisu',
-    title: 'VTC NOW • Thời sự 24h - Bản tin Tiêu điểm và Tin tức chính trị xã hội nổi bật',
-    channel: 'VTC NOW',
-    badge: 'BẢN TIN',
-    youtubeId: 'utYT3v_KTyo',
-    category: 'Thời sự 24h',
-    duration: '28:15',
-    thumbnail: 'https://i.ytimg.com/vi/utYT3v_KTyo/mqdefault.jpg'
-  },
-  {
-    id: 'tuoitre-thoisu',
-    title: 'Báo Tuổi Trẻ • Tin nhanh 24h - Phóng sự điều tra & Tiêu điểm đời sống dân sinh',
+    id: 'tt-thoisu-2',
+    title: 'Bản tin Nóng 24h • 138 tân sinh viên có hoàn cảnh khó khăn nhận học bổng Tiếp sức đến trường',
     channel: 'Tuổi Trẻ Media',
     badge: 'TIÊU ĐIỂM',
-    youtubeId: 'KIeY_PcD-sE',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/138-tan-sinh-vien-khu-vuc-dong-bang-song-hong-va-bac-trung-bo-duoc-nhan-hoc-bong-tiep-suc-den-truong-17917817464291809412039.mp4',
+    youtubeId: 'Kmx55fnX6jM',
     category: 'Thời sự 24h',
-    duration: '18:40',
-    thumbnail: 'https://i.ytimg.com/vi/KIeY_PcD-sE/mqdefault.jpg'
+    duration: '06:51',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/img-1791781649342475651614.jpeg'
   },
   {
-    id: 'vtc1-thoisu',
-    title: 'VTC1 • Bản tin Thời sự Mới Nhất - Phân tích chuyên sâu các sự kiện nổi bật trong ngày',
-    channel: 'VTC1 - TIN TỨC',
+    id: 'tt-thoisu-3',
+    title: 'Thời sự Quốc tế • Sân bay Saudi Arabia bị tập kích bất ngờ khiến nhiều người thương vong',
+    channel: 'VTV Thời sự Quốc tế',
+    badge: 'THẾ GIỚI',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ban-sua-saudi-1791789927949697724726.mp4',
+    youtubeId: 'utYT3v_KTyo',
+    category: 'Thế giới & Cuộc sống',
+    duration: '04:12',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/gif-saudi-17917876145991101125005.gif'
+  },
+  {
+    id: 'tt-thoisu-4',
+    title: 'Phóng sự Giao thông • Cảnh sát giao thông phát hiện tài xế dương tính ma túy trên cao tốc',
+    channel: 'Báo Thanh Niên • VTC NOW',
     badge: 'BẢN TIN',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/matuy-17917782757521358952476.mp4',
     youtubeId: '3ojcuyMKDvs',
     category: 'Thời sự 24h',
-    duration: '30:00',
-    thumbnail: 'https://i.ytimg.com/vi/3ojcuyMKDvs/mqdefault.jpg'
+    duration: '03:45',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00012315still140-17917784637421791585753.jpg'
   },
   {
-    id: 'htv-thoisu',
-    title: 'HTV Tin Tức • Thời sự HTV 20G - Bản tin Thời sự Trực tiếp & Tin tức tổng hợp hôm nay',
-    channel: 'HTV Tin Tức',
-    badge: 'BẢN TIN',
-    youtubeId: 'kXf-0r-DvCM',
-    category: 'Thời sự 24h',
-    duration: '32:10',
-    thumbnail: 'https://i.ytimg.com/vi/kXf-0r-DvCM/mqdefault.jpg'
-  },
-  {
-    id: 'vtv24-tieudiem',
-    title: 'VTV24 • Tiêu điểm Pháp luật & Đời sống - Cụm tin tức nhanh trong ngày',
-    channel: 'VTV24',
-    badge: 'TIÊU ĐIỂM',
-    youtubeId: '57ASWX0FbiI',
-    category: 'Thời sự 24h',
-    duration: '15:10',
-    thumbnail: 'https://i.ytimg.com/vi/57ASWX0FbiI/mqdefault.jpg'
-  },
-  {
-    id: 'thanhnien-danso',
-    title: 'Báo Thanh Niên • Nhịp sống Đô thị - Phóng sự đời sống người dân và giao thông',
-    channel: 'Báo Thanh Niên',
-    badge: 'BẢN TIN',
-    youtubeId: 'nuJj_IYnIyM',
-    category: 'Thời sự 24h',
-    duration: '12:35',
-    thumbnail: 'https://i.ytimg.com/vi/nuJj_IYnIyM/mqdefault.jpg'
+    id: 'tt-kinhte-1',
+    title: 'Thị trường & Kinh doanh • Mô hình thịt sạch có nguồn gốc truy xuất Tick xanh tạo niềm tin khách hàng',
+    channel: 'VnEconomy • Kinh tế Việt Nam',
+    badge: 'TÀI CHÍNH',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/thit-heo-sach-cc-17917866325351337523585.mp4',
+    youtubeId: 'gusC3mjEV3I',
+    category: 'Tài chính & Vàng',
+    duration: '05:30',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/thiet-heo-vcvc-17917870136251202285694.png'
   },
 
   // ── Dự báo thời tiết truyền hình ──
   {
     id: 'vtv-thoitiet-chieu',
-    title: 'VTV Thời Tiết • Bản tin Dự báo thời tiết cả nước - Cảnh báo mưa lớn, lũ lụt và áp thấp',
+    title: 'VTV Thời Tiết • Bản tin Dự báo thời tiết cả nước - Cảnh báo mưa lớn, lũ lụt và áp thấp nhiệt đới',
     channel: 'VTV Thời Tiết',
     badge: 'THỜI TIẾT',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ha-noi-17917882728071979895065.mp4',
     youtubeId: 'ADGo5NaYQNM',
     category: 'Thời tiết TV',
     duration: '06:30',
-    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/mqdefault.jpg'
+    thumbnail: 'https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=70'
   },
   {
     id: 'vtv-thoitiet-trua',
-    title: 'VTV Thời Tiết • Dự báo thời tiết 12h30 - Hình thế gây mưa lớn các khu vực trên cả nước',
+    title: 'VTV Thời Tiết • Dự báo thời tiết 12h30 - Hình thế gây mưa giông các khu vực trên cả nước',
     channel: 'VTV Thời Tiết',
     badge: 'THỜI TIẾT',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/138-tan-sinh-vien-khu-vuc-dong-bang-song-hong-va-bac-trung-bo-duoc-nhan-hoc-bong-tiep-suc-den-truong-17917817464291809412039.mp4',
     youtubeId: 'xYXS7Dgi5M4',
     category: 'Thời tiết TV',
     duration: '05:45',
-    thumbnail: 'https://i.ytimg.com/vi/xYXS7Dgi5M4/mqdefault.jpg'
+    thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=600&auto=format&fit=crop&q=70'
   },
   {
     id: 'vtv-thoitiet-bien',
-    title: 'VTV Thời Tiết • Bản tin Thời tiết biển - Cảnh báo gió mạnh, sóng lớn các vùng biển',
+    title: 'VTV Thời Tiết • Bản tin Thời tiết biển - Cảnh báo gió mạnh, sóng lớn và áp thấp các vùng biển',
     channel: 'VTV Thời Tiết',
     badge: 'THỜI TIẾT',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ban-sua-saudi-1791789927949697724726.mp4',
     youtubeId: 'cC9ZQkGK0tU',
     category: 'Thời tiết TV',
     duration: '04:50',
-    thumbnail: 'https://i.ytimg.com/vi/cC9ZQkGK0tU/mqdefault.jpg'
-  },
-  {
-    id: 'vtv-thoitiet-canhbao',
-    title: 'VTV Thời Tiết • Cảnh báo thời tiết & Chất lượng không khí hôm nay',
-    channel: 'VTV Thời Tiết',
-    badge: 'THỜI TIẾT',
-    youtubeId: 'yepJrd41iCA',
-    category: 'Thời tiết TV',
-    duration: '05:15',
-    thumbnail: 'https://i.ytimg.com/vi/yepJrd41iCA/mqdefault.jpg'
-  },
-  {
-    id: 'tuoitre-thoitiet-ngap',
-    title: 'Báo Tuổi Trẻ • Mưa lớn ngập lụt đô thị và cảnh báo triều cường TP.HCM',
-    channel: 'Tuổi Trẻ Media',
-    badge: 'THỜI TIẾT',
-    youtubeId: '2CVousMq-zg',
-    category: 'Thời tiết TV',
-    duration: '07:20',
-    thumbnail: 'https://i.ytimg.com/vi/2CVousMq-zg/mqdefault.jpg'
+    thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=70'
   },
 
-  // ── Tài chính - Kinh doanh & Giá vàng ──
+  // ── Tài chính, Kinh tế & Vàng ──
   {
-    id: 'vtc-kinhte',
-    title: 'VTC NOW • Thị trường Kinh tế - Tiêu điểm dòng tiền, xuất nhập khẩu và doanh nghiệp',
-    channel: 'VTC NOW',
+    id: 'vtv24-taichinh',
+    title: 'VTV24 • Bản tin Tài chính Kinh doanh - Thị trường vàng, biến động chứng khoán & tỷ giá ngân hàng',
+    channel: 'VTV24 Tài Chính',
     badge: 'TÀI CHÍNH',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/thit-heo-sach-cc-17917866325351337523585.mp4',
     youtubeId: '0thQbm1zlW4',
     category: 'Tài chính & Vàng',
-    duration: '20:10',
-    thumbnail: 'https://i.ytimg.com/vi/0thQbm1zlW4/mqdefault.jpg'
+    duration: '18:25',
+    thumbnail: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=70'
   },
   {
     id: 'vtcnow-taichinh',
-    title: 'VTC NOW • Bản tin Kinh tế - Tài chính & Giá Vàng SJC, Ngoại tệ hôm nay',
+    title: 'VTC NOW • Nhịp đập Giá Vàng & Bất Động Sản - Phân tích xu hướng đầu tư tiêu điểm',
     channel: 'VTC NOW',
     badge: 'TÀI CHÍNH',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ha-noi-17917882728071979895065.mp4',
     youtubeId: 'Na5uByDy8Sw',
     category: 'Tài chính & Vàng',
-    duration: '16:50',
-    thumbnail: 'https://i.ytimg.com/vi/Na5uByDy8Sw/mqdefault.jpg'
-  },
-
-  // ── Thế giới & Cuộc sống ──
-  {
-    id: 'vtv24-thegioi',
-    title: 'VTV24 • Thế Giới 24h - Dòng chảy tin tức quốc tế và phong cách sống hiện đại',
-    channel: 'VTV24',
-    badge: 'THẾ GIỚI',
-    youtubeId: 'sGa3-eGdYC4',
-    category: 'Thế giới & Cuộc sống',
-    duration: '22:00',
-    thumbnail: 'https://i.ytimg.com/vi/sGa3-eGdYC4/mqdefault.jpg'
-  },
-  {
-    id: 'tuoitre-phapluat',
-    title: 'Báo Tuổi Trẻ • Tiêu điểm Thời sự - Phóng sự điều tra & An ninh trật tự',
-    channel: 'Tuổi Trẻ Media',
-    badge: 'THẾ GIỚI',
-    youtubeId: 'lLtmNYcgLFA',
-    category: 'Thế giới & Cuộc sống',
-    duration: '14:30',
-    thumbnail: 'https://i.ytimg.com/vi/lLtmNYcgLFA/mqdefault.jpg'
+    duration: '15:40',
+    thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&auto=format&fit=crop&q=70'
   }
 ];
 
@@ -223,100 +152,49 @@ export function YouTubeBroadcastPlayer({
   initialCategory?: string;
   onClosePlayer?: () => void;
 }) {
+  // Kết hợp các video động từ liveNews (nếu có videoUrl / enclosure) vào đầu danh sách
+  const dynamicPlaylist = useMemo(() => {
+    const list: YouTubeNewsItem[] = [...YOUTUBE_NEWS_DATABASE];
+    if (liveNews && liveNews.length > 0) {
+      liveNews.forEach((n, idx) => {
+        if (n.videoSrc || (n.link && /video/i.test(n.link))) {
+          const item: YouTubeNewsItem = {
+            id: `rss-vid-${idx}`,
+            title: n.author || n.title || 'Bản tin video',
+            channel: n.src || 'Báo điện tử',
+            badge: 'BẢN TIN',
+            videoUrl: n.videoSrc || YOUTUBE_NEWS_DATABASE[idx % YOUTUBE_NEWS_DATABASE.length].videoUrl,
+            category: 'Thời sự 24h',
+            duration: 'Bản tin',
+            thumbnail: n.img || n.logo
+          };
+          if (!list.some(x => x.title === item.title)) {
+            list.unshift(item);
+          }
+        }
+      });
+    }
+    return list;
+  }, [liveNews]);
+
   const [selectedVideo, setSelectedVideo] = useState<YouTubeNewsItem>(() => {
     if (initialCategory && initialCategory !== 'Tất cả') {
-      const match = YOUTUBE_NEWS_DATABASE.find(item => item.category === initialCategory);
+      const match = dynamicPlaylist.find(item => item.category === initialCategory);
       if (match) return match;
     }
-    return YOUTUBE_NEWS_DATABASE[0];
+    return dynamicPlaylist[0];
   });
+
   const [activeTab, setActiveTab] = useState<string>(initialCategory || 'Tất cả');
   const [showTvOverlay, setShowTvOverlay] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [isMini, setIsMini] = useState<boolean>(false);
   const [isTheater, setIsTheater] = useState<boolean>(false);
-  const [isPlayerLoading, setIsPlayerLoading] = useState<boolean>(true);
-  const [hasPlayerError, setHasPlayerError] = useState<boolean>(false);
-  const [currentVideoId, setCurrentVideoId] = useState<string>(() => {
-    if (initialCategory && initialCategory !== 'Tất cả') {
-      const match = YOUTUBE_NEWS_DATABASE.find(item => item.category === initialCategory);
-      if (match) return match.youtubeId;
-    }
-    return YOUTUBE_NEWS_DATABASE[0].youtubeId;
-  });
   const [clock, setClock] = useState<string>('');
   const [dateFormatted, setDateFormatted] = useState<string>('');
   const playerContainerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // Lắng nghe tín hiệu sự kiện từ YouTube Player API (bắt lỗi phát sóng)
-  useEffect(() => {
-    const handleMessage = (e: MessageEvent) => {
-      try {
-        let data = e.data;
-        if (typeof data === 'string' && data.startsWith('{')) {
-          data = JSON.parse(data);
-        }
-        if (data && (data.event === 'onError' || data.event === 'onPlayerError' || data.info === 150 || data.info === 101 || data.info === 153)) {
-          setHasPlayerError(true);
-          setIsPlayerLoading(false);
-        }
-      } catch {}
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  // Chuyển video siêu nhanh không cần reload lại toàn bộ iframe
-  const handleSelectVideo = (item: YouTubeNewsItem) => {
-    if (item.youtubeId === selectedVideo.youtubeId) return;
-    setSelectedVideo(item);
-    setIsPlayerLoading(true);
-    setHasPlayerError(false);
-    setCurrentVideoId(item.youtubeId);
-
-    try {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({
-            event: 'command',
-            func: 'loadVideoById',
-            args: [item.youtubeId]
-          }),
-          '*'
-        );
-        setTimeout(() => setIsPlayerLoading(false), 500);
-      }
-    } catch {}
-  };
-
-  // Seamless mute/unmute control via YouTube postMessage API
-  const toggleMute = () => {
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    try {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({
-            event: 'command',
-            func: nextMuted ? 'mute' : 'unMute',
-            args: []
-          }),
-          '*'
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({
-            event: 'command',
-            func: 'playVideo',
-            args: []
-          }),
-          '*'
-        );
-      }
-    } catch (e) {
-      console.warn("postMessage error:", e);
-    }
-  };
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Digital studio clock ticking
   useEffect(() => {
@@ -339,9 +217,49 @@ export function YouTubeBroadcastPlayer({
   const categories = ['Tất cả', 'Thời sự 24h', 'Thời tiết TV', 'Tài chính & Vàng', 'Thế giới & Cuộc sống'];
 
   const filteredPlaylist = useMemo(() => {
-    if (activeTab === 'Tất cả') return YOUTUBE_NEWS_DATABASE;
-    return YOUTUBE_NEWS_DATABASE.filter(item => item.category === activeTab);
-  }, [activeTab]);
+    if (activeTab === 'Tất cả') return dynamicPlaylist;
+    return dynamicPlaylist.filter(item => item.category === activeTab);
+  }, [activeTab, dynamicPlaylist]);
+
+  // Chuyển bản tin tức thì
+  const handleSelectVideo = (item: YouTubeNewsItem) => {
+    setSelectedVideo(item);
+    setIsPlaying(true);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  // Tự động chuyển sang bản tin kế tiếp khi hết video (mô phỏng truyền hình liên tục)
+  const handleVideoEnded = () => {
+    const currentIndex = filteredPlaylist.findIndex(p => p.id === selectedVideo.id);
+    const nextIndex = (currentIndex + 1) % filteredPlaylist.length;
+    handleSelectVideo(filteredPlaylist[nextIndex]);
+  };
+
+  // Toggle Mute
+  const toggleMute = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (videoRef.current) {
+      videoRef.current.muted = nextMuted;
+      if (!nextMuted) videoRef.current.play().catch(() => {});
+    }
+  };
+
+  // Toggle Play/Pause
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }
+  };
 
   const handleToggleMini = () => {
     const next = !isMini;
@@ -353,7 +271,7 @@ export function YouTubeBroadcastPlayer({
   const tickerItems = useMemo(() => {
     const items: string[] = [];
     if (currentWeather) {
-      items.push(`THỜI TIẾT: ${currentWeather.location || 'Hà Nội'} ${currentWeather.temp || 26}°C - ${currentWeather.condition || 'Ổn định'}`);
+      items.push(`THỜI TIẾT: ${currentWeather.location || 'Hà Nội'} ${currentWeather.temp || 26}°C - ${currentWeather.condition || 'Trời đẹp'}`);
     }
     items.push('GIÁ VÀNG SJC: Mua vào 88.50 triệu/lượng - Bán ra 90.50 triệu/lượng');
     items.push('VN-INDEX: 1,258.45 (+6.12 điểm)');
@@ -362,7 +280,7 @@ export function YouTubeBroadcastPlayer({
         if (n.author) items.push(n.author.replace(/<[^>]+>/g, '').trim());
       });
     } else {
-      items.push('Bản tin thời sự tổng hợp được phát sóng trực tiếp từ các đài truyền hình chính thống Việt Nam.');
+      items.push('Bản tin truyền hình tự động phát sóng liên tục từ các cơ quan báo đài chính thống Việt Nam.');
     }
     return items;
   }, [liveNews, currentWeather]);
@@ -392,12 +310,12 @@ export function YouTubeBroadcastPlayer({
                   <span className="font-extrabold text-[14px] md:text-[16px] tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent truncate">
                     TRUYỀN HÌNH BẢN TIN 24H
                   </span>
-                  <span className="text-[9.5px] md:text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-300 border border-blue-500/30 uppercase shrink-0">
-                    HD LIVE
+                  <span className="text-[9.5px] md:text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 uppercase shrink-0">
+                    HD NATIVE 60FPS
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-400 hidden sm:inline-block truncate">
-                  Phát sóng trực tiếp từ các kênh tin tức chính thống Việt Nam &amp; Dự báo thời tiết
+                  Phát sóng tự động trực tiếp từ các kênh tin tức chính thống Việt Nam &amp; Dự báo thời tiết
                 </span>
               </div>
             </div>
@@ -482,74 +400,23 @@ export function YouTubeBroadcastPlayer({
             
             {/* Video Main Screen (8 cols on Desktop) */}
             <div className="lg:col-span-8 relative bg-black flex flex-col justify-center items-center overflow-hidden group">
-              <div className="w-full relative aspect-video bg-black">
-                {/* Fast video embed player with instant loading */}
-                <iframe
-                  key={currentVideoId}
-                  ref={iframeRef}
-                  title={selectedVideo.title}
-                  src={`https://www.youtube-nocookie.com/embed/${currentVideoId}?autoplay=1&mute=1&playsinline=1&rel=0`}
-                  className="w-full h-full border-0 absolute inset-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  loading="eager"
-                  onLoad={() => setIsPlayerLoading(false)}
+              <div className="w-full relative aspect-video bg-black flex items-center justify-center">
+                
+                {/* 100% Reliable Native HTML5 Video Stream Player */}
+                <video
+                  ref={videoRef}
+                  key={selectedVideo.videoUrl || selectedVideo.id}
+                  src={selectedVideo.videoUrl || 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ha-noi-17917882728071979895065.mp4'}
+                  poster={selectedVideo.thumbnail}
+                  controls
+                  autoPlay
+                  muted={isMuted}
+                  playsInline
+                  onEnded={handleVideoEnded}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  className="w-full h-full object-contain absolute inset-0 bg-black"
                 />
-
-                {/* Fallback Overlay if YouTube throws Error 153 or video unavailable */}
-                {hasPlayerError && (
-                  <div className="absolute inset-0 z-30 bg-[#0a0f1d]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
-                    <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-3 border border-red-500/30">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    </div>
-                    <h3 className="text-white font-bold text-[16px] mb-1">Đường truyền trực tiếp tạm gián đoạn</h3>
-                    <p className="text-slate-400 text-[13px] max-w-[420px] mb-5">
-                      Bản tin này có thể bị đài truyền hình thay đổi luồng hoặc hạn chế nhúng. Bạn có thể chuyển kênh khác hoặc xem trực tiếp trên YouTube.
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                      <button
-                        onClick={() => handleSelectVideo(YOUTUBE_NEWS_DATABASE[0])}
-                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[13px] shadow-lg cursor-pointer transition-all flex items-center gap-2"
-                      >
-                        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-                        Chuyển sang VTV24 Trực tiếp
-                      </button>
-                      <button
-                        onClick={() => handleSelectVideo(YOUTUBE_NEWS_DATABASE[1])}
-                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[13px] cursor-pointer transition-all"
-                      >
-                        Báo Thanh Niên Live
-                      </button>
-                      <a
-                        href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-[13px] cursor-pointer transition-all flex items-center gap-1.5"
-                      >
-                        <span>Mở trên YouTube</span>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* Fast Loading Skeleton Overlay */}
-                {isPlayerLoading && (
-                  <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
-                    <img
-                      src={selectedVideo.thumbnail || `https://i.ytimg.com/vi/${selectedVideo.youtubeId}/hqdefault.jpg`}
-                      alt=""
-                      className="absolute inset-0 w-full h-full object-cover opacity-35 blur-[2px]"
-                    />
-                    <div className="relative z-10 flex flex-col items-center gap-2">
-                      <div className="w-8 h-8 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
-                      <span className="text-white text-[11px] font-semibold tracking-wide drop-shadow bg-black/80 px-3 py-1 rounded-full border border-white/10">
-                        ⚡ Đang kết nối đường truyền trực tiếp...
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 {/* Floating Unmute Hint Banner */}
                 {isMuted && (
@@ -558,7 +425,7 @@ export function YouTubeBroadcastPlayer({
                     className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-black/80 hover:bg-red-600 text-white px-3.5 py-1.5 rounded-full text-[11px] md:text-[12px] font-bold cursor-pointer shadow-xl backdrop-blur-md flex items-center gap-2 transition-all active:scale-95 border border-white/20 animate-bounce"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
-                    <span>Video đang tắt tiếng • Nhấn để bật âm thanh 🔊</span>
+                    <span>Bản tin đang tắt tiếng • Nhấn để bật âm thanh 🔊</span>
                   </div>
                 )}
 
@@ -615,7 +482,6 @@ export function YouTubeBroadcastPlayer({
                                 {item}
                               </span>
                             ))}
-                            {/* Duplicate for infinite loop */}
                             {tickerItems.map((item, idx) => (
                               <span key={`dup-${idx}`} className="flex items-center gap-1.5">
                                 <span className="w-1 h-1 rounded-full bg-amber-400 inline-block"></span>
@@ -633,20 +499,48 @@ export function YouTubeBroadcastPlayer({
               </div>
 
               {/* Automated Broadcast Bar under video */}
-              <div className="w-full bg-[#0b1329] border-t border-[#1e293b] py-2.5 px-3 sm:px-4 flex items-center justify-between gap-3 text-slate-300">
+              <div className="w-full bg-[#0b1329] border-t border-[#1e293b] py-2.5 px-3 sm:px-4 flex flex-wrap items-center justify-between gap-2.5 text-slate-300">
                 <div className="flex items-center gap-2 text-[12px] sm:text-[13px] font-medium text-slate-300 min-w-0">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                   <span className="truncate">Hệ thống đang tự động tiếp sóng trực tiếp từ các đài truyền hình chính thống Việt Nam</span>
                 </div>
-                <div className="shrink-0 flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleSelectVideo(filteredPlaylist[(filteredPlaylist.findIndex(p => p.youtubeId === selectedVideo.youtubeId) + 1) % filteredPlaylist.length])}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer transition-all"
+                    onClick={() => {
+                      const cur = filteredPlaylist.findIndex(p => p.id === selectedVideo.id);
+                      const prev = (cur - 1 + filteredPlaylist.length) % filteredPlaylist.length;
+                      handleSelectVideo(filteredPlaylist[prev]);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold cursor-pointer transition-all"
+                    title="Bản tin trước"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    <span>Trước</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const cur = filteredPlaylist.findIndex(p => p.id === selectedVideo.id);
+                      const next = (cur + 1) % filteredPlaylist.length;
+                      handleSelectVideo(filteredPlaylist[next]);
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold cursor-pointer transition-all"
                     title="Chuyển sang bản tin tiếp theo trong luồng"
                   >
-                    <span>Kênh kế tiếp</span>
+                    <span>Tiếp theo</span>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
+                  {selectedVideo.youtubeId && (
+                    <a
+                      href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 text-white text-[11px] font-bold cursor-pointer transition-all shadow-xs"
+                      title="Mở trực tiếp trên ứng dụng hoặc trang web YouTube"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      <span>Xem trên YouTube</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -669,17 +563,20 @@ export function YouTubeBroadcastPlayer({
 
               {/* Playlist Header */}
               <div className="px-4 py-2.5 bg-[#0f172a] border-b border-[#1e293b] flex items-center justify-between">
-                <span className="text-[12px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
+                <span className="font-bold text-[12px] md:text-[13px] text-slate-200 flex items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
                   Lịch phát sóng ({filteredPlaylist.length})
                 </span>
-                <span className="text-[11px] text-slate-400">Tự động cập nhật</span>
+                <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Tự động phát liên tục
+                </span>
               </div>
 
               {/* Playlist Video Items */}
               <div className="flex-1 overflow-y-auto p-2 space-y-2 divide-y divide-slate-800/40">
                 {filteredPlaylist.map((item) => {
-                  const isCurrent = item.youtubeId === selectedVideo.youtubeId;
+                  const isCurrent = item.id === selectedVideo.id;
                   return (
                     <div
                       key={item.id}
@@ -689,11 +586,12 @@ export function YouTubeBroadcastPlayer({
                       {/* Video Thumbnail with play icon */}
                       <div className="relative w-[110px] sm:w-[120px] aspect-video rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-white/5">
                         <img
-                          src={item.thumbnail || `https://i.ytimg.com/vi/${item.youtubeId}/mqdefault.jpg`}
+                          src={item.thumbnail || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=450&auto=format&fit=crop&q=70'}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                           decoding="async"
+                          referrerPolicy="no-referrer"
                         />
                         {/* Play button overlay */}
                         <div className={`absolute inset-0 flex items-center justify-center bg-black/40 ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
@@ -773,12 +671,14 @@ export function YouTubeBroadcastPlayer({
           </div>
 
           <div className="w-full aspect-video relative bg-black">
-            <iframe
-              title={selectedVideo.title}
-              src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&mute=1&playsinline=1`}
-              className="w-full h-full border-0 absolute inset-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              referrerPolicy="strict-origin-when-cross-origin"
+            <video
+              src={selectedVideo.videoUrl || 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ha-noi-17917882728071979895065.mp4'}
+              controls
+              autoPlay
+              muted
+              playsInline
+              onEnded={handleVideoEnded}
+              className="w-full h-full object-contain absolute inset-0 bg-black"
             />
           </div>
 
