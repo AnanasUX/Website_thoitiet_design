@@ -638,8 +638,10 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 }
 
 
+const articleContentCache = new Map<string, any[]>();
+
 function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { article: any, allNews: any[], onClose: () => void, onSelectRelated: (item: any) => void }) {
-  const [fullContent, setFullContent] = useState<string>('');
+  const [fullContent, setFullContent] = useState<string>('RICH_RENDER');
   const [isLoadingFull, setIsLoadingFull] = useState(false);
   const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
 
@@ -667,7 +669,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       fc.paragraphs.forEach((p: string, i: number) => {
         html += `<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${p}</p>`;
         if ((i + 1) % 3 === 0 && imgIdx < (fc.images?.length || 0)) {
-          html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
+          html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" decoding="async" referrerPolicy="no-referrer" />`;
           if (fc.captions && fc.captions[imgIdx]) {
             html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
           }
@@ -676,7 +678,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       });
       
       while (imgIdx < (fc.images?.length || 0)) {
-        html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" />`;
+        html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" decoding="async" referrerPolicy="no-referrer" />`;
         if (fc.captions && fc.captions[imgIdx]) {
           html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
         }
@@ -856,12 +858,40 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         if (tag === 'script' || tag === 'style' || el.style.display === 'none') return;
         if (el.classList?.contains('readmore-body-box') || el.classList?.contains('article-relate') || el.classList?.contains('story__heading') || el.classList?.contains('link-source-wrapper') || el.classList?.contains('link-source-detail')) return;
 
+        const getBestImgSrc = (imgEl: Element | null) => {
+          if (!imgEl) return '';
+          let s = imgEl.getAttribute('data-src') ||
+                  imgEl.getAttribute('data-original') ||
+                  imgEl.getAttribute('data-lazy-src') ||
+                  imgEl.getAttribute('data-actualsrc') ||
+                  imgEl.getAttribute('data-cdn-src') ||
+                  imgEl.getAttribute('src') || '';
+
+          if (!s || s.startsWith('data:') || s.includes('blank.gif') || s.includes('placeholder') || s.includes('1x1')) {
+            const srcset = imgEl.getAttribute('data-srcset') || imgEl.getAttribute('srcset');
+            if (srcset) {
+              const candidate = srcset.split(',')[0]?.trim().split(' ')[0];
+              if (candidate && !candidate.startsWith('data:')) s = candidate;
+            }
+          }
+
+          if (s) {
+            s = s.trim();
+            if (s.startsWith('//')) s = 'https:' + s;
+            else if (s.startsWith('/')) {
+              try { s = new URL(s, baseUrl).href; } catch(e){}
+            }
+            s = s.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://icdn.dantri.com.vn');
+            s = s.replace('.dev', '.com.vn');
+          }
+          return s;
+        };
+
         if (tag === 'figure' || tag === 'picture') {
           const img = el.querySelector('img');
           if (img) {
-            let src = img.getAttribute('data-src') || img.getAttribute('data-original') || img.getAttribute('src');
-            if (src && !src.startsWith('data:')) {
-              if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
+            const src = getBestImgSrc(img);
+            if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif')) {
               const caption = el.querySelector('figcaption')?.textContent?.trim() || img.getAttribute('alt') || '';
               blocks.push({ type: 'image', src: getProxyImageUrl(src), caption });
             }
@@ -870,9 +900,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
 
         if (tag === 'img') {
-          let src = el.getAttribute('data-src') || el.getAttribute('data-original') || el.getAttribute('src');
-          if (src && !src.startsWith('data:')) {
-            if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
+          const src = getBestImgSrc(el);
+          if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif')) {
             blocks.push({ type: 'image', src: getProxyImageUrl(src), caption: el.getAttribute('alt') || '' });
           }
           return;
@@ -999,35 +1028,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       return cleanedBlocks;
     };
 
-    const scrapeViaProxy = async (articleUrl: string) => {
-      try {
-        const PROXY = 'https://new-bot.mrkun28.workers.dev/?url=';
-        const res = await fetch(PROXY + encodeURIComponent(articleUrl));
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (!data.contents) return null;
-        
-        return parseHTMLToBlocks(data.contents, articleUrl);
-      } catch (err) {
-        console.warn('[Scrape] Error:', err);
-        return null;
-      }
-    };
-    
-    setIsLoadingFull(true);
-    setFullContent('');
-    if (article.contentBlocks && article.contentBlocks.length > 0) {
-      setContentBlocks(article.contentBlocks);
-      setFullContent("RICH_RENDER");
-      setIsLoadingFull(false);
-      return;
-    }
-
-    if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
-      const html = renderContent(article.fullContent);
-      if (html) { setFullContent(html); setIsLoadingFull(false); return; }
-    }
-
     const buildFallbackBlocks = () => {
       const fallbackBlocks: any[] = [];
       const title = article.author || article.title || "Tin tức";
@@ -1060,25 +1060,65 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       return fallbackBlocks;
     };
 
+    const scrapeViaProxy = async (articleUrl: string) => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+
+        const PROXY = 'https://new-bot.mrkun28.workers.dev/?url=';
+        const res = await fetch(PROXY + encodeURIComponent(articleUrl), { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data.contents) return null;
+        
+        return parseHTMLToBlocks(data.contents, articleUrl);
+      } catch (err) {
+        console.warn('[Scrape] Error or timeout:', err);
+        return null;
+      }
+    };
+    
     let cleanLink = (article.link || '').replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+
+    // 1. Kiểm tra bộ nhớ cache trong phiên (0ms tức thì)
+    if (cleanLink && articleContentCache.has(cleanLink)) {
+      setContentBlocks(articleContentCache.get(cleanLink)!);
+      setFullContent("RICH_RENDER");
+      setIsLoadingFull(false);
+      return;
+    }
+
+    if (article.contentBlocks && article.contentBlocks.length > 0) {
+      setContentBlocks(article.contentBlocks);
+      setFullContent("RICH_RENDER");
+      setIsLoadingFull(false);
+      return;
+    }
+
+    if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
+      const html = renderContent(article.fullContent);
+      if (html) { setFullContent(html); setIsLoadingFull(false); return; }
+    }
+
+    // 2. Hiển thị ngay lập tức (0ms optimistic render) với ảnh đại diện & mô tả đã có
+    const initialBlocks = buildFallbackBlocks();
+    setContentBlocks(initialBlocks);
+    setFullContent("RICH_RENDER");
+
+    // 3. Tải nền nội dung chi tiết & ảnh toàn văn qua proxy
     if (cleanLink && cleanLink.startsWith('http')) {
+      setIsLoadingFull(true);
       scrapeViaProxy(cleanLink).then(blocks => {
         if (blocks && blocks.some((b: any) => b.type !== 'title')) {
           setContentBlocks(blocks);
-          setFullContent("RICH_RENDER"); 
-        } else {
-          setContentBlocks(buildFallbackBlocks());
-          setFullContent("RICH_RENDER");
+          articleContentCache.set(cleanLink, blocks);
         }
         setIsLoadingFull(false);
       }).catch(() => {
-        setContentBlocks(buildFallbackBlocks());
-        setFullContent("RICH_RENDER");
         setIsLoadingFull(false);
       });
     } else {
-      setContentBlocks(buildFallbackBlocks());
-      setFullContent("RICH_RENDER");
       setIsLoadingFull(false);
     }
   }, [article.link, article.author, article.title, article.body, article.fullContent]);
@@ -1104,22 +1144,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             <p className="font-medium text-[#5f687b] text-[14px]">{article.src}</p>
          </div>
 
-         {isLoadingFull ? (
-            <div className="flex flex-col gap-4 mt-6 animate-pulse">
-               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
-               <div className="h-4 bg-[#e3e7ef] rounded w-11/12"></div>
-               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
-               <div className="h-[200px] bg-[#e3e7ef] rounded w-full my-4"></div>
-               <div className="h-4 bg-[#e3e7ef] rounded w-10/12"></div>
-               <div className="h-4 bg-[#e3e7ef] rounded w-full"></div>
+          {isLoadingFull && (
+            <div className="flex items-center gap-2 py-1 px-3 bg-red-50 text-red-600 rounded-lg text-[12px] font-semibold w-fit animate-pulse mb-1">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping shrink-0" />
+              <span>Đang đồng bộ toàn văn & ảnh gốc...</span>
             </div>
-         ) : fullContent === "ERROR" ? (
+          )}
+
+          {fullContent === "ERROR" ? (
             <div className="mt-6 flex flex-col items-center justify-center p-8 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-center" style={{ backgroundColor: 'inherit' }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <p className="text-[#475569] text-[16px] font-bold mb-2">Không thể tự động bóc tách bài viết</p>
               <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
             </div>
-         ) : fullContent === "RICH_RENDER" && contentBlocks && contentBlocks.length > 0 ? (
+          ) : contentBlocks && contentBlocks.length > 0 ? (
             <div className="mt-2 flex flex-col gap-4">
               {contentBlocks.map((block: any, idx: number) => {
                 if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
@@ -1136,8 +1174,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
                 if (block.type === 'image') return (
                   <figure key={idx} className="my-5 w-full">
-                    <img src={block.src} alt={block.caption} className="w-full h-auto object-cover rounded-xl shadow-sm" loading="lazy" onError={(e) => { const el = e.currentTarget; if (!el.src.includes('unsplash.com')) el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; }} />
-                    {block.caption && <figcaption className="text-center text-[14px] mt-2 italic" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
+                    <div className="relative w-full rounded-xl overflow-hidden bg-slate-100 shadow-xs flex items-center justify-center min-h-[160px]">
+                      <img
+                        src={block.src}
+                        alt={block.caption || ''}
+                        className="w-full h-auto object-cover rounded-xl transition-all duration-300"
+                        loading={idx <= 1 ? "eager" : "lazy"}
+                        fetchPriority={idx <= 1 ? "high" : "auto"}
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const el = e.currentTarget as HTMLImageElement;
+                          if (!el.src.includes('unsplash.com')) {
+                            el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70";
+                          }
+                        }}
+                      />
+                    </div>
+                    {block.caption && <figcaption className="text-center text-[13px] md:text-[14px] mt-2 italic text-[#5f687b]" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
                   </figure>
                 );
                if (block.type === 'video') {
