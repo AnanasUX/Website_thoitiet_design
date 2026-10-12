@@ -1998,6 +1998,9 @@ export const NEWS_CATEGORIES = [
 ];
 
 export const DEFAULT_CAT_IMAGE: Record<string, string> = {
+  "Tất cả": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80",
+  "Trang chủ": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80",
+  "Tin nổi bật": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80",
   "Bản tin TV": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80",
   "Thời tiết": "https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=80",
   "Giá vàng": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=80",
@@ -2236,19 +2239,38 @@ export function getProxyImageUrl(url: string) {
   if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
   if (!cleanUrl.startsWith("http")) return cleanUrl;
   
+  cleanUrl = cleanUrl.replace('.dev', '.com.vn');
   // Normalize Dantri .dev mirrors to official CDN
   cleanUrl = cleanUrl.replace(/https?:\/\/[a-z0-9\.]*dantri\.dev/g, 'https://icdn.dantri.com.vn');
   if (cleanUrl.includes("dantri.dev")) {
     cleanUrl = cleanUrl.replace("dantri.dev", "icdn.dantri.com.vn");
   }
   
-  // Trusted CDNs that already permit cross-origin / never block hotlinking
-  if (cleanUrl.includes("wsrv.nl") || cleanUrl.includes("unsplash.com") || cleanUrl.includes("google.com/s2/favicons")) {
+  // Khôi phục logic cũ: Các trang báo VN và CDN uy tín không đi qua wsrv.nl để tránh bị chặn anti-bot/lỗi ảnh
+  const bypassDomains = [
+    'dantri.com.vn',
+    'icdn.dantri.com.vn',
+    'tuoitre.vn',
+    'thanhnien.vn',
+    'vietnamnet.vn',
+    'vtv.vn',
+    'tienphong.vn',
+    'kenh14.vn',
+    'cafebiz.vn',
+    'cafef.vn',
+    'genk.vn',
+    'unsplash.com',
+    'google.com/s2/favicons',
+    'wsrv.nl'
+  ];
+  if (bypassDomains.some(d => cleanUrl.includes(d))) {
     return cleanUrl;
   }
   
-  // Route through wsrv.nl to bypass hotlinking/Referer blocking (e.g. Dantri 403) and cache safely
-  return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+  }
+  return cleanUrl;
 }
 
 
@@ -3326,7 +3348,13 @@ useEffect(() => {
             const pubDateMatch = itemXml.match(/<pubDate>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/pubDate>/i);
             const encMatch = itemXml.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
             const mediaMatch = itemXml.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i);
-            const descImgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+
+            const title = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : "";
+            const link = linkMatch ? linkMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : "";
+            const desc = descMatch ? descMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : "";
+            const pubDate = pubDateMatch ? pubDateMatch[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : "";
+
+            const descImgMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i) || itemXml.match(/<img[^>]+src=["']([^"']+)["']/i);
             const thumb = encMatch ? encMatch[1] : (mediaMatch ? mediaMatch[1] : (descImgMatch ? descImgMatch[1] : ""));
 
             if (title && link) {
