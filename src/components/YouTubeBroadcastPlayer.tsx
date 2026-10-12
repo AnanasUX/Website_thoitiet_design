@@ -229,12 +229,36 @@ export function YouTubeBroadcastPlayer({
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isMini, setIsMini] = useState<boolean>(false);
   const [isTheater, setIsTheater] = useState<boolean>(false);
+  const [isPlayerLoading, setIsPlayerLoading] = useState<boolean>(true);
+  const [currentVideoId, setCurrentVideoId] = useState<string>(selectedVideo.youtubeId);
   const [customInput, setCustomInput] = useState<string>('');
   const [inputError, setInputError] = useState<string>('');
   const [clock, setClock] = useState<string>('');
   const [dateFormatted, setDateFormatted] = useState<string>('');
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Chuyển video siêu nhanh không cần reload lại toàn bộ iframe
+  const handleSelectVideo = (item: YouTubeNewsItem) => {
+    if (item.youtubeId === selectedVideo.youtubeId) return;
+    setSelectedVideo(item);
+    setIsPlayerLoading(true);
+    setCurrentVideoId(item.youtubeId);
+
+    try {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'loadVideoById',
+            args: [item.youtubeId]
+          }),
+          '*'
+        );
+        setTimeout(() => setIsPlayerLoading(false), 500);
+      }
+    } catch {}
+  };
 
   // Seamless mute/unmute control via YouTube postMessage API
   const toggleMute = () => {
@@ -452,16 +476,33 @@ export function YouTubeBroadcastPlayer({
             {/* Video Main Screen (8 cols on Desktop) */}
             <div className="lg:col-span-8 relative bg-black flex flex-col justify-center items-center overflow-hidden group">
               <div className="w-full relative aspect-video bg-black">
-                {/* Embed player using youtube-nocookie.com with autoplay=1, mute=1 for guaranteed autoplay */}
+                {/* Fast video embed player with instant loading */}
                 <iframe
                   ref={iframeRef}
-                  key={selectedVideo.youtubeId}
                   title={selectedVideo.title}
-                  src={`https://www.youtube-nocookie.com/embed/${selectedVideo.youtubeId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
+                  src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
                   className="w-full h-full border-0 absolute inset-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
+                  onLoad={() => setIsPlayerLoading(false)}
                 />
+
+                {/* Fast Loading Skeleton Overlay */}
+                {isPlayerLoading && (
+                  <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center pointer-events-none transition-opacity duration-300">
+                    <img
+                      src={selectedVideo.thumbnail || `https://i.ytimg.com/vi/${selectedVideo.youtubeId}/hqdefault.jpg`}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover opacity-35 blur-[2px]"
+                    />
+                    <div className="relative z-10 flex flex-col items-center gap-2">
+                      <div className="w-8 h-8 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+                      <span className="text-white text-[11px] font-semibold tracking-wide drop-shadow bg-black/80 px-3 py-1 rounded-full border border-white/10">
+                        ⚡ Đang kết nối đường truyền trực tiếp...
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Floating Unmute Hint Banner */}
                 {isMuted && (
@@ -603,7 +644,7 @@ export function YouTubeBroadcastPlayer({
                   return (
                     <div
                       key={item.id}
-                      onClick={() => setSelectedVideo(item)}
+                      onClick={() => handleSelectVideo(item)}
                       className={`flex gap-3 p-2 rounded-xl transition-all cursor-pointer group pt-2.5 ${isCurrent ? 'bg-red-950/40 border border-red-500/40' : 'hover:bg-slate-800/60 border border-transparent'}`}
                     >
                       {/* Video Thumbnail with play icon */}

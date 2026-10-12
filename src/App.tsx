@@ -1152,6 +1152,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           <video
                             controls
                             playsInline
+                            preload="metadata"
                             poster={block.poster}
                             src={block.src}
                             className="w-full h-full object-cover"
@@ -1168,7 +1169,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
                           <span>BẢN TIN TRUYỀN HÌNH</span>
                         </div>
-                        <video controls playsInline poster={block.poster} src={block.src} className="w-full h-full object-contain" />
+                        <video controls playsInline preload="metadata" poster={block.poster} src={block.src} className="w-full h-full object-contain" />
                       </div>
                       {block.caption && <figcaption className="text-center text-[14px] mt-2 italic text-gray-600">{block.caption}</figcaption>}
                     </figure>
