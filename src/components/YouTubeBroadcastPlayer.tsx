@@ -21,7 +21,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'Wn4Hw4f8Uvg',
     category: 'Tài chính & Vàng',
     duration: 'Trực tiếp',
-    thumbnail: 'https://i.ytimg.com/vi/Wn4Hw4f8Uvg/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/Wn4Hw4f8Uvg/mqdefault.jpg'
   },
   {
     id: 'vtv24-thoisu',
@@ -31,7 +31,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: '819YbuGDpK0',
     category: 'Thời sự 24h',
     duration: 'Trực tiếp',
-    thumbnail: 'https://i.ytimg.com/vi/819YbuGDpK0/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/819YbuGDpK0/mqdefault.jpg'
   },
   {
     id: 'thanhnien-live',
@@ -41,7 +41,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'Kmx55fnX6jM',
     category: 'Thời sự 24h',
     duration: 'Trực tiếp',
-    thumbnail: 'https://i.ytimg.com/vi/Kmx55fnX6jM/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/Kmx55fnX6jM/mqdefault.jpg'
   },
   {
     id: 'vtcnow-thoisu',
@@ -51,7 +51,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'utYT3v_KTyo',
     category: 'Thời sự 24h',
     duration: '28:15',
-    thumbnail: 'https://i.ytimg.com/vi/utYT3v_KTyo/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/utYT3v_KTyo/mqdefault.jpg'
   },
   {
     id: 'tuoitre-thoisu',
@@ -61,7 +61,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'KIeY_PcD-sE',
     category: 'Thời sự 24h',
     duration: '18:40',
-    thumbnail: 'https://i.ytimg.com/vi/KIeY_PcD-sE/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/KIeY_PcD-sE/mqdefault.jpg'
   },
   {
     id: 'vtc1-thoisu',
@@ -71,7 +71,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: '3ojcuyMKDvs',
     category: 'Thời sự 24h',
     duration: '30:00',
-    thumbnail: 'https://i.ytimg.com/vi/3ojcuyMKDvs/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/3ojcuyMKDvs/mqdefault.jpg'
   },
   {
     id: 'htv-thoisu',
@@ -81,7 +81,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'kXf-0r-DvCM',
     category: 'Thời sự 24h',
     duration: '32:10',
-    thumbnail: 'https://i.ytimg.com/vi/kXf-0r-DvCM/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/kXf-0r-DvCM/mqdefault.jpg'
   },
   {
     id: 'vtv24-tieudiem',
@@ -91,7 +91,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: '57ASWX0FbiI',
     category: 'Thời sự 24h',
     duration: '15:10',
-    thumbnail: 'https://i.ytimg.com/vi/57ASWX0FbiI/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/57ASWX0FbiI/mqdefault.jpg'
   },
   {
     id: 'thanhnien-danso',
@@ -101,7 +101,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'nuJj_IYnIyM',
     category: 'Thời sự 24h',
     duration: '12:35',
-    thumbnail: 'https://i.ytimg.com/vi/nuJj_IYnIyM/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/nuJj_IYnIyM/mqdefault.jpg'
   },
 
   // ── Dự báo thời tiết truyền hình ──
@@ -113,7 +113,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'ADGo5NaYQNM',
     category: 'Thời tiết TV',
     duration: '06:30',
-    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/mqdefault.jpg'
   },
   {
     id: 'vtv-thoitiet-trua',
@@ -123,7 +123,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'xYXS7Dgi5M4',
     category: 'Thời tiết TV',
     duration: '05:45',
-    thumbnail: 'https://i.ytimg.com/vi/xYXS7Dgi5M4/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/xYXS7Dgi5M4/mqdefault.jpg'
   },
   {
     id: 'vtv-thoitiet-bien',
@@ -133,7 +133,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'cC9ZQkGK0tU',
     category: 'Thời tiết TV',
     duration: '04:50',
-    thumbnail: 'https://i.ytimg.com/vi/cC9ZQkGK0tU/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/cC9ZQkGK0tU/mqdefault.jpg'
   },
   {
     id: 'vtv-thoitiet-canhbao',
@@ -143,7 +143,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'yepJrd41iCA',
     category: 'Thời tiết TV',
     duration: '05:15',
-    thumbnail: 'https://i.ytimg.com/vi/yepJrd41iCA/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/yepJrd41iCA/mqdefault.jpg'
   },
   {
     id: 'tuoitre-thoitiet-ngap',
@@ -153,7 +153,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: '2CVousMq-zg',
     category: 'Thời tiết TV',
     duration: '07:20',
-    thumbnail: 'https://i.ytimg.com/vi/2CVousMq-zg/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/2CVousMq-zg/mqdefault.jpg'
   },
 
   // ── Tài chính - Kinh doanh & Giá vàng ──
@@ -165,7 +165,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: '0thQbm1zlW4',
     category: 'Tài chính & Vàng',
     duration: '20:10',
-    thumbnail: 'https://i.ytimg.com/vi/0thQbm1zlW4/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/0thQbm1zlW4/mqdefault.jpg'
   },
   {
     id: 'vtcnow-taichinh',
@@ -175,7 +175,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'Na5uByDy8Sw',
     category: 'Tài chính & Vàng',
     duration: '16:50',
-    thumbnail: 'https://i.ytimg.com/vi/Na5uByDy8Sw/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/Na5uByDy8Sw/mqdefault.jpg'
   },
 
   // ── Thế giới & Cuộc sống ──
@@ -187,7 +187,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'sGa3-eGdYC4',
     category: 'Thế giới & Cuộc sống',
     duration: '22:00',
-    thumbnail: 'https://i.ytimg.com/vi/sGa3-eGdYC4/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/sGa3-eGdYC4/mqdefault.jpg'
   },
   {
     id: 'tuoitre-phapluat',
@@ -197,7 +197,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'lLtmNYcgLFA',
     category: 'Thế giới & Cuộc sống',
     duration: '14:30',
-    thumbnail: 'https://i.ytimg.com/vi/lLtmNYcgLFA/hqdefault.jpg'
+    thumbnail: 'https://i.ytimg.com/vi/lLtmNYcgLFA/mqdefault.jpg'
   }
 ];
 
@@ -484,6 +484,7 @@ export function YouTubeBroadcastPlayer({
                   className="w-full h-full border-0 absolute inset-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
+                  loading="lazy"
                   onLoad={() => setIsPlayerLoading(false)}
                 />
 
@@ -650,10 +651,11 @@ export function YouTubeBroadcastPlayer({
                       {/* Video Thumbnail with play icon */}
                       <div className="relative w-[110px] sm:w-[120px] aspect-video rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-white/5">
                         <img
-                          src={item.thumbnail || `https://i.ytimg.com/vi/${item.youtubeId}/hqdefault.jpg`}
+                          src={item.thumbnail || `https://i.ytimg.com/vi/${item.youtubeId}/mqdefault.jpg`}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
+                          decoding="async"
                         />
                         {/* Play button overlay */}
                         <div className={`absolute inset-0 flex items-center justify-center bg-black/40 ${isCurrent ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>

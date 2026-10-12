@@ -343,7 +343,7 @@ function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
         {points.map((p, i) => (
           <div key={i} className="absolute flex flex-col items-center justify-start w-[65px] z-10" style={{ left: `${p.x - 32.5}px`, top: '10px' }}>
             <p className="font-semibold text-[#182033] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
-            <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" />
+            <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" loading="lazy" decoding="async" />
             <p className="font-semibold text-[#0a84ff] text-[11px] whitespace-nowrap">{p.pop}%</p>
             <p className="font-bold text-[#182033] text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
           </div>
@@ -461,7 +461,7 @@ function WeatherSection({
                   <p className="font-semibold text-[#182033] w-[70px] shrink-0 text-left">{day.day}</p>
                   
                   <div className="flex items-center gap-2 w-[110px] shrink-0">
-                    <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-9 h-9 drop-shadow-sm" />
+                    <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-9 h-9 drop-shadow-sm" loading="lazy" decoding="async" alt="" />
                     <div className="flex flex-col items-start leading-tight">
                       <span className="text-[#182033] text-[12px] font-bold">{getConditionLabel(day.icon)}</span>
                       {day.pop > 0 && <span className="text-[#0a84ff] text-[10px] font-bold tracking-tight">Mưa {day.pop}%</span>}
@@ -1100,7 +1100,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       <div className="p-5 w-full md:max-w-3xl flex flex-col gap-4 pb-12">
         <div className="flex items-center gap-3 w-full">
-            <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || article.img} data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+            <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || article.img} loading="lazy" decoding="async" data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
             <p className="font-medium text-[#5f687b] text-[14px]">{article.src}</p>
          </div>
 
@@ -1235,7 +1235,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                       <p className="font-medium text-[#5f687b] text-[12px]">{item.src}</p>
                    </div>
                    <div className="w-[100px] h-[75px] shrink-0 rounded-lg overflow-hidden relative">
-                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
+                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                    </div>
                 </div>
              ))}
@@ -1425,14 +1425,14 @@ function MobileLayout({ activeCategory, setActiveCategory,
             >
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full">
-                    <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+                    <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
                     <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
                   </div>
                   <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
               <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i === 0 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
                   <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
                     <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1596,7 +1596,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
@@ -1623,7 +1623,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
                 <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
@@ -1780,7 +1780,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11 border border-gray-100">
-                  <img alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+                  <img alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} loading="lazy" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
@@ -1791,7 +1791,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 {featured.author}
               </p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
                   <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
                     <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1811,7 +1811,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
                 <div className="h-[140px] relative w-full overflow-hidden">
-                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80"; } }} />
+                  <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i < 4 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                   {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
                     <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-semibold backdrop-blur-md shadow-md">
                       <svg className="size-2.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -2059,19 +2059,19 @@ export const NEWS_CATEGORIES = [
 ];
 
 export const DEFAULT_CAT_IMAGE: Record<string, string> = {
-  "Tất cả": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80",
-  "Trang chủ": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80",
-  "Tin nổi bật": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80",
-  "Bản tin TV": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80",
-  "Thời tiết": "https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=80",
-  "Giá vàng": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=80",
-  "Chính trị": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=80",
-  "Đời sống": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&auto=format&fit=crop&q=80",
-  "Con người": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=600&auto=format&fit=crop&q=80",
-  "Doanh nghiệp": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80",
-  "Công nghệ": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80",
-  "Kỹ thuật khoa học": "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=600&auto=format&fit=crop&q=80",
-  "Giải trí": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80"
+  "Tất cả": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70",
+  "Trang chủ": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70",
+  "Tin nổi bật": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=450&auto=format&fit=crop&q=70",
+  "Bản tin TV": "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=450&auto=format&fit=crop&q=70",
+  "Thời tiết": "https://images.unsplash.com/photo-1592210454359-9043f067919b?w=450&auto=format&fit=crop&q=70",
+  "Giá vàng": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=450&auto=format&fit=crop&q=70",
+  "Chính trị": "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=450&auto=format&fit=crop&q=70",
+  "Đời sống": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=450&auto=format&fit=crop&q=70",
+  "Con người": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=450&auto=format&fit=crop&q=70",
+  "Doanh nghiệp": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=450&auto=format&fit=crop&q=70",
+  "Công nghệ": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=450&auto=format&fit=crop&q=70",
+  "Kỹ thuật khoa học": "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=450&auto=format&fit=crop&q=70",
+  "Giải trí": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=450&auto=format&fit=crop&q=70"
 };
 
 export const RSS_FEEDS_DB = [
@@ -2294,7 +2294,7 @@ export function getNewspaperLogo(url: string) {
   }
 }
 
-export function getProxyImageUrl(url: string) {
+export function getProxyImageUrl(url: string, width = 450, quality = 75) {
   if (!url || typeof url !== 'string') return "";
   let cleanUrl = url.trim();
   if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
@@ -2329,7 +2329,7 @@ export function getProxyImageUrl(url: string) {
   }
   
   if (cleanUrl.startsWith("http") && !cleanUrl.includes("wsrv.nl")) {
-    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`;
+    return `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}&w=${width}&q=${quality}&output=webp`;
   }
   return cleanUrl;
 }
