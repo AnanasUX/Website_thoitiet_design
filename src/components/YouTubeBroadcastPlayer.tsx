@@ -224,6 +224,31 @@ export function YouTubeBroadcastPlayer({
   const [clock, setClock] = useState<string>('');
   const [dateFormatted, setDateFormatted] = useState<string>('');
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Seamless mute/unmute control via YouTube postMessage API
+  const toggleMute = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    try {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: nextMuted ? 'mute' : 'unMute'
+          }),
+          '*'
+        );
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'playVideo'
+          }),
+          '*'
+        );
+      }
+    } catch {}
+  };
 
   // Digital studio clock ticking
   useEffect(() => {
@@ -336,7 +361,7 @@ export function YouTubeBroadcastPlayer({
             <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
               {/* Audio Unmute Toggle Button */}
               <button
-                onClick={() => setIsMuted(!isMuted)}
+                onClick={toggleMute}
                 title={isMuted ? 'Nhấn để Bật âm thanh' : 'Nhấn để Tắt tiếng'}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] md:text-[12px] font-bold transition-all cursor-pointer shadow-xs ${isMuted ? 'bg-[#ff315f] text-white animate-pulse' : 'bg-emerald-600 text-white'}`}
               >
@@ -415,7 +440,8 @@ export function YouTubeBroadcastPlayer({
               <div className="w-full relative aspect-video bg-black">
                 {/* Responsive Embedded YouTube Player */}
                 <iframe
-                  key={`${selectedVideo.youtubeId}-${isMuted}`}
+                  ref={iframeRef}
+                  key={selectedVideo.youtubeId}
                   title={selectedVideo.title}
                   src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&enablejsapi=1&playsinline=1&rel=0`}
                   className="w-full h-full border-0 absolute inset-0"
@@ -426,7 +452,7 @@ export function YouTubeBroadcastPlayer({
                 {/* Unmute floating hint when muted */}
                 {isMuted && (
                   <div 
-                    onClick={() => setIsMuted(false)}
+                    onClick={toggleMute}
                     className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-black/75 hover:bg-[#ff315f] text-white px-3 py-1 rounded-full text-[11px] font-semibold cursor-pointer shadow-lg backdrop-blur-md flex items-center gap-1.5 transition-all active:scale-95 border border-white/20"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>

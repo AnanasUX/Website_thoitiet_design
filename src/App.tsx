@@ -674,7 +674,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       for (const s of ldJsonMatches) {
         if (s.includes('VideoObject') || s.includes('contentUrl') || s.includes('embedUrl')) {
           try {
-            const jsonText = s.replace(/<script[^>]*>|<\/script>/gi, '').trim();
+            let jsonText = s.replace(/<script[^>]*>|<\/script>/gi, '').trim();
+            // Xóa ký tự điều khiển (như xuống dòng trần \n trong chuỗi) gây lỗi JSON.parse ở các trang Tuổi Trẻ / Dân Trí
+            jsonText = jsonText.replace(/[\u0000-\u001F\u007F-\u009F]/g, c => (c === '\n' || c === '\r' ? ' ' : ''));
             const parsed = JSON.parse(jsonText);
             const list = Array.isArray(parsed) ? parsed : [parsed];
             for (const item of list) {
@@ -690,13 +692,29 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                     type: vUrl.includes('embed') || vUrl.includes('iframe') ? 'iframe' : 'video',
                     src: vUrl,
                     poster: thumb,
-                    caption: obj.name || '',
+                    caption: obj.name || obj.description || '',
                     isShort
                   });
                 }
               }
             }
-          } catch(e) {}
+          } catch(e) {
+            // Regex fallback nếu JSON.parse vẫn lỗi cú pháp
+            const urlMatch = s.match(/"contentUrl"\s*:\s*"([^"]+)"/i) || s.match(/"embedUrl"\s*:\s*"([^"]+)"/i);
+            if (urlMatch) {
+              let vUrl = urlMatch[1].trim();
+              if (vUrl.startsWith('//')) vUrl = 'https:' + vUrl;
+              if (vUrl && !extractedVideos.some(v => v.src === vUrl)) {
+                extractedVideos.push({
+                  type: 'video',
+                  src: vUrl,
+                  poster: '',
+                  caption: '',
+                  isShort: /shorts/i.test(baseUrl)
+                });
+              }
+            }
+          }
         }
       }
 
@@ -762,8 +780,11 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       let mainContent = null;
       for (const sel of contentSelectors) {
-        mainContent = doc.querySelector(sel);
-        if (mainContent) break;
+        const candidate = doc.querySelector(sel);
+        if (candidate && (candidate.textContent?.trim().length || 0) > 20 || candidate?.querySelector('p, img, video, iframe, [type="VideoStream"]')) {
+          mainContent = candidate;
+          break;
+        }
       }
       
       // Fallback linh động (Heuristic): Tự động tìm vùng nội dung chính dựa trên mật độ thẻ <p>
@@ -990,7 +1011,23 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             setContentBlocks(blocks);
             setFullContent("RICH_RENDER"); 
          } else {
-            setFullContent("ERROR");
+            // Cung cấp giao diện dự phòng đầy đủ thay vì báo lỗi trống trải
+            const fallbackBlocks: any[] = [];
+            if (article.author) fallbackBlocks.push({ type: 'title', content: article.author });
+            if (article.videoSrc) {
+              fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: article.author });
+            } else if (article.img) {
+              fallbackBlocks.push({ type: 'image', src: article.img, caption: '' });
+            }
+            if (article.body) {
+              fallbackBlocks.push({ type: 'text', content: article.body, tag: 'p' });
+            }
+            if (fallbackBlocks.length > 0) {
+              setContentBlocks(fallbackBlocks);
+              setFullContent("RICH_RENDER");
+            } else {
+              setFullContent("ERROR");
+            }
          }
        setIsLoadingFull(false);
     });
@@ -1199,26 +1236,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
             </p>
           </div>
           </div>
-          <button
-            onClick={() => {
-              if (setActiveCategory) {
-                setActiveCategory(activeCategory === "Bản tin TV" ? "Tất cả" : "Bản tin TV");
-              }
-              setTimeout(() => {
-                const el = document.getElementById("youtube-broadcast-section");
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            role="button"
-            tabIndex={0}
-            className={`ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all shrink-0 aspect-square cursor-pointer relative ${activeCategory === "Bản tin TV" ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] text-[#182033] hover:bg-[#e3e7ef]'}`}
-            title="Bản tin TV"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></svg>
-            {activeCategory !== "Bản tin TV" && (
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#ff315f]" />
-            )}
-          </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -1242,8 +1259,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides}  darkMode={darkMode} />
         </div>
 
-        
-
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
           {userRole && userRole.email ? (
@@ -1256,23 +1271,94 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
             </div>
           )}
-                  <div className="flex items-center justify-between w-full mb-1 sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
-        <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-            {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
-        </p>
-        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
-      </div>
 
-          {/* ── YouTube Broadcast Desk Mobile ── */}
-          {activeCategory === "Bản tin TV" && (
-            <YouTubeBroadcastPlayer
-              liveNews={newsFeed}
-              currentWeather={WEATHER}
-              initialCategory="Thời sự 24h"
-            />
+          {/* ── Banner Bản tin TV Trực tiếp (Mobile Quick Access) ── */}
+          {activeCategory !== "Bản tin TV" && (
+            <div
+              onClick={() => {
+                if (setActiveCategory) setActiveCategory("Bản tin TV");
+                setTimeout(() => {
+                  document.getElementById("youtube-broadcast-section")?.scrollIntoView({ behavior: 'smooth' });
+                }, 80);
+              }}
+              className="w-full bg-gradient-to-r from-[#182033] via-[#223358] to-[#182033] text-white rounded-2xl p-3 px-3.5 flex items-center justify-between cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99] border border-slate-700/60"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-[#ff315f] flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9.5px] font-black px-1.5 py-0.2 rounded bg-red-500/30 text-red-400 border border-red-500/30 uppercase tracking-wider">LIVE 24H</span>
+                    <span className="font-bold text-[13px] text-white truncate">Truyền Hình Bản Tin 24H</span>
+                  </div>
+                  <span className="text-[11px] text-slate-300 truncate">VTV24, VTC, HTV &amp; Dự báo thời tiết</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-bold text-[#ff315f] bg-white/10 px-2.5 py-1 rounded-full shrink-0">
+                <span>Xem TV</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </div>
           )}
 
-          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
+          {/* ── Category Bar Mobile: Sticky Category Row + Swipeable Pills ── */}
+          <div className="flex flex-col gap-2 w-full sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-2 mt-[-8px]">
+            <div className="flex items-center justify-between w-full">
+              <p className="font-bold text-[#182033] text-[17px]">
+                {activeCategory === "Bản tin TV" ? "Bản Tin Truyền Hình 24H" : "Tin Tức Mới Nhất"}
+              </p>
+              <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
+            </div>
+            
+            {/* Horizontal swipeable pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full pb-0.5">
+              {NEWS_CATEGORIES.map(cat => {
+                const isActive = activeCategory === cat;
+                const isTv = cat === "Bản tin TV";
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      if (setActiveCategory) setActiveCategory(cat);
+                      if (isTv) {
+                        setTimeout(() => {
+                          document.getElementById("youtube-broadcast-section")?.scrollIntoView({ behavior: 'smooth' });
+                        }, 80);
+                      }
+                    }}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
+                      isActive
+                        ? (isTv ? 'bg-[#ff315f] text-white font-bold shadow-sm' : 'bg-[#182033] text-white font-bold shadow-sm')
+                        : (isTv ? 'bg-[#ffe8ee] text-[#ff315f] border border-[#ff315f]/30 font-bold' : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:bg-[#f4f6fa]')
+                    }`}
+                  >
+                    {isTv && <span className="w-1.5 h-1.5 rounded-full bg-[#ff315f] animate-ping shrink-0" />}
+                    <span>{cat}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── YouTube Broadcast Desk Mobile ── */}
+          {activeCategory === "Bản tin TV" ? (
+            <div className="w-full flex flex-col gap-3">
+              <button
+                onClick={() => setActiveCategory && setActiveCategory("Tất cả")}
+                className="self-start flex items-center gap-1.5 px-3 py-1 bg-white border border-[#e3e7ef] rounded-full text-[12px] font-semibold text-[#5f687b] hover:text-[#ff315f] shadow-xs cursor-pointer transition-all"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <span>Về Tin tức mới nhất</span>
+              </button>
+              <YouTubeBroadcastPlayer
+                liveNews={newsFeed}
+                currentWeather={WEATHER}
+                initialCategory="Thời sự 24h"
+                onClosePlayer={() => setActiveCategory && setActiveCategory("Tất cả")}
+              />
+            </div>
+          ) : (isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
               <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
@@ -1358,26 +1444,6 @@ function TabletLayout({ activeCategory, setActiveCategory,
             {dateStr} · {timeStr}
           </p>
         </div>
-        <button
-          onClick={() => {
-            if (setActiveCategory) {
-              setActiveCategory(activeCategory === "Bản tin TV" ? "Tất cả" : "Bản tin TV");
-            }
-            setTimeout(() => {
-              const el = document.getElementById("youtube-broadcast-section");
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }}
-          role="button"
-          tabIndex={0}
-          className={`ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all shrink-0 aspect-square cursor-pointer relative ${activeCategory === "Bản tin TV" ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] text-[#182033] hover:bg-[#e3e7ef]'}`}
-          title="Bản tin TV"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></svg>
-          {activeCategory !== "Bản tin TV" && (
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#ff315f]" />
-          )}
-        </button>
             <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -1567,26 +1633,6 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               {dateStr} · {timeStr}
             </p>
           </div>
-          <button
-            onClick={() => {
-              if (setActiveCategory) {
-                setActiveCategory(activeCategory === "Bản tin TV" ? "Tất cả" : "Bản tin TV");
-              }
-              setTimeout(() => {
-                const el = document.getElementById("youtube-broadcast-section");
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
-            }}
-            role="button"
-            tabIndex={0}
-            className={`ml-2 w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all shrink-0 aspect-square cursor-pointer relative ${activeCategory === "Bản tin TV" ? 'bg-[#ff315f] text-white shadow-xs' : 'bg-[#f4f6fa] text-[#182033] hover:bg-[#e3e7ef]'}`}
-            title="Bản tin TV"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" /><polyline points="17 2 12 7 7 2" /></svg>
-            {activeCategory !== "Bản tin TV" && (
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#ff315f]" />
-            )}
-          </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -1971,37 +2017,39 @@ export const RSS_FEEDS_DB = [
   { category: "Bản tin TV", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
   { category: "Bản tin TV", name: "Dân Trí • Video", url: "https://dantri.com.vn/rss/video.rss", isVideo: true },
 
-  // Thời tiết
-  { category: "Thời tiết", name: "Tuổi Trẻ • Thời tiết", url: "https://tuoitre.vn/rss/thoi-su.rss" },
+  // Thời tiết & Môi trường
+  { category: "Thời tiết", name: "Tuổi Trẻ • Thời sự", url: "https://tuoitre.vn/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "Tiền Phong • Xã hội", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
   { category: "Thời tiết", name: "Thanh Niên • Thời sự", url: "https://thanhnien.vn/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "Dân Trí • Xã hội", url: "https://dantri.com.vn/rss/xa-hoi.rss" },
 
-  // Giá vàng
-  { category: "Giá vàng", name: "VnEconomy • Tài chính", url: "https://vneconomy.vn/rss/tai-chinh.rss" },
+  // Giá vàng & Thị trường tài chính
   { category: "Giá vàng", name: "Dân Trí • Kinh doanh", url: "https://dantri.com.vn/rss/kinh-doanh.rss" },
   { category: "Giá vàng", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
   { category: "Giá vàng", name: "CafeF • Thị trường", url: "https://cafef.vn/rss/home.rss" },
   { category: "Giá vàng", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
+  { category: "Giá vàng", name: "VietnamNet • Kinh doanh", url: "https://vietnamnet.vn/rss/kinh-doanh.rss" },
+  { category: "Giá vàng", name: "Tiền Phong • Kinh tế", url: "https://tienphong.vn/rss/kinh-te-3.rss" },
 
-  // Chính trị
+  // Chính trị & Thời sự chính thống
+  { category: "Chính trị", name: "VietnamNet • Chính trị", url: "https://vietnamnet.vn/rss/chinh-tri.rss" },
   { category: "Chính trị", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Tuổi Trẻ • Thời sự", url: "https://tuoitre.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Thanh Niên • Thời sự", url: "https://thanhnien.vn/rss/thoi-su.rss" },
-  { category: "Chính trị", name: "VietnamNet • Thời sự", url: "https://vietnamnet.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Lao Động", url: "https://laodong.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Người Lao Động", url: "https://nld.com.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Tiền Phong • Xã hội", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
 
   // Đời sống
   { category: "Đời sống", name: "VnExpress • Đời sống", url: "https://vnexpress.net/rss/doi-song.rss" },
-  { category: "Đời sống", name: "Tuổi Trẻ • Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
   { category: "Đời sống", name: "Dân Trí • Đời sống", url: "https://dantri.com.vn/rss/doi-song.rss" },
   { category: "Đời sống", name: "Thanh Niên • Đời sống", url: "https://thanhnien.vn/rss/doi-song.rss" },
-  { category: "Đời sống", name: "Tiền Phong • Nhịp sống", url: "https://tienphong.vn/rss/nhip-song-do-thi-116.rss" },
+  { category: "Đời sống", name: "VietnamNet • Đời sống", url: "https://vietnamnet.vn/rss/doi-song.rss" },
+  { category: "Đời sống", name: "Tuổi Trẻ • Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
+  { category: "Đời sống", name: "Tiền Phong • Giới trẻ", url: "https://tienphong.vn/rss/gioi-tre-11.rss" },
 
-  // Con người
+  // Con người & Xã hội
   { category: "Con người", name: "VnExpress • Tâm sự", url: "https://vnexpress.net/rss/tam-su.rss" },
   { category: "Con người", name: "Dân Trí • Nhân ái", url: "https://dantri.com.vn/rss/tam-long-nhan-ai.rss" },
   { category: "Con người", name: "Dân Trí • Giới trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
@@ -2010,10 +2058,10 @@ export const RSS_FEEDS_DB = [
 
   // Doanh nghiệp
   { category: "Doanh nghiệp", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
-  { category: "Doanh nghiệp", name: "VnEconomy • Doanh nghiệp", url: "https://vneconomy.vn/rss/doanh-nghiep.rss" },
   { category: "Doanh nghiệp", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
-  { category: "Doanh nghiệp", name: "Diễn đàn Doanh nghiệp", url: "https://diendandoanhnghiep.vn/rss/home.rss" },
+  { category: "Doanh nghiệp", name: "Dân Trí • Kinh doanh", url: "https://dantri.com.vn/rss/kinh-doanh.rss" },
   { category: "Doanh nghiệp", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
+  { category: "Doanh nghiệp", name: "Tiền Phong • Kinh tế", url: "https://tienphong.vn/rss/kinh-te-3.rss" },
 
   // Công nghệ
   { category: "Công nghệ", name: "VnExpress • Số Hóa", url: "https://vnexpress.net/rss/so-hoa.rss" },
@@ -2034,12 +2082,10 @@ export const RSS_FEEDS_DB = [
   { category: "Giải trí", name: "Tuổi Trẻ • Giải trí", url: "https://tuoitre.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Thanh Niên • Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Dân Trí • Giải trí", url: "https://dantri.com.vn/rss/giai-tri.rss" },
+  { category: "Giải trí", name: "Tiền Phong • Giải trí", url: "https://tienphong.vn/rss/giai-tri-3.rss" },
+  { category: "Giải trí", name: "Tiền Phong • Hoa hậu", url: "https://tienphong.vn/rss/hoa-hau-245.rss" },
   { category: "Giải trí", name: "Ngôi Sao • Showbiz", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
-  { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" },
-  { category: "Giải trí", name: "Tuổi Trẻ • Video", url: "https://tuoitre.vn/rss/video.rss", isVideo: true },
-  { category: "Giải trí", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true },
-  { category: "Giải trí", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
-  { category: "Đời sống", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true }
+  { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" }
 ];
 
 
@@ -3356,7 +3402,8 @@ useEffect(() => {
             }
             
             const isVid = !!item._isVideo || /video/i.test(item.link || '') || /video/i.test(item.title || '') || (item.enclosure?.type && item.enclosure.type.includes('video'));
-            const isSh = isVid && (/short|tiktok|reel/i.test(item.link || '') || /short|tiktok|reel/i.test(item.title || ''));
+            const isSh = isVid && (/short|tiktok|reel/i.test(item.link || '') || /short|reel|tiktok/i.test(item.title || ''));
+            const videoLink = (item.enclosure?.type?.includes('video') ? item.enclosure.link : '') || (item.videoUrl || '');
             return {
               img: imageUrl,
               logo: getNewspaperLogo(item.link || ""),
@@ -3368,12 +3415,28 @@ useEffect(() => {
               pubDate: item.pubDate,
               _isHot: item._isHot,
               isVideo: isVid,
-              isShort: isSh
+              isShort: isSh,
+              videoSrc: videoLink
             };
           }).filter(Boolean);
         });
         
         let validFeeds = mappedFeeds.filter(f => f.length > 0);
+
+        // Lọc chuyên sâu theo từ khóa cho các mục đặc thù (Thời tiết, Giá vàng)
+        if (activeCategory === "Thời tiết") {
+          const WEATHER_KEYWORDS = /thời tiết|mưa|nắng|áp thấp|bão|triều cường|lũ|nhiệt độ|dự báo|khí tượng|gió|hạn hán|sạt lở|rét|lạnh|không khí lạnh|sóng biển|mây|sương mù/i;
+          validFeeds = validFeeds.map(feed => {
+            const matches = feed.filter((item: any) => WEATHER_KEYWORDS.test(item.author || '') || WEATHER_KEYWORDS.test(item.body || ''));
+            return matches.length > 0 ? matches : feed;
+          }).filter(f => f.length > 0);
+        } else if (activeCategory === "Giá vàng") {
+          const GOLD_KEYWORDS = /vàng|sjc|vàng miếng|vàng nhẫn|bạc|kim hoàn|ngoại tệ|đô la|usd|bảng anh|lãi suất|tỷ giá|ngân hàng|chứng khoán|tiền tệ/i;
+          validFeeds = validFeeds.map(feed => {
+            const matches = feed.filter((item: any) => GOLD_KEYWORDS.test(item.author || '') || GOLD_KEYWORDS.test(item.body || ''));
+            return matches.length > 0 ? matches : feed;
+          }).filter(f => f.length > 0);
+        }
         
         // Sắp xếp bài viết trong từng feed theo thứ tự mới nhất
         validFeeds.forEach(feed => {
@@ -3409,9 +3472,12 @@ useEffect(() => {
         const mixedNews = [...hotNews, ...normalNews];
         
         if (!isBackground) {
-          // Bảo lưu các bài viết từ bot (nếu có) trên đầu trang
+          // Bảo lưu các bài viết từ bot (nếu có) trên đầu trang CHỈ KHI ở danh mục "Tất cả"
+          // Không chèn tin tức chung từ bot khi người dùng chọn mục cụ thể (Đời sống, Giá vàng,...)
           const existingLinks = new Set(mixedNews.map(n => n.link));
-          const botItems = (fullNewsPool.current || []).filter(n => (n as any)._isBot && !existingLinks.has(n.link));
+          const botItems = activeCategory === "Tất cả"
+            ? (fullNewsPool.current || []).filter(n => (n as any)._isBot && !existingLinks.has(n.link))
+            : [];
           const finalPool = [...botItems, ...mixedNews];
           fullNewsPool.current = finalPool;
           setLiveNews(finalPool.slice(0, 15));
