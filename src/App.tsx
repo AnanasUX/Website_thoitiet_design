@@ -295,7 +295,7 @@ interface LiveOverrides {
   suggestionItems?: string[];
   floodItems?: string[];
   routeItems?: string[];
-  weatherNews?: { title: string, link: string, source: string }[];
+  weatherNews?: { title: string, link: string, source: string, body?: string, img?: string }[];
 }
 
 
@@ -552,7 +552,8 @@ function WeatherSection({
                             author: news.title || (news as any).author || "Tin tức",
                             src: news.source || (news as any).src || "Thời tiết",
                             link: news.link || (news as any).url,
-                            img: (news as any).image || (news as any).img || "",
+                            body: news.body || `Dự báo thời tiết chi tiết từ ${news.source || 'Trung tâm Khí tượng'}.`,
+                            img: news.img || (news as any).image || "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=800&auto=format&fit=crop&q=80",
                           });
                         }
                       }}
@@ -1013,43 +1014,74 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       }
     };
     
+    setIsLoadingFull(true);
+    setFullContent('');
+    if (article.contentBlocks && article.contentBlocks.length > 0) {
+      setContentBlocks(article.contentBlocks);
+      setFullContent("RICH_RENDER");
+      setIsLoadingFull(false);
+      return;
+    }
+
     if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
       const html = renderContent(article.fullContent);
       if (html) { setFullContent(html); setIsLoadingFull(false); return; }
     }
-    
-    if (contentBlocks && contentBlocks.length > 0) {
-       setIsLoadingFull(false);
-       return; 
-    }
 
-    let cleanLink = article.link.replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
-    scrapeViaProxy(cleanLink).then(blocks => {
-         if (blocks && blocks.some((b: any) => b.type !== 'title')) {
-            setContentBlocks(blocks);
-            setFullContent("RICH_RENDER"); 
-         } else {
-            // Cung cấp giao diện dự phòng đầy đủ thay vì báo lỗi trống trải
-            const fallbackBlocks: any[] = [];
-            if (article.author) fallbackBlocks.push({ type: 'title', content: article.author });
-            if (article.videoSrc) {
-              fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: article.author });
-            } else if (article.img) {
-              fallbackBlocks.push({ type: 'image', src: article.img, caption: '' });
-            }
-            if (article.body) {
-              fallbackBlocks.push({ type: 'text', content: article.body, tag: 'p' });
-            }
-            if (fallbackBlocks.length > 0) {
-              setContentBlocks(fallbackBlocks);
-              setFullContent("RICH_RENDER");
-            } else {
-              setFullContent("ERROR");
-            }
-         }
-       setIsLoadingFull(false);
-    });
-  }, [article.link, article.body, article.fullContent]);
+    const buildFallbackBlocks = () => {
+      const fallbackBlocks: any[] = [];
+      const title = article.author || article.title || "Tin tức";
+      fallbackBlocks.push({ type: 'title', content: title });
+
+      if (article.videoSrc) {
+        fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: title });
+      } else if (article.img) {
+        fallbackBlocks.push({ type: 'image', src: article.img, caption: title });
+      }
+
+      const bodyText = article.body || article.description || article.desc || article.summary || "";
+      if (bodyText) {
+        const sentences = bodyText.split('. ').filter(Boolean);
+        if (sentences.length > 2) {
+          fallbackBlocks.push({ type: 'text', content: sentences.slice(0, 2).join('. ') + '.', tag: 'p' });
+          fallbackBlocks.push({ type: 'text', content: sentences.slice(2).join('. ') + (sentences.slice(2).join('. ').endsWith('.') ? '' : '.'), tag: 'p' });
+        } else {
+          fallbackBlocks.push({ type: 'text', content: bodyText, tag: 'p' });
+        }
+      } else {
+        fallbackBlocks.push({ type: 'text', content: `Bản tin được cập nhật và tổng hợp từ nguồn báo chí chính thống ${article.src || 'Thời sự 24h'}.`, tag: 'p' });
+      }
+
+      fallbackBlocks.push({
+        type: 'quote',
+        content: `Nguồn phát hành: ${article.src || 'Báo điện tử'}. Bấm nút "Đọc bài viết gốc" bên dưới để xem toàn văn trực tiếp tại nguồn phát hành.`
+      });
+
+      return fallbackBlocks;
+    };
+
+    let cleanLink = (article.link || '').replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+    if (cleanLink && cleanLink.startsWith('http')) {
+      scrapeViaProxy(cleanLink).then(blocks => {
+        if (blocks && blocks.some((b: any) => b.type !== 'title')) {
+          setContentBlocks(blocks);
+          setFullContent("RICH_RENDER"); 
+        } else {
+          setContentBlocks(buildFallbackBlocks());
+          setFullContent("RICH_RENDER");
+        }
+        setIsLoadingFull(false);
+      }).catch(() => {
+        setContentBlocks(buildFallbackBlocks());
+        setFullContent("RICH_RENDER");
+        setIsLoadingFull(false);
+      });
+    } else {
+      setContentBlocks(buildFallbackBlocks());
+      setFullContent("RICH_RENDER");
+      setIsLoadingFull(false);
+    }
+  }, [article.link, article.author, article.title, article.body, article.fullContent]);
   const detailContainerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (detailContainerRef.current) {
@@ -3819,11 +3851,20 @@ useEffect(() => {
 
 
 
-          const weatherNews = weatherNewsRaw.slice(0, 3).map((item: any) => {
+          const weatherNews = weatherNewsRaw.slice(0, 4).map((item: any) => {
             const titleMatch = item.title ? item.title.match(/(.+) - (.+)/) : null;
             const title = decodeHTMLEntities(titleMatch ? titleMatch[1] : item.title);
-            const source = titleMatch ? titleMatch[2] : (item.source || "Google News");
-            return { title, link: item.link, source };
+            const source = titleMatch ? titleMatch[2] : (item.source || "Thời tiết");
+            const rawDesc = item.description || item.content || "";
+            const desc = rawDesc.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+            const img = item.enclosure?.link || item.thumbnail || "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=800&auto=format&fit=crop&q=80";
+            return {
+              title,
+              link: item.link,
+              source,
+              body: desc || `Thông tin thời tiết và tình hình khí tượng thủy văn mới nhất từ ${source}.`,
+              img: img
+            };
           });
 
           let resolvedLocation = locationNameStr;
@@ -4074,9 +4115,9 @@ useEffect(() => {
 
       {selectedArticle && (
         <NewsDetailView 
-          key={selectedArticle.link}
+          key={selectedArticle.link || selectedArticle.author || selectedArticle.title}
           article={selectedArticle} 
-          allNews={liveNews} 
+          allNews={liveNews && liveNews.length > 0 ? liveNews : DEFAULT_NEWS_FEED} 
           onClose={closeArticle} 
           onSelectRelated={handleArticleSelect} 
         />
