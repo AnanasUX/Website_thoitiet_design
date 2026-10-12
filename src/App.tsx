@@ -646,7 +646,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
 
   const related = useMemo(() => {
-    return allNews.filter((n: any) => n.link !== article.link).sort(() => 0.5 - Math.random()).slice(0, 3);
+    const pool = Array.isArray(allNews) && allNews.length > 0 ? allNews : DEFAULT_NEWS_FEED;
+    const currentClean = (article.link || '').split('?')[0];
+    const filtered = pool.filter((n: any) => {
+      const l = (n.link || '').split('?')[0];
+      return l !== currentClean && n.author !== article.author;
+    });
+    return filtered.slice(0, 6);
   }, [article, allNews]);
 
   useEffect(() => {
@@ -779,14 +785,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         ''
       ).replace(/\s+/g, ' ').trim();
 
-      // Pre-cleaning selector loại bỏ toàn bộ rác, quảng cáo, và các khối điều hướng/bài liên quan của Tuổi Trẻ, Tiền Phong,...
+      // Pre-cleaning selector loại bỏ rác, quảng cáo, và script (GIỮ LẠI các khối bài viết liên quan)
       doc.querySelectorAll(`
-        script, style, nav, footer, header, .ads, .related, .box-tinlienquan, .detail-relate, 
-        .social, .comment, iframe:not([data-keep-video="true"]), .banner, .readmore-body-box, .return-thread-body-btn, 
-        .readmore-body-btn, .box-author-detail, .article-relate, .article-related, .box-relate, 
-        .relate-container, .story__heading, .box-topic, .topic-box, .detail-topic, .tag, .tags, 
-        .txttag, .tag-container, .box-tag, .author-info, .bread-crumb, .breadcrumb, 
-        [type="RelatedOneNews"], .VCSortableInPreviewMode[type="RelatedOneNews"], .share, .like-fb
+        script, style, nav, footer, header, .ads, .social, .comment, 
+        iframe:not([data-keep-video="true"]), .banner, .return-thread-body-btn, 
+        .readmore-body-btn, .box-author-detail, .author-info, .bread-crumb, 
+        .breadcrumb, .share, .like-fb
       `).forEach(el => el.remove());
 
       const contentSelectors = [
@@ -827,13 +831,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       
       if (!mainContent) mainContent = doc.body;
 
-      // Loại bỏ tiếp các khối điều hướng nếu còn sót bên trong mainContent
-      mainContent.querySelectorAll(`
-        .readmore-body-box, .return-thread-body-btn, .readmore-body-btn, .box-author-detail, 
-        .article-relate, .story__heading, .box-topic, .topic-box, .detail-topic, .txttag, 
-        [type="RelatedOneNews"], .VCSortableInPreviewMode[type="RelatedOneNews"]
-      `).forEach(el => el.remove());
-
       // Hàm khử sạch inline styles làm nhảy kích thước font chữ
       const sanitizeInnerHtml = (rawHtml: string) => {
         return rawHtml
@@ -856,7 +853,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         const tag = el.tagName.toLowerCase();
 
         if (tag === 'script' || tag === 'style' || el.style.display === 'none') return;
-        if (el.classList?.contains('readmore-body-box') || el.classList?.contains('article-relate') || el.classList?.contains('story__heading') || el.classList?.contains('link-source-wrapper') || el.classList?.contains('link-source-detail')) return;
+        if (el.classList?.contains('link-source-wrapper') || el.classList?.contains('link-source-detail')) return;
 
         const getBestImgSrc = (imgEl: Element | null) => {
           if (!imgEl) return '';
@@ -886,6 +883,39 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           }
           return s;
         };
+
+        // Nhận diện và bóc tách các khối bài viết liên quan trong thân bài
+        const isRelatedBlock = el.classList?.contains('article-relate') ||
+                               el.classList?.contains('box-tinlienquan') ||
+                               el.classList?.contains('detail-relate') ||
+                               el.classList?.contains('article-related') ||
+                               el.classList?.contains('box-relate') ||
+                               el.classList?.contains('relate-container') ||
+                               el.classList?.contains('readmore-body-box') ||
+                               el.getAttribute('type') === 'RelatedOneNews' ||
+                               el.classList?.contains('story__heading');
+
+        if (isRelatedBlock) {
+          const anchor = el.querySelector('a') || (tag === 'a' ? (el as HTMLAnchorElement) : null);
+          if (anchor) {
+            let rHref = anchor.getAttribute('href') || '';
+            if (rHref && !rHref.startsWith('javascript:')) {
+              if (rHref.startsWith('/')) {
+                try { rHref = new URL(rHref, baseUrl).href; } catch(e){}
+              }
+              const rTitle = anchor.textContent?.trim() || el.textContent?.trim() || 'Bài viết liên quan';
+              const rImgEl = el.querySelector('img');
+              const rImg = rImgEl ? getBestImgSrc(rImgEl) : '';
+              blocks.push({
+                type: 'related-link',
+                title: rTitle.replace(/^(bài viết liên quan|tin liên quan|xem thêm)\s*[:\-]\s*/i, '').trim(),
+                link: rHref,
+                img: rImg ? getProxyImageUrl(rImg) : ''
+              });
+              return;
+            }
+          }
+        }
 
         if (tag === 'figure' || tag === 'picture') {
           const img = el.querySelector('img');
@@ -1158,7 +1188,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
             </div>
           ) : contentBlocks && contentBlocks.length > 0 ? (
-            <div className="mt-2 flex flex-col gap-4">
+            <div 
+              className="mt-2 flex flex-col gap-4"
+              onClick={(e) => {
+                const target = (e.target as HTMLElement).closest('a');
+                if (target && target.href && !target.classList.contains('original-article-btn')) {
+                  e.preventDefault();
+                  const href = target.href;
+                  const text = target.textContent?.trim() || "Bài viết liên quan";
+                  onSelectRelated({
+                    author: text,
+                    title: text,
+                    link: href,
+                    img: article.img,
+                    src: article.src || 'Tin liên quan'
+                  });
+                }
+              }}
+            >
               {contentBlocks.map((block: any, idx: number) => {
                 if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
                 if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
@@ -1172,6 +1219,32 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                   return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
                 }
                 if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
+                if (block.type === 'related-link') {
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => onSelectRelated({
+                        author: block.title,
+                        title: block.title,
+                        link: block.link,
+                        img: block.img || article.img,
+                        src: article.src || 'Tin liên quan'
+                      })}
+                      className="my-4 p-3.5 bg-red-50/70 border border-red-200/60 border-l-4 border-l-red-600 rounded-r-xl flex items-center gap-3 cursor-pointer hover:bg-red-100/70 transition-all shadow-xs group"
+                    >
+                      {block.img && (
+                        <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-200 border border-slate-200">
+                          <img src={block.img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10.5px] uppercase font-bold text-red-600 block mb-0.5 tracking-wider">Bài viết liên quan</span>
+                        <p className="text-[14px] font-semibold text-[#182033] line-clamp-2 group-hover:text-red-600 transition-colors">{block.title}</p>
+                      </div>
+                      <svg className="size-4 text-slate-400 group-hover:text-red-500 shrink-0 ml-1 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                  );
+                }
                 if (block.type === 'image') return (
                   <figure key={idx} className="my-5 w-full">
                     <div className="relative w-full rounded-xl overflow-hidden bg-slate-100 shadow-xs flex items-center justify-center min-h-[160px]">
@@ -1276,20 +1349,29 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
         {/* Related articles */}
         <div className="mt-10 border-t border-[#e3e7ef] pt-8">
-           <h2 className="font-bold text-[#182033] text-[20px] mb-4">Bài viết liên quan</h2>
-           <div className="flex flex-col gap-4">
+           <div className="flex items-center justify-between mb-5">
+             <h2 className="font-bold text-[#182033] text-[20px] flex items-center gap-2">
+               <span className="w-1.5 h-6 bg-[#ff315f] rounded-full inline-block"></span>
+               Bài viết liên quan
+             </h2>
+             <span className="text-[13px] text-[#5f687b] font-medium">{related.length} bài gợi ý</span>
+           </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
              {related.map((item: any, i: number) => (
-                <div key={i} className="flex gap-4 cursor-pointer group" onClick={() => {
+                <div key={i} className="flex gap-3 p-3 rounded-xl border border-[#e3e7ef]/80 hover:border-[#ff315f]/40 hover:shadow-sm bg-white cursor-pointer group transition-all" onClick={() => {
                    if (detailContainerRef.current) detailContainerRef.current.scrollTo({top:0, behavior:'smooth'});
                    window.scrollTo({top:0, behavior:'smooth'});
                    onSelectRelated(item);
                  }}>
-                   <div className="flex-1 flex flex-col gap-2">
-                      <p className="font-bold text-[#182033] text-[15px] line-clamp-3 group-hover:text-[#ff315f] transition-colors">{item.author}</p>
-                      <p className="font-medium text-[#5f687b] text-[12px]">{item.src}</p>
+                   <div className="w-[96px] h-[72px] shrink-0 rounded-lg overflow-hidden relative bg-[#f1f4f9]">
+                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                    </div>
-                   <div className="w-[100px] h-[75px] shrink-0 rounded-lg overflow-hidden relative">
-                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                   <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <p className="font-bold text-[#182033] text-[13px] sm:text-[14px] line-clamp-2 group-hover:text-[#ff315f] transition-colors leading-snug">{item.author || item.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#eef2f6] text-[#5f687b] truncate max-w-[120px]">{item.src || "Tin tức"}</span>
+                        {item.pubDate && <span className="text-[11px] text-[#8e98a8]">{item.pubDate.split(' ')[0]}</span>}
+                      </div>
                    </div>
                 </div>
              ))}
@@ -2361,10 +2443,15 @@ export function getProxyImageUrl(url: string, width = 450, quality = 75) {
     cleanUrl = cleanUrl.replace("dantri.dev", "icdn.dantri.com.vn");
   }
   
-  // Khôi phục logic cũ: Các trang báo VN và CDN uy tín không đi qua wsrv.nl để tránh bị chặn anti-bot/lỗi ảnh
+  // Các CDN báo chí Việt Nam tải trực tiếp siêu tốc (50ms) với referrerPolicy="no-referrer", không qua proxy chậm
   const bypassDomains = [
     'dantri.com.vn',
     'icdn.dantri.com.vn',
+    'cdnphoto.dantri.com.vn',
+    'cdnweb.dantri.com.vn',
+    'vnecdn.net',
+    'mediacdn.vn',
+    'vnncdn.net',
     'tuoitre.vn',
     'thanhnien.vn',
     'vietnamnet.vn',
@@ -2374,8 +2461,17 @@ export function getProxyImageUrl(url: string, width = 450, quality = 75) {
     'cafebiz.vn',
     'cafef.vn',
     'genk.vn',
+    'soha.vn',
+    'vtcnews.vn',
+    'vtc.vn',
+    'laodong.vn',
+    'nld.com.vn',
+    'plo.vn',
+    'znews.vn',
+    'zingnews.vn',
     'unsplash.com',
     'google.com/s2/favicons',
+    'ytimg.com',
     'wsrv.nl'
   ];
   if (bypassDomains.some(d => cleanUrl.includes(d))) {
@@ -4172,7 +4268,7 @@ useEffect(() => {
         <NewsDetailView 
           key={selectedArticle.link || selectedArticle.author || selectedArticle.title}
           article={selectedArticle} 
-          allNews={liveNews && liveNews.length > 0 ? liveNews : DEFAULT_NEWS_FEED} 
+          allNews={fullNewsPool.current && fullNewsPool.current.length > 0 ? fullNewsPool.current : (liveNews && liveNews.length > 0 ? liveNews : DEFAULT_NEWS_FEED)} 
           onClose={closeArticle} 
           onSelectRelated={handleArticleSelect} 
         />
