@@ -1393,7 +1393,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onLoginSuccess,
   onLogout,
   onTokenExpired,
-  onRelogin
+  onRelogin,
+  onOpenShorts
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -1554,7 +1555,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onLoginSuccess,
   onLogout,
   onTokenExpired,
-  onRelogin
+  onRelogin,
+  onOpenShorts
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -1730,7 +1732,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onLoginSuccess,
   onLogout,
   onTokenExpired,
-  onRelogin
+  onRelogin,
+  onOpenShorts
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
