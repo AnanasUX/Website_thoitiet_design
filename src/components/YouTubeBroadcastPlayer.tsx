@@ -14,16 +14,6 @@ export interface YouTubeNewsItem {
 export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
   // ── Bản tin Trực tiếp & Thời sự 24h ──
   {
-    id: 'vneconomy-tv',
-    title: 'VnEconomy TV • Nhịp đập Kinh tế - Bất động sản, Lãi suất ngân hàng & Tiêu điểm thị trường vốn',
-    channel: 'VnEconomy TV',
-    badge: 'TÀI CHÍNH',
-    youtubeId: 'Wn4Hw4f8Uvg',
-    category: 'Tài chính & Vàng',
-    duration: 'Trực tiếp',
-    thumbnail: 'https://i.ytimg.com/vi/Wn4Hw4f8Uvg/mqdefault.jpg'
-  },
-  {
     id: 'vtv24-thoisu',
     title: 'VTV24 • Bản tin Chuyển Động 24h Mới Nhất - Toàn cảnh dòng chảy tin tức trong nước và quốc tế',
     channel: 'VTV24',
@@ -42,6 +32,16 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     category: 'Thời sự 24h',
     duration: 'Trực tiếp',
     thumbnail: 'https://i.ytimg.com/vi/Kmx55fnX6jM/mqdefault.jpg'
+  },
+  {
+    id: 'vneconomy-tv',
+    title: 'VnEconomy Media • Bắt Sóng Thị Trường - Nhịp đập Kinh tế, Bất động sản, Lãi suất & Tài chính',
+    channel: 'VnEconomy Media',
+    badge: 'TÀI CHÍNH',
+    youtubeId: 'gusC3mjEV3I',
+    category: 'Tài chính & Vàng',
+    duration: 'Bản tin',
+    thumbnail: 'https://i.ytimg.com/vi/gusC3mjEV3I/mqdefault.jpg'
   },
   {
     id: 'vtcnow-thoisu',
@@ -223,14 +223,27 @@ export function YouTubeBroadcastPlayer({
   initialCategory?: string;
   onClosePlayer?: () => void;
 }) {
-  const [selectedVideo, setSelectedVideo] = useState<YouTubeNewsItem>(YOUTUBE_NEWS_DATABASE[0]);
-  const [activeTab, setActiveTab] = useState<string>('Tất cả');
+  const [selectedVideo, setSelectedVideo] = useState<YouTubeNewsItem>(() => {
+    if (initialCategory && initialCategory !== 'Tất cả') {
+      const match = YOUTUBE_NEWS_DATABASE.find(item => item.category === initialCategory);
+      if (match) return match;
+    }
+    return YOUTUBE_NEWS_DATABASE[0];
+  });
+  const [activeTab, setActiveTab] = useState<string>(initialCategory || 'Tất cả');
   const [showTvOverlay, setShowTvOverlay] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isMini, setIsMini] = useState<boolean>(false);
   const [isTheater, setIsTheater] = useState<boolean>(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState<boolean>(true);
-  const [currentVideoId, setCurrentVideoId] = useState<string>(selectedVideo.youtubeId);
+  const [hasPlayerError, setHasPlayerError] = useState<boolean>(false);
+  const [currentVideoId, setCurrentVideoId] = useState<string>(() => {
+    if (initialCategory && initialCategory !== 'Tất cả') {
+      const match = YOUTUBE_NEWS_DATABASE.find(item => item.category === initialCategory);
+      if (match) return match.youtubeId;
+    }
+    return YOUTUBE_NEWS_DATABASE[0].youtubeId;
+  });
   const [customInput, setCustomInput] = useState<string>('');
   const [inputError, setInputError] = useState<string>('');
   const [clock, setClock] = useState<string>('');
@@ -238,11 +251,30 @@ export function YouTubeBroadcastPlayer({
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Lắng nghe tín hiệu sự kiện từ YouTube Player API (bắt lỗi phát sóng)
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      try {
+        let data = e.data;
+        if (typeof data === 'string' && data.startsWith('{')) {
+          data = JSON.parse(data);
+        }
+        if (data && (data.event === 'onError' || data.event === 'onPlayerError' || data.info === 150 || data.info === 101 || data.info === 153)) {
+          setHasPlayerError(true);
+          setIsPlayerLoading(false);
+        }
+      } catch {}
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   // Chuyển video siêu nhanh không cần reload lại toàn bộ iframe
   const handleSelectVideo = (item: YouTubeNewsItem) => {
     if (item.youtubeId === selectedVideo.youtubeId) return;
     setSelectedVideo(item);
     setIsPlayerLoading(true);
+    setHasPlayerError(false);
     setCurrentVideoId(item.youtubeId);
 
     try {
@@ -478,15 +510,54 @@ export function YouTubeBroadcastPlayer({
               <div className="w-full relative aspect-video bg-black">
                 {/* Fast video embed player with instant loading */}
                 <iframe
+                  key={currentVideoId}
                   ref={iframeRef}
                   title={selectedVideo.title}
-                  src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1`}
+                  src={`https://www.youtube.com/embed/${currentVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : ''}`}
                   className="w-full h-full border-0 absolute inset-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
-                  loading="lazy"
+                  loading="eager"
                   onLoad={() => setIsPlayerLoading(false)}
                 />
+
+                {/* Fallback Overlay if YouTube throws Error 153 or video unavailable */}
+                {hasPlayerError && (
+                  <div className="absolute inset-0 z-30 bg-[#0a0f1d]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                    <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mb-3 border border-red-500/30">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
+                    <h3 className="text-white font-bold text-[16px] mb-1">Đường truyền trực tiếp tạm gián đoạn</h3>
+                    <p className="text-slate-400 text-[13px] max-w-[420px] mb-5">
+                      Bản tin này có thể bị đài truyền hình thay đổi luồng hoặc hạn chế nhúng. Bạn có thể chuyển kênh khác hoặc xem trực tiếp trên YouTube.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        onClick={() => handleSelectVideo(YOUTUBE_NEWS_DATABASE[0])}
+                        className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[13px] shadow-lg cursor-pointer transition-all flex items-center gap-2"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                        Chuyển sang VTV24 Trực tiếp
+                      </button>
+                      <button
+                        onClick={() => handleSelectVideo(YOUTUBE_NEWS_DATABASE[1])}
+                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[13px] cursor-pointer transition-all"
+                      >
+                        Báo Thanh Niên Live
+                      </button>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${selectedVideo.youtubeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-[13px] cursor-pointer transition-all flex items-center gap-1.5"
+                      >
+                        <span>Mở trên YouTube</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                      </a>
+                    </div>
+                  </div>
+                )}
 
                 {/* Fast Loading Skeleton Overlay */}
                 {isPlayerLoading && (
@@ -737,9 +808,10 @@ export function YouTubeBroadcastPlayer({
           <div className="w-full aspect-video relative bg-black">
             <iframe
               title={selectedVideo.title}
-              src={`https://www.youtube-nocookie.com/embed/${selectedVideo.youtubeId}?autoplay=1&mute=1&playsinline=1`}
+              src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&mute=1&playsinline=1`}
               className="w-full h-full border-0 absolute inset-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
             />
           </div>
 
