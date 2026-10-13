@@ -16,11 +16,11 @@
   - Áp dụng cơ chế **Cache 2 lớp**:
     - Lớp 1: Đọc tức thì từ `localStorage` (`MULTI_CACHE_KEY`) với TTL 30 phút, đảm bảo phản hồi 0ms.
     - Lớp 2: Fetch song song ngầm với timeout 4.5s; nếu mạng chậm hoặc lỗi sẽ dùng `BACKUP_FALLBACK_SHORTS` và `YOUTUBE_NEWS_DATABASE` sẵn có.
-- **State Management**:
-  - `selectedChannelId`: Lưu ID kênh truyền hình đang được chọn (mặc định `'all'`).
-  - `mediaTab`: Phân loại nội dung `'all'` | `'video'` | `'short'`.
-  - `playlist`: Tính toán lại qua `useMemo` dựa trên kênh và tab được chọn, tự động sắp xếp theo `publishedAt` giảm dần.
-  - `currentIndex`: Reset về `0` mỗi khi người dùng đổi kênh hoặc đổi tab để luôn phát từ video mới nhất.
+- **PC Desktop Widescreen Theater Architecture**:
+  - Tự động phát hiện màn hình máy tính (`window.innerWidth >= 1024`): Mặc định chuyển sang `isLandscape = true` (16:9 Toàn Cảnh) để tương thích tối đa với nội dung bản tin truyền hình và phóng sự.
+  - Video Player được mở rộng quy mô hiển thị linh hoạt (`min(95vh, 1020px)`), loại bỏ giới hạn cứng `max-w-[1100px]`, chiếm trọn ~85-90% diện tích màn hình.
+  - Sidebar Playlist máy tính (`xl:flex`) đồng bộ chiều cao tuyệt đối với player (`h-[min(94vh,940px)] 2xl:h-[min(95vh,1020px)]`), hiển thị ngay từ độ phân giải 1280px (`xl`) để người dùng màn hình laptop/desktop có thể quan sát danh sách phát mà không cần mở drawer.
+  - Cung cấp phím tắt `R` và nút chuyển đổi trực quan `[🖥️ 16:9 Toàn cảnh]` / `[📱 9:16 Dọc]` trên header overlay.
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
 - **Từ chối**: Sử dụng nút xem trên YouTube hoặc icon liên kết ngoài mở app YouTube (gây thoát trang, vi phạm trải nghiệm người dùng).

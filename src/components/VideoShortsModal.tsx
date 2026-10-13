@@ -549,7 +549,13 @@ export function VideoShortsModal({
   ]);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
-  const [isLandscape, setIsLandscape] = useState<boolean>(false);
+  // Khởi tạo isLandscape: Trên PC / Laptop (>= 1024px) mặc định là 16:9 Toàn Cảnh để giao diện rộng lớn, không bị bé tẹo
+  const [isLandscape, setIsLandscape] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      return true;
+    }
+    return false;
+  });
   const modalContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -592,11 +598,11 @@ export function VideoShortsModal({
     };
   }, [isOpen, showComments, showPlaylistDrawer]);
 
-  // Xoay ngang / dọc màn hình để xem trọn vẹn video
+  // Xoay ngang / dọc màn hình để xem trọn vẹn video (Chuyển chế độ 16:9 Toàn cảnh / 9:16 Dọc)
   const toggleOrientation = () => {
     const nextState = !isLandscape;
     setIsLandscape(nextState);
-    setShowToast(nextState ? 'Đã quay ngang màn hình (Xem video 16:9 trọn vẹn)' : 'Đã về chế độ dọc Shorts');
+    setShowToast(nextState ? '🖥️ Chế độ Toàn Cảnh 16:9 (Rộng tối đa trên PC)' : '📱 Chế độ Dọc Shorts (9:16)');
     setTimeout(() => setShowToast(null), 2200);
   };
 
@@ -638,6 +644,9 @@ export function VideoShortsModal({
     setSelectedChannelId(channelId);
     setShowChannelMenu(false);
     setCurrentIndex(0); // Luôn bắt đầu từ video mới nhất của kênh theo đúng yêu cầu
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024 && mediaTab !== 'short') {
+      setIsLandscape(true); // Trên PC ưu tiên mở 16:9 toàn cảnh rộng rãi cho video kênh
+    }
     setIsControlsVisible(false);
     const ch = TV_CHANNELS.find(c => c.id === channelId) || TV_CHANNELS[0];
     setShowToast(`📺 Đang phát ${ch.number}: ${ch.name} • Từ video mới nhất`);
@@ -647,7 +656,12 @@ export function VideoShortsModal({
   const handleSelectMediaTab = (tab: 'all' | 'video' | 'short') => {
     setMediaTab(tab);
     setCurrentIndex(0);
-    const label = tab === 'all' ? 'Tất cả video & Shorts' : (tab === 'video' ? 'Video dài trên kênh' : 'Video Shorts ngắn');
+    if (tab === 'video' && typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setIsLandscape(true); // Trên PC tự chuyển sang chế độ Toàn cảnh 16:9 cho video kênh
+    } else if (tab === 'short') {
+      setIsLandscape(false); // Chuyển về chế độ dọc 9:16 cho tab shorts
+    }
+    const label = tab === 'all' ? 'Tất cả video & Shorts' : (tab === 'video' ? 'Video dài trên kênh (16:9 Toàn cảnh)' : 'Video Shorts ngắn (9:16)');
     setShowToast(`⚡ Chế độ: ${label}`);
     setTimeout(() => setShowToast(null), 2000);
   };
@@ -1133,8 +1147,8 @@ export function VideoShortsModal({
       <div 
         className={`relative bg-black sm:rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] sm:border sm:border-white/15 flex flex-col justify-between shrink-0 transition-all duration-300 ${
           isLandscape
-            ? 'w-full h-full max-w-full max-h-[100dvh] sm:h-auto sm:max-h-[92vh] sm:max-w-[1100px] aspect-[16/9]'
-            : 'w-full h-[100dvh] sm:h-[min(92vh,840px)] sm:w-auto aspect-[9/16] max-w-[100vw]'
+            ? 'w-full h-full max-w-full max-h-[100dvh] sm:h-[min(90vh,820px)] lg:h-[min(92vh,880px)] xl:h-[min(94vh,940px)] 2xl:h-[min(95vh,1020px)] aspect-[16/9] sm:w-auto max-w-[calc(100vw-32px)] xl:max-w-[calc(100vw-420px)] 2xl:max-w-[calc(100vw-470px)]'
+            : 'w-full h-[100dvh] sm:h-[min(92vh,880px)] 2xl:h-[min(95vh,960px)] sm:w-auto aspect-[9/16] max-w-[100vw]'
         }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -1248,6 +1262,26 @@ export function VideoShortsModal({
           <div className={`flex items-center gap-2 pointer-events-auto transition-opacity duration-300 ${
             isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}>
+            {/* Nút Chuyển Đổi Kích Thước: 16:9 Toàn Cảnh / 9:16 Dọc */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleOrientation();
+                resetInactivityTimer();
+              }}
+              style={{ height: '36px', borderRadius: '18px', padding: '0 12px' }}
+              className={`flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md ${
+                isLandscape
+                  ? 'bg-[#ff315f] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.5)]'
+                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+              }`}
+              title={isLandscape ? "Đang ở chế độ Toàn Cảnh 16:9 - Bấm để xem Dọc 9:16 [Phím R]" : "Đang ở chế độ Dọc 9:16 - Bấm để phóng to Toàn Cảnh 16:9 [Phím R]"}
+            >
+              <span className="text-[12px]">{isLandscape ? '🖥️' : '📱'}</span>
+              <span className="hidden sm:inline">{isLandscape ? '16:9 Toàn cảnh' : '9:16 Dọc'}</span>
+              <span className="text-[9px] opacity-75 font-mono bg-white/20 px-1 py-0.2 rounded">R</span>
+            </button>
+
             {/* Nút Chọn Kênh TV */}
             <button
               onClick={(e) => {
@@ -1522,9 +1556,11 @@ export function VideoShortsModal({
       </div>
 
       {/* ── Desktop / Tablet Playlist Sidebar (Drawer linh hoạt trên PC) ── */}
-      <div className={`hidden ${isLandscape ? '2xl:flex' : 'xl:flex'} flex-col gap-3 w-[340px] h-[calc(100vh-40px)] max-h-[820px] ml-5 bg-neutral-900/90 rounded-2xl border border-white/10 p-4 backdrop-blur-md z-20 transition-all ${
-        showPlaylistDrawer ? '!flex' : ''
-      }`}>
+      <div className={`hidden xl:flex flex-col gap-3 w-[350px] 2xl:w-[390px] shrink-0 ml-4 2xl:ml-6 bg-neutral-900/90 rounded-2xl border border-white/10 p-4 backdrop-blur-md z-20 transition-all ${
+        isLandscape 
+          ? 'h-[min(90vh,820px)] lg:h-[min(92vh,880px)] xl:h-[min(94vh,940px)] 2xl:h-[min(95vh,1020px)]' 
+          : 'h-[min(92vh,880px)] 2xl:h-[min(95vh,960px)]'
+      } ${showPlaylistDrawer ? '!flex' : ''}`}>
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <div className="flex flex-col">
             <h3 className="font-extrabold text-white text-[14px] flex items-center gap-2">
