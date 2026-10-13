@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { YOUTUBE_NEWS_DATABASE } from './YouTubeBroadcastPlayer';
+import siteLogo from '../assets/logo.png';
 
 export interface ShortItem {
   id: string;
@@ -287,7 +288,7 @@ export function VideoShortsModal({
   const siteLogoUrl = `${siteBaseUrl}favicon.png`;
   const siteAppleIconUrl = `${siteBaseUrl}icons/apple-touch-icon.png`;
 
-  // Tự động ẩn các nút điều khiển & tiêu đề khi không có tương tác sau 3.5s
+  // Tự động ẩn các nút điều khiển & tiêu đề khi không có tương tác sau 5s (theo đúng yêu cầu người dùng)
   const [isControlsVisible, setIsControlsVisible] = useState<boolean>(true);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -301,7 +302,7 @@ export function VideoShortsModal({
 
     inactivityTimerRef.current = setTimeout(() => {
       setIsControlsVisible(false);
-    }, 3500);
+    }, 5000);
   };
 
   useEffect(() => {
@@ -555,7 +556,7 @@ export function VideoShortsModal({
     }
   };
 
-  // Double tap để thả tim, Chạm 1 lần để bật/tắt các nút điều khiển
+  // Double tap để thả tim, Chạm vào màn hình thì LUÔN HIỂN THỊ lại toàn bộ thông tin và đếm lùi 5s không tác động mới ẩn
   const lastTapRef = useRef<number>(0);
   const handleOverlayClick = () => {
     const now = Date.now();
@@ -563,16 +564,10 @@ export function VideoShortsModal({
       handleLike();
       setShowHeartPop(true);
       setTimeout(() => setShowHeartPop(false), 800);
-      setIsControlsVisible(true);
-      resetInactivityTimer();
-    } else {
-      // Chạm 1 lần: ẩn hoặc hiện lại controls
-      setIsControlsVisible(prev => {
-        const next = !prev;
-        if (next) resetInactivityTimer();
-        return next;
-      });
     }
+    // Đúng yêu cầu người dùng: Chạm vào thì tất cả thông tin ẩn đều hiển thị lên, sau 5s không có tác động mới tự ẩn
+    setIsControlsVisible(true);
+    resetInactivityTimer();
     lastTapRef.current = now;
   };
 
@@ -760,7 +755,7 @@ export function VideoShortsModal({
         className={`relative bg-black sm:rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] sm:border sm:border-white/15 flex flex-col justify-between shrink-0 transition-all duration-300 ${
           isLandscape
             ? 'w-full h-full max-w-full max-h-[100dvh] sm:h-auto sm:max-h-[92vh] sm:max-w-[1100px] aspect-[16/9]'
-            : 'w-full h-[100dvh] sm:w-[460px] md:w-[480px] sm:max-h-[100dvh] aspect-[9/16]'
+            : 'w-full h-[100dvh] sm:h-[min(92vh,840px)] sm:w-auto aspect-[9/16] max-w-[100vw]'
         }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -827,17 +822,14 @@ export function VideoShortsModal({
               className="w-8 h-8 rounded-full overflow-hidden border border-white/30 shadow-md shrink-0 bg-black/60 flex items-center justify-center backdrop-blur-sm"
             >
               <img
-                src={siteLogoUrl}
+                src={siteLogo}
                 alt="Logo AnX"
                 className="w-full h-full object-cover rounded-full"
                 onError={(e) => {
                   const target = e.currentTarget;
-                  if (!target.dataset.tried1) {
-                    target.dataset.tried1 = '1';
-                    target.src = siteAppleIconUrl;
-                  } else if (!target.dataset.tried2) {
-                    target.dataset.tried2 = '1';
-                    target.src = './favicon.png';
+                  target.style.display = 'none';
+                  if (target.parentElement) {
+                    target.parentElement.innerHTML = '<span class="font-bold text-[#ff315f] text-[13px]">A</span>';
                   }
                 }}
               />
@@ -855,7 +847,7 @@ export function VideoShortsModal({
             </div>
           </div>
 
-          {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tự động ẩn sau 3.5s khi không tương tác) */}
+          {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tự động ẩn sau 5s khi không tương tác) */}
           <div className={`flex items-center gap-2 pointer-events-auto transition-opacity duration-300 ${
             isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}>
@@ -1035,7 +1027,7 @@ export function VideoShortsModal({
           )}
         </div>
 
-        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags (Tự động ẩn sau 3.5s) ── */}
+        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags (Tự động ẩn sau 5s khi không thao tác) ── */}
         <div className={`absolute bottom-0 inset-x-0 z-20 p-4 ${isLandscape ? 'pb-3 pr-[260px]' : 'pb-4 pr-16'} bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 transition-opacity duration-300 ${
           isControlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
@@ -1048,11 +1040,15 @@ export function VideoShortsModal({
             >
               {currentShort.isSiteNews || currentShort.badge === 'BẢN TIN TRANG' ? (
                 <img 
-                  src={siteLogoUrl} 
+                  src={siteLogo} 
                   alt="Logo" 
                   className="w-full h-full object-cover rounded-full" 
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = siteAppleIconUrl;
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.innerHTML = '<span>A</span>';
+                    }
                   }}
                 />
               ) : (
