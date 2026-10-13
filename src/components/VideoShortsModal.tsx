@@ -321,9 +321,11 @@ export function VideoShortsModal({
   const modalContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Tự động ẩn các nút điều khiển & tiêu đề khi không có tương tác sau 5s (theo đúng yêu cầu người dùng)
-  const [isControlsVisible, setIsControlsVisible] = useState<boolean>(true);
+  // Tự động ẩn các nút điều khiển & tiêu đề (chỉ xuất hiện khi người dùng chủ động chạm/tương tác)
+  const [isControlsVisible, setIsControlsVisible] = useState<boolean>(false);
+  const [slideTransition, setSlideTransition] = useState<'slide-up' | 'slide-down' | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetInactivityTimer = () => {
     setIsControlsVisible(true);
@@ -341,25 +343,20 @@ export function VideoShortsModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    resetInactivityTimer();
-
-    const handleUserActivity = () => {
+    // Chỉ khi có tác động chủ động từ người dùng (click, chạm tap, bấm phím) mới đánh thức hiển thị controls
+    const handleExplicitUserAction = () => {
       resetInactivityTimer();
     };
 
-    window.addEventListener('mousemove', handleUserActivity);
-    window.addEventListener('mousedown', handleUserActivity);
-    window.addEventListener('touchstart', handleUserActivity, { passive: true });
-    window.addEventListener('touchmove', handleUserActivity, { passive: true });
-    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('mousedown', handleExplicitUserAction);
+    window.addEventListener('touchstart', handleExplicitUserAction, { passive: true });
+    window.addEventListener('keydown', handleExplicitUserAction);
 
     return () => {
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      window.removeEventListener('mousemove', handleUserActivity);
-      window.removeEventListener('mousedown', handleUserActivity);
-      window.removeEventListener('touchstart', handleUserActivity);
-      window.removeEventListener('touchmove', handleUserActivity);
-      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('mousedown', handleExplicitUserAction);
+      window.removeEventListener('touchstart', handleExplicitUserAction);
+      window.removeEventListener('keydown', handleExplicitUserAction);
     };
   }, [isOpen, showComments, showPlaylistDrawer]);
 
@@ -509,30 +506,61 @@ export function VideoShortsModal({
     }
   }, [currentShort, likesMap]);
 
-  // ── KHÓA ĐIỀU HƯỚNG CHỐNG TREO/LAG (THROTTLE 700MS) ──
+  // ── ĐIỀU HƯỚNG CHUYỂN VIDEO CÓ HIỆU ỨNG CUỘN TRƯỢT DỌC & ẨN TOÀN BỘ CONTROLS NỘI DUNG ──
   const isNavigatingRef = useRef<boolean>(false);
 
   const handleSelectIndex = (idx: number) => {
-    const validIdx = (idx + playlist.length) % playlist.length;
-    setCurrentIndex(validIdx);
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+    // Khi chuyển video: Giữ ẩn toàn bộ icon nội dung ẩn theo đúng yêu cầu
+    setIsControlsVisible(false);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+
+    setSlideTransition('slide-up');
+    setTimeout(() => {
+      const validIdx = (idx + playlist.length) % playlist.length;
+      setCurrentIndex(validIdx);
+      setSlideTransition(null);
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 150);
+    }, 280);
   };
 
   const handleNextShort = () => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
-    setCurrentIndex(prev => (prev + 1) % playlist.length);
+    // Khi chuyển video: Không xuất hiện các icon nội dung ẩn
+    setIsControlsVisible(false);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+
+    // Hiệu ứng cuộn trượt dọc sang video kế tiếp (Scroll up reel)
+    setSlideTransition('slide-up');
     setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 700);
+      setCurrentIndex(prev => (prev + 1) % playlist.length);
+      setSlideTransition(null);
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 150);
+    }, 280);
   };
 
   const handlePrevShort = () => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
-    setCurrentIndex(prev => (prev - 1 + playlist.length) % playlist.length);
+    // Khi chuyển video: Không xuất hiện các icon nội dung ẩn
+    setIsControlsVisible(false);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+
+    // Hiệu ứng cuộn trượt dọc quay lại video trước (Scroll down reel)
+    setSlideTransition('slide-down');
     setTimeout(() => {
-      isNavigatingRef.current = false;
-    }, 700);
+      setCurrentIndex(prev => (prev - 1 + playlist.length) % playlist.length);
+      setSlideTransition(null);
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 150);
+    }, 280);
   };
 
   // ── PC: LĂN CHUỘT (MOUSE WHEEL) ĐỂ CHUYỂN CLIP ──
@@ -640,7 +668,7 @@ export function VideoShortsModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, showComments, showPlaylistDrawer, isLandscape, currentIndex, playlist.length]);
 
-  // Tự động đảo / chuyển tiếp video khi hết (YouTube API + Timer dự phòng)
+  // Tự động đảo / cuộn chuyển tiếp video khi hết (YouTube API + Timer dự phòng)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -666,14 +694,36 @@ export function VideoShortsModal({
           setShowToast('Video giới hạn nhúng, tự chuyển clip tiếp theo');
           setTimeout(() => {
             handleNextShort();
-          }, 600);
+          }, 500);
         }
-        // YouTube onStateChange = 0 (hết video) hoặc infoDelivery (playerState = 0): Tự động chuyển tiếp clip
+
+        // 1. YouTube onStateChange = 0 (hết video) hoặc infoDelivery (playerState = 0): Tự động cuộn sang clip kế tiếp
         if (
           (data.event === 'onStateChange' && data.info === 0) ||
           (data.event === 'infoDelivery' && data.info?.playerState === 0)
         ) {
           handleNextShort();
+        }
+
+        // 2. Tự động chuyển clip khi currentTime chạm mốc kết thúc video
+        if (
+          data.event === 'infoDelivery' &&
+          typeof data.info?.currentTime === 'number' &&
+          typeof data.info?.duration === 'number' &&
+          data.info.duration > 2 &&
+          data.info.currentTime >= data.info.duration - 0.5
+        ) {
+          handleNextShort();
+        }
+
+        // 3. Khi YouTube báo thời lượng thực tế của clip (duration), đồng bộ timer tự động chuyển clip chính xác
+        if (typeof data.info?.duration === 'number' && data.info.duration > 2) {
+          if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+          const current = typeof data.info?.currentTime === 'number' ? data.info.currentTime : 0;
+          const timeLeft = Math.max(1, data.info.duration - current);
+          autoAdvanceTimerRef.current = setTimeout(() => {
+            handleNextShort();
+          }, (timeLeft + 0.6) * 1000);
         }
       } catch {}
     };
@@ -681,14 +731,14 @@ export function VideoShortsModal({
     window.addEventListener('message', handleMessage);
 
     // Timer dự phòng tự động chuyển tiếp nếu video kết thúc mà bị chặn postMessage cross-origin
-    const durationSec = parseDurationSeconds(currentShort.duration) || 60;
-    const autoAdvanceTimer = setTimeout(() => {
+    const durationSec = parseDurationSeconds(currentShort.duration) || 50;
+    autoAdvanceTimerRef.current = setTimeout(() => {
       handleNextShort();
-    }, (durationSec + 4) * 1000);
+    }, (durationSec + 2) * 1000);
 
     return () => {
       window.removeEventListener('message', handleMessage);
-      clearTimeout(autoAdvanceTimer);
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
   }, [isOpen, currentIndex, currentShort.id, playlist.length]);
 
@@ -799,46 +849,56 @@ export function VideoShortsModal({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* ── TRÌNH PHÁT YOUTUBE SHORTS HOẶC VIDEO BẢN TIN TRANG ── */}
-        {currentShort.youtubeId ? (
-          <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto notranslate" translate="no">
-            <iframe
-              ref={iframeRef}
-              key={`${currentShort.youtubeId}-${isMuted ? 'muted' : 'unmuted'}`}
-              src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
-              title={cleanVideoTitle(currentShort.title)}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"
-              onLoad={(e) => {
-                const ifr = e.target as HTMLIFrameElement;
-                try {
-                  ifr?.contentWindow?.postMessage(
-                    JSON.stringify({ event: 'listening' }),
-                    '*'
-                  );
-                  // Tắt ngay phụ đề / dịch tự động của YouTube
-                  disableCaptionsAndAutoTranslation(ifr?.contentWindow);
-                  setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 400);
-                  setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 1200);
-                  setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 2500);
-                } catch {}
-              }}
+        {/* ── TRÌNH PHÁT YOUTUBE SHORTS HOẶC VIDEO BẢN TIN TRANG (HIỆU ỨNG TỰ ĐỘNG CUỘN TRƯỢT DỌC REEL) ── */}
+        <div 
+          className={`w-full h-full absolute inset-0 transition-all duration-300 ease-out pointer-events-auto ${
+            slideTransition === 'slide-up'
+              ? '-translate-y-full opacity-40 scale-95'
+              : slideTransition === 'slide-down'
+              ? 'translate-y-full opacity-40 scale-95'
+              : 'translate-y-0 opacity-100 scale-100'
+          }`}
+        >
+          {currentShort.youtubeId ? (
+            <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto notranslate" translate="no">
+              <iframe
+                ref={iframeRef}
+                key={`${currentShort.youtubeId}-${isMuted ? 'muted' : 'unmuted'}`}
+                src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
+                title={cleanVideoTitle(currentShort.title)}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"
+                onLoad={(e) => {
+                  const ifr = e.target as HTMLIFrameElement;
+                  try {
+                    ifr?.contentWindow?.postMessage(
+                      JSON.stringify({ event: 'listening' }),
+                      '*'
+                    );
+                    // Tắt ngay phụ đề / dịch tự động của YouTube
+                    disableCaptionsAndAutoTranslation(ifr?.contentWindow);
+                    setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 400);
+                    setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 1200);
+                    setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 2500);
+                  } catch {}
+                }}
+              />
+            </div>
+          ) : (
+            /* Fallback video MP4 nếu có bài viết từ tin tức bản tin trang */
+            <video
+              key={currentShort.id || currentShort.videoUrl}
+              src={currentShort.videoUrl}
+              poster={currentShort.thumbnail}
+              playsInline
+              autoPlay
+              onEnded={handleNextShort}
+              muted={isMuted}
+              className="w-full h-full object-cover absolute inset-0 cursor-pointer"
             />
-          </div>
-        ) : (
-          /* Fallback video MP4 nếu có bài viết từ tin tức bản tin trang */
-          <video
-            key={currentShort.id || currentShort.videoUrl}
-            src={currentShort.videoUrl}
-            poster={currentShort.thumbnail}
-            playsInline
-            autoPlay
-            onEnded={handleNextShort}
-            muted={isMuted}
-            className="w-full h-full object-cover absolute inset-0 cursor-pointer"
-          />
-        )}
+          )}
+        </div>
 
         {/* ── LỚP BẮT CỬ CHỈ VUỐT CHẠM (MOBILE/TABLET) VÀ LĂN CHUỘT (PC) ── */}
         <div 
