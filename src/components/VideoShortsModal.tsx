@@ -20,6 +20,45 @@ export interface ShortItem {
   mediaType?: 'video' | 'short';
 }
 
+// Chuyển đổi chuỗi duration dạng mm:ss hoặc hh:mm:ss thành số giây
+export function parseDurationSeconds(d?: string): number {
+  if (!d) return 50;
+  if (/shorts/i.test(d)) return 50;
+  const parts = d.split(':').map(Number);
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return parts[0] * 60 + parts[1];
+  }
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+  return 50;
+}
+
+// ── Hàm tắt triệt để phụ đề, dịch tự động và quảng cáo trên trình phát YouTube Shorts ──
+export function suppressAdsAndCaptions(targetWin?: Window | null) {
+  if (!targetWin) return;
+  try {
+    // 0. Tự động skip/bỏ qua quảng cáo YouTube nếu có
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'skipAd' }), '*');
+    // 1. Gỡ bỏ hoàn toàn module phụ đề/dịch tự động
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'unloadModule', args: ['captions'] }), '*');
+    // 2. Tắt track phụ đề (set track object rỗng)
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'track', {}] }), '*');
+    // 3. Tắt nạp lại phụ đề
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'reload', false] }), '*');
+    // 4. Giảm kích thước font phụ đề về 0 nếu trình duyệt vẫn cố hiển thị
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'fontSize', -1] }), '*');
+  } catch {}
+}
+
+// ── Danh sách các nguồn tin tức & phóng sự lớn nhất trong ngày ──
+export const FEATURED_NEWS_CHANNELS = [
+  { id: 'UCabsTV34JwALXKGMqHpvUiA', name: 'VTV24' },
+  { id: 'UCIW9cGgoRuGJnky3K3tbzNg', name: 'Báo Thanh Niên' },
+  { id: 'UCteGrHMrnQwx7Scx--7nyoA', name: 'Báo Tuổi Trẻ' },
+  { id: 'UCFN0IoARjOAgx-OWr-JBIHg', name: 'Báo Lao Động' }
+];
+
 // ── Cấu trúc Kênh Truyền Hình phong cách Smart TV ──
 export interface TVChannel {
   id: string; // 'all' | 'vtv24' | 'tienphong' | 'thanhnien' | 'tuoitre' | 'vtcnow' | 'laodong' | 'thoitiet' | 'site'
@@ -387,6 +426,7 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
           const pubMatch = entryXml.match(/<published>([^<]+)<\/published>/i);
 
           if (vidMatch && titleMatch) {
+            const vid = vidMatch[1];
             let rawTitle = titleMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
             rawTitle = cleanVideoTitle(rawTitle);
 

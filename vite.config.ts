@@ -23,15 +23,6 @@ export default defineConfig(({ mode }) => {
       sourcemap: emitSourcemaps ? 'inline' : false,
       minify: !emitSourcemaps,
     },
-    server: {
-      proxy: {
-        '/api/phuquy': {
-          target: 'https://phuquygroup.vn',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/phuquy/, '')
-        }
-      }
-    },
     plugins: [
       VitePWA({
         registerType: 'autoUpdate',
@@ -109,10 +100,17 @@ react(),
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
+      proxy: {
+        '/api/phuquy': {
+          target: 'https://phuquygroup.vn',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/phuquy/, '')
+        }
+      },
       watch: {
         ignored: [
           '**/.figma/**',
-],
+        ],
       },
     },
     preview: {
