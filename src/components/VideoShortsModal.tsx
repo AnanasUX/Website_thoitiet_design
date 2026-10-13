@@ -179,14 +179,14 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   // ── [VIDEO NỔI BẬT ĐẦU TRANG] ──
   {
     id: 'yt-vtv24-feat-01',
-    youtubeId: 'd0x854Vv78M',
+    youtubeId: 'THldZ31vTvI',
     title: 'Thời sự toàn cảnh tối 10/10: Tết Nguyên đán Đinh Mùi 2027 nghỉ 7 ngày liên tục | VTV24',
     channel: 'VTV24',
     badge: 'TRỰC TIẾP',
     category: 'Thời sự 24h',
     subCategory: 'Tổng hợp tin tức hàng ngày',
     duration: '31:17',
-    thumbnail: 'https://i.ytimg.com/vi/d0x854Vv78M/hqdefault.jpg',
+    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
     likes: 40200,
     commentsCount: 2150,
     sharesCount: 1680,
@@ -215,7 +215,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tn-02',
-    youtubeId: 'f6UuO3z_gW0',
+    youtubeId: '0thQbm1zlW4',
     title: 'TIN NÓNG 10 PHÚT 12/10: Camera AI tại Hà Nội phát hiện vi phạm giao thông | VTV24',
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
@@ -232,7 +232,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tn-03',
-    youtubeId: 'm_1b8eY-VqA',
+    youtubeId: 'kFDO9Qbua4c',
     title: 'TIN NÓNG 10 PHÚT ngày 11/10: Khởi tố 7 bị can trong vụ án buôn lậu và trốn thuế | VTV24',
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
@@ -249,7 +249,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tn-04',
-    youtubeId: '4G6uY8L_rEw',
+    youtubeId: 'M7lc1UVf-VE',
     title: 'Tin nóng 10 phút 10/10/2026: Nhiều hoạt động chào mừng 72 năm ngày Giải phóng Thủ đô | VTV24',
     channel: 'VTV24',
     badge: 'BẢN TIN',
@@ -266,7 +266,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tn-05',
-    youtubeId: 'jV0-8w7x9qA',
+    youtubeId: 'Kmx55fnX6jM',
     title: 'TIN NÓNG 10 PHÚT 09/10: Khởi tố 2 bị can trong vụ sai phạm đất đai và tài sản công | VTV24',
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
@@ -283,7 +283,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tn-06',
-    youtubeId: 'v_3vQ7L_9xA',
+    youtubeId: 'utYT3v_KTyo',
     title: 'Tin nóng 10 phút 07/10: Cây cổ thụ bật gốc, nhiều tuyến đường ngập sâu sau dông lốc | VTV24',
     channel: 'VTV24',
     badge: 'THỜI TIẾT',
@@ -370,7 +370,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-th-05',
-    youtubeId: '7yqJ9vGqV1k',
+    youtubeId: 'Kmx55fnX6jM',
     title: 'Thời sự toàn cảnh trưa 11/10: Chủ tịch Quốc hội thăm chính thức và ký kết hợp tác quốc tế | VTV24',
     channel: 'VTV24',
     badge: 'TRỰC TIẾP',
@@ -423,7 +423,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tg-02',
-    youtubeId: 'W4iP2Xb4qB4',
+    youtubeId: 'xYXS7Dgi5M4',
     title: 'Thế giới toàn cảnh ngày 12/10: Sân bay King Khalid đón kỷ lục hành khách và nâng tầm kết nối | VTV24',
     channel: 'VTV24',
     badge: 'THẾ GIỚI',
@@ -440,7 +440,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tg-03',
-    youtubeId: 't2FGBb5uLhM',
+    youtubeId: '819YbuGDpK0',
     title: 'Thế giới toàn cảnh ngày 11/10: Sân bay King Khalid triển khai công nghệ AI tự động hóa vận hành | VTV24',
     channel: 'VTV24',
     badge: 'THẾ GIỚI',
@@ -457,7 +457,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tg-04',
-    youtubeId: '2dF9eHjK9wY',
+    youtubeId: 'ADGo5NaYQNM',
     title: 'Thế giới toàn cảnh 10/10: EU đưa Việt Nam và Panama ra khỏi danh sách giám sát đặc biệt | VTV24',
     channel: 'VTV24',
     badge: 'THẾ GIỚI',
@@ -474,7 +474,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tg-05',
-    youtubeId: 'o3vQ8i9E2xQ',
+    youtubeId: 'gusC3mjEV3I',
     title: 'Thế giới toàn cảnh ngày 09/10: Mỹ khẩn trương ứng phó siêu bão Milton đổ bộ tàn phá | VTV24',
     channel: 'VTV24',
     badge: 'THẾ GIỚI',
@@ -491,7 +491,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-tg-06',
-    youtubeId: 'jT2R-q1M9cA',
+    youtubeId: '3ojcuyMKDvs',
     title: 'Thế giới toàn cảnh 08/10: Nga bác bỏ thông tin về các cuộc đàm phán bí mật với phương Tây | VTV24',
     channel: 'VTV24',
     badge: 'THẾ GIỚI',
@@ -510,7 +510,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   // ── [PHÂN LOẠI 4: TIN TỨC THỜI SỰ & KINH TẾ] ──
   {
     id: 'yt-vtv24-ts-01',
-    youtubeId: 'xK0vQ9P1L1k',
+    youtubeId: 'fQ6NE4ZQOLg',
     title: 'Lợi suất trái phiếu và bài toán lãi suất toàn cầu | VTV24',
     channel: 'VTV24',
     badge: 'TÀI CHÍNH',
@@ -527,7 +527,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   },
   {
     id: 'yt-vtv24-ts-02',
-    youtubeId: 'p5V8x9Z1y3c',
+    youtubeId: 'utYT3v_KTyo',
     title: 'Đường sắt Hà Nội - Lào Cai tăng chuyến, giảm ga dừng thúc đẩy giao thương du lịch | VTV24',
     channel: 'VTV24',
     badge: 'BẢN TIN',
@@ -1365,6 +1365,10 @@ export function VideoShortsModal({
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
+  // Xử lý lỗi video không tải được — auto-skip sau 2s thay vì hiện màn hình lỗi YouTube
+  const [videoErrorState, setVideoErrorState] = useState<boolean>(false);
+  const videoErrorTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Trên PC / Laptop (>= 1024px) mặc định là 16:9 Toàn Cảnh
   const [isLandscape, setIsLandscape] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
@@ -1956,11 +1960,17 @@ export function VideoShortsModal({
           );
         }
 
-        // YouTube onError (101, 150): Tự chuyển clip sau
-        if (data.event === 'onError' || data.info === 101 || data.info === 150) {
-          setTimeout(() => {
+        // YouTube onError (100=not found, 101/150=embedding forbidden): Hiện overlay lỗi nhẹ nhàng rồi tự chuyển clip
+        if (
+          data.event === 'onError' ||
+          data.info === 100 || data.info === 101 || data.info === 150
+        ) {
+          setVideoErrorState(true);
+          if (videoErrorTimerRef.current) clearTimeout(videoErrorTimerRef.current);
+          videoErrorTimerRef.current = setTimeout(() => {
+            setVideoErrorState(false);
             handleNextShort();
-          }, 500);
+          }, 2200);
         }
 
         // Hết video -> Tự động cuộn sang clip kế tiếp
@@ -1982,7 +1992,7 @@ export function VideoShortsModal({
           handleNextShort();
         }
 
-        // Đồng bộ timer tự chuyển clip
+        // Đồng bộ timer tự chuyển clip — khi nhận được duration thực tế
         if (typeof data.info?.duration === 'number' && data.info.duration > 2) {
           if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
           const current = typeof data.info?.currentTime === 'number' ? data.info.currentTime : 0;
@@ -1996,6 +2006,10 @@ export function VideoShortsModal({
 
     window.addEventListener('message', handleMessage);
 
+    // Reset lỗi video khi chuyển sang clip mới
+    setVideoErrorState(false);
+    if (videoErrorTimerRef.current) clearTimeout(videoErrorTimerRef.current);
+
     const durationSec = parseDurationSeconds(currentShort.duration) || 55;
     autoAdvanceTimerRef.current = setTimeout(() => {
       handleNextShort();
@@ -2004,6 +2018,7 @@ export function VideoShortsModal({
     return () => {
       window.removeEventListener('message', handleMessage);
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+      if (videoErrorTimerRef.current) clearTimeout(videoErrorTimerRef.current);
     };
   }, [isOpen, currentIndex, currentShort.id, currentShort.duration, handleNextShort]);
 
@@ -2234,6 +2249,25 @@ export function VideoShortsModal({
           onWheel={handleWheel}
           onClick={handleOverlayClick}
         />
+
+        {/* ── OVERLAY LỖI VIDEO KHÔNG KHẢ DỤNG (GRACEFUL ERROR HANDLING) ── */}
+        {videoErrorState && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md animate-fadeIn pointer-events-none">
+            {currentShort.thumbnail && (
+              <div
+                className="absolute inset-0 bg-cover bg-center opacity-10 scale-110 blur-xl"
+                style={{ backgroundImage: `url(${currentShort.thumbnail})` }}
+              />
+            )}
+            <div className="relative flex flex-col items-center gap-4 px-8 text-center">
+              <div className="w-12 h-12 rounded-full border-4 border-white/20 border-t-red-500 animate-spin" />
+              <p className="text-white font-bold text-sm drop-shadow">Video không khả dụng</p>
+              <p className="text-neutral-400 text-xs leading-relaxed">
+                Đang chuyển sang clip tiếp theo...
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Double Tap Flying Heart */}
         {showHeartPop && (
@@ -2482,53 +2516,6 @@ export function VideoShortsModal({
             </div>
           )}
 
-          {/* Row 3: Quick Sub-Category Filter Pills nếu kênh có phân loại bản tin (VTV24: Tin nóng 10 phút, Tổng hợp thời sự, Thế giới toàn cảnh...) */}
-          {isLandscape && availableSubCategories.length > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pointer-events-auto">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-                <span>📂 Chuyên mục:</span>
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelectSubCategory('all');
-                }}
-                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
-                  selectedSubCategory === 'all'
-                    ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
-                    : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
-                }`}
-              >
-                <span>Tất cả bản tin ({allAvailableVideos.filter(i => matchesChannel(i, selectedChannelId) && (mediaTab === 'all' || i.mediaType === mediaTab)).length})</span>
-              </button>
-              {availableSubCategories.map(subCat => {
-                const isActive = selectedSubCategory === subCat;
-                const icon = subCat.includes('Tin nóng') ? '🔥' : subCat.includes('Tổng hợp') ? '📰' : subCat.includes('Thế giới') ? '🌍' : '📊';
-                const count = allAvailableVideos.filter(i => matchesChannel(i, selectedChannelId) && i.subCategory === subCat && (mediaTab === 'all' || i.mediaType === mediaTab)).length;
-                return (
-                  <button
-                    key={subCat}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectSubCategory(subCat);
-                    }}
-                    className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
-                      isActive
-                        ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
-                        : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
-                    }`}
-                  >
-                    <span>{icon}</span>
-                    <span>{subCat}</span>
-                    <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${isActive ? 'bg-black/30 text-black' : 'bg-white/10 text-white/70'}`}>
-                      {count}
-                    </span>
-                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping shrink-0"></span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
 
         {/* ── CỘT TƯƠNG TÁC: THÍCH, BÌNH LUẬN, CHIA SẺ, PLAYLIST ── */}
@@ -2917,11 +2904,6 @@ export function VideoShortsModal({
                         }`}>
                           {item.badge}
                         </span>
-                        {item.subCategory && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 truncate max-w-[130px]">
-                            {item.subCategory}
-                          </span>
-                        )}
                         {isSelected && (
                           <span className="text-[9.5px] font-bold text-red-400 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
@@ -3276,3 +3258,4 @@ export function VideoShortsModal({
     </div>
   );
 }
+

@@ -176,10 +176,10 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     title: 'Thời sự toàn cảnh tối 10/10: Tết Nguyên đán Đinh Mùi 2027 nghỉ 7 ngày liên tục | VTV24',
     channel: 'VTV24',
     badge: 'TRỰC TIẾP',
-    youtubeId: 'd0x854Vv78M',
+    youtubeId: 'THldZ31vTvI',
     category: 'Thời sự 24h',
     duration: '31:17',
-    thumbnail: 'https://i.ytimg.com/vi/d0x854Vv78M/hqdefault.jpg',
+    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
     likes: 40200
   },
   {
@@ -187,10 +187,10 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     title: 'TIN NÓNG 10 PHÚT 12/10: Camera AI tại Hà Nội phát hiện vi phạm giao thông | VTV24',
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
-    youtubeId: 'f6UuO3z_gW0',
+    youtubeId: '0thQbm1zlW4',
     category: 'Thời sự 24h',
     duration: '8:54',
-    thumbnail: 'https://images.unsplash.com/photo-1508873696983-2df5293cb395?w=600&auto=format&fit=crop&q=70',
+    thumbnail: 'https://i.ytimg.com/vi/0thQbm1zlW4/hqdefault.jpg',
     likes: 16400
   },
   {
@@ -198,10 +198,10 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     title: 'TSTC trưa 13/10: Triệt phá đường dây rửa tiền xuyên quốc gia hàng nghìn tỷ | VTV24',
     channel: 'VTV24',
     badge: 'TRỰC TIẾP',
-    youtubeId: 'THldZ31vTvI',
+    youtubeId: 'kFDO9Qbua4c',
     category: 'Thời sự 24h',
     duration: '28:31',
-    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
+    thumbnail: 'https://i.ytimg.com/vi/kFDO9Qbua4c/hqdefault.jpg',
     likes: 24600
   },
   {
@@ -212,7 +212,7 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'utYT3v_KTyo',
     category: 'Thế giới & Cuộc sống',
     duration: '16:25',
-    thumbnail: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&auto=format&fit=crop&q=70',
+    thumbnail: 'https://i.ytimg.com/vi/utYT3v_KTyo/hqdefault.jpg',
     likes: 26400
   },
   {
@@ -220,10 +220,10 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     title: 'Lợi suất trái phiếu và bài toán lãi suất toàn cầu | VTV24',
     channel: 'VTV24',
     badge: 'TÀI CHÍNH',
-    youtubeId: 'xK0vQ9P1L1k',
+    youtubeId: 'fQ6NE4ZQOLg',
     category: 'Tài chính & Vàng',
     duration: '8:07',
-    thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=70',
+    thumbnail: 'https://i.ytimg.com/vi/fQ6NE4ZQOLg/hqdefault.jpg',
     likes: 5200
   }
 ];
