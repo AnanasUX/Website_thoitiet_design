@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `d9912c0 (feat(shorts): optimize speed, unmuted default, separate video vs shorts, fix EPG & header layout, and add Google account interactions)`
-- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 524ms).
+- **Commit gần nhất**: `3a1b801 (fix(ui): eliminate header overlap in portrait shorts by unifying header into single flex-col container)`
+- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 454ms).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
 1. **Khắc Phục Tốc Độ & Tối Ưu Chuyển Clip**:
