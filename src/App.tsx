@@ -608,7 +608,7 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)} 
-        className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#e3e7ef] rounded-full text-[13px] font-semibold text-[#182033] shadow-sm active:scale-95 transition-transform"
+        className="flex items-center gap-[6px] px-[12px] py-[6px] bg-white border border-[#e3e7ef] rounded-full text-[13px] font-semibold text-[#182033] shadow-sm active:scale-95 transition-transform cursor-pointer"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
         <span>{activeCategory}</span>
@@ -616,22 +616,25 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
       </button>
       
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-[#e3e7ef] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
-          <div className="grid grid-cols-2 gap-[6px]">
-            {NEWS_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  setIsOpen(false);
-                }}
-                className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white font-bold' : 'hover:bg-[#f4f6fa] text-[#5f687b] font-medium'}`}
-              >
-                {cat}
-              </button>
-            ))}
+        <>
+          <div className="fixed inset-0 z-[140]" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full right-0 mt-2 bg-white border border-[#e3e7ef] rounded-[16px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 z-[150] w-[280px]">
+            <div className="grid grid-cols-2 gap-[6px]">
+              {NEWS_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setIsOpen(false);
+                  }}
+                  className={`text-left px-3 py-[8px] rounded-[10px] text-[13px] transition-all cursor-pointer ${activeCategory === cat ? 'bg-[#ff315f] text-white font-bold' : 'hover:bg-[#f4f6fa] text-[#5f687b] font-medium'}`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -1422,30 +1425,24 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-3.5 sm:px-4 w-full shrink-0 sticky top-0 z-[100]">
-        <div className="flex items-center gap-2 min-w-0">
-          <p className="font-extrabold text-[#ff315f] text-[19px] shrink-0">Anx.</p>
-          <div className="flex items-center gap-1 text-[#5f687b] text-[11px] truncate">
-            <span>📍</span>
-            <span className="font-semibold text-[#182033] truncate max-w-[110px]">{WEATHER.location.split(',')[0]}</span>
+      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
+        <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
+        <div className="flex items-center">
+          <div className="flex flex-col items-end">
+            <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
+              📍 {WEATHER.location}
+            </p>
+            <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
+              <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
+                {shortDateStr} · {timeStr}
+              </p>
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Nút Video Shorts TikTok/Reels trên Mobile Header */}
-          <button
-            onClick={onOpenShorts}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-extrabold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer"
-            title="Xem Video Shorts 9:16 (TikTok & Reels)"
-          >
-            <span>⚡ Shorts</span>
-          </button>
-
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[30px] h-[30px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
               {darkMode ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
               )}
           </div>
 
@@ -1478,34 +1475,33 @@ function MobileLayout({ activeCategory, setActiveCategory,
             </div>
           )}
 
-          {/* ── Category Bar Mobile: Sticky Category Row + Swipeable Pills ── */}
-          <div className="flex flex-col gap-2 w-full sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-2 mt-[-8px]">
-            <div className="flex items-center justify-between w-full">
-              <p className="font-bold text-[#182033] text-[17px]">Tin Tức Mới Nhất</p>
-              <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
+          {/* ── Banner Video Shorts (Thay thế Bản tin TV cũ) ── */}
+          <div
+            onClick={onOpenShorts}
+            className="w-full bg-[#182033] text-white rounded-2xl p-3 px-3.5 flex items-center justify-between cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99] border border-[#e3e7ef]/10"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-[#ff315f] flex items-center justify-center text-white shrink-0 shadow-xs">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9.5px] font-black px-1.5 py-0.2 rounded bg-[#ff315f]/25 text-[#ff315f] border border-[#ff315f]/30 uppercase tracking-wider">SHORTS</span>
+                  <span className="font-bold text-[13px] text-white truncate">Video Shorts 24H</span>
+                </div>
+                <span className="text-[11px] text-slate-300 truncate">Tin tức video ngắn định dạng 9:16 chuẩn nét</span>
+              </div>
             </div>
-            
-            {/* Horizontal swipeable pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full pb-0.5">
-              {NEWS_CATEGORIES.map(cat => {
-                const isActive = activeCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => {
-                      if (setActiveCategory) setActiveCategory(cat);
-                    }}
-                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
-                      isActive
-                        ? 'bg-[#182033] text-white font-bold shadow-sm'
-                        : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:bg-[#f4f6fa]'
-                    }`}
-                  >
-                    <span>{cat}</span>
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-1 text-[11px] font-bold text-[#ff315f] bg-white/10 px-2.5 py-1 rounded-full shrink-0">
+              <span>Xem ngay</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
+          </div>
+
+          {/* ── Category Bar Mobile: Sticky Category Row (Chỉ hiển thị nút lọc dạng dropdown trên Mobile) ── */}
+          <div className="flex items-center justify-between w-full sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-2 mt-[-4px]">
+            <p className="font-bold text-[#182033] text-[17px]">Tin Tức Mới Nhất</p>
+            <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
           </div>
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
@@ -1600,11 +1596,11 @@ function TabletLayout({ activeCategory, setActiveCategory,
           {/* Nút Video Shorts trên Tablet Header */}
           <button
             onClick={onOpenShorts}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-black text-[12px] shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer mr-2 shadow-red-500/20"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff315f] hover:bg-[#e02650] text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all cursor-pointer mr-2"
             title="Xem Video Shorts 9:16 (TikTok & YouTube Shorts)"
           >
-            <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-            <span>⚡ Shorts</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Shorts</span>
           </button>
 
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
@@ -1773,11 +1769,11 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {/* Nút Video Shorts trên Desktop Header */}
           <button
             onClick={onOpenShorts}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#ff0050] to-[#00f2fe] text-white font-black text-[13px] shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer mr-3 shadow-red-500/25"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ff315f] hover:bg-[#e02650] text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all cursor-pointer mr-3"
             title="Xem Video Shorts 9:16 (TikTok & YouTube Shorts)"
           >
-            <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-            <span>⚡ Video Shorts 9:16</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Video Shorts 9:16</span>
           </button>
 
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
@@ -2441,7 +2437,7 @@ function ScrollToTop() {
   return isVisible ? (
     <button 
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-      className="fixed bottom-20 right-5 z-[80] bg-white border border-[#e3e7ef] shadow-[0_4px_16px_rgba(23,33,51,0.18)] hover:-translate-y-1 transition-all duration-300 rounded-full size-11 flex items-center justify-center text-[#ff315f] group cursor-pointer"
+      className="fixed bottom-6 right-5 z-[80] bg-white border border-[#e3e7ef] shadow-[0_4px_16px_rgba(23,33,51,0.18)] hover:-translate-y-1 active:scale-90 transition-all duration-300 rounded-full size-11 flex items-center justify-center text-[#ff315f] group cursor-pointer"
       title="Cuộn lên đầu trang"
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-y-0.5 transition-transform duration-300"><path d="M18 15l-6-6-6 6"/></svg>
@@ -4129,21 +4125,6 @@ useEffect(() => {
         <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
       </div>
 
-      {/* Floating Action Button (FAB) - Xem Video Shorts TikTok/Reels */}
-      <div className="fixed bottom-5 right-5 z-[80] flex items-center group">
-        <button
-          onClick={() => setIsShortsOpen(true)}
-          className="flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-[#ff0050] via-[#833ab4] to-[#00f2fe] text-white font-extrabold text-[12px] sm:text-[13px] shadow-[0_6px_20px_rgba(255,0,80,0.4)] hover:shadow-[0_8px_25px_rgba(0,242,254,0.5)] hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/30 tracking-wider"
-          title="Xem Video Shorts 9:16 (TikTok & Reels)"
-        >
-          <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center text-white shrink-0 shadow-xs">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          </div>
-          <span className="flex items-center gap-1">
-            <span>⚡ Shorts</span>
-          </span>
-        </button>
-      </div>
 
       {/* Video Shorts Modal (Trải nghiệm TikTok / YouTube Shorts) */}
       <VideoShortsModal
