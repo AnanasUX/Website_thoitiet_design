@@ -4131,6 +4131,8 @@ useEffect(() => {
         isOpen={isShortsOpen}
         onClose={() => setIsShortsOpen(false)}
         liveNews={liveNews}
+        userRole={userRole}
+        onLogin={handleRelogin}
       />
 
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />
