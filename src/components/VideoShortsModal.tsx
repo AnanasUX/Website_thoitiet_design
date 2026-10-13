@@ -264,6 +264,58 @@ export function VideoShortsModal({
   ]);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
+  const [isLandscape, setIsLandscape] = useState<boolean>(false);
+  const modalContainerRef = useRef<HTMLDivElement>(null);
+
+  // Xoay ngang / dọc màn hình để xem trọn vẹn video
+  const toggleOrientation = async () => {
+    const nextState = !isLandscape;
+    setIsLandscape(nextState);
+    setShowToast(nextState ? 'Đã quay ngang màn hình (Xem video 16:9 trọn vẹn)' : 'Đã về chế độ dọc Shorts');
+    setTimeout(() => setShowToast(null), 2200);
+
+    try {
+      if (nextState) {
+        const elem = modalContainerRef.current || document.documentElement;
+        if (!document.fullscreenElement && (elem as any).requestFullscreen) {
+          await (elem as any).requestFullscreen().catch(() => {});
+        }
+        if (window.screen?.orientation && 'lock' in window.screen.orientation) {
+          await (window.screen.orientation as any).lock('landscape').catch(() => {});
+        }
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen().catch(() => {});
+        }
+        if (window.screen?.orientation && 'unlock' in window.screen.orientation) {
+          (window.screen.orientation as any).unlock?.();
+        }
+      }
+    } catch {}
+  };
+
+  // Lắng nghe thay đổi kích thước và xoay màn hình tự nhiên
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isLandscape && window.innerWidth < 768) {
+        setIsLandscape(false);
+      }
+    };
+    const handleResize = () => {
+      if (window.innerWidth > window.innerHeight && window.innerHeight < 600 && !isLandscape) {
+        setIsLandscape(true);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [isLandscape]);
 
   // Tải ngầm danh sách video đa kênh khi mở modal
   useEffect(() => {
@@ -413,7 +465,7 @@ export function VideoShortsModal({
     lastTapRef.current = now;
   };
 
-  // Phím tắt bàn phím PC: ↑ ↓ để chuyển video, M để tắt tiếng, Esc để đóng
+  // Phím tắt bàn phím PC: ↑ ↓ để chuyển video, M để tắt tiếng, R để quay ngang, Esc để đóng
   useEffect(() => {
     if (!isOpen) return;
 
@@ -429,11 +481,16 @@ export function VideoShortsModal({
       } else if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
         setIsMuted(m => !m);
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        toggleOrientation();
       } else if (e.key === 'Escape') {
         if (showComments) {
           setShowComments(false);
         } else if (showPlaylistDrawer) {
           setShowPlaylistDrawer(false);
+        } else if (isLandscape) {
+          setIsLandscape(false);
         } else {
           onClose();
         }
@@ -442,7 +499,7 @@ export function VideoShortsModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showComments, showPlaylistDrawer, currentIndex, playlist.length]);
+  }, [isOpen, showComments, showPlaylistDrawer, isLandscape, currentIndex, playlist.length]);
 
   // Tự động phục hồi lỗi từ YouTube API và tự chuyển video khi hết
   useEffect(() => {
@@ -541,6 +598,7 @@ export function VideoShortsModal({
 
   return (
     <div 
+      ref={modalContainerRef}
       className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh]"
       onWheel={handleWheel}
     >
@@ -552,7 +610,7 @@ export function VideoShortsModal({
       />
 
       {/* ── Floating PC Keyboard & Mouse Hint (Trợ năng trên PC) ── */}
-      <div className="hidden 2xl:flex flex-col gap-3 absolute left-8 top-1/2 -translate-y-1/2 z-20">
+      <div className={`hidden ${isLandscape ? '3xl:flex' : '2xl:flex'} flex-col gap-3 absolute left-8 top-1/2 -translate-y-1/2 z-20`}>
         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-[11px] text-neutral-400 flex flex-col gap-1.5 max-w-[170px] shadow-xl">
           <p className="font-extrabold text-neutral-200 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
@@ -560,14 +618,19 @@ export function VideoShortsModal({
           </p>
           <p>🖱️ Lăn chuột : Chuyển clip</p>
           <p>↑ / ↓ : Chuyển clip</p>
+          <p>R : Quay ngang màn hình</p>
           <p>M : Bật/Tắt âm thanh</p>
           <p>Esc : Đóng video</p>
         </div>
       </div>
 
-      {/* ── Khung Video Shorts 100% Chiều Cao (Responsive Fullscreen 100% tỷ lệ 9:16) ── */}
+      {/* ── Khung Video Shorts (Hỗ trợ cả Dọc 9:16 và Quay ngang 16:9 trọn vẹn) ── */}
       <div 
-        className="relative w-full h-[100dvh] sm:w-[460px] md:w-[480px] sm:max-h-[100dvh] aspect-[9/16] bg-black sm:rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] sm:border sm:border-white/15 flex flex-col justify-between shrink-0"
+        className={`relative bg-black sm:rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] sm:border sm:border-white/15 flex flex-col justify-between shrink-0 transition-all duration-300 ${
+          isLandscape
+            ? 'w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-[1100px] aspect-[16/9]'
+            : 'w-full h-[100dvh] sm:w-[460px] md:w-[480px] sm:max-h-[100dvh] aspect-[9/16]'
+        }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
@@ -625,19 +688,51 @@ export function VideoShortsModal({
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
             <span className="text-[11px] text-white/70 font-semibold drop-shadow hidden xs:inline">
-              Tin nóng 24h
+              {isLandscape ? 'Toàn cảnh 16:9' : 'Tin nóng 24h'}
             </span>
           </div>
 
-          {/* Controls: Âm thanh, Playlist, Đóng */}
-          <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tất cả icon tròn chuẩn width=height 36px) */}
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {/* Nút Quay Ngang Màn Hình (Xem video 16:9 trọn vẹn) */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleOrientation();
+              }}
+              className={`w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+                isLandscape
+                  ? 'bg-[#ff315f] hover:bg-[#ff315f]/90 text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.6)]'
+                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+              }`}
+              title={isLandscape ? "Quay về màn hình dọc (Shorts 9:16) [R]" : "Quay ngang màn hình (Xem video 16:9 trọn vẹn) [R]"}
+            >
+              {isLandscape ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="6" y="3" width="12" height="18" rx="2" />
+                  <path d="M2 10l2-2 2 2" />
+                  <path d="M4 8v5a3 3 0 0 0 3 3" />
+                  <path d="M22 14l-2 2-2-2" />
+                  <path d="M20 16v-5a3 3 0 0 0-3-3" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="6" width="18" height="12" rx="2" />
+                  <path d="M10 2l-2 2 2 2" />
+                  <path d="M8 4h5a3 3 0 0 1 3 3" />
+                  <path d="M14 22l2-2-2-2" />
+                  <path d="M16 20h-5a3 3 0 0 1-3-3" />
+                </svg>
+              )}
+            </button>
+
             {/* Quick sound toggle */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMuted(!isMuted);
               }}
-              className={`p-2 rounded-full backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+              className={`w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
                 isMuted 
                   ? 'bg-red-600/80 hover:bg-red-600 text-white border-red-400 shadow-md' 
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
@@ -653,8 +748,11 @@ export function VideoShortsModal({
 
             {/* Playlist Drawer Toggle Button */}
             <button
-              onClick={() => setShowPlaylistDrawer(!showPlaylistDrawer)}
-              className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPlaylistDrawer(!showPlaylistDrawer);
+              }}
+              className="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-transform"
               title="Danh sách Shorts"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -662,8 +760,11 @@ export function VideoShortsModal({
 
             {/* Close Button */}
             <button
-              onClick={onClose}
-              className="p-2 rounded-full bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              className="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
               title="Đóng (Esc)"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -672,7 +773,7 @@ export function VideoShortsModal({
         </div>
 
         {/* ── Cột Tương Tác Bên Phải (Right Action Column: Like, Comment, Share, YouTube) ── */}
-        <div className="absolute right-3 bottom-16 z-30 flex flex-col items-center gap-3.5 select-none pointer-events-auto">
+        <div className={`absolute right-3 ${isLandscape ? 'bottom-12' : 'bottom-16'} z-30 flex flex-col items-center gap-3.5 select-none pointer-events-auto`}>
           
           {/* Like ❤️ Button */}
           <button
@@ -680,7 +781,7 @@ export function VideoShortsModal({
             className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
             title="Thích video"
           >
-            <div className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-lg ${
+            <div className={`w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-lg ${
               likedMap[currentShort.id]
                 ? 'bg-red-600 text-white shadow-red-500/50'
                 : 'bg-black/50 text-white hover:bg-black/70 border border-white/15'
@@ -700,7 +801,7 @@ export function VideoShortsModal({
             className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
             title="Bình luận"
           >
-            <div className="w-11 h-11 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg">
+            <div className="w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </div>
             <span className="text-[11px] font-bold text-white drop-shadow">
@@ -714,7 +815,7 @@ export function VideoShortsModal({
             className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
             title="Chia sẻ video"
           >
-            <div className="w-11 h-11 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg">
+            <div className="w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </div>
             <span className="text-[11px] font-bold text-white drop-shadow">
@@ -731,7 +832,7 @@ export function VideoShortsModal({
               className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
               title="Xem trực tiếp trên YouTube"
             >
-              <div className="w-11 h-11 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg group-hover:border-red-500/50 transition-colors">
+              <div className="w-11 h-11 min-w-[44px] min-h-[44px] max-w-[44px] max-h-[44px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg group-hover:border-red-500/50 transition-colors">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-white group-hover:text-red-500 transition-colors"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
               </div>
               <span className="text-[11px] font-bold text-white drop-shadow">
@@ -742,26 +843,29 @@ export function VideoShortsModal({
         </div>
 
         {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags ── */}
-        <div className="absolute bottom-0 inset-x-0 z-20 p-4 pb-4 pr-16 bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 pointer-events-none">
+        <div className={`absolute bottom-0 inset-x-0 z-20 p-4 pb-4 ${isLandscape ? 'pr-20' : 'pr-16'} bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 pointer-events-none`}>
           
           {/* Channel Info & Nút Chuông Theo Dõi Kênh Tinh Tế */}
           <div className="flex items-center gap-2 pointer-events-auto">
-            <div className="w-8 h-8 rounded-full bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px] shadow-md shrink-0">
+            <div className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px] shadow-md shrink-0">
               {currentShort.channel.charAt(0)}
             </div>
             <div className="flex items-center gap-1 min-w-0">
               <span className="font-extrabold text-[13px] text-white truncate drop-shadow">
                 @{currentShort.channel}
               </span>
-              <span className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shrink-0 font-bold">
+              <span className="w-3.5 h-3.5 min-w-[14px] min-h-[14px] max-w-[14px] max-h-[14px] aspect-square rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shrink-0 font-bold">
                 ✓
               </span>
             </div>
 
-            {/* Nút icon chuông quan tâm / theo dõi kênh (nhỏ gọn, sang trọng, không choán diện tích) */}
+            {/* Nút icon chuông quan tâm / theo dõi kênh (chuẩn hình tròn width = height = 32px, aspect-square) */}
             <button 
-              onClick={toggleFollowChannel}
-              className={`p-1.5 rounded-full border backdrop-blur-md cursor-pointer transition-all active:scale-90 ml-1.5 ${
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFollowChannel();
+              }}
+              className={`w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 border backdrop-blur-md cursor-pointer transition-all active:scale-90 ml-1.5 ${
                 isFollowingChannel
                   ? 'bg-[#ff315f] border-[#ff315f] text-white shadow-[0_0_10px_rgba(255,49,95,0.5)]'
                   : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-300 hover:text-white'
@@ -769,15 +873,15 @@ export function VideoShortsModal({
               title={isFollowingChannel ? "Đang theo dõi kênh" : "Nhấn để quan tâm/theo dõi kênh"}
             >
               {isFollowingChannel ? (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               ) : (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
               )}
             </button>
           </div>
 
           {/* Title & Description */}
-          <p className="text-[13px] sm:text-[13.5px] font-medium text-white line-clamp-2 drop-shadow leading-snug">
+          <p className={`text-[13px] sm:text-[13.5px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[85%]' : 'line-clamp-2'} drop-shadow leading-snug`}>
             {currentShort.title}
           </p>
 
@@ -794,8 +898,8 @@ export function VideoShortsModal({
       </div>
 
       {/* ── Desktop / Tablet Playlist Sidebar (Drawer linh hoạt trên PC) ── */}
-      <div className={`hidden xl:flex flex-col gap-3 w-[340px] h-[calc(100vh-40px)] max-h-[820px] ml-5 bg-neutral-900/90 rounded-2xl border border-white/10 p-4 backdrop-blur-md z-20 transition-all ${
-        showPlaylistDrawer ? 'flex' : 'hidden xl:flex'
+      <div className={`hidden ${isLandscape ? '2xl:flex' : 'xl:flex'} flex-col gap-3 w-[340px] h-[calc(100vh-40px)] max-h-[820px] ml-5 bg-neutral-900/90 rounded-2xl border border-white/10 p-4 backdrop-blur-md z-20 transition-all ${
+        showPlaylistDrawer ? '!flex' : ''
       }`}>
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <div className="flex flex-col">
@@ -886,7 +990,7 @@ export function VideoShortsModal({
             </h4>
             <button 
               onClick={() => setShowPlaylistDrawer(false)}
-              className="p-1.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
+              className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -947,7 +1051,7 @@ export function VideoShortsModal({
             </h4>
             <button 
               onClick={() => setShowComments(false)}
-              className="p-1.5 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
+              className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full flex items-center justify-center shrink-0 p-0 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
