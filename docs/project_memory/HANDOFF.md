@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit mới nhất**: Chuẩn bị commit tính năng tích hợp toàn bộ chuyên mục bản tin VTV24.
-- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 450ms).
+- **Commit gần nhất**: `34fee68 (feat(news): integrate complete VTV24 news categories and videos with sub-category filtering)`
+- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 428ms).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
 1. **Kéo Toàn Bộ Video & Phân Loại Bản Tin Kênh VTV24 Về Hệ Thống**:
