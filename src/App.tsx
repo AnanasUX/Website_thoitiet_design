@@ -1586,8 +1586,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
             📍 {WEATHER.location}
           </p>
         </div>
-        <div className="flex items-center">
-          <div className="bg-[#f4f6fa] flex items-start px-3 py-1 rounded-full mr-2">
+        <div className="flex items-center gap-2">
+          <div className="bg-[#f4f6fa] flex items-center h-[32px] px-3 py-1 rounded-full shrink-0">
             <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
@@ -1596,14 +1596,21 @@ function TabletLayout({ activeCategory, setActiveCategory,
           {/* Nút Video Shorts trên Tablet Header */}
           <button
             onClick={onOpenShorts}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff315f] hover:bg-[#e02650] text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all cursor-pointer mr-2"
+            className="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-[#ff315f] hover:bg-[#e02650] text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
             title="Xem Video Shorts 9:16 (TikTok & YouTube Shorts)"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             <span>Shorts</span>
           </button>
 
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+          <div 
+            onClick={() => setDarkMode && setDarkMode(!darkMode)} 
+            role="button" 
+            tabIndex={0} 
+            style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', borderRadius: '50%' }}
+            className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 cursor-pointer"
+            title={darkMode ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+          >
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
@@ -1628,18 +1635,6 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
         {/* News panel */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
-          <div className="flex overflow-x-auto gap-2 w-full pb-3 pt-3 scrollbar-hide sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] mt-[-12px]">
-            {NEWS_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 whitespace-nowrap px-4 py-[6px] rounded-full font-semibold text-[13px] transition-all ${activeCategory === cat ? 'bg-[#ff315f] text-white shadow-md' : 'bg-white text-[#5f687b] border border-[#e3e7ef]'}`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
           <MarketSection />
           {userRole && userRole.email ? (
             <div className="w-full">
@@ -1651,13 +1646,23 @@ function TabletLayout({ activeCategory, setActiveCategory,
               <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
             </div>
           )}
-          <div className="flex flex-col gap-[2px] items-start">
-            <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
-              Tin tức
-            </p>
-            <p className="font-normal text-[#5f687b] text-[12px]">
-              {WEATHER.location} · {newsFeed.length} bài mới nhất
-            </p>
+
+          {/* Sticky Tin tức Header with MobileCategoryMenu dropdown */}
+          <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-2 mt-[-4px]">
+            <div className="flex flex-col gap-[2px] items-start">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
+                  Tin tức
+                </p>
+                <div className="bg-[#f7a928] px-2 py-0.5 rounded-full flex items-center">
+                  <p className="font-bold text-[10px] text-white">LIVE</p>
+                </div>
+              </div>
+              <p className="font-normal text-[#5f687b] text-[12px]">
+                {WEATHER.location} · {newsFeed.length} bài mới nhất
+              </p>
+            </div>
+            <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
           </div>
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
@@ -1759,8 +1764,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         <div className="flex gap-[var(--grid-gap)] items-center">
           <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
         </div>
-        <div className="flex items-center">
-          <div className="bg-[#f4f6fa] flex items-center px-3 py-1 rounded-full mr-2">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-[#f4f6fa] flex items-center h-[32px] px-3 py-1 rounded-full shrink-0">
             <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
             </p>
@@ -1769,14 +1774,21 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {/* Nút Video Shorts trên Desktop Header */}
           <button
             onClick={onOpenShorts}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#ff315f] hover:bg-[#e02650] text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all cursor-pointer mr-3"
+            className="flex items-center gap-1.5 h-[32px] px-3.5 py-1.5 rounded-full bg-[#ff315f] hover:bg-[#e02650] text-white font-bold text-[12px] shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
             title="Xem Video Shorts 9:16 (TikTok & YouTube Shorts)"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             <span>Video Shorts 9:16</span>
           </button>
 
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+          <div 
+            onClick={() => setDarkMode && setDarkMode(!darkMode)} 
+            role="button" 
+            tabIndex={0} 
+            style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', borderRadius: '50%' }}
+            className="w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 cursor-pointer"
+            title={darkMode ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}
+          >
             {darkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             ) : (
@@ -1817,15 +1829,30 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         )}
       </div>
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
-        <div className="flex gap-[10px] items-center">
+        <div className="flex gap-[10px] items-center shrink-0">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
             Tin Tức Mới Nhất
           </p>
-          <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full">
+          <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full shrink-0">
             <p className="font-bold text-[11px] text-white">LIVE</p>
           </div>
         </div>
-        <MobileCategoryMenu activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+        {/* Menu scroll danh mục trên PC theo đúng yêu cầu */}
+        <div className="flex overflow-x-auto gap-2 items-center max-w-[650px] scrollbar-hide py-1">
+          {NEWS_CATEGORIES.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory && setActiveCategory(cat)}
+              className={`shrink-0 whitespace-nowrap px-3.5 py-[5px] rounded-full font-semibold text-[13px] transition-all cursor-pointer ${
+                activeCategory === cat
+                  ? 'bg-[#ff315f] text-white shadow-md'
+                  : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:border-[#cbd5e1] hover:text-[#182033]'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
