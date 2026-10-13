@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: Chuẩn bị commit với các cải tiến toàn diện về hiệu năng, UI và tính năng tương tác thực tế.
-- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 1.72s).
+- **Commit gần nhất**: `d9912c0 (feat(shorts): optimize speed, unmuted default, separate video vs shorts, fix EPG & header layout, and add Google account interactions)`
+- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 524ms).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
 1. **Khắc Phục Tốc Độ & Tối Ưu Chuyển Clip**:
