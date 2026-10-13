@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `6e405ab (feat(shorts): add TV-style channel menu, filter videos by channel starting from newest, and add media format tabs)`
+- **Commit gần nhất**: `264d884 (docs: establish always-on project memory protocol in AGENTS.md and initialize docs/project_memory)`
 - **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch.
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
