@@ -15,9 +15,10 @@
    - `🎬 Video trên kênh`: Các bản tin, phóng sự dài 16:9 từ trang chủ của kênh.
    - `⚡ Video Shorts`: Các video dạng ngắn dọc 9:16 trong danh sách phát Shorts của YouTube của các đài.
    - Hệ thống tab lọc 3 chế độ: `📺 Tất cả`, `🎬 Video trên kênh`, `⚡ Shorts ngắn`.
-4. **Sửa Triệt Để Lỗi UI Header & Dải Kênh trên Shorts (Ảnh 2)**:
-   - Thiết kế lại Header responsive: Trên mobile chỉ giữ lại Logo, Badge kênh, nút tỉ lệ, nút playlist, nút âm thanh và nút đóng.
-   - Ẩn dải Quick Channel top-14 trên màn hình hẹp/dọc (`hidden lg:flex`), chỉ hiển thị trên màn hình rộng PC.
+4. **Sửa Triệt Để Lỗi Chồng Đè Header & Dải Kênh trên Shorts (Ảnh 2 & Ảnh mới)**:
+   - Thay thế kiến trúc đa div `absolute top-0` và `absolute top-14` bằng **MỘT container flex-col duy nhất**.
+   - Khóa chặt việc hiển thị các tab phân loại trung tâm và dải Quick TV Channel pills chỉ khi `isLandscape = true` (chế độ Toàn Cảnh 16:9).
+   - Ở chế độ Dọc Shorts 9:16 (`!isLandscape`), header duy trì đúng 1 dòng sạch sẽ, không có tab trung tâm, không có dải kênh đè lên video. Khắc phục triệt để lỗi va chạm giao diện được phản ánh.
    - Loại bỏ 100% thanh cuộn ngang xám xịt bằng bộ CSS ẩn scrollbar đa nền tảng.
 5. **Sửa Triệt Để Lỗi Lệch Thẻ trong "DANH SÁCH KÊNH TRUYỀN HÌNH" (Ảnh 1)**:
    - Đồng nhất chiều cao thẻ card `min-h-[135px]` và phần tagline `min-h-[32px] line-clamp-2`.

@@ -1764,238 +1764,245 @@ export function VideoShortsModal({
           </div>
         )}
 
-        {/* ── TOP HEADER OVERLAY (THIẾT KẾ RESPONSIVE CHỐNG ĐÈ NÚT TRÊN SHORTS) ── */}
-        <div className="absolute top-0 inset-x-0 z-30 pt-3 px-3 sm:px-5 pb-8 bg-gradient-to-b from-black/95 via-black/55 to-transparent flex items-center justify-between pointer-events-none">
-          {/* Logo & Channel EPG Badge bên trái */}
-          <div className="flex items-center gap-2 pointer-events-auto select-none min-w-0">
-            <span className="text-white font-black text-[15px] sm:text-[17px] tracking-tight drop-shadow-md leading-none flex items-center gap-1 shrink-0">
-              <span className="text-[#ff315f]">Anx.</span>
-              <span>TV</span>
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0 hidden sm:inline-block"></span>
-
-            {/* Nút Chọn Kênh TV EPG */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowChannelMenu(true);
-                resetInactivityTimer();
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 backdrop-blur-md text-white transition-all shadow-md group cursor-pointer shrink-0"
-              title="Mở menu chọn kênh truyền hình (TV EPG) [C]"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0"></span>
-              <span className="text-[11px] font-bold text-white flex items-center gap-1">
-                <span className="text-[#ff315f] font-mono text-[10px]">{currentChannelInfo.number}</span>
-                <span className="max-w-[70px] sm:max-w-[130px] truncate">{currentChannelInfo.name}</span>
-              </span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/70 group-hover:translate-y-0.5 transition-transform shrink-0">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-          </div>
-
-          {/* Quick Format Filter Tabs: CHỈ HIỂN THỊ TRÊN MÀN HÌNH RỘNG (PC / Widescreen) TRÁNH ĐÈ NÚT TRÊN SHORTS */}
-          <div className="hidden xl:flex items-center gap-1 pointer-events-auto bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/15 shadow-md">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectMediaTab('all');
-                resetInactivityTimer();
-              }}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all active:scale-95 ${
-                mediaTab === 'all'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'text-neutral-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              📺 Tất cả ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectMediaTab('video');
-                resetInactivityTimer();
-              }}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all active:scale-95 ${
-                mediaTab === 'video'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'text-neutral-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              🎬 Video trên kênh
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelectMediaTab('short');
-                resetInactivityTimer();
-              }}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all active:scale-95 ${
-                mediaTab === 'short'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'text-neutral-300 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              ⚡ Shorts ngắn
-            </button>
-          </div>
-
-          {/* Controls: Tỉ lệ, Playlist, Kênh TV, Âm thanh, Fullscreen, Đóng */}
-          <div className={`flex items-center gap-1.5 sm:gap-2 pointer-events-auto transition-opacity duration-300 shrink-0 ${
-            isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}>
-            {/* Chuyển đổi tỉ lệ 16:9 / 9:16 */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleOrientation();
-                resetInactivityTimer();
-              }}
-              style={{ height: '34px', borderRadius: '17px', padding: '0 10px' }}
-              className={`flex items-center gap-1 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
-                isLandscape
-                  ? 'bg-[#ff315f] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)]'
-                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-              }`}
-              title={isLandscape ? "Xem chế độ Dọc 9:16 Shorts [R]" : "Xem chế độ Toàn Cảnh 16:9 [R]"}
-            >
-              <span className="text-[12px]">{isLandscape ? '🖥️' : '📱'}</span>
-              <span className="hidden sm:inline">{isLandscape ? '16:9' : '9:16'}</span>
-            </button>
-
-            {/* Danh sách phát trên video */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPlaylistDrawer(!showPlaylistDrawer);
-                resetInactivityTimer();
-              }}
-              style={{ height: '34px', borderRadius: '17px', padding: '0 10px' }}
-              className={`flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
-                showPlaylistDrawer
-                  ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-              }`}
-              title="Mở Danh Sách Phát trực tiếp trên video [L / P]"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-              <span className="hidden sm:inline">Danh sách</span>
-              <span className="px-1 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{playlist.length}</span>
-            </button>
-
-            {/* Nút bật Smart TV Guide (Ẩn trên mobile vì đã có badge kênh góc trái) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowChannelMenu(true);
-                resetInactivityTimer();
-              }}
-              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-              className={`w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all hidden md:flex ${
-                showChannelMenu 
-                  ? 'bg-red-600 text-white border-red-400 shadow-md' 
-                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-              }`}
-              title="Danh sách kênh truyền hình TV Guide [C]"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="block m-auto">
-                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
-                <polyline points="17 2 12 7 7 2"/>
-              </svg>
-            </button>
-
-            {/* Bật/Tắt âm thanh (Mặc định là BẬT ÂM THANH theo yêu cầu) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleMute();
-                resetInactivityTimer();
-              }}
-              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-              className={`w-[34px] h-[34px] aspect-square rounded-full flex items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
-                isMuted 
-                  ? 'bg-red-600/80 hover:bg-red-600 text-white border-red-400 shadow-md' 
-                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-              }`}
-              title={isMuted ? 'Đang tắt tiếng - Nhấn để Bật âm thanh (M)' : 'Đang bật âm thanh - Nhấn để Tắt tiếng (M)'}
-            >
-              {isMuted ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-              )}
-            </button>
-
-            {/* Fullscreen trình duyệt (chỉ hiện trên màn hình tablet/PC) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleBrowserFullscreen();
-                resetInactivityTimer();
-              }}
-              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-              className="w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all hidden sm:flex"
-              title={isFullscreen ? 'Thoát toàn màn hình (F)' : 'Toàn màn hình trình duyệt (F)'}
-            >
-              {isFullscreen ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-              )}
-            </button>
-
-            {/* Đóng Modal */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-              className="w-[34px] h-[34px] aspect-square rounded-full flex items-center justify-center shrink-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
-              title="Đóng (Esc)"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ── QUICK TV CHANNEL PILLS BAR: CHỈ HIỂN THỊ TRÊN MÀN HÌNH RỘNG (PC) VÀ KHÔNG BAO GIỜ HIỆN THANH SCROLL XÁM ── */}
-        <div className={`hidden lg:flex absolute top-14 inset-x-0 z-30 px-4 transition-opacity duration-300 pointer-events-auto ${
+        {/* ── TOP HEADER OVERLAY (THIẾT KẾ ĐỒNG NHẤT KHÔNG CHỒNG ĐÈ GIAO DIỆN) ── */}
+        <div className={`absolute top-0 inset-x-0 z-30 pt-3 px-3 sm:px-5 pb-8 bg-gradient-to-b from-black/95 via-black/55 to-transparent flex flex-col gap-2.5 pointer-events-none transition-opacity duration-300 ${
           isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}>
-          <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {TV_CHANNELS.map(ch => {
-              const isActive = selectedChannelId === ch.id;
-              return (
+          {/* Row 1: Logo, Channel & Controls */}
+          <div className="flex items-center justify-between w-full">
+            {/* Logo & Channel EPG Badge bên trái */}
+            <div className="flex items-center gap-2 pointer-events-auto select-none min-w-0">
+              <span className="text-white font-black text-[15px] sm:text-[17px] tracking-tight drop-shadow-md leading-none flex items-center gap-1 shrink-0">
+                <span className="text-[#ff315f]">Anx.</span>
+                <span>TV</span>
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0 hidden sm:inline-block"></span>
+
+              {/* Nút Chọn Kênh TV EPG */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowChannelMenu(true);
+                  resetInactivityTimer();
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 backdrop-blur-md text-white transition-all shadow-md group cursor-pointer shrink-0"
+                title="Mở menu chọn kênh truyền hình (TV EPG) [C]"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0"></span>
+                <span className="text-[11px] font-bold text-white flex items-center gap-1">
+                  <span className="text-[#ff315f] font-mono text-[10px]">{currentChannelInfo.number}</span>
+                  <span className="max-w-[70px] sm:max-w-[130px] truncate">{currentChannelInfo.name}</span>
+                </span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/70 group-hover:translate-y-0.5 transition-transform shrink-0">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Quick Format Filter Tabs: CHỈ HIỂN THỊ KHI Ở CHẾ ĐỘ TOÀN CẢNH 16:9 RỘNG RÃI */}
+            {isLandscape && (
+              <div className="hidden md:flex items-center gap-1 pointer-events-auto bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/15 shadow-md">
                 <button
-                  key={ch.id}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleSelectChannel(ch.id);
+                    handleSelectMediaTab('all');
+                    resetInactivityTimer();
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
-                    isActive 
-                      ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]' 
-                      : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all active:scale-95 ${
+                    mediaTab === 'all'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-neutral-300 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <span className={`text-[9.5px] font-mono px-1 py-0.2 rounded ${isActive ? 'bg-black/30 text-white' : 'bg-white/10 text-white/70'}`}>
-                    {ch.number}
-                  </span>
-                  <span>{ch.name}</span>
-                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping shrink-0"></span>}
+                  📺 Tất cả ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
                 </button>
-              );
-            })}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectMediaTab('video');
+                    resetInactivityTimer();
+                  }}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all active:scale-95 ${
+                    mediaTab === 'video'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-neutral-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  🎬 Video trên kênh
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectMediaTab('short');
+                    resetInactivityTimer();
+                  }}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all active:scale-95 ${
+                    mediaTab === 'short'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-neutral-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  ⚡ Shorts ngắn
+                </button>
+              </div>
+            )}
+
+            {/* Controls: Tỉ lệ, Playlist, Kênh TV, Âm thanh, Fullscreen, Đóng */}
+            <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto shrink-0">
+              {/* Chuyển đổi tỉ lệ 16:9 / 9:16 */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleOrientation();
+                  resetInactivityTimer();
+                }}
+                style={{ height: '34px', borderRadius: '17px', padding: '0 10px' }}
+                className={`flex items-center gap-1 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
+                  isLandscape
+                    ? 'bg-[#ff315f] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)]'
+                    : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+                }`}
+                title={isLandscape ? "Xem chế độ Dọc 9:16 Shorts [R]" : "Xem chế độ Toàn Cảnh 16:9 [R]"}
+              >
+                <span className="text-[12px]">{isLandscape ? '🖥️' : '📱'}</span>
+                <span className="hidden sm:inline">{isLandscape ? '16:9' : '9:16'}</span>
+              </button>
+
+              {/* Danh sách phát trên video */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPlaylistDrawer(!showPlaylistDrawer);
+                  resetInactivityTimer();
+                }}
+                style={{ height: '34px', borderRadius: '17px', padding: '0 10px' }}
+                className={`flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
+                  showPlaylistDrawer
+                    ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                    : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+                }`}
+                title="Mở Danh Sách Phát trực tiếp trên video [L / P]"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                  <line x1="8" y1="6" x2="21" y2="6"/>
+                  <line x1="8" y1="12" x2="21" y2="12"/>
+                  <line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                <span className="hidden sm:inline">Danh sách</span>
+                <span className="px-1 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{playlist.length}</span>
+              </button>
+
+              {/* Nút bật Smart TV Guide (chỉ hiện trên màn hình ngang desktop) */}
+              {isLandscape && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowChannelMenu(true);
+                    resetInactivityTimer();
+                  }}
+                  style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                  className={`w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all hidden md:flex ${
+                    showChannelMenu 
+                      ? 'bg-red-600 text-white border-red-400 shadow-md' 
+                      : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+                  }`}
+                  title="Danh sách kênh truyền hình TV Guide [C]"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="block m-auto">
+                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
+                    <polyline points="17 2 12 7 7 2"/>
+                  </svg>
+                </button>
+              )}
+
+              {/* Bật/Tắt âm thanh (Mặc định là BẬT ÂM THANH theo yêu cầu) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMute();
+                  resetInactivityTimer();
+                }}
+                style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                className={`w-[34px] h-[34px] aspect-square rounded-full flex items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+                  isMuted 
+                    ? 'bg-red-600/80 hover:bg-red-600 text-white border-red-400 shadow-md' 
+                    : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+                }`}
+                title={isMuted ? 'Đang tắt tiếng - Nhấn để Bật âm thanh (M)' : 'Đang bật âm thanh - Nhấn để Tắt tiếng (M)'}
+              >
+                {isMuted ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                )}
+              </button>
+
+              {/* Fullscreen trình duyệt (chỉ hiện trên màn hình ngang desktop) */}
+              {isLandscape && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleBrowserFullscreen();
+                    resetInactivityTimer();
+                  }}
+                  style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                  className="w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all hidden sm:flex"
+                  title={isFullscreen ? 'Thoát toàn màn hình (F)' : 'Toàn màn hình trình duyệt (F)'}
+                >
+                  {isFullscreen ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  )}
+                </button>
+              )}
+
+              {/* Đóng Modal */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                className="w-[34px] h-[34px] aspect-square rounded-full flex items-center justify-center shrink-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
+                title="Đóng (Esc)"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
           </div>
+
+          {/* Row 2: Quick TV Channel Pills - CHỈ HIỂN THỊ KHI Ở CHẾ ĐỘ 16:9 TOÀN CẢNH (RỘNG RÃI, THẲNG HÀNG TRONG FLOW) */}
+          {isLandscape && (
+            <div className="hidden lg:flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pointer-events-auto">
+              {TV_CHANNELS.map(ch => {
+                const isActive = selectedChannelId === ch.id;
+                return (
+                  <button
+                    key={ch.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectChannel(ch.id);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
+                      isActive 
+                        ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]' 
+                        : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
+                    }`}
+                  >
+                    <span className={`text-[9.5px] font-mono px-1 py-0.2 rounded ${isActive ? 'bg-black/30 text-white' : 'bg-white/10 text-white/70'}`}>
+                      {ch.number}
+                    </span>
+                    <span>{ch.name}</span>
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping shrink-0"></span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── CỘT TƯƠNG TÁC: THÍCH, BÌNH LUẬN, CHIA SẺ, PLAYLIST ── */}

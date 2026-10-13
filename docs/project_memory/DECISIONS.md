@@ -19,7 +19,10 @@
   - `🎬 Video trên kênh`: Các bản tin phóng sự dài 16:9 lấy từ trang chủ của kênh, tự động ưu tiên chế độ Toàn Cảnh 16:9 trên PC.
   - `⚡ Video Shorts`: Các video dạng ngắn dọc 9:16 lấy từ danh sách phát Shorts của YouTube của các đài.
 - **Kiến trúc Header & Responsive Đa Nền Tảng**:
-  - Tách biệt dải Quick TV Channel Pills (`top-14`): Chỉ hiển thị trên màn hình rộng PC (`hidden lg:flex`), ẩn trên màn hình hẹp/dọc để tránh chồng lấn và xung đột bố cục.
+  - Hợp nhất toàn bộ Header và dải Kênh TV vào **MỘT container duy nhất** (`flex flex-col gap-2.5`), triệt tiêu hoàn toàn lỗi chồng đè do sử dụng các div `absolute top-0` và `absolute top-14` riêng rẽ.
+  - Ràng buộc trực tiếp các thanh điều khiển mở rộng (Quick Format Tabs & Quick TV Channel Pills) bằng điều kiện `{isLandscape && ...}`:
+    - Khi ở chế độ Dọc Shorts 9:16 (`!isLandscape`), header duy trì đúng 1 dòng tối giản duy nhất (Logo + Badge Kênh + Nút điều khiển), không render các tab/dải kênh gây vỡ bố cục trên khung dọc.
+    - Người dùng truy cập phân loại Kênh và Định dạng thông qua nút Badge EPG `[🔴 CH 01 ▾]` hoặc Drawer Danh sách phát.
   - Áp dụng kỹ thuật triệt tiêu triệt để scrollbar xám trên mọi trình duyệt (`[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden`).
   - Đồng bộ kích thước card Smart TV Guide với `min-h-[135px]` và tagline `min-h-[32px] line-clamp-2` để giải quyết vĩnh viễn hiện tượng xô lệch chiều cao.
 - **Tương Tác Thực Tế & Lưu Trữ Bền Vững**:

@@ -16,11 +16,10 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
   - **Danh sách phát hiển thị TRỰC TIẾP TRÊN VIDEO (On-Video Playlist Overlay)**: Không dùng sidebar bên ngoài đẩy video. Danh sách hiển thị dưới dạng drawer kính mờ trượt ra trên video (`z-40`), có thể bật/tắt tự do bằng nút `[📋 Danh sách]` hoặc phím `L`/`P`.
   - Cung cấp nút chuyển đổi trực quan `[🖥️ 16:9 Toàn cảnh]` / `[📱 9:16 Dọc]` (phím tắt `R`).
   - Tuyệt đối không bị vỡ bố cục trên Tablet (kể cả khi cầm đứng hay xoay ngang).
-- **Quy chuẩn Header & Chống Đè Nút trên Shorts (Ảnh 2 - Đã khắc phục triệt để)**:
-  - Header bar tinh gọn, linh hoạt theo kích thước màn hình:
-    - *Mobile / Khung dọc*: Chỉ giữ Logo `Anx. TV`, Nút Kênh `[🔴 CH 01 ▾]`, Nút `[🖥️]`, Nút `[📋]`, Nút Âm thanh `[🔊]`, Nút Đóng `[✕]`.
-    - *PC / Widescreen*: Đầy đủ nhãn và phím tắt `[🖥️ 16:9]`, `[📋 Danh sách]`, `[📺 Kênh TV]`, `[🔊]`, `[⛶]`, `[✕]`.
-    - Dải Quick TV Channel Pills (`top-14`) CHỈ hiển thị trên màn hình rộng PC (`hidden lg:flex`), ẩn trên màn hình dọc/mobile để tránh che lấn video.
+- **Quy chuẩn Header & Chống Đè Nút trên Shorts (Ảnh 2 & Ảnh mới - Đã khắc phục triệt để)**:
+  - Header bar tinh gọn, được cấu trúc trong MỘT container `flex-col` duy nhất:
+    - *Khung dọc Shorts 9:16 (`!isLandscape`)*: Header duy trì duy nhất 1 hàng tối giản, không bao giờ xuất hiện hàng thứ hai hay các tab trung tâm gây tràn đè. Bao gồm: Logo `Anx. TV`, Nút Kênh `[🔴 CH 01 • VTV24 ▾]`, Nút `[🖥️]`, Nút `[📋]`, Nút Âm thanh `[🔊]`, Nút Đóng `[✕]`.
+    - *Chế độ Toàn Cảnh 16:9 (`isLandscape`)*: Cho phép hiển thị thêm bộ lọc Tab trung tâm và Dải Quick TV Channel Pills đặt tự nhiên ở hàng thứ hai (Row 2) trong cùng container, loại bỏ hoàn toàn khả năng va chạm hay chồng lấn z-index.
     - Triệt tiêu 100% thanh cuộn ngang xám xịt trên mọi trình duyệt bằng CSS: `[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden`.
 - **Quy chuẩn Icon & Nút tương tác (Bắt buộc không được vi phạm)**:
   - Tất cả icon tròn (avatar, like, comment, share, chuông, âm lượng, đóng, menu) phải có tỉ lệ chính xác 1:1 (`aspect-ratio: 1 / 1`).
