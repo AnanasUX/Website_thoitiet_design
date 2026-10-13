@@ -322,7 +322,6 @@ export function VideoShortsModal({
           setActiveChannel(prev => ({ ...prev, name: channelTitle }));
         }
       } else {
-        // Fallback sang backup đã chuẩn hóa nếu kênh rỗng hoặc lỗi mạng
         setChannelVideos(BACKUP_FALLBACK_SHORTS);
       }
     }).catch(() => {
@@ -369,7 +368,7 @@ export function VideoShortsModal({
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory || 'Tất cả');
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   
-  // Khởi tạo mute = true để bảo đảm autoplay 100% tuân thủ chính sách trình duyệt
+  // Mặc định âm thanh tắt để bảo đảm 100% video tự phát không bị chặn bởi trình duyệt
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likesMap, setLikesMap] = useState<Record<string, number>>({});
@@ -378,13 +377,13 @@ export function VideoShortsModal({
   const [commentInput, setCommentInput] = useState<string>('');
   const [commentsList, setCommentsList] = useState<Array<{ user: string; text: string; time: string }>>([
     { user: 'Minh Thảo', text: 'Video phát từ YouTube mượt mà, nét căng và xem không bị giật lag chút nào!', time: 'Vừa xong' },
-    { user: 'Tuấn Anh', text: 'Tự động lấy theo tài khoản YouTube tiện quá, vuốt xem Shorts cuốn hẳn.', time: '5 phút trước' },
-    { user: 'Hương Giang', text: 'Âm thanh hình ảnh chuẩn HD 1080p, giao diện chuẩn TikTok 👍', time: '12 phút trước' }
+    { user: 'Tuấn Anh', text: 'Lăn chuột trên máy tính hoặc vuốt trên điện thoại chuyển clip rất tiện lợi.', time: '5 phút trước' },
+    { user: 'Hương Giang', text: 'Giao diện thoáng đãng, âm thanh hình ảnh chuẩn HD 1080p 👍', time: '12 phút trước' }
   ]);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
-  const touchStartY = useRef<number>(0);
 
+  // Phân loại
   const categories = ['Tất cả', 'Thời sự 24h', 'Thời tiết TV', 'Tài chính & Vàng', 'Thế giới & Cuộc sống'];
 
   const filteredPlaylist = useMemo(() => {
@@ -401,12 +400,98 @@ export function VideoShortsModal({
     }
   }, [currentShort, likesMap]);
 
+  // Đổi short
+  const handleSelectIndex = (idx: number) => {
+    const validIdx = (idx + filteredPlaylist.length) % filteredPlaylist.length;
+    setCurrentIndex(validIdx);
+  };
+
+  const handleNextShort = () => {
+    handleSelectIndex(currentIndex + 1);
+  };
+
+  const handlePrevShort = () => {
+    handleSelectIndex(currentIndex - 1);
+  };
+
+  // ── PC: LĂN CHUỘT (MOUSE WHEEL) ĐỂ CHUYỂN VIDEO SHORTS ──
+  const lastWheelTime = useRef<number>(0);
+  const handleWheel = (e: React.WheelEvent) => {
+    const now = Date.now();
+    if (now - lastWheelTime.current < 500) return; // Throttle 500ms
+    if (e.deltaY > 25) {
+      lastWheelTime.current = now;
+      handleNextShort();
+    } else if (e.deltaY < -25) {
+      lastWheelTime.current = now;
+      handlePrevShort();
+    }
+  };
+
+  // Lắng nghe lăn chuột toàn cửa sổ (PC) khi modal đang mở
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleWindowWheel = (e: WheelEvent) => {
+      // Không can thiệp nếu đang mở menu drawer (playlist / chọn kênh / bình luận)
+      if (showComments || showPlaylistDrawer || showChannelDrawer) return;
+
+      const now = Date.now();
+      if (now - lastWheelTime.current < 500) return;
+      if (e.deltaY > 25) {
+        lastWheelTime.current = now;
+        handleNextShort();
+      } else if (e.deltaY < -25) {
+        lastWheelTime.current = now;
+        handlePrevShort();
+      }
+    };
+
+    window.addEventListener('wheel', handleWindowWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWindowWheel);
+  }, [isOpen, showComments, showPlaylistDrawer, showChannelDrawer, currentIndex, filteredPlaylist.length]);
+
+  // ── TABLET & MOBILE: VUỐT CẢM ỨNG (TOUCH SWIPE) ĐỂ CHUYỂN VIDEO SHORTS ──
+  const touchStartY = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diffY = touchStartY.current - e.changedTouches[0].clientY;
+    const diffX = touchStartX.current - e.changedTouches[0].clientX;
+    // Nhận diện vuốt dọc nếu chênh lệch Y lớn hơn X và biên độ > 40px
+    if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 40) {
+      if (diffY > 40) {
+        handleNextShort(); // Vuốt lên -> Next Short
+      } else if (diffY < -40) {
+        handlePrevShort(); // Vuốt xuống -> Prev Short
+      }
+    }
+  };
+
+  // Bấm vào màn hình (Tap / Double tap)
+  const lastTapRef = useRef<number>(0);
+  const handleOverlayClick = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      // Double tap -> Thích video (❤️)
+      handleLike();
+      setShowHeartPop(true);
+      setTimeout(() => setShowHeartPop(false), 800);
+    }
+    lastTapRef.current = now;
+  };
+
   // Phím tắt bàn phím PC: ↑ ↓ để chuyển video, M để tắt tiếng, Esc để đóng
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showComments && e.key !== 'Escape') return; // Đang gõ bình luận
+      if (showComments && e.key !== 'Escape') return;
 
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
         e.preventDefault();
@@ -434,7 +519,7 @@ export function VideoShortsModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, showComments, showPlaylistDrawer, showChannelDrawer, currentIndex, filteredPlaylist.length]);
 
-  // ── Tính toán ổn định: Tự động phục hồi lỗi từ YouTube Embed API ──
+  // Tự động phục hồi lỗi từ YouTube Embed API và chuyển video khi hết
   useEffect(() => {
     if (!isOpen) return;
 
@@ -443,16 +528,15 @@ export function VideoShortsModal({
         if (typeof e.data === 'string') {
           const data = JSON.parse(e.data);
           
-          // YouTube onError: 2 (param lỗi), 5 (HTML5 lỗi), 100 (video private/xóa), 101/150 (chủ kênh chặn nhúng ngoài YouTube)
+          // YouTube onError: 2 (param lỗi), 5 (HTML5 lỗi), 100 (video private/xóa), 101/150 (chủ kênh chặn nhúng)
           if (data.event === 'onError') {
-            console.warn('YouTube embed error code:', data.info);
             setShowToast('Video bị giới hạn nhúng, tự động phát video tiếp theo');
             setTimeout(() => {
               handleNextShort();
             }, 600);
           }
 
-          // YouTube onStateChange: 0 = ENDED (hết video) -> Tự động chuyển video tiếp theo (Vòng lặp Shorts)
+          // YouTube onStateChange: 0 = ENDED (hết video) -> Tự động chuyển video tiếp theo
           if (data.event === 'onStateChange' && data.info === 0) {
             handleNextShort();
           }
@@ -464,7 +548,7 @@ export function VideoShortsModal({
     return () => window.removeEventListener('message', handleMessage);
   }, [isOpen, currentIndex, filteredPlaylist.length]);
 
-  // Khóa scroll trang khi mở Shorts modal
+  // Khóa scroll trang nền khi mở Shorts modal
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -475,34 +559,6 @@ export function VideoShortsModal({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
-
-  // Đổi short
-  const handleSelectIndex = (idx: number) => {
-    const validIdx = (idx + filteredPlaylist.length) % filteredPlaylist.length;
-    setCurrentIndex(validIdx);
-  };
-
-  const handleNextShort = () => {
-    handleSelectIndex(currentIndex + 1);
-  };
-
-  const handlePrevShort = () => {
-    handleSelectIndex(currentIndex - 1);
-  };
-
-  // Thao tác vuốt màn hình trên điện thoại
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const diff = touchStartY.current - e.changedTouches[0].clientY;
-    if (diff > 50) {
-      handleNextShort(); // Vuốt lên -> Tiếp theo
-    } else if (diff < -50) {
-      handlePrevShort(); // Vuốt xuống -> Trước đó
-    }
-  };
 
   // Thích video
   const handleLike = () => {
@@ -515,8 +571,6 @@ export function VideoShortsModal({
       ...prev,
       [currentShort.id]: isCurrentlyLiked ? currentCount - 1 : currentCount + 1
     }));
-    setShowHeartPop(true);
-    setTimeout(() => setShowHeartPop(false), 800);
   };
 
   // Chia sẻ
@@ -582,27 +636,28 @@ export function VideoShortsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh]">
+    <div 
+      className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh]"
+      onWheel={handleWheel}
+    >
       
-      {/* ── Ambient Backdrop (Sáng đẹp, hòa sắc trên màn hình Tablet & PC) ── */}
+      {/* ── Ambient Backdrop (Sáng đẹp trên màn hình Tablet & PC) ── */}
       <div 
-        className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-25 scale-125 pointer-events-none transition-all duration-700 hidden sm:block"
+        className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-20 scale-125 pointer-events-none transition-all duration-700 hidden sm:block"
         style={{ backgroundImage: `url(${currentShort.thumbnail})` }}
       />
 
-      {/* ── Floating PC Keyboard Navigation Hint (Trợ năng trên PC) ── */}
+      {/* ── Floating PC Keyboard & Mouse Hint (Trợ năng trên PC) ── */}
       <div className="hidden 2xl:flex flex-col gap-3 absolute left-8 top-1/2 -translate-y-1/2 z-20">
         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-[11px] text-neutral-400 flex flex-col gap-1.5 max-w-[170px] shadow-xl">
           <p className="font-extrabold text-neutral-200 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            Phím tắt PC:
+            Điều khiển PC:
           </p>
-          <p>↑ / ↓ : Chuyển video</p>
+          <p>🖱️ Lăn chuột : Chuyển clip</p>
+          <p>↑ / ↓ : Chuyển clip</p>
           <p>M : Bật/Tắt âm thanh</p>
           <p>Esc : Đóng video</p>
-          <div className="mt-1 pt-1.5 border-t border-white/10 text-[10px] text-red-400 font-semibold">
-            ▶ Trình phát YouTube HD
-          </div>
         </div>
       </div>
 
@@ -611,8 +666,9 @@ export function VideoShortsModal({
         className="relative w-full h-[100dvh] sm:w-[460px] md:w-[480px] sm:max-h-[100dvh] aspect-[9/16] bg-black sm:rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] sm:border sm:border-white/15 flex flex-col justify-between shrink-0"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onWheel={handleWheel}
       >
-        {/* ── TRÌNH PHÁT YOUTUBE SHORTS CHUẨN 9:16 (Phát mượt mà, siêu tốc, tự hồi phục lỗi) ── */}
+        {/* ── TRÌNH PHÁT YOUTUBE SHORTS CHUẨN 9:16 ── */}
         {currentShort.youtubeId ? (
           <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto">
             <iframe
@@ -638,16 +694,14 @@ export function VideoShortsModal({
           />
         )}
 
-        {/* Nút nhắc bật âm thanh nhanh nếu đang ở chế độ Mute (tuân thủ Autoplay policy) */}
-        {isMuted && (
-          <button
-            onClick={() => setIsMuted(false)}
-            className="absolute top-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-black/75 hover:bg-black text-white text-[11px] font-bold border border-white/20 shadow-lg flex items-center gap-1.5 animate-pulse cursor-pointer pointer-events-auto"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
-            <span>Chạm để bật âm thanh</span>
-          </button>
-        )}
+        {/* ── LỚP BẮT CỬ CHỈ VUỐT CHẠM (MOBILE/TABLET) VÀ LĂN CHUỘT (PC) ── */}
+        <div 
+          className="absolute inset-0 z-10 cursor-pointer"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel}
+          onClick={handleOverlayClick}
+        />
 
         {/* Buffering Indicator khi chuyển kênh */}
         {isLoadingChannel && (
@@ -663,14 +717,14 @@ export function VideoShortsModal({
         {showHeartPop && (
           <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-ping">
             <svg className="w-24 h-24 text-red-500 fill-current drop-shadow-2xl" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
             </svg>
           </div>
         )}
 
-        {/* ── Top Header Overlay (Tràn 100% nổi trên video) ── */}
+        {/* ── Top Header Overlay (Tràn 100% nổi trên video, tinh gọn và thoáng đãng) ── */}
         <div className="absolute top-0 inset-x-0 z-30 pt-3 px-3.5 pb-8 bg-gradient-to-b from-black/85 via-black/35 to-transparent flex items-center justify-between pointer-events-none">
-          {/* Logo Shorts & Tag */}
+          {/* Logo Shorts & Chọn kênh */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="flex items-center gap-1.5 bg-gradient-to-r from-[#ff0050] to-[#00f2fe] p-[1.5px] rounded-lg shadow-md">
               <div className="bg-black/90 px-2.5 py-0.5 rounded-[7px] flex items-center gap-1 text-white font-black text-[12px] tracking-wider">
@@ -679,40 +733,40 @@ export function VideoShortsModal({
               </div>
             </div>
 
-            {/* Nút chọn kênh YouTube của người dùng */}
+            {/* Nút chọn kênh YouTube */}
             <button
               onClick={() => setShowChannelDrawer(true)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 text-[11px] font-bold cursor-pointer transition-all active:scale-95 shadow-md"
               title="Đổi hoặc kết nối Kênh YouTube của bạn"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="text-red-500"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              <span className="max-w-[110px] truncate">{activeChannel.name}</span>
+              <span className="max-w-[100px] truncate">{activeChannel.name}</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
           </div>
 
-          {/* Quick Category Selector */}
-          <div className="hidden sm:flex items-center gap-1 pointer-events-auto">
-            {categories.slice(0, 3).map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  setCurrentIndex(0);
-                }}
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
-                  activeCategory === cat
-                    ? 'bg-red-600 text-white shadow-sm'
-                    : 'bg-black/50 text-neutral-300 hover:bg-black/70 border border-white/10'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Controls: Mute, Playlist, Close */}
+          {/* Controls: Âm thanh, Playlist, Đóng */}
           <div className="flex items-center gap-1.5 pointer-events-auto">
+            {/* Quick sound toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMuted(!isMuted);
+              }}
+              className={`p-2 rounded-full backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+                isMuted 
+                  ? 'bg-red-600/80 hover:bg-red-600 text-white border-red-400 shadow-md' 
+                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+              }`}
+              title={isMuted ? 'Đang tắt tiếng - Nhấn để Bật âm thanh (M)' : 'Đang bật âm thanh - Nhấn để Tắt tiếng (M)'}
+            >
+              {isMuted ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              )}
+            </button>
+
             {/* Playlist Drawer Toggle Button */}
             <button
               onClick={() => setShowPlaylistDrawer(!showPlaylistDrawer)}
@@ -720,22 +774,6 @@ export function VideoShortsModal({
               title="Danh sách Shorts"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            </button>
-
-            {/* Quick sound toggle */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMuted(!isMuted);
-              }}
-              className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-transform"
-              title={isMuted ? 'Bật âm thanh (M)' : 'Tắt tiếng (M)'}
-            >
-              {isMuted ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-              )}
             </button>
 
             {/* Close Button */}
@@ -749,8 +787,8 @@ export function VideoShortsModal({
           </div>
         </div>
 
-        {/* ── Cột Tương Tác Bên Phải (Right Action Column: Like, Comment, Share, Next, YouTube) ── */}
-        <div className="absolute right-3 bottom-24 z-20 flex flex-col items-center gap-3 select-none pointer-events-auto">
+        {/* ── Cột Tương Tác Bên Phải (Right Action Column: Like, Comment, Share, YouTube) ── */}
+        <div className="absolute right-3 bottom-16 z-30 flex flex-col items-center gap-3.5 select-none pointer-events-auto">
           
           {/* Like ❤️ Button */}
           <button
@@ -809,7 +847,7 @@ export function VideoShortsModal({
               className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
               title="Mở trong ứng dụng YouTube Shorts"
             >
-              <div className="w-11 h-11 rounded-full bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center backdrop-blur-md border border-red-400 shadow-lg">
+              <div className="w-11 h-11 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center backdrop-blur-md border border-red-400 shadow-lg">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
               </div>
               <span className="text-[10px] font-bold text-red-400 drop-shadow">
@@ -817,35 +855,21 @@ export function VideoShortsModal({
               </span>
             </a>
           )}
-
-          {/* Next Short ⬇ Button */}
-          <button
-            onClick={handleNextShort}
-            className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
-            title="Video tiếp theo"
-          >
-            <div className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-md border border-white/25 shadow-lg">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <span className="text-[10px] font-bold text-neutral-300 drop-shadow">
-              Tiếp
-            </span>
-          </button>
         </div>
 
-        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Nút Điều Hướng ── */}
-        <div className="absolute bottom-0 inset-x-0 z-20 p-4 pb-4 bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 pointer-events-none">
+        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags (Không còn nút thừa) ── */}
+        <div className="absolute bottom-0 inset-x-0 z-20 p-4 pb-4 pr-16 bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 pointer-events-none">
           
-          {/* Channel Info & Badge */}
+          {/* Channel Info & Follow Button (Gọn gàng bên trái, không đè vào cột nút phải) */}
           <div className="flex items-center gap-2 pointer-events-auto">
             <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-black text-white text-[12px] shadow-md shrink-0">
               {currentShort.channel.charAt(0)}
             </div>
-            <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-1 min-w-0">
               <span className="font-extrabold text-[13px] text-white truncate drop-shadow">
                 @{currentShort.channel}
               </span>
-              <span className="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] shrink-0 font-bold">
+              <span className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shrink-0 font-bold">
                 ✓
               </span>
             </div>
@@ -854,7 +878,7 @@ export function VideoShortsModal({
                 setShowToast('Đã lưu kênh vào danh sách yêu thích!');
                 setTimeout(() => setShowToast(null), 2000);
               }}
-              className="ml-auto px-2.5 py-0.5 rounded-full bg-white text-black hover:bg-neutral-200 text-[11px] font-bold cursor-pointer shrink-0 transition-all active:scale-95"
+              className="px-2.5 py-0.5 rounded-full bg-white text-black hover:bg-neutral-200 text-[11px] font-bold cursor-pointer shrink-0 transition-all active:scale-95 shadow-sm ml-1"
             >
               Quan tâm
             </button>
@@ -865,32 +889,14 @@ export function VideoShortsModal({
             {currentShort.title}
           </p>
 
-          {/* Hashtags & Badge */}
+          {/* Hashtags & Số thứ tự clip */}
           <div className="flex items-center gap-2 text-[11px] font-semibold drop-shadow">
             <span className="text-pink-400">#Shorts</span>
             <span className="text-cyan-400">#YouTube</span>
             <span className="text-yellow-400">#24H</span>
-            <span className="ml-auto text-[10px] text-neutral-400">
+            <span className="ml-auto text-[10px] text-neutral-400 font-bold">
               {currentIndex + 1} / {filteredPlaylist.length}
             </span>
-          </div>
-
-          {/* Fast Navigation Buttons on Mobile */}
-          <div className="flex items-center gap-2 pt-1 pointer-events-auto sm:hidden">
-            <button
-              onClick={handlePrevShort}
-              className="flex-1 py-1.5 rounded-xl bg-white/10 text-white font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer active:scale-95"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-              <span>Short Trước</span>
-            </button>
-            <button
-              onClick={handleNextShort}
-              className="flex-1 py-1.5 rounded-xl bg-red-600 text-white font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-md"
-            >
-              <span>Short Tiếp Theo</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
           </div>
         </div>
       </div>
@@ -962,20 +968,20 @@ export function VideoShortsModal({
           })}
         </div>
 
-        {/* Up & Down Quick Navigation on PC */}
+        {/* Up & Down Quick Navigation on PC Sidebar */}
         <div className="flex items-center gap-2 pt-2 border-t border-white/10">
           <button
             onClick={handlePrevShort}
             className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-            <span>Short Trước</span>
+            <span>Clip Trước</span>
           </button>
           <button
             onClick={handleNextShort}
             className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-red-600/40"
           >
-            <span>Short Sau</span>
+            <span>Clip Sau</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
         </div>
