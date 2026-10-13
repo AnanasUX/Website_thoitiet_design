@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit mới nhất**: Chuẩn bị commit tính năng Fullscreen phím F.
-- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 457ms).
+- **Commit gần nhất**: `2b741d0 (fix(player): enhance 'F' key and fullscreen to expand 100% cinema 16:9 without borders)`
+- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 445ms).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
 1. **Nâng Cấp Phím Tắt "F" & Cơ Chế Toàn Màn Hình Thật Sự (Fullscreen Cinema)**:
