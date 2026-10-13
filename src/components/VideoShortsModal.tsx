@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { YOUTUBE_NEWS_DATABASE } from './YouTubeBroadcastPlayer';
-import siteLogo from '../assets/logo.png';
 
 export interface ShortItem {
   id: string;
@@ -282,11 +281,6 @@ export function VideoShortsModal({
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
   const [isLandscape, setIsLandscape] = useState<boolean>(false);
   const modalContainerRef = useRef<HTMLDivElement>(null);
-
-  // Logo & thương hiệu website AnX
-  const siteBaseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') + '/';
-  const siteLogoUrl = `${siteBaseUrl}favicon.png`;
-  const siteAppleIconUrl = `${siteBaseUrl}icons/apple-touch-icon.png`;
 
   // Tự động ẩn các nút điều khiển & tiêu đề khi không có tương tác sau 5s (theo đúng yêu cầu người dùng)
   const [isControlsVisible, setIsControlsVisible] = useState<boolean>(true);
@@ -816,35 +810,17 @@ export function VideoShortsModal({
         {/* ── Top Header Overlay (Tràn 100% nổi trên video, tinh gọn và thoáng đãng) ── */}
         <div className="absolute top-0 inset-x-0 z-30 pt-3 px-3.5 pb-8 bg-gradient-to-b from-black/85 via-black/35 to-transparent flex items-center justify-between pointer-events-none">
           {/* Logo Brand & Tên Trang bên trái (LUÔN HIỂN THỊ cả khi controls tự ẩn, theo đúng yêu cầu) */}
-          <div className="flex items-center gap-2.5 pointer-events-auto">
-            <div 
-              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className="w-8 h-8 rounded-full overflow-hidden border border-white/30 shadow-md shrink-0 bg-black/60 flex items-center justify-center backdrop-blur-sm"
-            >
-              <img
-                src={siteLogo}
-                alt="Logo AnX"
-                className="w-full h-full object-cover rounded-full"
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  target.style.display = 'none';
-                  if (target.parentElement) {
-                    target.parentElement.innerHTML = '<span class="font-bold text-[#ff315f] text-[13px]">A</span>';
-                  }
-                }}
-              />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-white font-extrabold text-[13.5px] tracking-tight drop-shadow leading-tight">
-                  Anx. Shorts
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
-              </div>
-              <span className="text-[10px] text-white/75 font-semibold drop-shadow truncate">
-                {isLandscape ? 'AnX 16:9 · Toàn cảnh' : 'AnX · Thời Tiết & Tin Tức 24h'}
+          <div className="flex flex-col min-w-0 pointer-events-auto select-none pl-1">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-black text-[16px] tracking-tight drop-shadow-md leading-none flex items-center gap-1">
+                <span className="text-[#ff315f]">Anx.</span>
+                <span>Shorts</span>
               </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
             </div>
+            <span className="text-[10.5px] text-white/80 font-medium drop-shadow mt-0.5 truncate">
+              {isLandscape ? 'Toàn cảnh 16:9' : 'Thời Tiết & Tin Tức 24h'}
+            </span>
           </div>
 
           {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tự động ẩn sau 5s khi không tương tác) */}
@@ -1036,23 +1012,12 @@ export function VideoShortsModal({
           <div className="flex items-center gap-2 pointer-events-auto max-w-full overflow-hidden">
             <div 
               style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className="w-8 h-8 rounded-full overflow-hidden border border-white/25 shadow-md shrink-0 bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px]"
+              className="w-8 h-8 rounded-full overflow-hidden border border-white/25 shadow-md shrink-0 bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px] select-none"
             >
               {currentShort.isSiteNews || currentShort.badge === 'BẢN TIN TRANG' ? (
-                <img 
-                  src={siteLogo} 
-                  alt="Logo" 
-                  className="w-full h-full object-cover rounded-full" 
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    target.style.display = 'none';
-                    if (target.parentElement) {
-                      target.parentElement.innerHTML = '<span>A</span>';
-                    }
-                  }}
-                />
+                <span className="font-bold text-[11px] text-white tracking-tight">Anx</span>
               ) : (
-                <span>{currentShort.channel.charAt(0)}</span>
+                <span className="font-bold text-[12px] text-white">{currentShort.channel.charAt(0).toUpperCase()}</span>
               )}
             </div>
             <div className="flex items-center gap-1 min-w-0 shrink">
