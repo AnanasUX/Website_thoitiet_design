@@ -136,8 +136,30 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     youtubeId: 'Na5uByDy8Sw',
     category: 'Tài chính & Vàng',
     duration: '0:52',
-    thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=600&auto=format&fit=crop&q=70',
-    likes: 1650
+  },
+  {
+    id: 'tt-thoisu-5',
+    title: 'Thời sự 24h • Tiêu điểm công nghệ và các mô hình chuyển đổi số tiêu biểu toàn quốc',
+    channel: 'Báo Tuổi Trẻ Media',
+    badge: 'TIÊU ĐIỂM',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/138-tan-sinh-vien-khu-vuc-dong-bang-song-hong-va-bac-trung-bo-duoc-nhan-hoc-bong-tiep-suc-den-truong-17917817464291809412039.mp4',
+    youtubeId: '819YbuGDpK0',
+    category: 'Thời sự 24h',
+    duration: '1:10',
+    thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=70',
+    likes: 2780
+  },
+  {
+    id: 'tt-thegioi-2',
+    title: 'Thế giới toàn cảnh • Những chuyển động địa chính trị đáng chú ý và tác động chuỗi cung ứng',
+    channel: 'VTV Thời sự Quốc tế',
+    badge: 'THẾ GIỚI',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ban-sua-saudi-1791789927949697724726.mp4',
+    youtubeId: 'THldZ31vTvI',
+    category: 'Thế giới & Cuộc sống',
+    duration: '0:58',
+    thumbnail: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=70',
+    likes: 3120
   }
 ];
 

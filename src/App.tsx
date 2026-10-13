@@ -2159,38 +2159,60 @@ export const RSS_FEEDS_DB = [
   { category: "Giải trí", name: "Thanh Niên • Video", url: "https://thanhnien.vn/rss/video.rss", isVideo: true },
   { category: "Giải trí", name: "VnExpress • Video", url: "https://video.vnexpress.net/rss/tin-tuc.rss", isVideo: true },
   { category: "Giải trí", name: "Dân Trí • Video", url: "https://dantri.com.vn/rss/video.rss", isVideo: true },
+  { category: "Giải trí", name: "Báo Giao Thông • Video", url: "https://baogiaothong.vn/rss/video.rss", isVideo: true },
+  { category: "Giải trí", name: "VTV • Video Truyền hình", url: "https://vtv.vn/rss/truyen-hinh.rss", isVideo: true },
 
   // Thời tiết & Môi trường
+  { category: "Thời tiết", name: "VTV • Xã hội & Thời tiết", url: "https://vtv.vn/rss/xa-hoi.rss" },
+  { category: "Thời tiết", name: "VOV • Thời tiết Xã hội", url: "https://vov.vn/rss/xa-hoi.rss" },
   { category: "Thời tiết", name: "Tuổi Trẻ • Thời sự", url: "https://tuoitre.vn/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "Tiền Phong • Xã hội", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
   { category: "Thời tiết", name: "Thanh Niên • Thời sự", url: "https://thanhnien.vn/rss/thoi-su.rss" },
   { category: "Thời tiết", name: "Dân Trí • Xã hội", url: "https://dantri.com.vn/rss/xa-hoi.rss" },
+  { category: "Thời tiết", name: "TTXVN • Xã hội", url: "https://baotintuc.vn/rss/xa-hoi.rss" },
+  { category: "Thời tiết", name: "Báo Giao Thông", url: "https://baogiaothong.vn/rss/giao-thong.rss" },
 
   // Giá vàng & Thị trường tài chính
+  { category: "Giá vàng", name: "VTV • Kinh tế & Vàng", url: "https://vtv.vn/rss/kinh-te.rss" },
+  { category: "Giá vàng", name: "VOV • Kinh tế", url: "https://vov.vn/rss/kinh-te.rss" },
+  { category: "Giá vàng", name: "VnEconomy • Tài chính", url: "https://vneconomy.vn/rss/tai-chinh-ngan-hang.rss" },
+  { category: "Giá vàng", name: "VnEconomy • Thị trường", url: "https://vneconomy.vn/rss/thi-truong.rss" },
   { category: "Giá vàng", name: "Dân Trí • Kinh doanh", url: "https://dantri.com.vn/rss/kinh-doanh.rss" },
   { category: "Giá vàng", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
   { category: "Giá vàng", name: "CafeF • Thị trường", url: "https://cafef.vn/rss/home.rss" },
   { category: "Giá vàng", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
   { category: "Giá vàng", name: "VietnamNet • Kinh doanh", url: "https://vietnamnet.vn/rss/kinh-doanh.rss" },
   { category: "Giá vàng", name: "Tiền Phong • Kinh tế", url: "https://tienphong.vn/rss/kinh-te-3.rss" },
+  { category: "Giá vàng", name: "TTXVN • Kinh tế", url: "https://baotintuc.vn/rss/kinh-te.rss" },
+  { category: "Giá vàng", name: "Soha • Kinh doanh", url: "https://soha.vn/rss/kinh-doanh.rss" },
 
   // Chính trị & Thời sự chính thống
+  { category: "Chính trị", name: "VTV • Trong nước", url: "https://vtv.vn/rss/trong-nuoc.rss" },
+  { category: "Chính trị", name: "VOV • Chính trị", url: "https://vov.vn/rss/chinh-tri.rss" },
+  { category: "Chính trị", name: "TTXVN • Thời sự xã hội", url: "https://baotintuc.vn/rss/thoi-su-xa-hoi.rss" },
   { category: "Chính trị", name: "VietnamNet • Chính trị", url: "https://vietnamnet.vn/rss/chinh-tri.rss" },
+  { category: "Chính trị", name: "VietnamNet • Thời sự", url: "https://vietnamnet.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "VnExpress • Thời sự", url: "https://vnexpress.net/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Tuổi Trẻ • Thời sự", url: "https://tuoitre.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Thanh Niên • Thời sự", url: "https://thanhnien.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Lao Động", url: "https://laodong.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Người Lao Động", url: "https://nld.com.vn/rss/thoi-su.rss" },
   { category: "Chính trị", name: "Tiền Phong • Xã hội", url: "https://tienphong.vn/rss/xa-hoi-2.rss" },
+  { category: "Chính trị", name: "CAND • Thời sự", url: "https://cand.com.vn/rss/thoi-su-c1105.rss" },
+  { category: "Chính trị", name: "Báo Giao Thông • Thời sự", url: "https://baogiaothong.vn/rss/thoi-su.rss" },
 
   // Đời sống
+  { category: "Đời sống", name: "VTV • Đời sống & Xã hội", url: "https://vtv.vn/rss/xa-hoi.rss" },
+  { category: "Đời sống", name: "VOV • Xã hội", url: "https://vov.vn/rss/xa-hoi.rss" },
   { category: "Đời sống", name: "VnExpress • Đời sống", url: "https://vnexpress.net/rss/doi-song.rss" },
   { category: "Đời sống", name: "Dân Trí • Đời sống", url: "https://dantri.com.vn/rss/doi-song.rss" },
   { category: "Đời sống", name: "Thanh Niên • Đời sống", url: "https://thanhnien.vn/rss/doi-song.rss" },
   { category: "Đời sống", name: "VietnamNet • Đời sống", url: "https://vietnamnet.vn/rss/doi-song.rss" },
   { category: "Đời sống", name: "Tuổi Trẻ • Nhịp sống trẻ", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
   { category: "Đời sống", name: "Tiền Phong • Giới trẻ", url: "https://tienphong.vn/rss/gioi-tre-11.rss" },
+  { category: "Đời sống", name: "Soha • Đời sống", url: "https://soha.vn/rss/doi-song.rss" },
+  { category: "Đời sống", name: "Hà Nội Mới • Xã hội", url: "https://hanoimoi.vn/rss/xa-hoi" },
 
   // Con người & Xã hội
   { category: "Con người", name: "VnExpress • Tâm sự", url: "https://vnexpress.net/rss/tam-su.rss" },
@@ -2198,15 +2220,25 @@ export const RSS_FEEDS_DB = [
   { category: "Con người", name: "Dân Trí • Giới trẻ", url: "https://dantri.com.vn/rss/nhip-song-tre.rss" },
   { category: "Con người", name: "Thanh Niên • Giới trẻ", url: "https://thanhnien.vn/rss/gioi-tre.rss" },
   { category: "Con người", name: "Tuổi Trẻ • Gương sáng", url: "https://tuoitre.vn/rss/nhip-song-tre.rss" },
+  { category: "Con người", name: "TTXVN • Con người & Xã hội", url: "https://baotintuc.vn/rss/thoi-su-xa-hoi.rss" },
+  { category: "Con người", name: "CAND • Gương người tốt", url: "https://cand.com.vn/rss/xa-hoi-c1108.rss" },
 
   // Doanh nghiệp
+  { category: "Doanh nghiệp", name: "VTV • Doanh nghiệp & Kinh tế", url: "https://vtv.vn/rss/kinh-te.rss" },
+  { category: "Doanh nghiệp", name: "VOV • Doanh nghiệp", url: "https://vov.vn/rss/kinh-te.rss" },
+  { category: "Doanh nghiệp", name: "VnEconomy • Thị trường", url: "https://vneconomy.vn/rss/thi-truong.rss" },
   { category: "Doanh nghiệp", name: "CafeBiz", url: "https://cafebiz.vn/rss/home.rss" },
   { category: "Doanh nghiệp", name: "VnExpress • Kinh doanh", url: "https://vnexpress.net/rss/kinh-doanh.rss" },
   { category: "Doanh nghiệp", name: "Dân Trí • Kinh doanh", url: "https://dantri.com.vn/rss/kinh-doanh.rss" },
   { category: "Doanh nghiệp", name: "VietnamBiz", url: "https://vietnambiz.vn/rss/home.rss" },
   { category: "Doanh nghiệp", name: "Tiền Phong • Kinh tế", url: "https://tienphong.vn/rss/kinh-te-3.rss" },
+  { category: "Doanh nghiệp", name: "Hà Nội Mới • Kinh tế", url: "https://hanoimoi.vn/rss/kinh-te" },
+  { category: "Doanh nghiệp", name: "Soha • Doanh nghiệp", url: "https://soha.vn/rss/kinh-doanh.rss" },
 
   // Công nghệ
+  { category: "Công nghệ", name: "VTV • Công nghệ & Đổi mới", url: "https://vtv.vn/rss/cong-nghe.rss" },
+  { category: "Công nghệ", name: "VOV • Công nghệ", url: "https://vov.vn/rss/cong-nghe.rss" },
+  { category: "Công nghệ", name: "VnEconomy • Kinh tế số", url: "https://vneconomy.vn/rss/kinh-te-so.rss" },
   { category: "Công nghệ", name: "VnExpress • Số Hóa", url: "https://vnexpress.net/rss/so-hoa.rss" },
   { category: "Công nghệ", name: "Thanh Niên • Công nghệ", url: "https://thanhnien.vn/rss/cong-nghe.rss" },
   { category: "Công nghệ", name: "GenK", url: "https://genk.vn/rss/home.rss" },
@@ -2215,18 +2247,24 @@ export const RSS_FEEDS_DB = [
   { category: "Công nghệ", name: "Tuổi Trẻ • Công nghệ", url: "https://tuoitre.vn/rss/cong-nghe.rss" },
 
   // Kỹ thuật khoa học
+  { category: "Kỹ thuật khoa học", name: "VTV • Khoa học", url: "https://vtv.vn/rss/cong-nghe.rss" },
   { category: "Kỹ thuật khoa học", name: "VnExpress • Khoa học", url: "https://vnexpress.net/rss/khoa-hoc.rss" },
   { category: "Kỹ thuật khoa học", name: "Tuổi Trẻ • Khoa học", url: "https://tuoitre.vn/rss/khoa-hoc.rss" },
   { category: "Kỹ thuật khoa học", name: "Dân Trí • Khoa học", url: "https://dantri.com.vn/rss/khoa-hoc.rss" },
   { category: "Kỹ thuật khoa học", name: "VietnamNet • Khoa học", url: "https://vietnamnet.vn/rss/khoa-hoc.rss" },
+  { category: "Kỹ thuật khoa học", name: "TTXVN • Thế giới & Khoa học", url: "https://baotintuc.vn/rss/the-gioi.rss" },
 
   // Giải trí
+  { category: "Giải trí", name: "VTV • Văn hóa & Showbiz", url: "https://vtv.vn/rss/van-hoa-giai-tri.rss" },
+  { category: "Giải trí", name: "VOV • Văn hóa Thể thao", url: "https://vov.vn/rss/van-hoa.rss" },
+  { category: "Giải trí", name: "TTXVN • Văn hóa & Nghệ thuật", url: "https://baotintuc.vn/rss/van-hoa.rss" },
   { category: "Giải trí", name: "VnExpress • Giải trí", url: "https://vnexpress.net/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Tuổi Trẻ • Giải trí", url: "https://tuoitre.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Thanh Niên • Giải trí", url: "https://thanhnien.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Dân Trí • Giải trí", url: "https://dantri.com.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Tiền Phong • Giải trí", url: "https://tienphong.vn/rss/giai-tri-3.rss" },
   { category: "Giải trí", name: "Tiền Phong • Hoa hậu", url: "https://tienphong.vn/rss/hoa-hau-245.rss" },
+  { category: "Giải trí", name: "Soha • Giải trí", url: "https://soha.vn/rss/giai-tri.rss" },
   { category: "Giải trí", name: "Ngôi Sao • Showbiz", url: "https://ngoisao.vnexpress.net/rss/showbiz.rss" },
   { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" }
 ];
@@ -3491,7 +3529,10 @@ useEffect(() => {
           ? [
               { category: "Tin nổi bật", name: "Tin Nổi Bật", url: "https://vnexpress.net/rss/tin-noi-bat.rss", isHot: true },
               { category: "Trang chủ", name: "Dân Trí", url: "https://dantri.com.vn/rss/home.rss", isHot: true },
-              ...[...catFeeds].sort(() => 0.5 - Math.random()).slice(0, 25)
+              { category: "Thời sự VTV", name: "VTV Trong Nước", url: "https://vtv.vn/rss/trong-nuoc.rss", isHot: true },
+              { category: "Thời sự VOV", name: "VOV Chính Trị", url: "https://vov.vn/rss/chinh-tri.rss", isHot: true },
+              { category: "TTXVN", name: "Báo Tin Tức TTXVN", url: "https://baotintuc.vn/rss/thoi-su-xa-hoi.rss", isHot: true },
+              ...[...catFeeds].sort(() => 0.5 - Math.random()).slice(0, 38)
             ]
           : [...catFeeds];
         

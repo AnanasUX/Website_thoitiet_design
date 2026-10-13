@@ -35,7 +35,8 @@ function parseDurationSeconds(d?: string): number {
 export const FEATURED_NEWS_CHANNELS = [
   { id: 'UCabsTV34JwALXKGMqHpvUiA', name: 'VTV24' },
   { id: 'UCIW9cGgoRuGJnky3K3tbzNg', name: 'Báo Thanh Niên' },
-  { id: 'UCr8i-5AIxdiJbI0HdGdUzIA', name: 'Báo Lao Động' }
+  { id: 'UCteGrHMrnQwx7Scx--7nyoA', name: 'Báo Tuổi Trẻ' },
+  { id: 'UCFN0IoARjOAgx-OWr-JBIHg', name: 'Báo Lao Động' }
 ];
 
 // ── Kho video Shorts dự phòng chất lượng cao (100% embeddable, bảo đảm không bao giờ lỗi) ──
@@ -77,6 +78,18 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
     sharesCount: 420
   },
   {
+    id: 'yt-819YbuGDpK0',
+    youtubeId: '819YbuGDpK0',
+    title: 'Thời sự 24h: Tình huống giao thông nóng và cảnh báo an toàn trên các tuyến cao tốc',
+    channel: 'Báo Tuổi Trẻ',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    thumbnail: 'https://i.ytimg.com/vi/819YbuGDpK0/hqdefault.jpg',
+    likes: 5120,
+    commentsCount: 340,
+    sharesCount: 210
+  },
+  {
     id: 'yt-kFDO9Qbua4c',
     youtubeId: 'kFDO9Qbua4c',
     title: 'Sự thật về hồ sơ tị nạn chính trị và những chiêu trò lừa đảo trên mạng',
@@ -111,10 +124,22 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
     likes: 3100,
     commentsCount: 195,
     sharesCount: 110
+  },
+  {
+    id: 'yt-xYXS7Dgi5M4',
+    youtubeId: 'xYXS7Dgi5M4',
+    title: 'Bản tin nhanh: Hình thế thời tiết gây mưa giông cục bộ và chỉ số tia cực tím',
+    channel: 'VTV Thời Tiết',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    thumbnail: 'https://i.ytimg.com/vi/xYXS7Dgi5M4/hqdefault.jpg',
+    likes: 4320,
+    commentsCount: 312,
+    sharesCount: 190
   }
 ];
 
-const MULTI_CACHE_KEY = 'yt_aggregated_shorts_cache_v4';
+const MULTI_CACHE_KEY = 'yt_aggregated_shorts_cache_v5';
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 phút cache
 
 // Fetch có timeout không làm treo luồng mạng
