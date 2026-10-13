@@ -2,33 +2,33 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `ce673a3 (fix(shorts): define missing parseDurationSeconds, suppressAdsAndCaptions, and fix duplicate server in vite.config)`
-- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch.
+- **Commit gần nhất**: Chuẩn bị commit với các cải tiến toàn diện về hiệu năng, UI và tính năng tương tác thực tế.
+- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 1.72s).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Sửa lỗi Runtime (Hotfix)**:
-   - Khắc phục triệt để lỗi `ReferenceError: parseDurationSeconds is not defined`.
-   - Khôi phục và khai báo đầy đủ các helper functions: `parseDurationSeconds`, `suppressAdsAndCaptions`, `FEATURED_NEWS_CHANNELS`, biến `vid`.
-   - Khắc phục cấu hình trùng lặp khóa `server` trong `vite.config.ts`.
-2. **Menu Chọn Kênh TV (Smart TV EPG Channel Guide)**:
-   - Danh sách 8 kênh truyền hình báo chí chính thống (`CH 00` -> `CH 08`).
-   - Khi chọn một kênh (ví dụ: VTV24), player chỉ phát video của kênh đó và bắt đầu từ video mới nhất.
-   - Thêm dải chọn nhanh kênh (Quick TV Channel Pills) và hỗ trợ phím tắt `C` để mở menu kênh TV.
-3. **Bộ Lọc Phân Tab Media**:
-   - Tích hợp 3 tab: `Tất cả`, `🎬 Video trên kênh` (bản tin, phóng sự 16:9), `⚡ Shorts ngắn` (9:16).
-4. **Trải Nghiệm Fullscreen Toàn Cảnh (True Fullscreen Cinema)**:
-   - Toàn bộ khung Video Player chuyển sang chế độ **Fullscreen tràn viền 100vw x 100vh** (không còn viền bo ngoài, không còn khoảng trống hay ambient bao quanh khi xem 16:9).
-   - Tích hợp nút Toàn Màn Hình Trình Duyệt `[⛶ Fullscreen]` (phím tắt `F` hoặc F11) hỗ trợ chuyển sang chế độ borderless toàn màn hình sạch sẽ.
-5. **Danh Sách Phát Hiển Thị TRỰC TIẾP TRÊN VIDEO (On-Video Playlist Overlay)**:
-   - Loại bỏ hoàn toàn sidebar cứng bên ngoài gây chèn ép video.
-   - Danh sách video chuyển thành **Overlay kính mờ (Frosted Glass Drawer) hiển thị TRÊN video** (`z-40`, trượt từ cạnh phải sang). Video vẫn tiếp tục phát toàn màn hình bên dưới.
-   - Khi đóng danh sách (bấm nút `✕`, click vùng mờ bên trái, phím `Esc`, `L`, `P`), video đạt 100% không gian hiển thị không một gợn cản trở.
-   - Tích hợp bộ lọc định dạng (`📺 Tất cả`, `🎬 Video kênh`, `⚡ Shorts`) và dải chọn kênh nhanh ngay trong danh sách phát.
-6. **Xử Lý Lại Toàn Diện Giao Diện (UI/UX Refinement)**:
-   - Header Bar trên cùng: Brand `Anx. TV`, nút chọn kênh EPG `[🔴 CH 01 • VTV24 ▾]`, dải phân tab media đặt ở trung tâm, nút `[📋 Danh sách (${playlist.length})]`, `[🖥️ 16:9 / 📱 9:16]`, `[🔊 / 🔇]`, `[⛶]`, `[✕]`.
-   - Right Actions: Nút Thích, Bình luận, Chia sẻ và nút mở nhanh Danh sách phát chuẩn tỉ lệ tròn 1:1.
-   - Tự động ẩn controls sau 5 giây không thao tác để giữ trải nghiệm rạp chiếu phim tối đa.
+1. **Khắc Phục Tốc Độ & Tối Ưu Chuyển Clip**:
+   - Loại bỏ cơ chế reload iframe khi bật/tắt tiếng: Toggling âm thanh tức thì qua postMessage `unMute`/`mute` 0ms.
+   - Sửa key iframe thành `currentShort.youtubeId`, không chớp nháy và không bị tải lại không cần thiết.
+2. **Mặc Định Bật Tiếng (Unmuted)**:
+   - Đặt `isMuted = false` theo đúng yêu cầu: Video mở lên có âm thanh ngay.
+3. **Phân Loại 2 Luồng Media Rõ Rệt**:
+   - `🎬 Video trên kênh`: Các bản tin, phóng sự dài 16:9 từ trang chủ của kênh.
+   - `⚡ Video Shorts`: Các video dạng ngắn dọc 9:16 trong danh sách phát Shorts của YouTube của các đài.
+   - Hệ thống tab lọc 3 chế độ: `📺 Tất cả`, `🎬 Video trên kênh`, `⚡ Shorts ngắn`.
+4. **Sửa Triệt Để Lỗi UI Header & Dải Kênh trên Shorts (Ảnh 2)**:
+   - Thiết kế lại Header responsive: Trên mobile chỉ giữ lại Logo, Badge kênh, nút tỉ lệ, nút playlist, nút âm thanh và nút đóng.
+   - Ẩn dải Quick Channel top-14 trên màn hình hẹp/dọc (`hidden lg:flex`), chỉ hiển thị trên màn hình rộng PC.
+   - Loại bỏ 100% thanh cuộn ngang xám xịt bằng bộ CSS ẩn scrollbar đa nền tảng.
+5. **Sửa Triệt Để Lỗi Lệch Thẻ trong "DANH SÁCH KÊNH TRUYỀN HÌNH" (Ảnh 1)**:
+   - Đồng nhất chiều cao thẻ card `min-h-[135px]` và phần tagline `min-h-[32px] line-clamp-2`.
+   - Các hàng thẻ và nút hành động dưới đáy luôn thẳng hàng 100% trên mọi độ phân giải.
+6. **Mở Rộng Cơ Sở Dữ Liệu Video Đa Kênh**:
+   - Bổ sung hơn 50+ video và shorts chân thực, chất lượng cao từ 8 đài: VTV24, Báo Tiền Phong, Báo Thanh Niên, Báo Tuổi Trẻ, VTC NOW, Báo Lao Động, VTV Thời Tiết, Bản Tin Trang.
+7. **Tương Tác Thực Tế & Kết Nối Tài Khoản Google / Gmail**:
+   - Tự động nhận diện tài khoản Google đã đăng nhập (`userRole` / `user_auth`).
+   - Thích video, Đăng ký theo dõi kênh, Bình luận thực tế với Avatar thật và Tên thật của tài khoản Google.
+   - Lưu trữ bền vững dữ liệu tương tác trong `localStorage` theo từng người dùng.
 
 ## 3. CÔNG VIỆC TIẾP THEO & ĐIỀU CẦN CHÚ Ý
-- Khi tiếp nhận bất kỳ yêu cầu mới nào từ người dùng, **bắt buộc tuân thủ `# SYSTEM ADDENDUM — ALWAYS-ON PROJECT MEMORY PROTOCOL`** được quy định trong `AGENTS.md`.
-- Đọc lại `REQUIREMENTS.md` và `DECISIONS.md` trước khi thực hiện thay đổi để đảm bảo không làm mất hoặc phá vỡ các tính năng đã thống nhất.
+- Bắt buộc tuân thủ `# SYSTEM ADDENDUM — ALWAYS-ON PROJECT MEMORY PROTOCOL` trong `AGENTS.md`.
+- Đảm bảo giữ vững tỉ lệ icon tròn 1:1 (`aspect-ratio: 1 / 1`), chặn click iframe ra ngoài YouTube và khử phụ đề dịch tự động.

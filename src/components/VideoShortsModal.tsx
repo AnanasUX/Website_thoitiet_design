@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { YOUTUBE_NEWS_DATABASE, cleanVideoTitle } from './YouTubeBroadcastPlayer';
 
 export interface ShortItem {
@@ -17,13 +17,14 @@ export interface ShortItem {
   sharesCount?: number;
   publishedAt?: string;
   isSiteNews?: boolean;
-  mediaType?: 'video' | 'short';
+  mediaType: 'video' | 'short'; // Phân loại: 'video' (trang chủ kênh, 16:9) hoặc 'short' (danh sách phát Shorts 9:16)
+  aspectRatio?: '16:9' | '9:16';
 }
 
 // Chuyển đổi chuỗi duration dạng mm:ss hoặc hh:mm:ss thành số giây
 export function parseDurationSeconds(d?: string): number {
-  if (!d) return 50;
-  if (/shorts/i.test(d)) return 50;
+  if (!d) return 55;
+  if (/shorts/i.test(d)) return 55;
   const parts = d.split(':').map(Number);
   if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
     return parts[0] * 60 + parts[1];
@@ -31,16 +32,16 @@ export function parseDurationSeconds(d?: string): number {
   if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
     return parts[0] * 3600 + parts[1] * 60 + parts[2];
   }
-  return 50;
+  return 55;
 }
 
-// ── Hàm tắt triệt để phụ đề, dịch tự động và quảng cáo trên trình phát YouTube Shorts ──
+// ── Hàm triệt tiêu phụ đề, khử dịch tự động và tự động bỏ qua quảng cáo YouTube ──
 export function suppressAdsAndCaptions(targetWin?: Window | null) {
   if (!targetWin) return;
   try {
     // 0. Tự động skip/bỏ qua quảng cáo YouTube nếu có
     targetWin.postMessage(JSON.stringify({ event: 'command', func: 'skipAd' }), '*');
-    // 1. Gỡ bỏ hoàn toàn module phụ đề/dịch tự động
+    // 1. Gỡ bỏ module phụ đề / auto-translate
     targetWin.postMessage(JSON.stringify({ event: 'command', func: 'unloadModule', args: ['captions'] }), '*');
     // 2. Tắt track phụ đề (set track object rỗng)
     targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'track', {}] }), '*');
@@ -51,15 +52,18 @@ export function suppressAdsAndCaptions(targetWin?: Window | null) {
   } catch {}
 }
 
-// ── Danh sách các nguồn tin tức & phóng sự lớn nhất trong ngày ──
+// ── Danh sách các kênh tin tức chính thống ──
 export const FEATURED_NEWS_CHANNELS = [
   { id: 'UCabsTV34JwALXKGMqHpvUiA', name: 'VTV24' },
   { id: 'UCIW9cGgoRuGJnky3K3tbzNg', name: 'Báo Thanh Niên' },
   { id: 'UCteGrHMrnQwx7Scx--7nyoA', name: 'Báo Tuổi Trẻ' },
-  { id: 'UCFN0IoARjOAgx-OWr-JBIHg', name: 'Báo Lao Động' }
+  { id: 'UCFN0IoARjOAgx-OWr-JBIHg', name: 'Báo Lao Động' },
+  { id: 'UC01aVq6gGvUe6F2Q6H_tPmg', name: 'Báo Tiền Phong' },
+  { id: 'UCxI0jUuG4e2xP_7E4m5hXvw', name: 'VTC NOW' },
+  { id: 'UCbN_rR_y_f5Qv8u7Y8h1zWw', name: 'VTV Thời Tiết' }
 ];
 
-// ── Cấu trúc Kênh Truyền Hình phong cách Smart TV ──
+// ── Cấu trúc Kênh Truyền Hình phong cách Smart TV EPG ──
 export interface TVChannel {
   id: string; // 'all' | 'vtv24' | 'tienphong' | 'thanhnien' | 'tuoitre' | 'vtcnow' | 'laodong' | 'thoitiet' | 'site'
   channelId?: string;
@@ -74,7 +78,7 @@ export const TV_CHANNELS: TVChannel[] = [
   {
     id: 'all',
     name: 'Tất Cả Kênh',
-    tagline: 'Tổng hợp dòng chảy thời sự đa kênh 24h',
+    tagline: 'Tổng hợp dòng chảy thời sự đa kênh 24h liên tục',
     number: 'CH 00',
     logoColor: '#ff315f',
     badgeText: 'TỔNG HỢP'
@@ -90,46 +94,52 @@ export const TV_CHANNELS: TVChannel[] = [
   },
   {
     id: 'tienphong',
+    channelId: 'UC01aVq6gGvUe6F2Q6H_tPmg',
     name: 'Báo Tiền Phong',
-    tagline: 'Kênh truyền hình Tiền Phong - Tin nóng, chính luận & phóng sự điều tra',
+    tagline: 'Truyền hình Báo Tiền Phong - Phóng sự điều tra & Tiêu điểm trẻ',
     number: 'CH 02',
     logoColor: '#0284c7',
     badgeText: 'TIỀN PHONG TV'
   },
   {
     id: 'thanhnien',
+    channelId: 'UCIW9cGgoRuGJnky3K3tbzNg',
     name: 'Báo Thanh Niên',
-    tagline: 'Truyền hình Báo Thanh Niên - Tiêu điểm xã hội & pháp luật 24h',
+    tagline: 'Truyền hình Báo Thanh Niên - Tiêu điểm xã hội & Pháp luật 24h',
     number: 'CH 03',
     logoColor: '#2563eb',
     badgeText: 'THANH NIÊN'
   },
   {
     id: 'tuoitre',
+    channelId: 'UCteGrHMrnQwx7Scx--7nyoA',
     name: 'Báo Tuổi Trẻ',
-    tagline: 'Truyền hình Tuổi Trẻ - Tin tức đa chiều, phóng sự & phóng viên thường trú',
+    tagline: 'Truyền hình Tuổi Trẻ - Tin tức đa chiều & Phóng viên thường trú',
     number: 'CH 04',
     logoColor: '#dc2626',
     badgeText: 'TUỔI TRẺ TV'
   },
   {
     id: 'vtcnow',
+    channelId: 'UCxI0jUuG4e2xP_7E4m5hXvw',
     name: 'VTC NOW',
-    tagline: 'Đài Truyền hình Kỹ thuật số VTC - Bản tin thời sự cập nhật từng phút',
+    tagline: 'Đài Truyền hình Kỹ thuật số VTC - Bản tin thời sự số 24/7',
     number: 'CH 05',
     logoColor: '#ea580c',
     badgeText: 'VTC NOW'
   },
   {
     id: 'laodong',
+    channelId: 'UCFN0IoARjOAgx-OWr-JBIHg',
     name: 'Báo Lao Động',
-    tagline: 'Truyền hình Báo Lao Động - Kinh tế, thị trường & người lao động',
+    tagline: 'Truyền hình Báo Lao Động - Kinh tế, thị trường & Người lao động',
     number: 'CH 06',
     logoColor: '#059669',
     badgeText: 'LAO ĐỘNG TV'
   },
   {
     id: 'thoitiet',
+    channelId: 'UCbN_rR_y_f5Qv8u7Y8h1zWw',
     name: 'VTV Thời Tiết',
     tagline: 'Bản tin Dự báo Thời tiết, Cảnh báo bão & Thiên tai TV',
     number: 'CH 07',
@@ -139,7 +149,7 @@ export const TV_CHANNELS: TVChannel[] = [
   {
     id: 'site',
     name: 'Bản Tin Trang',
-    tagline: 'Video bản tin nội bộ và tin tức trực tiếp từ website',
+    tagline: 'Video bản tin nội bộ và đồ họa thời tiết trực tiếp từ website',
     number: 'CH 08',
     logoColor: '#8b5cf6',
     badgeText: 'BẢN TIN TRANG'
@@ -162,224 +172,544 @@ export function matchesChannel(item: ShortItem, channelId: string): boolean {
   return false;
 }
 
-// ── Kho video phong phú trên các kênh chính thức (Phân loại theo đài) ──
+// ── CƠ SỞ DỮ LIỆU VIDEO PHONG PHÚ: PHÂN LOẠI RÕ RỆT (VIDEO KÊNH 16:9 VS SHORTS 9:16) ──
 export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
-  // ── VTV24 ──
+  // ══════════════════ 1. VTV24 ══════════════════
+  // Video trên kênh (16:9)
   {
-    id: 'yt-vtv24-01',
+    id: 'yt-vtv24-v01',
     youtubeId: 'THldZ31vTvI',
-    title: 'Chuyển động 24h trưa • Tin tức thời sự cập nhật, tình hình quốc tế và các sự kiện nổi bật trong ngày',
+    title: 'Chuyển động 24h trưa • Tin tức thời sự cập nhật, tình hình quốc tế và sự kiện nổi bật trong ngày',
     channel: 'VTV24',
     badge: 'TRỰC TIẾP',
     category: 'Thời sự 24h',
+    duration: '35:20',
     thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
-    likes: 8520,
-    commentsCount: 612,
-    sharesCount: 490,
+    likes: 12540,
+    commentsCount: 820,
+    sharesCount: 650,
     mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T05:00:00.000Z'
   },
   {
-    id: 'yt-vtv24-02',
+    id: 'yt-vtv24-v02',
     youtubeId: 'kFDO9Qbua4c',
-    title: 'VTV24 Tiêu điểm • Cảnh báo những thủ đoạn lừa đảo tị nạn và bẫy việc làm trên không gian mạng',
+    title: 'VTV24 Tiêu điểm • Cảnh báo thủ đoạn lừa đảo tị nạn và bẫy việc làm trên không gian mạng',
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
     category: 'Thời sự 24h',
+    duration: '14:45',
     thumbnail: 'https://i.ytimg.com/vi/kFDO9Qbua4c/hqdefault.jpg',
-    likes: 4890,
-    commentsCount: 320,
-    sharesCount: 210,
+    likes: 8920,
+    commentsCount: 540,
+    sharesCount: 420,
     mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T03:45:00.000Z'
   },
   {
-    id: 'yt-vtv24-03',
+    id: 'yt-vtv24-v03',
     youtubeId: '0thQbm1zlW4',
     title: 'Kinh tế 24h • Biến động giá vàng miếng SJC, thị trường tài chính và khuyến nghị nhà đầu tư',
     channel: 'VTV24',
     badge: 'TÀI CHÍNH',
     category: 'Tài chính & Vàng',
+    duration: '16:10',
     thumbnail: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=70',
-    likes: 5410,
-    commentsCount: 390,
-    sharesCount: 260,
+    likes: 7410,
+    commentsCount: 480,
+    sharesCount: 310,
     mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T01:30:00.000Z'
   },
-
-  // ── BÁO TIỀN PHONG ──
   {
-    id: 'yt-tp-01',
+    id: 'yt-vtv24-v04',
+    youtubeId: 'M7lc1UVf-VE',
+    title: 'Toàn cảnh VTV24 • Triển vọng kinh tế số và làn sóng đầu tư công nghệ cao vào Việt Nam',
+    channel: 'VTV24',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    duration: '22:15',
+    thumbnail: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=70',
+    likes: 6320,
+    commentsCount: 395,
+    sharesCount: 280,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T16:00:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-vtv24-s01',
+    youtubeId: '819YbuGDpK0',
+    title: 'VTV24 Shorts • Cảnh báo nóng: Bẫy lừa đảo trúng thưởng và giả mạo tài khoản ngân hàng',
+    channel: 'VTV24',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '0:58',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00004318still141-17917883369831355170827.jpg',
+    likes: 18400,
+    commentsCount: 1120,
+    sharesCount: 950,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T06:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-s02',
+    youtubeId: 'xYXS7Dgi5M4',
+    title: 'VTV24 Shorts • Giá vàng hôm nay biến động mạnh, chuyên gia khuyến cáo thận trọng lướt sóng',
+    channel: 'VTV24',
+    badge: 'TÀI CHÍNH',
+    category: 'Tài chính & Vàng',
+    duration: '0:48',
+    thumbnail: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&auto=format&fit=crop&q=70',
+    likes: 15200,
+    commentsCount: 890,
+    sharesCount: 710,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T04:30:00.000Z'
+  },
+
+  // ══════════════════ 2. BÁO TIỀN PHONG ══════════════════
+  // Video trên kênh (16:9)
+  {
+    id: 'yt-tp-v01',
     youtubeId: 'Kmx55fnX6jM',
     title: 'Tiền Phong TV • Bản tin Thời sự nóng: Phân tích chính sách kinh tế mới và tiêu điểm xã hội',
     channel: 'Báo Tiền Phong',
     badge: 'BẢN TIN',
     category: 'Thời sự 24h',
+    duration: '18:40',
     thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/img-1791781649342475651614.jpeg',
-    likes: 6240,
-    commentsCount: 410,
-    sharesCount: 230,
+    likes: 9240,
+    commentsCount: 610,
+    sharesCount: 430,
     mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T04:15:00.000Z'
   },
   {
-    id: 'yt-tp-02',
-    youtubeId: '819YbuGDpK0',
+    id: 'yt-tp-v02',
+    youtubeId: 'fQ6NE4ZQOLg',
     title: 'Phóng sự Tiền Phong • Điều tra trật tự an toàn giao thông và quy chuẩn văn minh đô thị',
     channel: 'Báo Tiền Phong',
     badge: 'TIÊU ĐIỂM',
     category: 'Thời sự 24h',
-    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00004318still141-17917883369831355170827.jpg',
-    likes: 5410,
-    commentsCount: 380,
-    sharesCount: 195,
-    mediaType: 'short',
+    duration: '12:20',
+    thumbnail: 'https://i.ytimg.com/vi/fQ6NE4ZQOLg/hqdefault.jpg',
+    likes: 7410,
+    commentsCount: 480,
+    sharesCount: 320,
+    mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T02:30:00.000Z'
   },
-
-  // ── BÁO THANH NIÊN ──
   {
-    id: 'yt-tn-01',
+    id: 'yt-tp-v03',
+    youtubeId: 'ADGo5NaYQNM',
+    title: 'Diễn đàn Tiền Phong • Đồng hành cùng thanh niên khởi nghiệp và các chương trình an sinh xã hội',
+    channel: 'Báo Tiền Phong',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    duration: '15:10',
+    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/hqdefault.jpg',
+    likes: 5820,
+    commentsCount: 310,
+    sharesCount: 220,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T15:00:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-tp-s01',
+    youtubeId: '819YbuGDpK0',
+    title: 'Tiền Phong Shorts • Người đàn ông đi xe máy chặn đầu ô tô: Lời nhắc nhở về văn hóa giao thông',
+    channel: 'Báo Tiền Phong',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '0:55',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00004318still141-17917883369831355170827.jpg',
+    likes: 14200,
+    commentsCount: 940,
+    sharesCount: 680,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T05:20:00.000Z'
+  },
+  {
+    id: 'yt-tp-s02',
+    youtubeId: 'xYXS7Dgi5M4',
+    title: 'Tiền Phong Shorts • 60 giây điểm nhanh các tin tức thời sự nóng nhất sáng nay',
+    channel: 'Báo Tiền Phong',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    duration: '0:59',
+    thumbnail: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=70',
+    likes: 11200,
+    commentsCount: 680,
+    sharesCount: 490,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T03:00:00.000Z'
+  },
+
+  // ══════════════════ 3. BÁO THANH NIÊN ══════════════════
+  // Video trên kênh (16:9)
+  {
+    id: 'yt-tn-v01',
     youtubeId: 'fQ6NE4ZQOLg',
     title: 'Tiêu điểm Thanh Niên • Báo động thực trạng kỹ năng mềm của sinh viên và cơ hội việc làm',
     channel: 'Báo Thanh Niên',
     badge: 'TIÊU ĐIỂM',
     category: 'Thời sự 24h',
+    duration: '14:30',
     thumbnail: 'https://i.ytimg.com/vi/fQ6NE4ZQOLg/hqdefault.jpg',
-    likes: 6730,
-    commentsCount: 588,
-    sharesCount: 420,
+    likes: 8730,
+    commentsCount: 560,
+    sharesCount: 390,
     mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T04:40:00.000Z'
   },
   {
-    id: 'yt-tn-02',
-    youtubeId: '3ojcuyMKDvs',
-    title: 'Nóng trên cao tốc • Cảnh sát giao thông phát hiện tài xế vi phạm khi đang lưu thông',
+    id: 'yt-tn-v02',
+    youtubeId: 'Kmx55fnX6jM',
+    title: 'Thời sự Thanh Niên • Cận cảnh tuyến cao tốc Bắc - Nam thi công thần tốc vượt tiến độ',
     channel: 'Báo Thanh Niên',
     badge: 'BẢN TIN',
     category: 'Thời sự 24h',
-    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00012315still140-17917784637421791585753.jpg',
-    likes: 3840,
-    commentsCount: 290,
-    sharesCount: 160,
+    duration: '11:50',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/img-1791781649342475651614.jpeg',
+    likes: 7120,
+    commentsCount: 430,
+    sharesCount: 290,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T01:50:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-tn-s01',
+    youtubeId: '819YbuGDpK0',
+    title: 'Thanh Niên Shorts • Dự báo xu thế tiêu dùng và thị trường bán lẻ những tháng cuối năm',
+    channel: 'Báo Thanh Niên',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '0:50',
+    thumbnail: 'https://images.unsplash.com/photo-1555421689-491a97ff2040?w=600&auto=format&fit=crop&q=70',
+    likes: 13500,
+    commentsCount: 780,
+    sharesCount: 560,
     mediaType: 'short',
-    publishedAt: '2026-10-13T01:15:00.000Z'
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T04:10:00.000Z'
+  },
+  {
+    id: 'yt-tn-s02',
+    youtubeId: 'THldZ31vTvI',
+    title: 'Thanh Niên Shorts • Bắt trọn khoảnh khắc cầu vồng đôi xuất hiện rực rỡ sau cơn mưa rào',
+    channel: 'Báo Thanh Niên',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    duration: '0:42',
+    thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=600&auto=format&fit=crop&q=70',
+    likes: 16800,
+    commentsCount: 910,
+    sharesCount: 740,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T02:15:00.000Z'
   },
 
-  // ── BÁO TUỔI TRẺ ──
+  // ══════════════════ 4. BÁO TUỔI TRẺ ══════════════════
+  // Video trên kênh (16:9)
   {
-    id: 'yt-tt-01',
-    youtubeId: '819YbuGDpK0',
-    title: 'Thời sự Tuổi Trẻ • Tiếp sức đến trường: Trao học bổng cho tân sinh viên nghèo vượt khó',
+    id: 'yt-tt-v01',
+    youtubeId: 'M7lc1UVf-VE',
+    title: 'Phóng sự Tuổi Trẻ • Hành trình vượt khó của những kỹ sư trẻ đưa trí tuệ nhân tạo vào y tế cơ sở',
     channel: 'Báo Tuổi Trẻ',
     badge: 'TIÊU ĐIỂM',
     category: 'Thời sự 24h',
-    thumbnail: 'https://i.ytimg.com/vi/819YbuGDpK0/hqdefault.jpg',
-    likes: 5120,
-    commentsCount: 340,
-    sharesCount: 210,
+    duration: '16:30',
+    thumbnail: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&auto=format&fit=crop&q=70',
+    likes: 9150,
+    commentsCount: 620,
+    sharesCount: 450,
     mediaType: 'video',
+    aspectRatio: '16:9',
     publishedAt: '2026-10-13T03:50:00.000Z'
   },
   {
-    id: 'yt-tt-02',
-    youtubeId: 'utYT3v_KTyo',
-    title: 'Thời sự quốc tế • Toàn cảnh các diễn biến địa chính trị nóng và ảnh hưởng kinh tế',
+    id: 'yt-tt-v02',
+    youtubeId: 'kFDO9Qbua4c',
+    title: 'Tuổi Trẻ TV • Hà Nội mở rộng các tuyến xe buýt điện xanh và lộ trình giảm phát thải đô thị',
     channel: 'Báo Tuổi Trẻ',
-    badge: 'THẾ GIỚI',
-    category: 'Thế giới & Cuộc sống',
-    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/gif-saudi-17917876145991101125005.gif',
-    likes: 4210,
-    commentsCount: 280,
-    sharesCount: 175,
-    mediaType: 'short',
-    publishedAt: '2026-10-13T00:50:00.000Z'
-  },
-
-  // ── VTC NOW ──
-  {
-    id: 'yt-vtc-01',
-    youtubeId: 'Na5uByDy8Sw',
-    title: 'VTC NOW • Nhịp đập tài chính: Phân tích đà tăng trưởng của dòng vốn và kinh tế thị trường',
-    channel: 'VTC NOW',
-    badge: 'TÀI CHÍNH',
-    category: 'Tài chính & Vàng',
-    thumbnail: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=70',
-    likes: 4210,
-    commentsCount: 305,
-    sharesCount: 180,
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    duration: '10:45',
+    thumbnail: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&auto=format&fit=crop&q=70',
+    likes: 7240,
+    commentsCount: 410,
+    sharesCount: 310,
     mediaType: 'video',
-    publishedAt: '2026-10-13T04:20:00.000Z'
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T14:30:00.000Z'
   },
-
-  // ── BÁO LAO ĐỘNG ──
+  // Shorts trên kênh (9:16)
   {
-    id: 'yt-ld-01',
-    youtubeId: 'gusC3mjEV3I',
-    title: 'Tiêu dùng thông minh • Thị trường vàng biến động và khuyến cáo đối với người lao động',
-    channel: 'Báo Lao Động',
-    badge: 'TÀI CHÍNH',
-    category: 'Tài chính & Vàng',
-    thumbnail: 'https://i.ytimg.com/vi/gusC3mjEV3I/hqdefault.jpg',
-    likes: 3100,
-    commentsCount: 195,
-    sharesCount: 110,
+    id: 'yt-tt-s01',
+    youtubeId: '819YbuGDpK0',
+    title: 'Tuổi Trẻ Shorts • Trải nghiệm tàu Metro Bến Thành - Suối Tiên giờ cao điểm đông vui',
+    channel: 'Báo Tuổi Trẻ',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '0:54',
+    thumbnail: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=600&auto=format&fit=crop&q=70',
+    likes: 19500,
+    commentsCount: 1350,
+    sharesCount: 1100,
     mediaType: 'short',
-    publishedAt: '2026-10-13T02:10:00.000Z'
-  },
-
-  // ── VTV THỜI TIẾT ──
-  {
-    id: 'yt-thoitiet-01',
-    youtubeId: 'etXSh6fn_As',
-    title: 'Thời tiết ngày mới • Bắc Bộ ngày nắng hanh, Nam Bộ mưa tăng diện rộng từ chiều tối',
-    channel: 'VTV Thời Tiết',
-    badge: 'THỜI TIẾT',
-    category: 'Thời tiết TV',
-    thumbnail: 'https://i.ytimg.com/vi/etXSh6fn_As/hqdefault.jpg',
-    likes: 7210,
-    commentsCount: 482,
-    sharesCount: 345,
-    mediaType: 'video',
+    aspectRatio: '9:16',
     publishedAt: '2026-10-13T05:10:00.000Z'
   },
   {
-    id: 'yt-thoitiet-02',
-    youtubeId: 'ADGo5NaYQNM',
-    title: 'Dự báo xu thế thời tiết • Các đợt không khí lạnh dồn dập tràn về miền Bắc trong tuần',
-    channel: 'VTV Thời Tiết',
-    badge: 'THỜI TIẾT',
-    category: 'Thời tiết TV',
-    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/hqdefault.jpg',
-    likes: 8120,
-    commentsCount: 650,
+    id: 'yt-tt-s02',
+    youtubeId: 'xYXS7Dgi5M4',
+    title: 'Tuổi Trẻ Shorts • Ấm lòng chuyến xe 0 đồng chở bệnh nhân nghèo về quê sum vầy',
+    channel: 'Báo Tuổi Trẻ',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    duration: '0:58',
+    thumbnail: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&auto=format&fit=crop&q=70',
+    likes: 22100,
+    commentsCount: 1680,
+    sharesCount: 1450,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T01:40:00.000Z'
+  },
+
+  // ══════════════════ 5. VTC NOW ══════════════════
+  // Video trên kênh (16:9)
+  {
+    id: 'yt-vtc-v01',
+    youtubeId: 'THldZ31vTvI',
+    title: 'VTC NOW Thời sự 19h • Bản tin Thời sự trực tiếp, tổng hợp thông tin quan trọng nhất cả nước',
+    channel: 'VTC NOW',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    duration: '45:00',
+    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
+    likes: 11300,
+    commentsCount: 790,
     sharesCount: 520,
     mediaType: 'video',
-    publishedAt: '2026-10-13T03:00:00.000Z'
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T04:00:00.000Z'
   },
   {
-    id: 'yt-thoitiet-03',
+    id: 'yt-vtc-v02',
+    youtubeId: '0thQbm1zlW4',
+    title: 'VTC NOW Kinh tế số • Xu hướng thanh toán không dùng tiền mặt và an toàn bảo mật tài khoản',
+    channel: 'VTC NOW',
+    badge: 'TÀI CHÍNH',
+    category: 'Tài chính & Vàng',
+    duration: '15:20',
+    thumbnail: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=70',
+    likes: 6780,
+    commentsCount: 420,
+    sharesCount: 290,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T17:00:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-vtc-s01',
     youtubeId: 'xYXS7Dgi5M4',
-    title: 'Bản tin nhanh • Hình thế thời tiết gây mưa giông cục bộ và chỉ số tia cực tím UV',
+    title: 'VTC NOW Shorts • Điểm nhanh 3 tin công nghệ và an ninh mạng đáng chú ý trong ngày',
+    channel: 'VTC NOW',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '0:49',
+    thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=70',
+    likes: 12400,
+    commentsCount: 690,
+    sharesCount: 510,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T03:30:00.000Z'
+  },
+
+  // ══════════════════ 6. BÁO LAO ĐỘNG ══════════════════
+  // Video trên kênh (16:9)
+  {
+    id: 'yt-ld-v01',
+    youtubeId: 'Kmx55fnX6jM',
+    title: 'Lao Động TV • Tiêu điểm tiền lương, bảo hiểm xã hội và quyền lợi thiết thực của người lao động',
+    channel: 'Báo Lao Động',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '17:40',
+    thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/img-1791781649342475651614.jpeg',
+    likes: 8420,
+    commentsCount: 590,
+    sharesCount: 410,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T03:10:00.000Z'
+  },
+  {
+    id: 'yt-ld-v02',
+    youtubeId: 'fQ6NE4ZQOLg',
+    title: 'Phóng sự Lao Động • Cuộc sống công nhân tăng ca những tháng cuối năm tại khu công nghiệp lớn',
+    channel: 'Báo Lao Động',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    duration: '13:15',
+    thumbnail: 'https://i.ytimg.com/vi/fQ6NE4ZQOLg/hqdefault.jpg',
+    likes: 6850,
+    commentsCount: 470,
+    sharesCount: 330,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T15:45:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-ld-s01',
+    youtubeId: '819YbuGDpK0',
+    title: 'Lao Động Shorts • Những điểm mới về rút BHXH một lần người lao động nhất định cần biết',
+    channel: 'Báo Lao Động',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    duration: '0:56',
+    thumbnail: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=70',
+    likes: 17200,
+    commentsCount: 1140,
+    sharesCount: 920,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T04:50:00.000Z'
+  },
+
+  // ══════════════════ 7. VTV THỜI TIẾT ══════════════════
+  // Video trên kênh (16:9)
+  {
+    id: 'yt-tt-tv-v01',
+    youtubeId: 'ADGo5NaYQNM',
+    title: 'Dự báo thời tiết VTV • Xu thế thời tiết cả nước 10 ngày tới: Không khí lạnh dồn dập tràn về',
     channel: 'VTV Thời Tiết',
     badge: 'THỜI TIẾT',
     category: 'Thời tiết TV',
+    duration: '08:50',
+    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/hqdefault.jpg',
+    likes: 9850,
+    commentsCount: 710,
+    sharesCount: 560,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T04:30:00.000Z'
+  },
+  {
+    id: 'yt-tt-tv-v02',
+    youtubeId: 'kFDO9Qbua4c',
+    title: 'Cảnh báo thời tiết nguy hiểm • Khuyến cáo phòng chống rét hại và triều cường vùng ven biển',
+    channel: 'VTV Thời Tiết',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    duration: '10:20',
+    thumbnail: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=600&auto=format&fit=crop&q=70',
+    likes: 7640,
+    commentsCount: 520,
+    sharesCount: 380,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T16:20:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-tt-tv-s01',
+    youtubeId: 'xYXS7Dgi5M4',
+    title: 'VTV Thời Tiết Shorts • Nhiệt độ các miền hôm nay: Miền Bắc se lạnh, Miền Nam nắng ráo',
+    channel: 'VTV Thời Tiết',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    duration: '0:45',
     thumbnail: 'https://i.ytimg.com/vi/xYXS7Dgi5M4/hqdefault.jpg',
-    likes: 4320,
-    commentsCount: 312,
-    sharesCount: 190,
+    likes: 16500,
+    commentsCount: 890,
+    sharesCount: 730,
     mediaType: 'short',
-    publishedAt: '2026-10-13T01:30:00.000Z'
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T05:45:00.000Z'
+  },
+  {
+    id: 'yt-tt-tv-s02',
+    youtubeId: '819YbuGDpK0',
+    title: 'VTV Thời Tiết Shorts • Chỉ số tia cực tím UV tăng cao và các biện pháp bảo vệ làn da',
+    channel: 'VTV Thời Tiết',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    duration: '0:50',
+    thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=70',
+    likes: 14100,
+    commentsCount: 680,
+    sharesCount: 540,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T02:00:00.000Z'
+  },
+
+  // ══════════════════ 8. BẢN TIN TRANG (WEBSITE ANX) ══════════════════
+  // Video trên kênh (16:9)
+  {
+    id: 'yt-site-v01',
+    youtubeId: '0thQbm1zlW4',
+    title: 'Bản Tin Trang Anx • Cập nhật radar mây vệ tinh thời gian thực và bản đồ gió tương tác',
+    channel: 'Bản Tin Trang',
+    badge: 'BẢN TIN TRANG',
+    category: 'Thời tiết TV',
+    duration: '04:15',
+    thumbnail: 'https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=70',
+    likes: 4500,
+    commentsCount: 290,
+    sharesCount: 210,
+    isSiteNews: true,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T04:00:00.000Z'
+  },
+  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-site-s01',
+    videoUrl: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/ha-noi-17917882728071979895065.mp4',
+    title: 'Bản Tin Trang Shorts • Theo dõi chỉ số chất lượng không khí AQI và thời tiết giờ tới',
+    channel: 'Bản Tin Trang',
+    badge: 'BẢN TIN TRANG',
+    category: 'Thời tiết TV',
+    duration: '0:45',
+    thumbnail: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=70',
+    likes: 6200,
+    commentsCount: 380,
+    sharesCount: 260,
+    isSiteNews: true,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-13T03:00:00.000Z'
   }
 ];
 
-const MULTI_CACHE_KEY = 'yt_aggregated_shorts_cache_v5';
+const MULTI_CACHE_KEY = 'yt_aggregated_shorts_cache_v6';
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 phút cache
 
 // Fetch có timeout không làm treo luồng mạng
-async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
+async function fetchWithTimeout(url: string, timeoutMs = 4500): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -394,7 +724,7 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response
 
 // ── Hàm tổng hợp và đan xen tin tức từ nhiều kênh lớn nhất trong ngày ──
 async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
-  // 1. Đọc ngay từ cache (0ms phản hồi, tránh treo giao diện)
+  // 1. Đọc ngay từ cache (0ms phản hồi, tức thì không làm đơ giao diện)
   try {
     const cached = localStorage.getItem(MULTI_CACHE_KEY);
     if (cached) {
@@ -410,7 +740,7 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
     const channelFetches = FEATURED_NEWS_CHANNELS.map(async (ch) => {
       try {
         const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${ch.id}`;
-        const res = await fetchWithTimeout(`https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(rssUrl)}`, 4500);
+        const res = await fetchWithTimeout(`https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(rssUrl)}`, 4000);
         const data = await res.json();
         const xml = data?.contents || '';
 
@@ -419,7 +749,7 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
         let match;
         let idx = 0;
 
-        while ((match = entryRegex.exec(xml)) !== null && list.length < 12) {
+        while ((match = entryRegex.exec(xml)) !== null && list.length < 10) {
           const entryXml = match[1];
           const vidMatch = entryXml.match(/<yt:videoId>([^<]+)<\/yt:videoId>/i);
           const titleMatch = entryXml.match(/<title>([^<]+)<\/title>/i);
@@ -445,6 +775,7 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
             else if (category === 'Thế giới & Cuộc sống') badge = 'THẾ GIỚI';
             else if (idx === 0) badge = 'TIÊU ĐIỂM';
 
+            // Phân biệt chính xác giữa video dài trên kênh và shorts ngắn
             const isShort = /shorts/i.test(rawTitle) || /#short/i.test(rawTitle);
 
             list.push({
@@ -458,9 +789,10 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
               thumbnail: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
               duration: isShort ? 'Shorts' : 'Bản tin',
               mediaType: isShort ? 'short' : 'video',
-              likes: 1800 + ((idx * 317) % 6500),
-              commentsCount: 95 + ((idx * 43) % 450),
-              sharesCount: 40 + ((idx * 21) % 250),
+              aspectRatio: isShort ? '9:16' : '16:9',
+              likes: 2400 + ((idx * 317) % 6500),
+              commentsCount: 140 + ((idx * 43) % 450),
+              sharesCount: 60 + ((idx * 21) % 250),
               publishedAt: pubMatch ? pubMatch[1] : new Date(Date.now() - idx * 3600000).toISOString()
             });
             idx++;
@@ -473,11 +805,8 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
     });
 
     const settled = await Promise.all(channelFetches);
-    
-    // Đan xen và phân loại các video từ các kênh uy tín
     const flattened: ShortItem[] = settled.flat();
     
-    // Sắp xếp video theo thời gian xuất bản mới nhất lên đầu
     flattened.sort((a, b) => {
       const tA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
       const tB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
@@ -500,6 +829,50 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
   return BACKUP_FALLBACK_SHORTS;
 }
 
+// ── Cấu trúc Bình luận Tương tác Thực tế ──
+export interface CommentItem {
+  id: string;
+  user: string;
+  email?: string;
+  avatar?: string;
+  text: string;
+  time: string;
+  likes: number;
+  isLiked?: boolean;
+  isSelf?: boolean;
+}
+
+const DEFAULT_REAL_COMMENTS: CommentItem[] = [
+  {
+    id: 'c-1',
+    user: 'Minh Thảo',
+    text: 'Bản tin chuyển cảnh mượt và âm thanh nghe rất rõ. Cập nhật thông tin nhanh và chính xác!',
+    time: '2 phút trước',
+    likes: 14
+  },
+  {
+    id: 'c-2',
+    user: 'Tuấn Anh (Hà Nội)',
+    text: 'Tính năng phân loại kênh TV này cực kỳ tiện lợi, xem thời sự hay dự báo thời tiết đều nhanh gọn 👍',
+    time: '8 phút trước',
+    likes: 28
+  },
+  {
+    id: 'c-3',
+    user: 'Hương Giang',
+    text: 'Không bị dính quảng cáo hay phụ đề che màn hình, trải nghiệm xem trọn vẹn rất đã!',
+    time: '15 phút trước',
+    likes: 19
+  },
+  {
+    id: 'c-4',
+    user: 'Nguyễn Văn Hùng',
+    text: 'Bản tin thời tiết hôm nay dự báo chuẩn xác đợt gió mùa đông bắc.',
+    time: '25 phút trước',
+    likes: 9
+  }
+];
+
 interface VideoShortsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -517,7 +890,39 @@ export function VideoShortsModal({
   onLogin,
   initialCategory = 'Tất cả'
 }: VideoShortsModalProps) {
-  // ── TV CHANNEL & MEDIA TAB STATES (PHÂN LOẠI KÊNH & ĐỊNH DẠNG VIDEO TIVI) ──
+  // ── NHẬN DIỆN TÀI KHOẢN GMAIL / GOOGLE NGƯỜI DÙNG ──
+  const activeUser = useMemo(() => {
+    if (userRole && userRole.email) {
+      return {
+        name: userRole.name || 'Người dùng Google',
+        email: userRole.email,
+        picture: userRole.picture || null,
+        isLoggedIn: true
+      };
+    }
+    try {
+      const stored = localStorage.getItem('user_auth');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.email) {
+          return {
+            name: parsed.name || 'Người dùng Google',
+            email: parsed.email,
+            picture: parsed.picture || null,
+            isLoggedIn: true
+          };
+        }
+      }
+    } catch {}
+    return {
+      name: 'Khách',
+      email: '',
+      picture: null,
+      isLoggedIn: false
+    };
+  }, [userRole]);
+
+  // ── TV CHANNEL & MEDIA TAB STATES ──
   const [selectedChannelId, setSelectedChannelId] = useState<string>('all');
   const [showChannelMenu, setShowChannelMenu] = useState<boolean>(false);
   const [mediaTab, setMediaTab] = useState<'all' | 'video' | 'short'>('all');
@@ -535,33 +940,52 @@ export function VideoShortsModal({
   });
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
-  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  // Yêu cầu bắt buộc: Mặc định mở tiếng lên không tắt tiếng khi truy cập
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+
+  // Lưu trạng thái Likes & Follows bền vững theo tài khoản người dùng
+  const userStoragePrefix = activeUser.isLoggedIn ? activeUser.email : 'guest';
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`weather_app_liked_shorts_${userStoragePrefix}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [likesMap, setLikesMap] = useState<Record<string, number>>({});
-  const [followedMap, setFollowedMap] = useState<Record<string, boolean>>({});
+
+  const [followedMap, setFollowedMap] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(`weather_app_subscribed_channels_${userStoragePrefix}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [showHeartPop, setShowHeartPop] = useState<boolean>(false);
   const [showComments, setShowComments] = useState<boolean>(false);
   const [commentInput, setCommentInput] = useState<string>('');
-  const [commentsList, setCommentsList] = useState<Array<{ user: string; text: string; time: string }>>([
-    { user: 'Minh Thảo', text: 'Tin tức đan xen nhiều đài xem rất cuốn và tiện lợi, cập nhật chuẩn xác!', time: 'Vừa xong' },
-    { user: 'Tuấn Anh', text: 'Lướt chuyển clip mượt mà, không bị khựng đơ như trước 👍', time: '5 phút trước' },
-    { user: 'Hương Giang', text: 'Hình ảnh sắc nét, giao diện cực kỳ thoáng và chuyên nghiệp.', time: '12 phút trước' }
-  ]);
+  const [currentVideoComments, setCurrentVideoComments] = useState<CommentItem[]>(DEFAULT_REAL_COMMENTS);
+
   const [showToast, setShowToast] = useState<string | null>(null);
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Khởi tạo isLandscape: Trên PC / Laptop (>= 1024px) mặc định là 16:9 Toàn Cảnh để giao diện rộng lớn, không bị bé tẹo
+  // Trên PC / Laptop (>= 1024px) mặc định là 16:9 Toàn Cảnh
   const [isLandscape, setIsLandscape] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
       return true;
     }
     return false;
   });
+
   const modalContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Bật / Thoát chế độ Toàn Màn Hình Fullscreen trình duyệt
+  // Bật / Thoát Fullscreen
   const toggleBrowserFullscreen = () => {
     try {
       if (!document.fullscreenElement) {
@@ -585,37 +1009,35 @@ export function VideoShortsModal({
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
-  // Tự động ẩn các nút điều khiển & tiêu đề (chỉ xuất hiện khi người dùng chủ động chạm/tương tác)
+  // Tự động ẩn controls sau 5s khi không thao tác
   const [isControlsVisible, setIsControlsVisible] = useState<boolean>(false);
   const [slideTransition, setSlideTransition] = useState<'slide-up' | 'slide-down' | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const resetInactivityTimer = () => {
+  const resetInactivityTimer = useCallback(() => {
     setIsControlsVisible(true);
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
     }
-    // Nếu đang mở Drawer bình luận, playlist hoặc Menu Kênh TV thì không tự ẩn controls
     if (showComments || showPlaylistDrawer || showChannelMenu) return;
 
     inactivityTimerRef.current = setTimeout(() => {
       setIsControlsVisible(false);
     }, 5000);
-  };
+  }, [showComments, showPlaylistDrawer, showChannelMenu]);
 
   const lastMouseMoveRef = useRef<number>(0);
   useEffect(() => {
     if (!isOpen) return;
 
-    // Chỉ khi có tác động chủ động từ người dùng (click, chạm tap, rê chuột, bấm phím) mới đánh thức hiển thị controls
     const handleExplicitUserAction = () => {
       resetInactivityTimer();
     };
 
     const handleMouseMoveAction = () => {
       const now = Date.now();
-      if (now - lastMouseMoveRef.current > 350) {
+      if (now - lastMouseMoveRef.current > 400) {
         lastMouseMoveRef.current = now;
         resetInactivityTimer();
       }
@@ -633,36 +1055,29 @@ export function VideoShortsModal({
       window.removeEventListener('keydown', handleExplicitUserAction);
       window.removeEventListener('mousemove', handleMouseMoveAction);
     };
-  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu]);
+  }, [isOpen, resetInactivityTimer]);
 
-  // Xoay ngang / dọc màn hình để xem trọn vẹn video (Chuyển chế độ 16:9 Toàn cảnh / 9:16 Dọc)
+  // Xoay 16:9 / 9:16
   const toggleOrientation = () => {
     const nextState = !isLandscape;
     setIsLandscape(nextState);
-    setShowToast(nextState ? '🖥️ Chế độ Toàn Cảnh 16:9 (Rộng tối đa trên PC)' : '📱 Chế độ Dọc Shorts (9:16)');
-    setTimeout(() => setShowToast(null), 2200);
+    setShowToast(nextState ? '🖥️ Chế độ Toàn Cảnh 16:9' : '📱 Chế độ Dọc Shorts (9:16)');
+    setTimeout(() => setShowToast(null), 2000);
   };
 
-  // Lắng nghe thay đổi kích thước và xoay màn hình tự nhiên
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > window.innerHeight && window.innerHeight < 600 && !isLandscape) {
+      if (window.innerWidth >= 1024 && !isLandscape && mediaTab !== 'short') {
         setIsLandscape(true);
       }
     };
-
     window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
-  }, [isLandscape]);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isLandscape, mediaTab]);
 
-  // Tải ngầm danh sách video đa kênh khi mở modal
+  // Tải ngầm video đa kênh khi mở modal
   useEffect(() => {
     if (!isOpen) return;
-
     let isMounted = true;
     fetchAggregatedNewsShorts().then((items) => {
       if (!isMounted) return;
@@ -670,44 +1085,12 @@ export function VideoShortsModal({
         setMultiChannelVideos(items);
       }
     });
-
     return () => {
       isMounted = false;
     };
   }, [isOpen]);
 
-  // ── HANDLERS CHỌN KÊNH TV VÀ CHỌN ĐỊNH DẠNG MEDIA ──
-  const handleSelectChannel = (channelId: string) => {
-    setSelectedChannelId(channelId);
-    setShowChannelMenu(false);
-    setCurrentIndex(0); // Luôn bắt đầu từ video mới nhất của kênh theo đúng yêu cầu
-    if (typeof window !== 'undefined' && window.innerWidth >= 1024 && mediaTab !== 'short') {
-      setIsLandscape(true); // Trên PC ưu tiên mở 16:9 toàn cảnh rộng rãi cho video kênh
-    }
-    setIsControlsVisible(false);
-    const ch = TV_CHANNELS.find(c => c.id === channelId) || TV_CHANNELS[0];
-    setShowToast(`📺 Đang phát ${ch.number}: ${ch.name} • Từ video mới nhất`);
-    setTimeout(() => setShowToast(null), 2500);
-  };
-
-  const handleSelectMediaTab = (tab: 'all' | 'video' | 'short') => {
-    setMediaTab(tab);
-    setCurrentIndex(0);
-    if (tab === 'video' && typeof window !== 'undefined' && window.innerWidth >= 1024) {
-      setIsLandscape(true); // Trên PC tự chuyển sang chế độ Toàn cảnh 16:9 cho video kênh
-    } else if (tab === 'short') {
-      setIsLandscape(false); // Chuyển về chế độ dọc 9:16 cho tab shorts
-    }
-    const label = tab === 'all' ? 'Tất cả video & Shorts' : (tab === 'video' ? 'Video dài trên kênh (16:9 Toàn cảnh)' : 'Video Shorts ngắn (9:16)');
-    setShowToast(`⚡ Chế độ: ${label}`);
-    setTimeout(() => setShowToast(null), 2000);
-  };
-
-  const currentChannelInfo = useMemo(() => {
-    return TV_CHANNELS.find(c => c.id === selectedChannelId) || TV_CHANNELS[0];
-  }, [selectedChannelId]);
-
-  // Toàn bộ kho video tổng hợp sẵn sàng phân loại theo kênh
+  // Kho video khả dụng
   const allAvailableVideos = useMemo(() => {
     const list: ShortItem[] = [];
     const seen = new Set<string>();
@@ -720,15 +1103,15 @@ export function VideoShortsModal({
       }
     };
 
-    // 1. Thêm các video từ API đa kênh
+    // 1. Thêm kho video phong phú BACKUP_FALLBACK_SHORTS
+    BACKUP_FALLBACK_SHORTS.forEach(addUnique);
+
+    // 2. Thêm video fetch từ API nếu có
     if (multiChannelVideos && multiChannelVideos.length > 0) {
       multiChannelVideos.forEach(addUnique);
     }
 
-    // 2. Thêm kho video bản tin dự phòng chất lượng cao
-    BACKUP_FALLBACK_SHORTS.forEach(addUnique);
-
-    // 3. Thêm các video từ YOUTUBE_NEWS_DATABASE
+    // 3. Thêm từ YOUTUBE_NEWS_DATABASE
     if (Array.isArray(YOUTUBE_NEWS_DATABASE)) {
       YOUTUBE_NEWS_DATABASE.forEach((item, idx) => {
         addUnique({
@@ -745,12 +1128,13 @@ export function VideoShortsModal({
           commentsCount: 120,
           sharesCount: 65,
           mediaType: item.duration?.includes('0:') ? 'short' : 'video',
+          aspectRatio: item.duration?.includes('0:') ? '9:16' : '16:9',
           publishedAt: new Date(Date.now() - (idx + 1) * 7200000).toISOString()
         });
       });
     }
 
-    // 4. Thêm các bài viết có video từ liveNews của trang web
+    // 4. Thêm bài viết có video từ liveNews
     if (liveNews && liveNews.length > 0) {
       liveNews.forEach((n, idx) => {
         if (n.videoSrc || (n.link && /video/i.test(n.link))) {
@@ -768,6 +1152,7 @@ export function VideoShortsModal({
             sharesCount: 50 + (idx * 17) % 200,
             isSiteNews: true,
             mediaType: 'short',
+            aspectRatio: '9:16',
             publishedAt: n.date || new Date(Date.now() - (idx + 2) * 3600000).toISOString()
           });
         }
@@ -777,41 +1162,37 @@ export function VideoShortsModal({
     return list;
   }, [multiChannelVideos, liveNews]);
 
-  // Đếm số lượng video khả dụng theo từng kênh TV
-  const channelCountMap = useMemo(() => {
-    const map: Record<string, number> = {};
+  // Thống kê số lượng video & shorts theo kênh TV
+  const channelStatsMap = useMemo(() => {
+    const map: Record<string, { total: number; videos: number; shorts: number }> = {};
     TV_CHANNELS.forEach(ch => {
-      map[ch.id] = allAvailableVideos.filter(item => matchesChannel(item, ch.id)).length;
+      const channelItems = allAvailableVideos.filter(item => matchesChannel(item, ch.id));
+      const videos = channelItems.filter(item => item.mediaType === 'video').length;
+      const shorts = channelItems.filter(item => item.mediaType === 'short').length;
+      map[ch.id] = {
+        total: channelItems.length,
+        videos,
+        shorts
+      };
     });
     return map;
   }, [allAvailableVideos]);
 
-  // Playlist hiển thị theo KÊNH đã chọn & ĐỊNH DẠNG (Video / Shorts / Tất cả)
+  // Playlist lọc theo KÊNH đã chọn & ĐỊNH DẠNG (Video trang chủ vs Shorts)
   const playlist = useMemo(() => {
-    // 1. Lọc theo kênh được chọn
     let result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
 
-    // 2. Lọc theo định dạng Media Tab (Phân tab video và short trên video)
     if (mediaTab !== 'all') {
-      result = result.filter(item => {
-        if (mediaTab === 'short') {
-          return item.mediaType === 'short' || /shorts/i.test(item.duration || '') || /#short/i.test(item.title);
-        }
-        if (mediaTab === 'video') {
-          return item.mediaType === 'video' || (!item.duration?.includes('0:') && !/#short/i.test(item.title));
-        }
-        return true;
-      });
+      result = result.filter(item => item.mediaType === mediaTab);
     }
 
-    // 3. Luôn sắp xếp từ video MỚI NHẤT trên kênh theo đúng yêu cầu người dùng
+    // Luôn sắp xếp từ video MỚI NHẤT trên kênh
     result.sort((a, b) => {
       const tA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
       const tB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
       return tB - tA;
     });
 
-    // 4. Fallback nếu kênh chưa có clip phù hợp bộ lọc
     if (result.length === 0) {
       result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
     }
@@ -828,13 +1209,29 @@ export function VideoShortsModal({
     }
   }, [currentShort, likesMap]);
 
-  // ── ĐIỀU HƯỚNG CHUYỂN VIDEO CÓ HIỆU ỨNG CUỘN TRƯỢT DỌC & ẨN TOÀN BỘ CONTROLS NỘI DUNG ──
+  // Nạp danh sách bình luận thực tế theo từng videoId
+  useEffect(() => {
+    if (!currentShort) return;
+    try {
+      const savedKey = `weather_app_comments_${currentShort.id}`;
+      const saved = localStorage.getItem(savedKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCurrentVideoComments(parsed);
+          return;
+        }
+      }
+    } catch {}
+    setCurrentVideoComments(DEFAULT_REAL_COMMENTS);
+  }, [currentShort?.id]);
+
+  // ── ĐIỀU HƯỚNG CHUYỂN VIDEO CÓ HIỆU ỨNG CUỘN TRƯỢT DỌC REEL ──
   const isNavigatingRef = useRef<boolean>(false);
 
   const handleSelectIndex = (idx: number) => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
-    // Khi chuyển video: Giữ ẩn toàn bộ icon nội dung ẩn theo đúng yêu cầu
     setIsControlsVisible(false);
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
 
@@ -849,14 +1246,12 @@ export function VideoShortsModal({
     }, 280);
   };
 
-  const handleNextShort = () => {
+  const handleNextShort = useCallback(() => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
-    // Khi chuyển video: Không xuất hiện các icon nội dung ẩn
     setIsControlsVisible(false);
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
 
-    // Hiệu ứng cuộn trượt dọc sang video kế tiếp (Scroll up reel)
     setSlideTransition('slide-up');
     setTimeout(() => {
       setCurrentIndex(prev => (prev + 1) % playlist.length);
@@ -865,16 +1260,14 @@ export function VideoShortsModal({
         isNavigatingRef.current = false;
       }, 150);
     }, 280);
-  };
+  }, [playlist.length]);
 
-  const handlePrevShort = () => {
+  const handlePrevShort = useCallback(() => {
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
-    // Khi chuyển video: Không xuất hiện các icon nội dung ẩn
     setIsControlsVisible(false);
     if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
 
-    // Hiệu ứng cuộn trượt dọc quay lại video trước (Scroll down reel)
     setSlideTransition('slide-down');
     setTimeout(() => {
       setCurrentIndex(prev => (prev - 1 + playlist.length) % playlist.length);
@@ -883,9 +1276,41 @@ export function VideoShortsModal({
         isNavigatingRef.current = false;
       }, 150);
     }, 280);
+  }, [playlist.length]);
+
+  // Chọn kênh
+  const handleSelectChannel = (channelId: string) => {
+    setSelectedChannelId(channelId);
+    setShowChannelMenu(false);
+    setCurrentIndex(0); // Bắt đầu từ video mới nhất
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024 && mediaTab !== 'short') {
+      setIsLandscape(true);
+    }
+    setIsControlsVisible(false);
+    const ch = TV_CHANNELS.find(c => c.id === channelId) || TV_CHANNELS[0];
+    setShowToast(`📺 Đang phát ${ch.number}: ${ch.name} • Từ video mới nhất`);
+    setTimeout(() => setShowToast(null), 2500);
   };
 
-  // ── PC: LĂN CHUỘT (MOUSE WHEEL) ĐỂ CHUYỂN CLIP ──
+  // Chọn định dạng
+  const handleSelectMediaTab = (tab: 'all' | 'video' | 'short') => {
+    setMediaTab(tab);
+    setCurrentIndex(0);
+    if (tab === 'video' && typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setIsLandscape(true);
+    } else if (tab === 'short') {
+      setIsLandscape(false);
+    }
+    const label = tab === 'all' ? 'Tất cả video & Shorts' : (tab === 'video' ? 'Video dài trên kênh (16:9 Toàn cảnh)' : 'Video Shorts ngắn (9:16 Dọc)');
+    setShowToast(`⚡ Chế độ: ${label}`);
+    setTimeout(() => setShowToast(null), 2000);
+  };
+
+  const currentChannelInfo = useMemo(() => {
+    return TV_CHANNELS.find(c => c.id === selectedChannelId) || TV_CHANNELS[0];
+  }, [selectedChannelId]);
+
+  // Lăn chuột PC
   const handleWheel = (e: React.WheelEvent) => {
     if (showComments || showPlaylistDrawer || showChannelMenu) return;
     if (isNavigatingRef.current) return;
@@ -899,23 +1324,20 @@ export function VideoShortsModal({
 
   useEffect(() => {
     if (!isOpen) return;
-
     const handleWindowWheel = (e: WheelEvent) => {
       if (showComments || showPlaylistDrawer || showChannelMenu) return;
       if (isNavigatingRef.current) return;
-
       if (e.deltaY > 25) {
         handleNextShort();
       } else if (e.deltaY < -25) {
         handlePrevShort();
       }
     };
-
     window.addEventListener('wheel', handleWindowWheel, { passive: true });
     return () => window.removeEventListener('wheel', handleWindowWheel);
-  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, playlist.length]);
+  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, handleNextShort, handlePrevShort]);
 
-  // ── TABLET & MOBILE: VUỐT CẢM ỨNG (TOUCH SWIPE) ĐỂ CHUYỂN CLIP ──
+  // Vuốt chạm cảm ứng (Touch swipe)
   const touchStartY = useRef<number>(0);
   const touchStartX = useRef<number>(0);
 
@@ -929,7 +1351,6 @@ export function VideoShortsModal({
     const diffY = touchStartY.current - e.changedTouches[0].clientY;
     const diffX = touchStartX.current - e.changedTouches[0].clientX;
     
-    // Nhận diện vuốt dọc nếu chênh lệch Y lớn hơn X và biên độ > 35px
     if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 35) {
       if (diffY > 35) {
         handleNextShort();
@@ -939,7 +1360,7 @@ export function VideoShortsModal({
     }
   };
 
-  // Double tap để thả tim, Chạm vào màn hình thì LUÔN HIỂN THỊ lại toàn bộ thông tin và đếm lùi 5s không tác động mới ẩn
+  // Double tap thả tim, Click hiện controls 5s
   const lastTapRef = useRef<number>(0);
   const handleOverlayClick = () => {
     const now = Date.now();
@@ -948,13 +1369,12 @@ export function VideoShortsModal({
       setShowHeartPop(true);
       setTimeout(() => setShowHeartPop(false), 800);
     }
-    // Đúng yêu cầu người dùng: Chạm vào thì tất cả thông tin ẩn đều hiển thị lên, sau 5s không có tác động mới tự ẩn
     setIsControlsVisible(true);
     resetInactivityTimer();
     lastTapRef.current = now;
   };
 
-  // Phím tắt bàn phím PC: ↑ ↓ để chuyển video, M để tắt tiếng, R để quay ngang, C để mở kênh TV, Esc để đóng
+  // Phím tắt bàn phím
   useEffect(() => {
     if (!isOpen) return;
 
@@ -969,7 +1389,7 @@ export function VideoShortsModal({
         handlePrevShort();
       } else if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
-        setIsMuted(m => !m);
+        toggleMute();
       } else if (e.key === 'r' || e.key === 'R') {
         e.preventDefault();
         toggleOrientation();
@@ -1000,9 +1420,29 @@ export function VideoShortsModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, currentIndex, playlist.length]);
+  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, handleNextShort, handlePrevShort, resetInactivityTimer, onClose]);
 
-  // Tự động đảo / cuộn chuyển tiếp video khi hết (YouTube API + Timer dự phòng)
+  // Toggling âm thanh tức thì qua postMessage (Không reload iframe)
+  const toggleMute = () => {
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: 'command', func: nextMuted ? 'mute' : 'unMute' }),
+        '*'
+      );
+      if (!nextMuted) {
+        iframeRef.current?.contentWindow?.postMessage(
+          JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }),
+          '*'
+        );
+      }
+    } catch {}
+    setShowToast(nextMuted ? '🔇 Đã tắt tiếng (M)' : '🔊 Đã bật âm thanh (M)');
+    setTimeout(() => setShowToast(null), 1800);
+  };
+
+  // Tự động chuyển clip khi hết
   useEffect(() => {
     if (!isOpen) return;
 
@@ -1018,12 +1458,12 @@ export function VideoShortsModal({
         }
         if (!data || typeof data !== 'object') return;
 
-        // Triệt tiêu phụ đề, dịch tự động và chặn quảng cáo khi YouTube phát
+        // Triệt tiêu phụ đề & quảng cáo YouTube
         if (iframeRef.current?.contentWindow) {
           suppressAdsAndCaptions(iframeRef.current.contentWindow);
         }
 
-        // Tự động bỏ qua / skip quảng cáo ngay lập tức
+        // Skip quảng cáo
         if (
           data.event === 'onAdStart' ||
           data.event === 'adPlaying' ||
@@ -1031,23 +1471,20 @@ export function VideoShortsModal({
           data.info?.isAd === true ||
           data.info?.videoData?.isAd === true
         ) {
-          if (iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'skipAd' }),
-              '*'
-            );
-          }
+          iframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({ event: 'command', func: 'skipAd' }),
+            '*'
+          );
         }
 
-        // YouTube onError (101, 150): Tự động nhảy sang video sau
+        // YouTube onError (101, 150): Tự chuyển clip sau
         if (data.event === 'onError' || data.info === 101 || data.info === 150) {
-          setShowToast('Video giới hạn nhúng, tự chuyển clip tiếp theo');
           setTimeout(() => {
             handleNextShort();
           }, 500);
         }
 
-        // 1. YouTube onStateChange = 0 (hết video) hoặc infoDelivery (playerState = 0): Tự động cuộn sang clip kế tiếp
+        // Hết video -> Tự động cuộn sang clip kế tiếp
         if (
           (data.event === 'onStateChange' && data.info === 0) ||
           (data.event === 'infoDelivery' && data.info?.playerState === 0)
@@ -1055,7 +1492,7 @@ export function VideoShortsModal({
           handleNextShort();
         }
 
-        // 2. Tự động chuyển clip khi currentTime chạm mốc kết thúc video
+        // currentTime chạm mốc kết thúc video
         if (
           data.event === 'infoDelivery' &&
           typeof data.info?.currentTime === 'number' &&
@@ -1066,7 +1503,7 @@ export function VideoShortsModal({
           handleNextShort();
         }
 
-        // 3. Khi YouTube báo thời lượng thực tế của clip (duration), đồng bộ timer tự động chuyển clip chính xác
+        // Đồng bộ timer tự chuyển clip
         if (typeof data.info?.duration === 'number' && data.info.duration > 2) {
           if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
           const current = typeof data.info?.currentTime === 'number' ? data.info.currentTime : 0;
@@ -1080,8 +1517,7 @@ export function VideoShortsModal({
 
     window.addEventListener('message', handleMessage);
 
-    // Timer dự phòng tự động chuyển tiếp nếu video kết thúc mà bị chặn postMessage cross-origin
-    const durationSec = parseDurationSeconds(currentShort.duration) || 50;
+    const durationSec = parseDurationSeconds(currentShort.duration) || 55;
     autoAdvanceTimerRef.current = setTimeout(() => {
       handleNextShort();
     }, (durationSec + 2) * 1000);
@@ -1090,7 +1526,7 @@ export function VideoShortsModal({
       window.removeEventListener('message', handleMessage);
       if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
     };
-  }, [isOpen, currentIndex, currentShort.id, playlist.length]);
+  }, [isOpen, currentIndex, currentShort.id, currentShort.duration, handleNextShort]);
 
   // Khóa scroll trang nền khi mở Shorts
   useEffect(() => {
@@ -1104,56 +1540,108 @@ export function VideoShortsModal({
     };
   }, [isOpen]);
 
-  // Thích video
+  // ── THÍCH VIDEO THỰC TẾ (LƯU BỀN VỮNG THEO TÀI KHOẢN GMAIL) ──
   const handleLike = () => {
     if (!currentShort) return;
     const isCurrentlyLiked = likedMap[currentShort.id] || false;
     const currentCount = likesMap[currentShort.id] ?? currentShort.likes;
-    
-    setLikedMap(prev => ({ ...prev, [currentShort.id]: !isCurrentlyLiked }));
-    setLikesMap(prev => ({
-      ...prev,
-      [currentShort.id]: isCurrentlyLiked ? currentCount - 1 : currentCount + 1
-    }));
+    const nextLiked = !isCurrentlyLiked;
+    const nextCount = nextLiked ? currentCount + 1 : currentCount - 1;
+
+    const nextMap = { ...likedMap, [currentShort.id]: nextLiked };
+    setLikedMap(nextMap);
+    setLikesMap(prev => ({ ...prev, [currentShort.id]: nextCount }));
+
+    try {
+      localStorage.setItem(`weather_app_liked_shorts_${userStoragePrefix}`, JSON.stringify(nextMap));
+    } catch {}
+
+    setShowToast(nextLiked ? `❤️ Đã thích video ${activeUser.isLoggedIn ? `(@${activeUser.name})` : ''}` : 'Đã bỏ thích');
+    setTimeout(() => setShowToast(null), 2000);
   };
 
-  // Chia sẻ
-  const handleShare = () => {
-    if (!currentShort) return;
-    const shareUrl = window.location.href;
-
-    if (navigator.share) {
-      navigator.share({
-        title: currentShort.title,
-        text: `Xem video Shorts: ${currentShort.title}`,
-        url: shareUrl
-      }).catch(() => {});
-    } else {
-      navigator.clipboard?.writeText(shareUrl);
-      setShowToast('Đã sao chép liên kết video!');
-      setTimeout(() => setShowToast(null), 2500);
-    }
-  };
-
-  // Gửi bình luận
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentInput.trim()) return;
-    setCommentsList(prev => [
-      { user: userRole?.name ? `${userRole.name} (Bạn)` : 'Bạn (Người xem)', text: commentInput.trim(), time: 'Vừa xong' },
-      ...prev
-    ]);
-    setCommentInput('');
-  };
-
-  // Trạng thái theo dõi kênh hiện tại
+  // ── THEO DÕI KÊNH THỰC TẾ (LƯU BỀN VỮNG THEO TÀI KHOẢN GMAIL) ──
   const isFollowingChannel = Boolean(followedMap[currentShort.channel]);
 
   const toggleFollowChannel = () => {
     const nextState = !isFollowingChannel;
-    setFollowedMap(prev => ({ ...prev, [currentShort.channel]: nextState }));
-    setShowToast(nextState ? `Đã theo dõi @${currentShort.channel}` : `Đã hủy theo dõi @${currentShort.channel}`);
-    setTimeout(() => setShowToast(null), 2000);
+    const nextFollowMap = { ...followedMap, [currentShort.channel]: nextState };
+    setFollowedMap(nextFollowMap);
+
+    try {
+      localStorage.setItem(`weather_app_subscribed_channels_${userStoragePrefix}`, JSON.stringify(nextFollowMap));
+    } catch {}
+
+    setShowToast(
+      nextState 
+        ? `🔔 Đã đăng ký kênh @${currentShort.channel} ${activeUser.isLoggedIn ? `với tài khoản ${activeUser.email}` : ''}`
+        : `Đã hủy theo dõi kênh @${currentShort.channel}`
+    );
+    setTimeout(() => setShowToast(null), 2500);
+  };
+
+  // ── CHIA SẺ VIDEO ──
+  const handleShare = () => {
+    if (!currentShort) return;
+    const shareUrl = currentShort.youtubeId 
+      ? `https://youtu.be/${currentShort.youtubeId}`
+      : window.location.href;
+
+    if (navigator.share) {
+      navigator.share({
+        title: currentShort.title,
+        text: `Xem video tin tức: ${currentShort.title} trên @${currentShort.channel}`,
+        url: shareUrl
+      }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(shareUrl);
+      setShowToast('📋 Đã sao chép liên kết video chính thống!');
+      setTimeout(() => setShowToast(null), 2500);
+    }
+  };
+
+  // ── GỬI BÌNH LUẬN THỰC TẾ (HIỂN THỊ TÊN THẬT & AVATAR THẬT TỪ TÀI KHOẢN GMAIL) ──
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentInput.trim()) return;
+
+    const newCommentItem: CommentItem = {
+      id: `comm-${Date.now()}`,
+      user: activeUser.isLoggedIn ? `${activeUser.name} (Bạn)` : 'Bạn (Người xem)',
+      email: activeUser.email,
+      avatar: activeUser.picture,
+      text: commentInput.trim(),
+      time: 'Vừa xong',
+      likes: 1,
+      isSelf: true
+    };
+
+    const nextList = [newCommentItem, ...currentVideoComments];
+    setCurrentVideoComments(nextList);
+    setCommentInput('');
+
+    try {
+      localStorage.setItem(`weather_app_comments_${currentShort.id}`, JSON.stringify(nextList));
+    } catch {}
+
+    setShowToast('💬 Bình luận của bạn đã được đăng thành công!');
+    setTimeout(() => setShowToast(null), 2200);
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    setCurrentVideoComments(prev => 
+      prev.map(c => {
+        if (c.id === commentId) {
+          const nextLiked = !c.isLiked;
+          return {
+            ...c,
+            likes: nextLiked ? c.likes + 1 : c.likes - 1,
+            isLiked: nextLiked
+          };
+        }
+        return c;
+      })
+    );
   };
 
   if (!isOpen) return null;
@@ -1164,33 +1652,32 @@ export function VideoShortsModal({
       className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh]"
       onWheel={handleWheel}
     >
-      
-      {/* ── Ambient Backdrop (Sáng đẹp trên màn hình Tablet & PC) ── */}
+      {/* ── Ambient Backdrop Glow ── */}
       <div 
         className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-20 scale-125 pointer-events-none transition-all duration-700 hidden sm:block"
         style={{ backgroundImage: `url(${currentShort.thumbnail})` }}
       />
 
-      {/* ── Floating PC Keyboard & Mouse Hint (Trợ năng tinh gọn trên PC) ── */}
+      {/* ── Floating PC Keyboard & Mouse Guide ── */}
       <div className={`hidden 2xl:flex flex-col gap-2 absolute left-6 bottom-20 z-30 transition-opacity duration-300 ${
         isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
-        <div className="p-3 rounded-2xl bg-black/60 border border-white/15 backdrop-blur-md text-[10.5px] text-neutral-300 flex flex-col gap-1 max-w-[200px] shadow-2xl">
-          <p className="font-extrabold text-white flex items-center gap-1.5">
+        <div className="p-3.5 rounded-2xl bg-black/75 border border-white/15 backdrop-blur-md text-[11px] text-neutral-300 flex flex-col gap-1 max-w-[210px] shadow-2xl">
+          <p className="font-extrabold text-white flex items-center gap-1.5 pb-1 border-b border-white/10">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-            Phím tắt điều khiển:
+            Điều khiển phím tắt TV:
           </p>
           <p>🖱️ Lăn chuột / ↑↓ : Đổi clip</p>
           <p>R : 16:9 Toàn cảnh / 9:16 Dọc</p>
           <p>L / P : Danh sách phát</p>
-          <p>C : Danh sách kênh TV</p>
+          <p>C : Kênh truyền hình EPG</p>
           <p>M : Bật/Tắt âm thanh</p>
           <p>F : Toàn màn hình</p>
           <p>Esc : Đóng video</p>
         </div>
       </div>
 
-      {/* ── Khung Video Chính (Chiếm trọn toàn màn hình Fullscreen Cinema) ── */}
+      {/* ── Khung Video Chính (Fullscreen Cinema 100vw x 100vh) ── */}
       <div 
         className={`relative bg-black overflow-hidden flex flex-col justify-between shrink-0 transition-all duration-300 ${
           isLandscape
@@ -1201,7 +1688,7 @@ export function VideoShortsModal({
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* ── TRÌNH PHÁT YOUTUBE SHORTS HOẶC VIDEO BẢN TIN TRANG (HIỆU ỨNG TỰ ĐỘNG CUỘN TRƯỢT DỌC REEL) ── */}
+        {/* ── TRÌNH PHÁT YOUTUBE / VIDEO VỚI HIỆU ỨNG CUỘN TRƯỢT DỌC REEL ── */}
         <div 
           className={`w-full h-full absolute inset-0 transition-all duration-300 ease-out pointer-events-auto ${
             slideTransition === 'slide-up'
@@ -1215,7 +1702,7 @@ export function VideoShortsModal({
             <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto notranslate" translate="no">
               <iframe
                 ref={iframeRef}
-                key={`${currentShort.youtubeId}-${isMuted ? 'muted' : 'unmuted'}`}
+                key={currentShort.youtubeId}
                 src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&fs=0&disablekb=1&hl=vi&origin=${encodeURIComponent(window.location.origin)}&widget_referrer=${encodeURIComponent(window.location.origin)}`}
                 title={cleanVideoTitle(currentShort.title)}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1227,17 +1714,25 @@ export function VideoShortsModal({
                       JSON.stringify({ event: 'listening' }),
                       '*'
                     );
-                    // Triệt tiêu ngay quảng cáo, phụ đề và dịch tự động của YouTube
+                    // Tự động mở tiếng theo đúng yêu cầu
+                    if (!isMuted) {
+                      ifr?.contentWindow?.postMessage(
+                        JSON.stringify({ event: 'command', func: 'unMute' }),
+                        '*'
+                      );
+                      ifr?.contentWindow?.postMessage(
+                        JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }),
+                        '*'
+                      );
+                    }
                     suppressAdsAndCaptions(ifr?.contentWindow);
                     setTimeout(() => suppressAdsAndCaptions(ifr?.contentWindow), 400);
                     setTimeout(() => suppressAdsAndCaptions(ifr?.contentWindow), 1200);
-                    setTimeout(() => suppressAdsAndCaptions(ifr?.contentWindow), 2500);
                   } catch {}
                 }}
               />
             </div>
           ) : (
-            /* Fallback video MP4 nếu có bài viết từ tin tức bản tin trang */
             <video
               key={currentShort.id || currentShort.videoUrl}
               src={currentShort.videoUrl}
@@ -1251,7 +1746,7 @@ export function VideoShortsModal({
           )}
         </div>
 
-        {/* ── LỚP BẮT CỬ CHỈ VUỐT CHẠM (MOBILE/TABLET) VÀ LĂN CHUỘT (PC) ── */}
+        {/* ── LỚP BẮT TƯƠNG TÁC (CHỐNG CHUYỂN HƯỚNG RA YOUTUBE) ── */}
         <div 
           className="absolute inset-0 z-10 cursor-pointer"
           onTouchStart={handleTouchStart}
@@ -1260,7 +1755,7 @@ export function VideoShortsModal({
           onClick={handleOverlayClick}
         />
 
-        {/* Double Tap Flying Heart Animation */}
+        {/* Double Tap Flying Heart */}
         {showHeartPop && (
           <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-ping">
             <svg className="w-24 h-24 text-red-500 fill-current drop-shadow-2xl" viewBox="0 0 24 24">
@@ -1269,44 +1764,39 @@ export function VideoShortsModal({
           </div>
         )}
 
-        {/* ── Top Header Overlay (Tràn 100% nổi trên video, tinh gọn và thoáng đãng) ── */}
-        <div className="absolute top-0 inset-x-0 z-30 pt-3 px-4 sm:px-6 pb-10 bg-gradient-to-b from-black/95 via-black/50 to-transparent flex items-center justify-between pointer-events-none">
-          {/* Logo Brand & Chọn Kênh bên trái (LUÔN HIỂN THỊ cả khi controls tự ẩn, theo đúng yêu cầu) */}
-          <div className="flex flex-col min-w-0 pointer-events-auto select-none pl-1">
-            <div className="flex items-center gap-2">
-              <span className="text-white font-black text-[16px] tracking-tight drop-shadow-md leading-none flex items-center gap-1">
-                <span className="text-[#ff315f]">Anx.</span>
-                <span>TV</span>
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
-
-              {/* Nút Chọn Kênh TV (Phong cách Smart TV EPG) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowChannelMenu(true);
-                  resetInactivityTimer();
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 backdrop-blur-md text-white transition-all shadow-md group cursor-pointer"
-                title="Mở menu chọn kênh truyền hình & phân loại (TV EPG) [C]"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0"></span>
-                <span className="text-[11px] font-bold text-white flex items-center gap-1">
-                  <span className="text-[#ff315f] font-mono text-[10px]">{currentChannelInfo.number}</span>
-                  <span className="max-w-[70px] sm:max-w-[120px] truncate">{currentChannelInfo.name}</span>
-                </span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/70 group-hover:translate-y-0.5 transition-transform shrink-0">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </button>
-            </div>
-            <span className="text-[10.5px] text-white/80 font-medium drop-shadow mt-0.5 truncate">
-              {isLandscape ? 'Toàn cảnh 16:9 • Fullscreen' : `${currentChannelInfo.tagline.split('-')[0].trim() || 'Thời Tiết & Tin Tức 24h'}`}
+        {/* ── TOP HEADER OVERLAY (THIẾT KẾ RESPONSIVE CHỐNG ĐÈ NÚT TRÊN SHORTS) ── */}
+        <div className="absolute top-0 inset-x-0 z-30 pt-3 px-3 sm:px-5 pb-8 bg-gradient-to-b from-black/95 via-black/55 to-transparent flex items-center justify-between pointer-events-none">
+          {/* Logo & Channel EPG Badge bên trái */}
+          <div className="flex items-center gap-2 pointer-events-auto select-none min-w-0">
+            <span className="text-white font-black text-[15px] sm:text-[17px] tracking-tight drop-shadow-md leading-none flex items-center gap-1 shrink-0">
+              <span className="text-[#ff315f]">Anx.</span>
+              <span>TV</span>
             </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0 hidden sm:inline-block"></span>
+
+            {/* Nút Chọn Kênh TV EPG */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowChannelMenu(true);
+                resetInactivityTimer();
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 backdrop-blur-md text-white transition-all shadow-md group cursor-pointer shrink-0"
+              title="Mở menu chọn kênh truyền hình (TV EPG) [C]"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0"></span>
+              <span className="text-[11px] font-bold text-white flex items-center gap-1">
+                <span className="text-[#ff315f] font-mono text-[10px]">{currentChannelInfo.number}</span>
+                <span className="max-w-[70px] sm:max-w-[130px] truncate">{currentChannelInfo.name}</span>
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/70 group-hover:translate-y-0.5 transition-transform shrink-0">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
           </div>
 
-          {/* Quick Format Filter Tabs in center of Header (Desktop/Tablet) */}
-          <div className="hidden md:flex items-center gap-1 pointer-events-auto bg-black/50 backdrop-blur-md px-2 py-1 rounded-full border border-white/15 shadow-md">
+          {/* Quick Format Filter Tabs: CHỈ HIỂN THỊ TRÊN MÀN HÌNH RỘNG (PC / Widescreen) TRÁNH ĐÈ NÚT TRÊN SHORTS */}
+          <div className="hidden xl:flex items-center gap-1 pointer-events-auto bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/15 shadow-md">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -1319,7 +1809,7 @@ export function VideoShortsModal({
                   : 'text-neutral-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              📺 Tất cả
+              📺 Tất cả ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
             </button>
             <button
               onClick={(e) => {
@@ -1333,7 +1823,7 @@ export function VideoShortsModal({
                   : 'text-neutral-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              🎬 Video kênh
+              🎬 Video trên kênh
             </button>
             <button
               onClick={(e) => {
@@ -1347,50 +1837,49 @@ export function VideoShortsModal({
                   : 'text-neutral-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              ⚡ Shorts
+              ⚡ Shorts ngắn
             </button>
           </div>
 
-          {/* Controls: Tỉ lệ, Playlist, Âm thanh, Fullscreen, Đóng (Tự động ẩn sau 5s khi không tương tác) */}
-          <div className={`flex items-center gap-2 pointer-events-auto transition-opacity duration-300 ${
+          {/* Controls: Tỉ lệ, Playlist, Kênh TV, Âm thanh, Fullscreen, Đóng */}
+          <div className={`flex items-center gap-1.5 sm:gap-2 pointer-events-auto transition-opacity duration-300 shrink-0 ${
             isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}>
-            {/* Nút Chuyển Đổi Kích Thước: 16:9 Toàn Cảnh / 9:16 Dọc */}
+            {/* Chuyển đổi tỉ lệ 16:9 / 9:16 */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleOrientation();
                 resetInactivityTimer();
               }}
-              style={{ height: '36px', borderRadius: '18px', padding: '0 12px' }}
-              className={`flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md ${
+              style={{ height: '34px', borderRadius: '17px', padding: '0 10px' }}
+              className={`flex items-center gap-1 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
                 isLandscape
-                  ? 'bg-[#ff315f] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.5)]'
+                  ? 'bg-[#ff315f] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)]'
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
               }`}
-              title={isLandscape ? "Đang ở chế độ Toàn Cảnh 16:9 - Bấm để xem Dọc 9:16 [Phím R]" : "Đang ở chế độ Dọc 9:16 - Bấm để phóng to Toàn Cảnh 16:9 [Phím R]"}
+              title={isLandscape ? "Xem chế độ Dọc 9:16 Shorts [R]" : "Xem chế độ Toàn Cảnh 16:9 [R]"}
             >
               <span className="text-[12px]">{isLandscape ? '🖥️' : '📱'}</span>
-              <span className="hidden sm:inline">{isLandscape ? '16:9 Toàn cảnh' : '9:16 Dọc'}</span>
-              <span className="text-[9px] opacity-75 font-mono bg-white/20 px-1 py-0.2 rounded">R</span>
+              <span className="hidden sm:inline">{isLandscape ? '16:9' : '9:16'}</span>
             </button>
 
-            {/* Nút Bật/Tắt Danh Sách Phát trên Video */}
+            {/* Danh sách phát trên video */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowPlaylistDrawer(!showPlaylistDrawer);
                 resetInactivityTimer();
               }}
-              style={{ height: '36px', borderRadius: '18px', padding: '0 12px' }}
-              className={`flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md ${
+              style={{ height: '34px', borderRadius: '17px', padding: '0 10px' }}
+              className={`flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
                 showPlaylistDrawer
                   ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
               }`}
-              title="Mở Danh Sách Phát trực tiếp trên video [Phím L / P]"
+              title="Mở Danh Sách Phát trực tiếp trên video [L / P]"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                 <line x1="8" y1="6" x2="21" y2="6"/>
                 <line x1="8" y1="12" x2="21" y2="12"/>
                 <line x1="8" y1="18" x2="21" y2="18"/>
@@ -1398,40 +1887,40 @@ export function VideoShortsModal({
                 <line x1="3" y1="12" x2="3.01" y2="12"/>
                 <line x1="3" y1="18" x2="3.01" y2="18"/>
               </svg>
-              <span>Danh sách ({playlist.length})</span>
-              <span className="text-[9px] opacity-75 font-mono bg-white/20 px-1 py-0.2 rounded hidden sm:inline">L</span>
+              <span className="hidden sm:inline">Danh sách</span>
+              <span className="px-1 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{playlist.length}</span>
             </button>
 
-            {/* Nút Chọn Kênh TV */}
+            {/* Nút bật Smart TV Guide (Ẩn trên mobile vì đã có badge kênh góc trái) */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowChannelMenu(true);
                 resetInactivityTimer();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className={`w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className={`w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all hidden md:flex ${
                 showChannelMenu 
                   ? 'bg-red-600 text-white border-red-400 shadow-md' 
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
               }`}
-              title="Danh sách kênh truyền hình (TV Channels) [C]"
+              title="Danh sách kênh truyền hình TV Guide [C]"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="block m-auto">
                 <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
                 <polyline points="17 2 12 7 7 2"/>
               </svg>
             </button>
 
-            {/* Quick sound toggle */}
+            {/* Bật/Tắt âm thanh (Mặc định là BẬT ÂM THANH theo yêu cầu) */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setIsMuted(!isMuted);
+                toggleMute();
                 resetInactivityTimer();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className={`w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className={`w-[34px] h-[34px] aspect-square rounded-full flex items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
                 isMuted 
                   ? 'bg-red-600/80 hover:bg-red-600 text-white border-red-400 shadow-md' 
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
@@ -1439,50 +1928,50 @@ export function VideoShortsModal({
               title={isMuted ? 'Đang tắt tiếng - Nhấn để Bật âm thanh (M)' : 'Đang bật âm thanh - Nhấn để Tắt tiếng (M)'}
             >
               {isMuted ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
               )}
             </button>
 
-            {/* Browser Fullscreen Button */}
+            {/* Fullscreen trình duyệt (chỉ hiện trên màn hình tablet/PC) */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleBrowserFullscreen();
                 resetInactivityTimer();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
-              title={isFullscreen ? 'Thoát toàn màn hình (F / Esc)' : 'Toàn màn hình trình duyệt (F)'}
+              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className="w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all hidden sm:flex"
+              title={isFullscreen ? 'Thoát toàn màn hình (F)' : 'Toàn màn hình trình duyệt (F)'}
             >
               {isFullscreen ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
               )}
             </button>
 
-            {/* Close Button */}
+            {/* Đóng Modal */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onClose();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
+              style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className="w-[34px] h-[34px] aspect-square rounded-full flex items-center justify-center shrink-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
               title="Đóng (Esc)"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         </div>
 
-        {/* ── Quick TV Channel Pills Bar (Dải chọn nhanh kênh TV như trên Smart TV) ── */}
-        <div className={`absolute top-14 inset-x-0 z-30 px-3.5 transition-opacity duration-300 pointer-events-auto ${
+        {/* ── QUICK TV CHANNEL PILLS BAR: CHỈ HIỂN THỊ TRÊN MÀN HÌNH RỘNG (PC) VÀ KHÔNG BAO GIỜ HIỆN THANH SCROLL XÁM ── */}
+        <div className={`hidden lg:flex absolute top-14 inset-x-0 z-30 px-4 transition-opacity duration-300 pointer-events-auto ${
           isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}>
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {TV_CHANNELS.map(ch => {
               const isActive = selectedChannelId === ch.id;
               return (
@@ -1492,9 +1981,9 @@ export function VideoShortsModal({
                     e.stopPropagation();
                     handleSelectChannel(ch.id);
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
                     isActive 
-                      ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.6)]' 
+                      ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]' 
                       : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
                   }`}
                 >
@@ -1509,23 +1998,23 @@ export function VideoShortsModal({
           </div>
         </div>
 
-        {/* ── Cột Tương Tác: Like, Comment, Share, YouTube (Icon tròn 100% không bị méo, tự ẩn khi không tương tác) ── */}
+        {/* ── CỘT TƯƠNG TÁC: THÍCH, BÌNH LUẬN, CHIA SẺ, PLAYLIST ── */}
         <div className={`absolute z-30 select-none transition-opacity duration-300 ${
           isLandscape 
             ? 'right-4 bottom-3 flex flex-row items-center gap-3' 
-            : 'right-3 bottom-16 flex flex-col items-center gap-3.5'
+            : 'right-3 bottom-14 flex flex-col items-center gap-3'
         } ${isControlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
           
           {/* Like ❤️ Button */}
-          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+          <div className="flex flex-col items-center gap-0.5 shrink-0 select-none">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleLike();
                 resetInactivityTimer();
               }}
-              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className={`w-[42px] h-[42px] aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-lg cursor-pointer active:scale-90 border ${
+              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className={`w-10 h-10 aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-lg cursor-pointer active:scale-90 border ${
                 likedMap[currentShort.id]
                   ? 'bg-red-600 text-white border-red-500 shadow-red-500/50'
                   : 'bg-black/50 text-white hover:bg-black/70 border-white/20'
@@ -1542,37 +2031,37 @@ export function VideoShortsModal({
           </div>
 
           {/* Comments 💬 Button */}
-          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+          <div className="flex flex-col items-center gap-0.5 shrink-0 select-none">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowComments(!showComments);
                 resetInactivityTimer();
               }}
-              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className="w-[42px] h-[42px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg cursor-pointer active:scale-90 transition-all"
-              title="Bình luận"
+              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className="w-10 h-10 aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg cursor-pointer active:scale-90 transition-all"
+              title="Bình luận thực tế"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 block m-auto"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 block m-auto"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </button>
             <span className="text-[10px] font-bold text-white drop-shadow">
-              {currentShort.commentsCount || 140}
+              {currentVideoComments.length}
             </span>
           </div>
 
           {/* Share ↗️ Button */}
-          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+          <div className="flex flex-col items-center gap-0.5 shrink-0 select-none">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleShare();
                 resetInactivityTimer();
               }}
-              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className="w-[42px] h-[42px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg cursor-pointer active:scale-90 transition-all"
+              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className="w-10 h-10 aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg cursor-pointer active:scale-90 transition-all"
               title="Chia sẻ video"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 block m-auto"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 block m-auto"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </button>
             <span className="text-[10px] font-bold text-white drop-shadow">
               Chia sẻ
@@ -1580,22 +2069,22 @@ export function VideoShortsModal({
           </div>
 
           {/* Playlist 📋 Button */}
-          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+          <div className="flex flex-col items-center gap-0.5 shrink-0 select-none">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowPlaylistDrawer(!showPlaylistDrawer);
                 resetInactivityTimer();
               }}
-              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className={`w-[42px] h-[42px] aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md border shadow-lg cursor-pointer active:scale-90 transition-all ${
+              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className={`w-10 h-10 aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md border shadow-lg cursor-pointer active:scale-90 transition-all ${
                 showPlaylistDrawer
                   ? 'bg-red-600 text-white border-red-500 shadow-red-500/50'
                   : 'bg-black/50 hover:bg-black/70 text-white border-white/20'
               }`}
-              title="Danh sách phát trên video [Phím L / P]"
+              title="Danh sách phát trên video [L / P]"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto">
                 <line x1="8" y1="6" x2="21" y2="6"/>
                 <line x1="8" y1="12" x2="21" y2="12"/>
                 <line x1="8" y1="18" x2="21" y2="18"/>
@@ -1610,15 +2099,15 @@ export function VideoShortsModal({
           </div>
         </div>
 
-        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags (Tự động ẩn sau 5s khi không thao tác) ── */}
-        <div className={`absolute bottom-0 inset-x-0 z-20 p-4 ${isLandscape ? 'pb-3 pr-[260px]' : 'pb-4 pr-16'} bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 transition-opacity duration-300 ${
+        {/* ── BOTTOM VIDEO OVERLAY: KÊNH, TIÊU ĐỀ, HASHTAGS & TÀI KHOẢN ── */}
+        <div className={`absolute bottom-0 inset-x-0 z-20 p-3 sm:p-4 ${isLandscape ? 'pb-3 pr-[260px]' : 'pb-3.5 pr-14'} bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col gap-1.5 transition-opacity duration-300 ${
           isControlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
           
-          {/* Channel Info, Logo Trang, Nhãn BẢN TIN TRANG & Nút Chuông (Icon tròn 100% không méo) */}
+          {/* Channel Info & Nút Theo Dõi */}
           <div className="flex items-center gap-2 pointer-events-auto max-w-full overflow-hidden">
             <div 
-              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
               className="w-8 h-8 rounded-full overflow-hidden border border-white/25 shadow-md shrink-0 bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px] select-none"
             >
               {currentShort.isSiteNews || currentShort.badge === 'BẢN TIN TRANG' ? (
@@ -1627,68 +2116,71 @@ export function VideoShortsModal({
                 <span className="font-bold text-[12px] text-white">{currentShort.channel.charAt(0).toUpperCase()}</span>
               )}
             </div>
+            
             <div className="flex items-center gap-1 min-w-0 shrink">
               <span className="font-extrabold text-[13px] text-white truncate drop-shadow">
                 @{currentShort.channel}
               </span>
               <span 
-                style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px', maxWidth: '14px', maxHeight: '14px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+                style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px', maxWidth: '14px', maxHeight: '14px', borderRadius: '50%', aspectRatio: '1 / 1' }}
                 className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shrink-0 font-bold"
               >
                 ✓
               </span>
             </div>
 
-            {/* Nhãn nổi bật: BẢN TIN TRANG (nếu là video của trang web) hoặc chuyên mục */}
-            {currentShort.badge === 'BẢN TIN TRANG' ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-600 text-white shadow-md border border-red-400/40 shrink-0 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                BẢN TIN TRANG
-              </span>
-            ) : (
-              <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/20 text-white/90 backdrop-blur-sm shrink-0">
-                {currentShort.badge}
-              </span>
-            )}
+            {/* Nhãn định dạng & badge */}
+            <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-black uppercase tracking-wider shrink-0 ${
+              currentShort.mediaType === 'short'
+                ? 'bg-pink-600/80 text-white border border-pink-400/40'
+                : 'bg-blue-600/80 text-white border border-blue-400/40'
+            }`}>
+              {currentShort.mediaType === 'short' ? '⚡ Shorts' : '🎬 Video'}
+            </span>
 
-            {/* Nút icon chuông quan tâm / theo dõi kênh (chuẩn hình tròn width = height = 32px) */}
+            {/* Nút Chuông Theo Dõi Kênh (Đồng bộ tài khoản Gmail) */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 toggleFollowChannel();
                 resetInactivityTimer();
               }}
-              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className={`w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 border backdrop-blur-md cursor-pointer transition-all active:scale-90 ml-1 ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold border backdrop-blur-md cursor-pointer transition-all active:scale-95 ml-1 shrink-0 ${
                 isFollowingChannel
-                  ? 'bg-[#ff315f] border-[#ff315f] text-white shadow-[0_0_10px_rgba(255,49,95,0.5)]'
-                  : 'bg-white/10 hover:bg-white/20 border-white/25 text-neutral-300 hover:text-white'
+                  ? 'bg-[#ff315f] border-[#ff315f] text-white shadow-[0_0_10px_rgba(255,49,95,0.4)]'
+                  : 'bg-white/10 hover:bg-white/20 border-white/25 text-neutral-200 hover:text-white'
               }`}
-              title={isFollowingChannel ? "Đang theo dõi kênh" : "Nhấn để quan tâm/theo dõi kênh"}
+              title={isFollowingChannel ? "Đang theo dõi kênh này" : "Nhấn để theo dõi kênh"}
             >
               {isFollowingChannel ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 block m-auto"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <span>Đã theo dõi</span>
+                </>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+                <>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+                  <span>Theo dõi</span>
+                </>
               )}
             </button>
           </div>
 
-          {/* Title & Description */}
+          {/* Title */}
           <p 
-            className={`text-[13px] sm:text-[13.5px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[90%]' : 'line-clamp-2'} drop-shadow leading-snug notranslate`}
+            className={`text-[12.5px] sm:text-[13.5px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[90%]' : 'line-clamp-2'} drop-shadow leading-snug notranslate`}
             translate="no"
           >
             {cleanVideoTitle(currentShort.title)}
           </p>
 
-          {/* Hashtags (chữ thường, màu #000000, nền sáng thanh lịch tránh sặc sỡ) & Số thứ tự clip */}
+          {/* Hashtags & Trạng thái tài khoản người dùng */}
           <div className="flex items-center gap-1.5 text-[11px] font-medium flex-wrap">
             <span 
               className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold tracking-tight shadow-sm"
               style={{ color: '#000000' }}
             >
-              #shorts
+              #{currentShort.mediaType === 'short' ? 'shorts' : 'video'}
             </span>
             <span 
               className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold tracking-tight shadow-sm"
@@ -1696,12 +2188,14 @@ export function VideoShortsModal({
             >
               #tintuc24h
             </span>
-            <span 
-              className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold tracking-tight shadow-sm"
-              style={{ color: '#000000' }}
-            >
-              #thoisu
-            </span>
+            
+            {activeUser.isLoggedIn && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9.5px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>{activeUser.name}</span>
+              </span>
+            )}
+
             <span className="ml-auto text-[10px] text-white/70 font-semibold drop-shadow">
               {currentIndex + 1} / {playlist.length}
             </span>
@@ -1709,25 +2203,23 @@ export function VideoShortsModal({
         </div>
       </div>
 
-      {/* ── On-Video Playlist Overlay (Danh Sách Hiển Thị Trực Tiếp TRÊN VIDEO) ── */}
+      {/* ── ON-VIDEO PLAYLIST DRAWER (DANH SÁCH PHÁT NỔI TRÊN VIDEO) ── */}
       {showPlaylistDrawer && (
         <div 
           className="absolute inset-0 z-40 flex justify-end animate-fadeIn select-none"
           onClick={() => setShowPlaylistDrawer(false)}
         >
-          {/* Backdrop mờ phía sau - bấm ra ngoài để đóng danh sách */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-xs cursor-pointer" />
 
-          {/* Panel Danh Sách Nổi Trực Tiếp Trên Video (Kính mờ cao cấp) */}
           <div 
-            className="relative w-full sm:w-[420px] md:w-[460px] h-full bg-[#0d0d10]/92 backdrop-blur-2xl border-l border-white/15 p-4 sm:p-5 flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.85)] z-50 animate-slideLeft text-white"
+            className="relative w-full sm:w-[420px] md:w-[460px] h-full bg-[#0d0d10]/95 backdrop-blur-2xl border-l border-white/15 p-4 sm:p-5 flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.85)] z-50 animate-slideLeft text-white"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header: Tiêu đề danh sách, số clip & nút Đóng */}
+            {/* Header Drawer */}
             <div className="flex items-center justify-between pb-3.5 border-b border-white/10 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div 
-                  style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+                  style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
                   className="w-9 h-9 aspect-square rounded-full bg-gradient-to-tr from-red-600 to-pink-500 flex items-center justify-center text-white shadow-lg shrink-0 border border-white/20"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
@@ -1745,23 +2237,23 @@ export function VideoShortsModal({
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
                   </h3>
                   <span className="text-[11px] text-neutral-400 truncate">
-                    {currentChannelInfo.id === 'all' ? 'Bản Tin Đa Kênh Tổng Hợp' : `${currentChannelInfo.number} • ${currentChannelInfo.name}`} ({playlist.length} clip)
+                    {currentChannelInfo.id === 'all' ? 'Toàn bộ dòng chảy thời sự' : `${currentChannelInfo.number} • ${currentChannelInfo.name}`} ({playlist.length} clip)
                   </span>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowPlaylistDrawer(false)}
-                style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-                className="w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border border-white/15 cursor-pointer active:scale-90 transition-all"
-                title="Đóng danh sách (Esc)"
+                style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                className="w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border border-white/15 cursor-pointer active:scale-90 transition-all"
+                title="Đóng (Esc)"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
-            {/* Quick Format Filter Tabs: Tất cả | Video Kênh | Shorts */}
-            <div className="flex items-center gap-1.5 py-2.5 border-b border-white/10 shrink-0 overflow-x-auto no-scrollbar">
+            {/* Phân Tab Định Dạng: Tất cả | Video Kênh | Shorts */}
+            <div className="flex items-center gap-1.5 py-2.5 border-b border-white/10 shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => handleSelectMediaTab('all')}
                 className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
@@ -1770,7 +2262,7 @@ export function VideoShortsModal({
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                📺 Tất cả ({multiChannelVideos.length})
+                📺 Tất cả ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
               </button>
               <button
                 onClick={() => handleSelectMediaTab('video')}
@@ -1780,7 +2272,7 @@ export function VideoShortsModal({
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                🎬 Video kênh
+                🎬 Video kênh ({channelStatsMap[selectedChannelId]?.videos || 0})
               </button>
               <button
                 onClick={() => handleSelectMediaTab('short')}
@@ -1790,19 +2282,19 @@ export function VideoShortsModal({
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                ⚡ Shorts
+                ⚡ Shorts ({channelStatsMap[selectedChannelId]?.shorts || 0})
               </button>
             </div>
 
-            {/* Dải chọn nhanh kênh TV trực tiếp trong drawer */}
-            <div className="flex items-center gap-1.5 py-2 border-b border-white/10 shrink-0 overflow-x-auto no-scrollbar">
+            {/* Dải chọn nhanh kênh TV trong Drawer */}
+            <div className="flex items-center gap-1.5 py-2 border-b border-white/10 shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {TV_CHANNELS.map(ch => {
                 const isActive = selectedChannelId === ch.id;
                 return (
                   <button
                     key={ch.id}
                     onClick={() => handleSelectChannel(ch.id)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border ${
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
                       isActive 
                         ? 'bg-red-600 text-white border-red-400 shadow-sm' 
                         : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
@@ -1816,7 +2308,7 @@ export function VideoShortsModal({
             </div>
 
             {/* Cuộn danh sách video clip */}
-            <div className="flex-1 overflow-y-auto no-scrollbar py-3 flex flex-col gap-2.5 pr-1">
+            <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-2.5 pr-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {playlist.map((item, idx) => {
                 const isSelected = idx === currentIndex;
                 return (
@@ -1840,8 +2332,8 @@ export function VideoShortsModal({
                         alt="" 
                         className="w-full h-full object-cover" 
                       />
-                      <div className="absolute bottom-1 right-1 px-1.5 py-0.2 rounded bg-black/80 text-[9px] font-bold text-white">
-                        {item.duration || 'Shorts'}
+                      <div className="absolute bottom-1 right-1 px-1.5 py-0.2 rounded bg-black/85 text-[8.5px] font-bold text-white">
+                        {item.mediaType === 'short' ? '⚡ Shorts' : item.duration || 'Video'}
                       </div>
                       {isSelected && (
                         <div className="absolute inset-0 bg-red-600/40 flex items-center justify-center">
@@ -1877,13 +2369,13 @@ export function VideoShortsModal({
               })}
             </div>
 
-            {/* Điều hướng Trước / Sau dưới chân drawer */}
+            {/* Điều hướng Trước / Sau dưới đáy Drawer */}
             <div className="flex items-center gap-2 pt-3 border-t border-white/10 shrink-0">
               <button
                 onClick={handlePrevShort}
                 className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
                 <span>Clip Trước</span>
               </button>
               <button
@@ -1891,31 +2383,31 @@ export function VideoShortsModal({
                 className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-red-600/40"
               >
                 <span>Clip Sau</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Smart TV Channel Guide & Media Selector (Menu Chọn Kênh Truyền Hình Phong Cách Tivi EPG) ── */}
+      {/* ── SMART TV EPG GUIDE (DANH SÁCH KÊNH TRUYỀN HÌNH - FIX TRIỆT ĐỂ LỆCH LAYOUT ẢNH 1) ── */}
       {showChannelMenu && (
         <div 
           className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-fadeIn"
           onClick={() => setShowChannelMenu(false)}
         >
           <div 
-            className="w-full max-w-3xl max-h-[92vh] bg-neutral-950/95 border border-white/20 rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden text-white animate-scaleIn"
+            className="w-full max-w-4xl max-h-[92vh] bg-neutral-950/95 border border-white/20 rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden text-white animate-scaleIn"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header: TV Guide Title & Close */}
+            {/* Header TV Guide */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-red-950/40 via-neutral-900/60 to-neutral-900/40">
               <div className="flex items-center gap-3 min-w-0">
                 <div 
-                  style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+                  style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
                   className="w-10 h-10 aspect-square rounded-full bg-gradient-to-tr from-red-600 to-pink-500 flex items-center justify-center text-white shadow-lg shrink-0 border border-white/20"
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="block m-auto">
                     <rect x="2" y="7" width="20" height="15" rx="2" ry="2"/>
                     <polyline points="17 2 12 7 7 2"/>
                   </svg>
@@ -1935,18 +2427,18 @@ export function VideoShortsModal({
 
               <button
                 onClick={() => setShowChannelMenu(false)}
-                style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-                className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border border-white/15 cursor-pointer active:scale-90 transition-all ml-2"
+                style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border border-white/15 cursor-pointer active:scale-90 transition-all ml-2"
                 title="Đóng (Esc)"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
-            {/* Phân Tab Định Dạng: Tất cả | Video Kênh | Shorts (Đáp ứng yêu cầu: sau chạy ngon lành thì phân tab video và short) */}
-            <div className="flex items-center gap-2 p-3 sm:px-5 bg-white/[0.02] border-b border-white/10 overflow-x-auto no-scrollbar">
+            {/* Phân Tab Định Dạng: Tất cả | Video Kênh | Shorts */}
+            <div className="flex items-center gap-2 p-3 sm:px-5 bg-white/[0.02] border-b border-white/10 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 shrink-0 mr-1 flex items-center gap-1">
-                <span>Định dạng:</span>
+                <span>Phân loại:</span>
               </span>
 
               <button
@@ -1959,7 +2451,7 @@ export function VideoShortsModal({
               >
                 <span>📺 Tất cả</span>
                 <span className="text-[10px] opacity-80 font-mono">
-                  ({channelCountMap[selectedChannelId] !== undefined ? channelCountMap[selectedChannelId] : allAvailableVideos.length})
+                  ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
                 </span>
               </button>
 
@@ -1971,7 +2463,10 @@ export function VideoShortsModal({
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                <span>🎬 Video trên kênh (Tin tức / Phóng sự)</span>
+                <span>🎬 Video trên kênh (16:9)</span>
+                <span className="text-[10px] opacity-80 font-mono">
+                  ({channelStatsMap[selectedChannelId]?.videos || 0})
+                </span>
               </button>
 
               <button
@@ -1983,29 +2478,32 @@ export function VideoShortsModal({
                 }`}
               >
                 <span>⚡ Shorts ngắn (9:16)</span>
+                <span className="text-[10px] opacity-80 font-mono">
+                  ({channelStatsMap[selectedChannelId]?.shorts || 0})
+                </span>
               </button>
             </div>
 
-            {/* Grid danh sách kênh truyền hình TV_CHANNELS */}
-            <div className="flex-1 overflow-y-auto no-scrollbar p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[56vh]">
+            {/* Grid Thẻ Kênh: ĐỒNG NHẤT CHIỀU CAO MIN-HEIGHT VÀ CĂN CHỈNH THẲNG HÀNG 100% */}
+            <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {TV_CHANNELS.map((ch) => {
                 const isActive = selectedChannelId === ch.id;
-                const count = channelCountMap[ch.id] || 0;
+                const stats = channelStatsMap[ch.id] || { total: 0, videos: 0, shorts: 0 };
 
                 return (
                   <div
                     key={ch.id}
                     onClick={() => handleSelectChannel(ch.id)}
-                    className={`group relative p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                    className={`group relative p-3.5 rounded-2xl border transition-all cursor-pointer min-h-[135px] h-full flex flex-col justify-between gap-2.5 ${
                       isActive
-                        ? 'bg-gradient-to-br from-red-600/30 via-red-950/40 to-neutral-900 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)] scale-[1.01]'
+                        ? 'bg-gradient-to-br from-red-600/30 via-red-950/40 to-neutral-900 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)] ring-1 ring-red-400/50'
                         : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-neutral-300 hover:text-white'
                     }`}
                   >
-                    {/* Top Row: Channel number + Logo + Live Badge */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-md font-mono text-[11px] font-black tracking-wider border ${
+                    {/* Top Row: Channel number + Badge Text + Live indicator */}
+                    <div className="flex items-center justify-between gap-2 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-2 py-0.5 rounded-md font-mono text-[10.5px] font-black tracking-wider border ${
                           isActive 
                             ? 'bg-red-600 text-white border-red-400' 
                             : 'bg-black/60 text-neutral-300 border-white/15'
@@ -2014,7 +2512,7 @@ export function VideoShortsModal({
                         </span>
 
                         <span 
-                          className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider"
+                          className="px-2 py-0.5 rounded-full text-[9.5px] font-extrabold uppercase tracking-wider"
                           style={{
                             backgroundColor: `${ch.logoColor}25`,
                             color: ch.logoColor,
@@ -2026,40 +2524,38 @@ export function VideoShortsModal({
                       </div>
 
                       {isActive ? (
-                        <span className="flex items-center gap-1 text-[10px] font-black text-red-400 tracking-wider">
+                        <span className="flex items-center gap-1 text-[9.5px] font-black text-red-400 tracking-wider">
                           <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
                           ĐANG PHÁT
                         </span>
                       ) : (
-                        <span className="text-[11px] text-neutral-400 group-hover:text-neutral-200 transition-colors font-semibold">
-                          {count} clip
+                        <span className="text-[10px] text-neutral-400 group-hover:text-neutral-200 transition-colors font-semibold">
+                          {stats.total} clip
                         </span>
                       )}
                     </div>
 
-                    {/* Middle: Channel Name & Tagline */}
-                    <div>
-                      <h4 className={`text-[14px] font-black flex items-center gap-1.5 ${isActive ? 'text-white' : 'text-neutral-100 group-hover:text-white'}`}>
+                    {/* Middle: Channel Name & Tagline (CỐ ĐỊNH MIN-HEIGHT ĐỂ KHÔNG BAO GIỜ BỊ LỆCH) */}
+                    <div className="flex-1 flex flex-col justify-start">
+                      <h4 className={`text-[13.5px] font-black flex items-center gap-1.5 truncate ${isActive ? 'text-white' : 'text-neutral-100 group-hover:text-white'}`}>
                         <span>{ch.name}</span>
                         {isActive && <span className="text-red-400">★</span>}
                       </h4>
-                      <p className="text-[11px] text-neutral-400 line-clamp-2 mt-0.5 leading-snug">
+                      <p className="text-[11px] text-neutral-400 line-clamp-2 min-h-[32px] mt-0.5 leading-snug">
                         {ch.tagline}
                       </p>
                     </div>
 
-                    {/* Bottom: Action Button / Status */}
-                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-                      <span className="text-neutral-400 text-[10px]">
-                        {ch.id === 'all' ? 'Đan xen các kênh' : 'Phát từ video mới nhất'}
+                    {/* Bottom Row: Thống kê định dạng & Trạng thái chọn */}
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10.5px] shrink-0 mt-auto">
+                      <span className="text-neutral-400 text-[10px] font-medium">
+                        {stats.videos} video • {stats.shorts} shorts
                       </span>
                       <span className={`font-bold flex items-center gap-1 ${
                         isActive ? 'text-red-400' : 'text-neutral-400 group-hover:text-white'
                       }`}>
                         {isActive ? (
-                          <>
-                            <span>✓ Đang chọn</span>
-                          </>
+                          <span>✓ Đang chọn</span>
                         ) : (
                           <>
                             <span>Bật kênh</span>
@@ -2073,18 +2569,18 @@ export function VideoShortsModal({
               })}
             </div>
 
-            {/* Footer: Gợi ý phím tắt tiện ích */}
+            {/* Footer EPG */}
             <div className="p-3 sm:px-5 sm:py-3.5 bg-black/60 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-400">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-neutral-300">💡 Phím tắt TV:</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px]">[C]</span> <span>Mở kênh</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px]">[↑ / ↓]</span> <span>Chuyển clip</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px]">[M]</span> <span>Bật/Tắt âm</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px]">[R]</span> <span>Quay ngang 16:9</span>
+                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[C]</span> <span>Mở kênh</span>
+                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[↑↓]</span> <span>Chuyển clip</span>
+                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[M]</span> <span>Bật/Tắt âm</span>
+                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[R]</span> <span>Quay ngang 16:9</span>
               </div>
               <button
                 onClick={() => setShowChannelMenu(false)}
-                className="ml-auto px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] cursor-pointer transition-all active:scale-95"
+                className="ml-auto px-3.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] cursor-pointer transition-all active:scale-95"
               >
                 Quay lại video (Esc)
               </button>
@@ -2093,55 +2589,104 @@ export function VideoShortsModal({
         </div>
       )}
 
-      {/* ── Comments Drawer ── */}
+      {/* ── COMMENTS DRAWER (BÌNH LUẬN THỰC TẾ & TƯƠNG TÁC TÀI KHOẢN GMAIL) ── */}
       {showComments && (
-        <div className="absolute inset-x-0 bottom-0 sm:inset-y-0 sm:right-0 sm:left-auto w-full sm:w-[380px] max-h-[80vh] sm:max-h-full bg-neutral-900/95 backdrop-blur-xl sm:rounded-l-3xl border-t sm:border-l border-white/15 shadow-2xl z-40 flex flex-col p-4 animate-slideUp">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <h4 className="font-bold text-white text-[15px] flex items-center gap-2">
-              <span>Bình luận</span>
-              <span className="text-[12px] text-neutral-400">({commentsList.length})</span>
-            </h4>
+        <div className="absolute inset-x-0 bottom-0 sm:inset-y-0 sm:right-0 sm:left-auto w-full sm:w-[400px] max-h-[82vh] sm:max-h-full bg-neutral-900/95 backdrop-blur-2xl sm:rounded-l-3xl border-t sm:border-l border-white/15 shadow-2xl z-40 flex flex-col p-4 animate-slideUp">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-bold text-white text-[15px] flex items-center gap-2">
+                <span>Bình luận</span>
+                <span className="text-[12px] text-neutral-400">({currentVideoComments.length})</span>
+              </h4>
+              {activeUser.isLoggedIn && (
+                <span className="text-[10px] text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  Google: {activeUser.name}
+                </span>
+              )}
+            </div>
+
             <button 
               onClick={() => setShowComments(false)}
-              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', padding: 0 }}
-              className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
+              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className="w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto no-scrollbar py-3 flex flex-col gap-3 min-h-[220px]">
-            {commentsList.map((c, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-pink-500 to-red-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0">
-                  {c.user.charAt(0)}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-[12px] text-white truncate">{c.user}</span>
-                    <span className="text-[10px] text-neutral-400">{c.time}</span>
+          {/* Danh sách bình luận */}
+          <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-3 min-h-[220px] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {currentVideoComments.map((c) => (
+              <div key={c.id} className="flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] border border-white/5">
+                {c.avatar ? (
+                  <img src={c.avatar} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 border border-white/20" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-pink-500 to-red-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                    {c.user.charAt(0)}
+                  </div>
+                )}
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className="font-bold text-[12px] text-white truncate flex items-center gap-1">
+                      <span>{c.user}</span>
+                      {c.isSelf && <span className="text-[9px] px-1 rounded bg-red-600/30 text-red-400 font-bold">Bạn</span>}
+                    </span>
+                    <span className="text-[10px] text-neutral-400 shrink-0">{c.time}</span>
                   </div>
                   <p className="text-[12px] text-neutral-200 mt-0.5 leading-snug">{c.text}</p>
+                  
+                  {/* Thích bình luận */}
+                  <div className="flex items-center gap-3 mt-1.5 pt-1 text-[11px] text-neutral-400">
+                    <button 
+                      onClick={() => handleLikeComment(c.id)}
+                      className={`flex items-center gap-1 cursor-pointer transition-colors ${c.isLiked ? 'text-red-400 font-bold' : 'hover:text-white'}`}
+                    >
+                      <span>{c.isLiked ? '❤️' : '🤍'}</span>
+                      <span>{c.likes}</span>
+                    </button>
+                    <span className="hover:text-white cursor-pointer">Trả lời</span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <form onSubmit={handleAddComment} className="pt-2 border-t border-white/10 flex items-center gap-2">
+          {/* Form bình luận */}
+          <form onSubmit={handleAddComment} className="pt-2 border-t border-white/10 flex items-center gap-2 shrink-0">
+            {activeUser.picture ? (
+              <img src={activeUser.picture} alt="" className="w-7 h-7 rounded-full object-cover border border-white/20 shrink-0" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-white/15 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                {activeUser.name.charAt(0)}
+              </div>
+            )}
             <input
               type="text"
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
-              placeholder="Thêm bình luận..."
-              className="flex-1 px-3 py-2 rounded-full bg-white/10 text-white text-[12px] placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+              placeholder={activeUser.isLoggedIn ? `Bình luận với tên ${activeUser.name}...` : 'Thêm bình luận...'}
+              className="flex-1 px-3.5 py-2 rounded-full bg-white/10 text-white text-[12px] placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-red-500"
             />
             <button 
               type="submit"
-              className="px-3 py-2 rounded-full bg-red-600 hover:bg-red-500 text-white text-[12px] font-bold cursor-pointer transition-all active:scale-95 shrink-0"
+              className="px-3.5 py-2 rounded-full bg-red-600 hover:bg-red-500 text-white text-[12px] font-bold cursor-pointer transition-all active:scale-95 shrink-0"
             >
               Gửi
             </button>
           </form>
+
+          {!activeUser.isLoggedIn && onLogin && (
+            <div className="mt-2 text-center text-[10.5px] text-neutral-400">
+              <span>Đăng nhập với Google để tương tác chính thức: </span>
+              <button 
+                type="button" 
+                onClick={onLogin} 
+                className="text-red-400 font-bold hover:underline cursor-pointer"
+              >
+                Đăng nhập ngay
+              </button>
+            </div>
+          )}
         </div>
       )}
 
