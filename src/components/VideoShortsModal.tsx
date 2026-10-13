@@ -2446,53 +2446,67 @@ export function VideoShortsModal({
               </div>
             )}
 
-            {/* Controls: Trên Mobile CHỈ CÓ Âm thanh + Đóng; Trên Tablet/PC có đủ Tỉ lệ, Playlist, Fullscreen */}
-            <div className="flex items-center gap-1 sm:gap-1.5 pointer-events-auto shrink-0">
-              {/* Chuyển đổi tỉ lệ 16:9 / 9:16 (CHỈ HIỂN THỊ TRÊN TABLET & PC, ẨN TRÊN MOBILE VÌ SHORTS MOBILE LUÔN XEM DỌC) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleOrientation();
-                  resetInactivityTimer();
-                }}
-                style={{ height: '32px', borderRadius: '16px', padding: '0 8px' }}
-                className={`hidden sm:flex items-center gap-1 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
-                  isLandscape
-                    ? 'bg-[#ff315f] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)]'
-                    : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-                }`}
-                title={isLandscape ? "Xem chế độ Dọc 9:16 Shorts [R]" : "Xem chế độ Toàn Cảnh 16:9 [R]"}
-              >
-                <span className="text-[12px]">{isLandscape ? '🖥️' : '📱'}</span>
-                <span>{isLandscape ? '16:9' : '9:16'}</span>
-              </button>
+            {/* Controls: Trên khung dọc (Shorts) tinh gọn tối đa; trên khung ngang (16:9) hiển thị đầy đủ */}
+            <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto shrink-0">
+              {/* Chuyển đổi tỉ lệ 16:9 / 9:16 */}
+              {isLandscape ? (
+                /* Khi đang ở 16:9 ngang: Nút chuyển về 9:16 Dọc */
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOrientation();
+                    resetInactivityTimer();
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ff315f] text-white border border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)] text-[11px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
+                  title="Chuyển sang chế độ Dọc Shorts [R]"
+                >
+                  <span className="text-[12px] leading-none">📱</span>
+                  <span>9:16</span>
+                </button>
+              ) : (
+                /* Khi đang ở Dọc Shorts: Nút chuyển sang 16:9 Toàn Cảnh (Icon 32px tròn trên PC/Tablet, ẩn trên mobile) */
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOrientation();
+                    resetInactivityTimer();
+                  }}
+                  style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                  className="w-8 h-8 aspect-square rounded-full hidden sm:flex items-center justify-center shrink-0 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all shadow-md"
+                  title="Xem chế độ Toàn Cảnh 16:9 Cinema [R]"
+                >
+                  <span className="text-[13px] leading-none">🖥️</span>
+                </button>
+              )}
 
-              {/* Danh sách phát trên video (CHỈ HIỂN THỊ TRÊN TABLET & PC; TRÊN MOBILE ĐÃ CÓ NÚT LIST Ở CỘT TƯƠNG TÁC) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPlaylistDrawer(!showPlaylistDrawer);
-                  resetInactivityTimer();
-                }}
-                style={{ height: '32px', borderRadius: '16px', padding: '0 8px' }}
-                className={`hidden sm:flex items-center gap-1.5 backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
-                  showPlaylistDrawer
-                    ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                    : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-                }`}
-                title="Mở Danh Sách Phát trực tiếp trên video [L / P]"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                  <line x1="8" y1="6" x2="21" y2="6"/>
-                  <line x1="8" y1="12" x2="21" y2="12"/>
-                  <line x1="8" y1="18" x2="21" y2="18"/>
-                  <line x1="3" y1="6" x2="3.01" y2="6"/>
-                  <line x1="3" y1="12" x2="3.01" y2="12"/>
-                  <line x1="3" y1="18" x2="3.01" y2="18"/>
-                </svg>
-                <span>Danh sách</span>
-                <span className="px-1 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{playlist.length}</span>
-              </button>
+              {/* Danh sách phát trên Header: CHỈ HIỂN THỊ KHI Ở CHẾ ĐỘ TOÀN CẢNH 16:9 RỘNG RÃI
+                  (Khi ở chế độ Dọc Shorts, ở cột tương tác bên phải ĐÃ CÓ nút 'List' chuyên dụng, không hiển thị trên Header để tránh đè nút Kênh) */}
+              {isLandscape && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPlaylistDrawer(!showPlaylistDrawer);
+                    resetInactivityTimer();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 ${
+                    showPlaylistDrawer
+                      ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]'
+                      : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
+                  }`}
+                  title="Mở Danh Sách Phát trên video [L / P]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                    <line x1="8" y1="6" x2="21" y2="6"/>
+                    <line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/>
+                    <line x1="3" y1="6" x2="3.01" y2="6"/>
+                    <line x1="3" y1="12" x2="3.01" y2="12"/>
+                    <line x1="3" y1="18" x2="3.01" y2="18"/>
+                  </svg>
+                  <span>Danh sách</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{playlist.length}</span>
+                </button>
+              )}
 
               {/* Nút bật Smart TV Guide (chỉ hiện trên màn hình ngang desktop) */}
               {isLandscape && (
