@@ -168,6 +168,63 @@ export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
     duration: '0:58',
     thumbnail: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=70',
     likes: 3120
+  },
+
+  // ── Các bản tin nổi bật từ VTV24 ──
+  {
+    id: 'vtv24-feat-holiday',
+    title: 'Thời sự toàn cảnh tối 10/10: Tết Nguyên đán Đinh Mùi 2027 nghỉ 7 ngày liên tục | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    youtubeId: 'd0x854Vv78M',
+    category: 'Thời sự 24h',
+    duration: '31:17',
+    thumbnail: 'https://i.ytimg.com/vi/d0x854Vv78M/hqdefault.jpg',
+    likes: 40200
+  },
+  {
+    id: 'vtv24-tn-ai-hanoi',
+    title: 'TIN NÓNG 10 PHÚT 12/10: Camera AI tại Hà Nội phát hiện vi phạm giao thông | VTV24',
+    channel: 'VTV24',
+    badge: 'TIÊU ĐIỂM',
+    youtubeId: 'f6UuO3z_gW0',
+    category: 'Thời sự 24h',
+    duration: '8:54',
+    thumbnail: 'https://images.unsplash.com/photo-1508873696983-2df5293cb395?w=600&auto=format&fit=crop&q=70',
+    likes: 16400
+  },
+  {
+    id: 'vtv24-th-ruatien',
+    title: 'TSTC trưa 13/10: Triệt phá đường dây rửa tiền xuyên quốc gia hàng nghìn tỷ | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    youtubeId: 'THldZ31vTvI',
+    category: 'Thời sự 24h',
+    duration: '28:31',
+    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
+    likes: 24600
+  },
+  {
+    id: 'vtv24-tg-kingkhalid',
+    title: 'Thế giới toàn cảnh 13/10: Sân bay quốc tế King Khalid mở rộng đón làn sóng khách quốc tế | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    youtubeId: 'utYT3v_KTyo',
+    category: 'Thế giới & Cuộc sống',
+    duration: '16:25',
+    thumbnail: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&auto=format&fit=crop&q=70',
+    likes: 26400
+  },
+  {
+    id: 'vtv24-ts-traiphieu',
+    title: 'Lợi suất trái phiếu và bài toán lãi suất toàn cầu | VTV24',
+    channel: 'VTV24',
+    badge: 'TÀI CHÍNH',
+    youtubeId: 'xK0vQ9P1L1k',
+    category: 'Tài chính & Vàng',
+    duration: '8:07',
+    thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=70',
+    likes: 5200
   }
 ];
 

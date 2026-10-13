@@ -2,37 +2,35 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `2b741d0 (fix(player): enhance 'F' key and fullscreen to expand 100% cinema 16:9 without borders)`
-- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 445ms).
+- **Commit mới nhất**: Chuẩn bị commit tính năng tích hợp toàn bộ chuyên mục bản tin VTV24.
+- **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch (bundle xong trong 450ms).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Nâng Cấp Phím Tắt "F" & Cơ Chế Toàn Màn Hình Thật Sự (Fullscreen Cinema)**:
-   - **Tự động chuyển 16:9 Toàn Cảnh khi Fullscreen**: Khi người dùng bấm `F` (hoặc click nút `[⛶]` trên Header), hệ thống tự động kích hoạt `setIsLandscape(true)` và `setIsFullscreen(true)`, giải phóng khung video bung trọn 100% màn hình máy tính (100vw x 100vh), loại bỏ hoàn toàn viền bo tròn trắng và kích thước dọc hẹp 9:16 ở giữa màn hình.
-   - **Tương thích toàn diện Web Fullscreen API**: Hỗ trợ đầy đủ các vendor prefixes: `requestFullscreen`, `webkitRequestFullscreen`, `mozRequestFullScreen`, `msRequestFullscreen` và `exitFullscreen`, `webkitExitFullscreen`,...
-   - **Lắng nghe đa sự kiện `fullscreenchange`**: Bắt chính xác sự kiện thay đổi trạng thái fullscreen (`fullscreenchange`, `webkitfullscreenchange`, `mozfullscreenchange`, `MSFullscreenChange`) để đồng bộ UI chuẩn xác.
-   - **Xử lý phím Escape thông minh**: Khi đang ở chế độ Fullscreen, nếu người dùng bấm `Escape`, hệ thống chỉ thoát Fullscreen và giữ nguyên modal video đang phát, không làm tắt văng modal ra ngoài.
-   - **Nút Fullscreen [⛶] luôn khả dụng trên Desktop/Tablet**: Bỏ điều kiện ràng buộc `isLandscape`, cho phép nút Toàn Màn Hình xuất hiện trên Header ở mọi chế độ để người dùng có thể nhấp chuột trực tiếp ngoài phím F.
-2. **Khắc Phục Tốc Độ & Tối Ưu Chuyển Clip**:
-   - Loại bỏ cơ chế reload iframe khi bật/tắt tiếng: Toggling âm thanh tức thì qua postMessage `unMute`/`mute` 0ms.
-   - Sửa key iframe thành `currentShort.youtubeId`, không chớp nháy và không bị tải lại không cần thiết.
-3. **Mặc Định Bật Tiếng (Unmuted)**:
-   - Đặt `isMuted = false` theo đúng yêu cầu: Video mở lên có âm thanh ngay.
-4. **Phân Loại 2 Luồng Media Rõ Rệt**:
-   - `🎬 Video trên kênh`: Các bản tin, phóng sự dài 16:9 từ trang chủ của kênh.
-   - `⚡ Video Shorts`: Các video dạng ngắn dọc 9:16 trong danh sách phát Shorts của YouTube của các đài.
-   - Hệ thống tab lọc 3 chế độ: `📺 Tất cả`, `🎬 Video trên kênh`, `⚡ Shorts ngắn`.
-5. **Sửa Triệt Để Lỗi Chồng Đè Header & Dải Kênh trên Shorts (Ảnh 2 & Ảnh mới)**:
-   - Thay thế kiến trúc đa div bằng **MỘT container flex-col duy nhất**.
-   - Khóa chặt việc hiển thị các tab phân loại trung tâm và dải Quick TV Channel pills chỉ khi `isLandscape = true`.
-   - Ở chế độ Dọc Shorts 9:16 (`!isLandscape`), header duy trì đúng 1 dòng sạch sẽ.
-   - Loại bỏ 100% thanh cuộn ngang xám xịt bằng bộ CSS ẩn scrollbar đa nền tảng.
-6. **Sửa Triệt Để Lỗi Lệch Thẻ trong "DANH SÁCH KÊNH TRUYỀN HÌNH" (Ảnh 1)**:
-   - Đồng nhất chiều cao thẻ card `min-h-[135px]` và tagline `min-h-[32px] line-clamp-2`.
-7. **Mở Rộng Cơ Sở Dữ Liệu Video Đa Kênh**:
-   - Bổ sung hơn 50+ video và shorts chân thực, chất lượng cao từ 8 đài chính thống.
-8. **Tương Tác Thực Tế & Kết Nối Tài Khoản Google / Gmail**:
-   - Tự động nhận diện tài khoản Google đã đăng nhập (`userRole` / `user_auth`).
-   - Thích video, Đăng ký theo dõi kênh, Bình luận thực tế lưu trữ bền vững trong `localStorage`.
+1. **Kéo Toàn Bộ Video & Phân Loại Bản Tin Kênh VTV24 Về Hệ Thống**:
+   - **Tích hợp 28+ video bản tin thực tế từ kênh YouTube VTV24**: Trực tiếp từ ảnh chụp trang chủ kênh do người dùng cung cấp (`media_1791877485527_561c6e75.png`).
+   - **Phân loại 4 Chuyên mục bản tin chính của VTV24**:
+     + `🔥 Tin nóng 10 phút`: Bản tin 10 phút trên VTVgo (vụ hài cốt liệt sĩ, camera AI Hà Nội, khởi tố buôn lậu vàng, ngày Giải phóng Thủ đô, đất đai, dông lốc...).
+     + `📰 Tổng hợp tin tức hàng ngày`: Bản tin thời sự toàn cảnh trưa & tối (Chủ tịch Quốc hội Trần Thanh Mẫn dự họp, triệt phá rửa tiền, thảm họa sạt lở ven biển, Tết Nguyên đán 7 ngày...).
+     + `🌍 Thế giới toàn cảnh`: Bản tin quốc tế (Sân bay King Khalid, EU gỡ giám sát Việt Nam, bão Milton, Nga đàm phán hòa bình...).
+     + `📊 Tin tức thời sự & Kinh tế`: Trái phiếu và lãi suất toàn cầu, Đường sắt Hà Nội - Lào Cai, Bản tin sáng, Houthi, bầu cử Mỹ...
+     + `⚡ Shorts ngắn`: Các clip dọc cảnh báo lừa đảo, thị trường giá vàng...
+   - **Hệ thống Lọc Chuyên Mục (Sub-Category Filter Chips)**:
+     + Bổ sung dải nút lọc chuyên mục bản tin trực quan trên **Top Header (Row 3)** khi xem ở chế độ Toàn cảnh 16:9.
+     + Bổ sung dải nút lọc chuyên mục bản tin bên trong **Playlist Drawer (Danh sách phát)**.
+     + Khi người dùng bấm vào chuyên mục bất kỳ, danh sách phát tự động chuyển lọc theo chuyên mục đó và **bắt đầu chạy từ video mới nhất** (`currentIndex = 0`).
+2. **Nâng Cấp Phím Tắt "F" & Cơ Chế Toàn Màn Hình Thật Sự (Fullscreen Cinema)**:
+   - Tự động chuyển 16:9 Toàn Cảnh khi Fullscreen, tràn trọn vẹn màn hình 100vw x 100vh.
+   - Hỗ trợ đầy đủ vendor prefixes của Web Fullscreen API và lắng nghe đa sự kiện `fullscreenchange`.
+   - Phím `Escape` chỉ thoát chế độ Fullscreen, không đóng modal video đột ngột.
+   - Nút Fullscreen `[⛶]` hiển thị trực quan ở cả 2 chế độ (dọc và ngang) trên Desktop/Tablet.
+3. **Phân Loại 2 Luồng Media Rõ Rệt**:
+   - `🎬 Video trên kênh` (16:9) vs `⚡ Video Shorts` (9:16) với hệ thống tab 3 chế độ.
+4. **Mặc Định Mở Tiếng (Unmuted)**:
+   - Video mở lên có âm thanh ngay (`isMuted: false`), toggling âm thanh tức thì qua postMessage 0ms.
+5. **Chống Chồng Đè Header & Dải Kênh**:
+   - Header gom vào 1 container `flex-col` duy nhất, khóa dải điều khiển mở rộng chỉ hiện khi `isLandscape = true`.
+6. **Tương Tác Thực Tế & Kết Nối Tài Khoản Google / Gmail**:
+   - Tự động nhận diện tài khoản Google, tương tác Like, Follow, Comment lưu bền vững vào `localStorage`.
 
 ## 3. CÔNG VIỆC TIẾP THEO & ĐIỀU CẦN CHÚ Ý
 - Bắt buộc tuân thủ `# SYSTEM ADDENDUM — ALWAYS-ON PROJECT MEMORY PROTOCOL` trong `AGENTS.md`.

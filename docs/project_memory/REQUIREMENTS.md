@@ -71,6 +71,14 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
   - Khi người dùng chọn một kênh (ví dụ: `VTV24`), danh sách phát CHỈ phát video của kênh đó.
   - Luôn luôn bắt đầu phát từ **video mới nhất trên kênh** (`currentIndex = 0`).
   - Sắp xếp video theo thời gian xuất bản giảm dần (`publishedAt` mới nhất lên trước).
+- **Hệ Thống Phân Loại Chuyên Mục Bản Tin (Sub-Category News Feeds)**:
+  - Tích hợp toàn diện các chuyên mục bản tin thực tế từ kênh YouTube của đài (điển hình VTV24):
+    + `🔥 Tin nóng 10 phút`
+    + `📰 Tổng hợp tin tức hàng ngày`
+    + `🌍 Thế giới toàn cảnh`
+    + `📊 Tin tức thời sự & Kinh tế`
+  - Cho phép người dùng chuyển đổi chuyên mục trực quan qua dải nút chip trên Header (Row 3) và trong Drawer Playlist.
+  - Khi chọn chuyên mục, danh sách phát lọc tức thì và phát ngay từ video mới nhất của chuyên mục đó.
 
 ### 2.4. Tương Tác Thực Tế & Kết Nối Tài Khoản Google / Gmail
 - **Nhận diện Tài Khoản**:

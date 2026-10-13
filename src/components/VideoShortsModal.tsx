@@ -10,6 +10,7 @@ export interface ShortItem {
   channelId?: string;
   badge: 'TRỰC TIẾP' | 'BẢN TIN' | 'TIÊU ĐIỂM' | 'THỜI TIẾT' | 'TÀI CHÍNH' | 'THẾ GIỚI' | 'BẢN TIN TRANG';
   category: 'Thời sự 24h' | 'Thời tiết TV' | 'Tài chính & Vàng' | 'Thế giới & Cuộc sống';
+  subCategory?: string; // Phân loại bản tin: 'Tin nóng 10 phút' | 'Tổng hợp tin tức hàng ngày' | 'Thế giới toàn cảnh' | 'Tin tức thời sự' | 'Shorts ngắn'
   duration?: string;
   thumbnail?: string;
   likes: number;
@@ -174,73 +175,426 @@ export function matchesChannel(item: ShortItem, channelId: string): boolean {
 
 // ── CƠ SỞ DỮ LIỆU VIDEO PHONG PHÚ: PHÂN LOẠI RÕ RỆT (VIDEO KÊNH 16:9 VS SHORTS 9:16) ──
 export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
-  // ══════════════════ 1. VTV24 ══════════════════
-  // Video trên kênh (16:9)
+  // ══════════════════ 1. VTV24 (KÊNH TRUYỀN HÌNH CHÍNH THỐNG VTV24) ══════════════════
+  // ── [VIDEO NỔI BẬT ĐẦU TRANG] ──
   {
-    id: 'yt-vtv24-v01',
-    youtubeId: 'THldZ31vTvI',
-    title: 'Chuyển động 24h trưa • Tin tức thời sự cập nhật, tình hình quốc tế và sự kiện nổi bật trong ngày',
+    id: 'yt-vtv24-feat-01',
+    youtubeId: 'd0x854Vv78M',
+    title: 'Thời sự toàn cảnh tối 10/10: Tết Nguyên đán Đinh Mùi 2027 nghỉ 7 ngày liên tục | VTV24',
     channel: 'VTV24',
     badge: 'TRỰC TIẾP',
     category: 'Thời sự 24h',
-    duration: '35:20',
-    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
-    likes: 12540,
-    commentsCount: 820,
-    sharesCount: 650,
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '31:17',
+    thumbnail: 'https://i.ytimg.com/vi/d0x854Vv78M/hqdefault.jpg',
+    likes: 40200,
+    commentsCount: 2150,
+    sharesCount: 1680,
     mediaType: 'video',
     aspectRatio: '16:9',
-    publishedAt: '2026-10-13T05:00:00.000Z'
+    publishedAt: '2026-10-10T19:00:00.000Z'
   },
+
+  // ── [PHÂN LOẠI 1: TIN NÓNG 10 PHÚT TRÊN VTVgo] ──
   {
-    id: 'yt-vtv24-v02',
-    youtubeId: 'kFDO9Qbua4c',
-    title: 'VTV24 Tiêu điểm • Cảnh báo thủ đoạn lừa đảo tị nạn và bẫy việc làm trên không gian mạng',
+    id: 'yt-vtv24-tn-01',
+    youtubeId: 'mBwR5jE57gA',
+    title: 'TP. Hồ Chí Minh sẵn sàng đưa 731 hài cốt liệt sĩ về an táng trang trọng | VTV24',
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
     category: 'Thời sự 24h',
-    duration: '14:45',
-    thumbnail: 'https://i.ytimg.com/vi/kFDO9Qbua4c/hqdefault.jpg',
-    likes: 8920,
-    commentsCount: 540,
-    sharesCount: 420,
+    subCategory: 'Tin nóng 10 phút',
+    duration: '10:27',
+    thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=70',
+    likes: 1320,
+    commentsCount: 95,
+    sharesCount: 78,
     mediaType: 'video',
     aspectRatio: '16:9',
-    publishedAt: '2026-10-13T03:45:00.000Z'
+    publishedAt: '2026-10-13T13:00:00.000Z'
   },
   {
-    id: 'yt-vtv24-v03',
-    youtubeId: '0thQbm1zlW4',
-    title: 'Kinh tế 24h • Biến động giá vàng miếng SJC, thị trường tài chính và khuyến nghị nhà đầu tư',
+    id: 'yt-vtv24-tn-02',
+    youtubeId: 'f6UuO3z_gW0',
+    title: 'TIN NÓNG 10 PHÚT 12/10: Camera AI tại Hà Nội phát hiện vi phạm giao thông | VTV24',
     channel: 'VTV24',
-    badge: 'TÀI CHÍNH',
-    category: 'Tài chính & Vàng',
-    duration: '16:10',
-    thumbnail: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=70',
-    likes: 7410,
-    commentsCount: 480,
-    sharesCount: 310,
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    subCategory: 'Tin nóng 10 phút',
+    duration: '8:54',
+    thumbnail: 'https://images.unsplash.com/photo-1508873696983-2df5293cb395?w=600&auto=format&fit=crop&q=70',
+    likes: 16400,
+    commentsCount: 780,
+    sharesCount: 520,
     mediaType: 'video',
     aspectRatio: '16:9',
-    publishedAt: '2026-10-13T01:30:00.000Z'
+    publishedAt: '2026-10-12T13:00:00.000Z'
   },
   {
-    id: 'yt-vtv24-v04',
-    youtubeId: 'M7lc1UVf-VE',
-    title: 'Toàn cảnh VTV24 • Triển vọng kinh tế số và làn sóng đầu tư công nghệ cao vào Việt Nam',
+    id: 'yt-vtv24-tn-03',
+    youtubeId: 'm_1b8eY-VqA',
+    title: 'TIN NÓNG 10 PHÚT ngày 11/10: Khởi tố 7 bị can trong vụ án buôn lậu và trốn thuế | VTV24',
+    channel: 'VTV24',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    subCategory: 'Tin nóng 10 phút',
+    duration: '10:28',
+    thumbnail: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&auto=format&fit=crop&q=70',
+    likes: 28500,
+    commentsCount: 1420,
+    sharesCount: 890,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-11T13:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tn-04',
+    youtubeId: '4G6uY8L_rEw',
+    title: 'Tin nóng 10 phút 10/10/2026: Nhiều hoạt động chào mừng 72 năm ngày Giải phóng Thủ đô | VTV24',
     channel: 'VTV24',
     badge: 'BẢN TIN',
     category: 'Thời sự 24h',
-    duration: '22:15',
-    thumbnail: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=70',
-    likes: 6320,
-    commentsCount: 395,
-    sharesCount: 280,
+    subCategory: 'Tin nóng 10 phút',
+    duration: '8:30',
+    thumbnail: 'https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=600&auto=format&fit=crop&q=70',
+    likes: 15300,
+    commentsCount: 640,
+    sharesCount: 410,
     mediaType: 'video',
     aspectRatio: '16:9',
-    publishedAt: '2026-10-12T16:00:00.000Z'
+    publishedAt: '2026-10-10T13:00:00.000Z'
   },
-  // Shorts trên kênh (9:16)
+  {
+    id: 'yt-vtv24-tn-05',
+    youtubeId: 'jV0-8w7x9qA',
+    title: 'TIN NÓNG 10 PHÚT 09/10: Khởi tố 2 bị can trong vụ sai phạm đất đai và tài sản công | VTV24',
+    channel: 'VTV24',
+    badge: 'TIÊU ĐIỂM',
+    category: 'Thời sự 24h',
+    subCategory: 'Tin nóng 10 phút',
+    duration: '10:55',
+    thumbnail: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=70',
+    likes: 17200,
+    commentsCount: 810,
+    sharesCount: 560,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-09T13:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tn-06',
+    youtubeId: 'v_3vQ7L_9xA',
+    title: 'Tin nóng 10 phút 07/10: Cây cổ thụ bật gốc, nhiều tuyến đường ngập sâu sau dông lốc | VTV24',
+    channel: 'VTV24',
+    badge: 'THỜI TIẾT',
+    category: 'Thời sự 24h',
+    subCategory: 'Tin nóng 10 phút',
+    duration: '9:28',
+    thumbnail: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=600&auto=format&fit=crop&q=70',
+    likes: 14800,
+    commentsCount: 590,
+    sharesCount: 380,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-07T13:00:00.000Z'
+  },
+
+  // ── [PHÂN LOẠI 2: TỔNG HỢP TIN TỨC HÀNG NGÀY (THỜI SỰ TOÀN CẢNH TRƯA & TỐI)] ──
+  {
+    id: 'yt-vtv24-th-01',
+    youtubeId: 'THldZ31vTvI',
+    title: 'TSTC trưa 13/10: Triệt phá đường dây rửa tiền xuyên quốc gia hàng nghìn tỷ | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '28:31',
+    thumbnail: 'https://i.ytimg.com/vi/THldZ31vTvI/hqdefault.jpg',
+    likes: 24600,
+    commentsCount: 1320,
+    sharesCount: 970,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T12:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-th-02',
+    youtubeId: 'kFDO9Qbua4c',
+    title: 'Thời sự toàn cảnh tối 12/10: Chủ tịch Quốc hội Trần Thanh Mẫn dự phiên họp Quốc hội | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '37:11',
+    thumbnail: 'https://i.ytimg.com/vi/kFDO9Qbua4c/hqdefault.jpg',
+    likes: 45200,
+    commentsCount: 2410,
+    sharesCount: 1840,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T19:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-th-03',
+    youtubeId: '0thQbm1zlW4',
+    title: 'TSTC trưa 12/10: Ít nhất 139 người thiệt mạng trong thảm họa lũ lụt và sạt lở ven biển | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '23:51',
+    thumbnail: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=600&auto=format&fit=crop&q=70',
+    likes: 35100,
+    commentsCount: 1890,
+    sharesCount: 1450,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T12:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-th-04',
+    youtubeId: 'M7lc1UVf-VE',
+    title: 'Thời sự toàn cảnh tối 11/10: Chủ tịch Quốc hội Trần Thanh Mẫn tham dự chuỗi sự kiện đối ngoại | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '43:33',
+    thumbnail: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=70',
+    likes: 74500,
+    commentsCount: 3820,
+    sharesCount: 2910,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-11T19:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-th-05',
+    youtubeId: '7yqJ9vGqV1k',
+    title: 'Thời sự toàn cảnh trưa 11/10: Chủ tịch Quốc hội thăm chính thức và ký kết hợp tác quốc tế | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '21:01',
+    thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=70',
+    likes: 106400,
+    commentsCount: 5120,
+    sharesCount: 4230,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-11T12:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-th-06',
+    youtubeId: 'Kmx55fnX6jM',
+    title: 'Thời sự toàn cảnh trưa 10/10: Tình hình an ninh kinh tế và các vấn đề xã hội được quan tâm | VTV24',
+    channel: 'VTV24',
+    badge: 'TRỰC TIẾP',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: '25:40',
+    thumbnail: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=70',
+    likes: 29800,
+    commentsCount: 1350,
+    sharesCount: 920,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-10T12:00:00.000Z'
+  },
+
+  // ── [PHÂN LOẠI 3: THẾ GIỚI TOÀN CẢNH (BẢN TIN QUỐC TẾ)] ──
+  {
+    id: 'yt-vtv24-tg-01',
+    youtubeId: 'utYT3v_KTyo',
+    title: 'Thế giới toàn cảnh 13/10: Sân bay quốc tế King Khalid mở rộng đón làn sóng khách quốc tế | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Thế giới toàn cảnh',
+    duration: '16:25',
+    thumbnail: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&auto=format&fit=crop&q=70',
+    likes: 26400,
+    commentsCount: 1180,
+    sharesCount: 820,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T09:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tg-02',
+    youtubeId: 'W4iP2Xb4qB4',
+    title: 'Thế giới toàn cảnh ngày 12/10: Sân bay King Khalid đón kỷ lục hành khách và nâng tầm kết nối | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Thế giới toàn cảnh',
+    duration: '13:54',
+    thumbnail: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&auto=format&fit=crop&q=70',
+    likes: 131200,
+    commentsCount: 6540,
+    sharesCount: 4890,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T09:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tg-03',
+    youtubeId: 't2FGBb5uLhM',
+    title: 'Thế giới toàn cảnh ngày 11/10: Sân bay King Khalid triển khai công nghệ AI tự động hóa vận hành | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Thế giới toàn cảnh',
+    duration: '15:54',
+    thumbnail: 'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&auto=format&fit=crop&q=70',
+    likes: 105000,
+    commentsCount: 4920,
+    sharesCount: 3670,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-11T09:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tg-04',
+    youtubeId: '2dF9eHjK9wY',
+    title: 'Thế giới toàn cảnh 10/10: EU đưa Việt Nam và Panama ra khỏi danh sách giám sát đặc biệt | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Thế giới toàn cảnh',
+    duration: '17:20',
+    thumbnail: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=70',
+    likes: 209000,
+    commentsCount: 9840,
+    sharesCount: 7120,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-10T09:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tg-05',
+    youtubeId: 'o3vQ8i9E2xQ',
+    title: 'Thế giới toàn cảnh ngày 09/10: Mỹ khẩn trương ứng phó siêu bão Milton đổ bộ tàn phá | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Thế giới toàn cảnh',
+    duration: '14:20',
+    thumbnail: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=600&auto=format&fit=crop&q=70',
+    likes: 51200,
+    commentsCount: 2430,
+    sharesCount: 1890,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-09T09:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-tg-06',
+    youtubeId: 'jT2R-q1M9cA',
+    title: 'Thế giới toàn cảnh 08/10: Nga bác bỏ thông tin về các cuộc đàm phán bí mật với phương Tây | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Thế giới toàn cảnh',
+    duration: '20:35',
+    thumbnail: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=600&auto=format&fit=crop&q=70',
+    likes: 61400,
+    commentsCount: 3120,
+    sharesCount: 2340,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-08T09:00:00.000Z'
+  },
+
+  // ── [PHÂN LOẠI 4: TIN TỨC THỜI SỰ & KINH TẾ] ──
+  {
+    id: 'yt-vtv24-ts-01',
+    youtubeId: 'xK0vQ9P1L1k',
+    title: 'Lợi suất trái phiếu và bài toán lãi suất toàn cầu | VTV24',
+    channel: 'VTV24',
+    badge: 'TÀI CHÍNH',
+    category: 'Tài chính & Vàng',
+    subCategory: 'Tin tức thời sự',
+    duration: '8:07',
+    thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=70',
+    likes: 5200,
+    commentsCount: 310,
+    sharesCount: 220,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T12:30:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-ts-02',
+    youtubeId: 'p5V8x9Z1y3c',
+    title: 'Đường sắt Hà Nội - Lào Cai tăng chuyến, giảm ga dừng thúc đẩy giao thương du lịch | VTV24',
+    channel: 'VTV24',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    subCategory: 'Tin tức thời sự',
+    duration: '9:30',
+    thumbnail: 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=600&auto=format&fit=crop&q=70',
+    likes: 3600,
+    commentsCount: 240,
+    sharesCount: 180,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T10:30:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-ts-03',
+    youtubeId: '819YbuGDpK0',
+    title: 'BẢN TIN SÁNG 13/10: Nga miễn thị thực cho công dân một số nước và các điểm tin nóng | VTV24',
+    channel: 'VTV24',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    subCategory: 'Tin tức thời sự',
+    duration: '12:45',
+    thumbnail: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=70',
+    likes: 20400,
+    commentsCount: 1150,
+    sharesCount: 840,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-13T06:30:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-ts-04',
+    youtubeId: '3ojcuyMKDvs',
+    title: 'Houthi liên tiếp tấn công sân bay Ả Rập Xêút | Cụm tin quốc tế | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Tin tức thời sự',
+    duration: '10:51',
+    thumbnail: 'https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=600&auto=format&fit=crop&q=70',
+    likes: 25800,
+    commentsCount: 1390,
+    sharesCount: 990,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T15:00:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-ts-05',
+    youtubeId: 'Kmx55fnX6jM',
+    title: 'Băn khoăn của cử tri Mỹ trước bầu cử giữa kỳ và những tác động kinh tế mới | VTV24',
+    channel: 'VTV24',
+    badge: 'THẾ GIỚI',
+    category: 'Thế giới & Cuộc sống',
+    subCategory: 'Tin tức thời sự',
+    duration: '8:47',
+    thumbnail: 'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=600&auto=format&fit=crop&q=70',
+    likes: 90200,
+    commentsCount: 4890,
+    sharesCount: 3720,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-12T14:00:00.000Z'
+  },
+
+  // ── [SHORTS TRÊN KÊNH VTV24 (9:16 DỌC)] ──
   {
     id: 'yt-vtv24-s01',
     youtubeId: '819YbuGDpK0',
@@ -248,6 +602,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
     channel: 'VTV24',
     badge: 'TIÊU ĐIỂM',
     category: 'Thời sự 24h',
+    subCategory: 'Shorts ngắn',
     duration: '0:58',
     thumbnail: 'https://cdn2.tuoitre.vn/471584752817336320/2026/10/12/quy-chuan00004318still141-17917883369831355170827.jpg',
     likes: 18400,
@@ -264,6 +619,7 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
     channel: 'VTV24',
     badge: 'TÀI CHÍNH',
     category: 'Tài chính & Vàng',
+    subCategory: 'Shorts ngắn',
     duration: '0:48',
     thumbnail: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&auto=format&fit=crop&q=70',
     likes: 15200,
@@ -272,6 +628,40 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
     mediaType: 'short',
     aspectRatio: '9:16',
     publishedAt: '2026-10-13T04:30:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-s03',
+    youtubeId: 'ADGo5NaYQNM',
+    title: 'VTV24 Shorts • Cảnh báo bão và hình thái thời tiết mưa lớn dông lốc nguy hiểm tại các tỉnh ven biển',
+    channel: 'VTV24',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    subCategory: 'Shorts ngắn',
+    duration: '0:59',
+    thumbnail: 'https://images.unsplash.com/photo-1592210454359-9043f067919b?w=600&auto=format&fit=crop&q=70',
+    likes: 12800,
+    commentsCount: 670,
+    sharesCount: 520,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-12T16:30:00.000Z'
+  },
+  {
+    id: 'yt-vtv24-s04',
+    youtubeId: 'gusC3mjEV3I',
+    title: 'VTV24 Shorts • Thị trường tiêu dùng: Sức mua các mặt hàng thiết yếu tại các siêu thị lớn tăng cao',
+    channel: 'VTV24',
+    badge: 'TÀI CHÍNH',
+    category: 'Tài chính & Vàng',
+    subCategory: 'Shorts ngắn',
+    duration: '1:05',
+    thumbnail: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=600&auto=format&fit=crop&q=70',
+    likes: 14100,
+    commentsCount: 780,
+    sharesCount: 610,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-12T08:00:00.000Z'
   },
 
   // ══════════════════ 2. BÁO TIỀN PHONG ══════════════════
@@ -926,6 +1316,7 @@ export function VideoShortsModal({
   const [selectedChannelId, setSelectedChannelId] = useState<string>('all');
   const [showChannelMenu, setShowChannelMenu] = useState<boolean>(false);
   const [mediaTab, setMediaTab] = useState<'all' | 'video' | 'short'>('all');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
 
   // Danh sách video đa kênh
   const [multiChannelVideos, setMultiChannelVideos] = useState<ShortItem[]>(() => {
@@ -1223,12 +1614,28 @@ export function VideoShortsModal({
     return map;
   }, [allAvailableVideos]);
 
-  // Playlist lọc theo KÊNH đã chọn & ĐỊNH DẠNG (Video trang chủ vs Shorts)
+  // Danh sách các chuyên mục bản tin thực tế của kênh hiện tại (VTV24: Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
+  const availableSubCategories = useMemo(() => {
+    const currentChannelVideos = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
+    const subCats = new Set<string>();
+    currentChannelVideos.forEach(item => {
+      if (item.subCategory && item.subCategory !== 'Shorts ngắn') {
+        subCats.add(item.subCategory);
+      }
+    });
+    return Array.from(subCats);
+  }, [allAvailableVideos, selectedChannelId]);
+
+  // Playlist lọc theo KÊNH đã chọn, ĐỊNH DẠNG & CHUYÊN MỤC PHÂN LOẠI BẢN TIN
   const playlist = useMemo(() => {
     let result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
 
     if (mediaTab !== 'all') {
       result = result.filter(item => item.mediaType === mediaTab);
+    }
+
+    if (selectedSubCategory !== 'all') {
+      result = result.filter(item => item.subCategory === selectedSubCategory);
     }
 
     // Luôn sắp xếp từ video MỚI NHẤT trên kênh
@@ -1243,7 +1650,7 @@ export function VideoShortsModal({
     }
 
     return result.length > 0 ? result : BACKUP_FALLBACK_SHORTS;
-  }, [allAvailableVideos, selectedChannelId, mediaTab]);
+  }, [allAvailableVideos, selectedChannelId, mediaTab, selectedSubCategory]);
 
   const currentShort = playlist[currentIndex] || playlist[0] || BACKUP_FALLBACK_SHORTS[0];
 
@@ -1326,6 +1733,7 @@ export function VideoShortsModal({
   // Chọn kênh
   const handleSelectChannel = (channelId: string) => {
     setSelectedChannelId(channelId);
+    setSelectedSubCategory('all');
     setShowChannelMenu(false);
     setCurrentIndex(0); // Bắt đầu từ video mới nhất
     if (typeof window !== 'undefined' && window.innerWidth >= 1024 && mediaTab !== 'short') {
@@ -1335,6 +1743,15 @@ export function VideoShortsModal({
     const ch = TV_CHANNELS.find(c => c.id === channelId) || TV_CHANNELS[0];
     setShowToast(`📺 Đang phát ${ch.number}: ${ch.name} • Từ video mới nhất`);
     setTimeout(() => setShowToast(null), 2500);
+  };
+
+  // Chọn chuyên mục phân loại bản tin (Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
+  const handleSelectSubCategory = (subCat: string) => {
+    setSelectedSubCategory(subCat);
+    setCurrentIndex(0); // Bắt đầu từ video mới nhất của chuyên mục
+    const label = subCat === 'all' ? 'Toàn bộ chuyên mục bản tin' : subCat;
+    setShowToast(`📂 Đang phát: ${label} • Từ video mới nhất`);
+    setTimeout(() => setShowToast(null), 2000);
   };
 
   // Chọn định dạng
@@ -2064,6 +2481,54 @@ export function VideoShortsModal({
               })}
             </div>
           )}
+
+          {/* Row 3: Quick Sub-Category Filter Pills nếu kênh có phân loại bản tin (VTV24: Tin nóng 10 phút, Tổng hợp thời sự, Thế giới toàn cảnh...) */}
+          {isLandscape && availableSubCategories.length > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pointer-events-auto">
+              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <span>📂 Chuyên mục:</span>
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectSubCategory('all');
+                }}
+                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
+                  selectedSubCategory === 'all'
+                    ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                    : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
+                }`}
+              >
+                <span>Tất cả bản tin ({allAvailableVideos.filter(i => matchesChannel(i, selectedChannelId) && (mediaTab === 'all' || i.mediaType === mediaTab)).length})</span>
+              </button>
+              {availableSubCategories.map(subCat => {
+                const isActive = selectedSubCategory === subCat;
+                const icon = subCat.includes('Tin nóng') ? '🔥' : subCat.includes('Tổng hợp') ? '📰' : subCat.includes('Thế giới') ? '🌍' : '📊';
+                const count = allAvailableVideos.filter(i => matchesChannel(i, selectedChannelId) && i.subCategory === subCat && (mediaTab === 'all' || i.mediaType === mediaTab)).length;
+                return (
+                  <button
+                    key={subCat}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectSubCategory(subCat);
+                    }}
+                    className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
+                      isActive
+                        ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                        : 'bg-black/60 hover:bg-black/85 text-white/90 border-white/15'
+                    }`}
+                  >
+                    <span>{icon}</span>
+                    <span>{subCat}</span>
+                    <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${isActive ? 'bg-black/30 text-black' : 'bg-white/10 text-white/70'}`}>
+                      {count}
+                    </span>
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping shrink-0"></span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── CỘT TƯƠNG TÁC: THÍCH, BÌNH LUẬN, CHIA SẺ, PLAYLIST ── */}
@@ -2375,6 +2840,40 @@ export function VideoShortsModal({
               })}
             </div>
 
+            {/* Dải chọn chuyên mục bản tin phân loại (Tin nóng 10 phút, Tổng hợp tin tức...) */}
+            {availableSubCategories.length > 0 && (
+              <div className="flex items-center gap-1.5 py-2 border-b border-white/10 shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <button
+                  onClick={() => handleSelectSubCategory('all')}
+                  className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
+                    selectedSubCategory === 'all'
+                      ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-sm'
+                      : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                  }`}
+                >
+                  📁 Tất cả chuyên mục
+                </button>
+                {availableSubCategories.map(subCat => {
+                  const isActive = selectedSubCategory === subCat;
+                  const icon = subCat.includes('Tin nóng') ? '🔥' : subCat.includes('Tổng hợp') ? '📰' : subCat.includes('Thế giới') ? '🌍' : '📊';
+                  return (
+                    <button
+                      key={subCat}
+                      onClick={() => handleSelectSubCategory(subCat)}
+                      className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
+                        isActive
+                          ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-sm'
+                          : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                      }`}
+                    >
+                      <span>{icon}</span>
+                      <span>{subCat}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Cuộn danh sách video clip */}
             <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-2.5 pr-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {playlist.map((item, idx) => {
@@ -2418,6 +2917,11 @@ export function VideoShortsModal({
                         }`}>
                           {item.badge}
                         </span>
+                        {item.subCategory && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 truncate max-w-[130px]">
+                            {item.subCategory}
+                          </span>
+                        )}
                         {isSelected && (
                           <span className="text-[9.5px] font-bold text-red-400 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
@@ -2428,9 +2932,14 @@ export function VideoShortsModal({
                       <p className={`text-[12px] font-semibold line-clamp-2 mt-0.5 leading-snug ${isSelected ? 'text-white font-bold' : 'text-neutral-200'}`}>
                         {item.title}
                       </p>
-                      <span className="text-[10px] text-neutral-400 mt-0.5 truncate">
-                        {item.channel}
-                      </span>
+                      <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-0.5">
+                        <span className="truncate">{item.channel}</span>
+                        {item.publishedAt && (
+                          <span className="text-[9.5px] text-neutral-500 shrink-0 ml-1">
+                            {new Date(item.publishedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
