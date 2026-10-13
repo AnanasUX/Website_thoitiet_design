@@ -2,11 +2,16 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `f250ef7 (fix(shorts): optimize responsive design across Mobile, Tablet, PC, remove redundant mobile controls, use 100% YouTube sources and expand multi-channel news)`
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 426ms, 471.36 kB).
+- **Commit gần nhất**: `cfd3bb4 (fix(player): fix Top Header controls overlap in portrait mode by hiding duplicate playlist button and compacting ratio toggle)`
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 466ms, 471.72 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Lấy Shorts 100% YouTube Chính Thống, Không Lấy Video Tại Trang**:
+1. **Khắc Phục Triệt Để Lỗi Chèn Ép & Đè Nút Trên Top Header Ở Chế Độ Dọc (Ảnh Người Dùng Gửi)**:
+   - **Nguyên nhân gốc rễ**: Khi ở chế độ Dọc Shorts (`!isLandscape`), chiều rộng khung video chỉ khoảng 390px - 420px. Việc render cả nút `[= Danh sách 55]` (chiếm hơn 115px) và nút tỉ lệ `[📱 9:16]` trên Header đã làm cụm điều khiển bên phải vượt quá 310px, đè bẹp dí nút Kênh TV `[🔴 CH 01 • VTV24 ▾]` ở bên trái.
+   - **Giải pháp dứt điểm**:
+     + Ẩn hoàn toàn nút `[= Danh sách]` trên Header khi ở chế độ dọc (vì ở góc dưới bên phải ĐÃ CÓ nút `[List]` chuyên dụng của Shorts). Nút này CHỈ hiển thị khi ở chế độ Toàn Cảnh 16:9 (`isLandscape`).
+     + Chuyển nút Tỉ lệ trong chế độ dọc thành nút tròn nhỏ gọn `32px` `[🖥️]` (ẩn trên mobile, hiện trên tablet/desktop).
+     + Giúp tổng chiều rộng cụm nút bên phải giảm từ 310px xuống chỉ còn 128px (trên desktop/tablet) và 64px (trên mobile), giải phóng hơn 180px không gian cho Logo và Nút Kênh TV hiển thị đầy đủ, thoáng đãng 100% không bao giờ bị đè.
    - Loại bỏ hoàn toàn video nội bộ MP4 (`isSiteNews`, cdn tuoitre) và kênh placeholder `site` khỏi cơ sở dữ liệu Shorts.
    - 100% video và Shorts đều lấy từ YouTube với `youtubeId` thật đã xác minh và thumbnail `https://i.ytimg.com/vi/{id}/hqdefault.jpg` chuẩn của YouTube.
    - Bổ sung nhiều nguồn video phong phú từ các đài truyền hình và báo chí lớn: ANTV, VnExpress TV, Báo Dân Trí, Báo Lao Động, Báo Tuổi Trẻ, Báo Thanh Niên, Báo Tiền Phong, VTC NOW, VTV Thời Tiết, VTV24.
