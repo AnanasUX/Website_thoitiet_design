@@ -21,7 +21,9 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
   - Tuyệt đối không bị vỡ bố cục trên Tablet (kể cả khi cầm đứng hay xoay ngang).
 - **Quy chuẩn Header & Chống Đè Nút trên Shorts (Ảnh 2 & Ảnh mới - Đã khắc phục triệt để)**:
   - Header bar tinh gọn, được cấu trúc trong MỘT container `flex-col` duy nhất:
-    - *Khung dọc Shorts 9:16 (`!isLandscape`)*: Header duy trì duy nhất 1 hàng tối giản, không bao giờ xuất hiện hàng thứ hai hay các tab trung tâm gây tràn đè. Bao gồm: Logo `Anx. TV`, Nút Kênh `[🔴 CH 01 • VTV24 ▾]`, Nút `[🖥️]`, Nút `[📋]`, Nút Âm thanh `[🔊]`, Nút Đóng `[✕]`.
+    - *Khung dọc Shorts 9:16 (`!isLandscape`)*:
+      + **Trên Mobile (< 640px)**: Header tối giản tuyệt đối, chỉ có 2 cụm: Bên trái (Logo `Anx. TV` + Nút Kênh `[🔴 CH 01 • VTV24 ▾]`) và Bên phải (Nút Âm thanh `[🔊]` + Nút Đóng `[✕]`). Loại bỏ hoàn toàn các nút xoay 16:9, nút playlist trên header, nút fullscreen và nút TV guide để chống đè nút 100%.
+      + **Trên Tablet & PC (>= 640px)**: Hiển thị thêm Nút Tỉ lệ `[16:9/9:16]`, Nút Playlist `[📋 Danh sách]`, Nút Fullscreen `[⛶]`.
     - *Chế độ Toàn Cảnh 16:9 (`isLandscape`)*: Cho phép hiển thị thêm bộ lọc Tab trung tâm và Dải Quick TV Channel Pills đặt tự nhiên ở hàng thứ hai (Row 2) trong cùng container, loại bỏ hoàn toàn khả năng va chạm hay chồng lấn z-index.
     - Triệt tiêu 100% thanh cuộn ngang xám xịt trên mọi trình duyệt bằng CSS: `[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden`.
 - **Quy chuẩn Icon & Nút tương tác (Bắt buộc không được vi phạm)**:

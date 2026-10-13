@@ -46,6 +46,5 @@
 - **Từ chối**: Reload iframe khi người dùng bấm Mute (gây chậm, chớp màn hình và đơ luồng phát).
 - **Từ chối**: Sử dụng sidebar cứng bên ngoài đặt cạnh video player (làm co nhỏ video, tạo khoảng trống đen thừa thãi và phá vỡ trải nghiệm xem toàn màn hình).
 - **Từ chối**: Hiển thị dải Quick Channel Pills trên mobile portrait (gây đè nút Header và xuất hiện thanh cuộn xám).
-- **Từ chối**: Sử dụng nút xem trên YouTube hoặc icon liên kết ngoài mở app YouTube (gây thoát trang, vi phạm trải nghiệm người dùng).
-- **Từ chối**: Cho phép phụ đề tự động dịch hiển thị che chắn nội dung video (gây rối mắt và dịch sai ngữ nghĩa).
-- **Từ chối**: Đặt kích thước icon bằng flex thông thường mà không có `minWidth/minHeight` hoặc inline style cố định (gây méo icon thành hình oval trên tablet/mobile khi co giãn).
+- **Từ chối**: Sử dụng video MP4 nội bộ lưu trữ tại trang cho luồng Shorts (gây thiếu phong phú, lỗi codec hoặc độ trễ tải, thay vào đó lấy 100% video YouTube chính thống).
+- **Từ chối**: Nhồi nhét các nút điều khiển xoay 16:9, playlist drawer trùng lặp hay fullscreen lên Top Header trên Mobile (làm tràn mép và đè lên tên kênh, gây hỏng giao diện di động).
