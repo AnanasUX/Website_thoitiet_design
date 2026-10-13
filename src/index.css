@@ -69,7 +69,6 @@ h6 { font-size: var(--font-h6); line-height: 1.4; font-weight: 600; }
 button {
   font-size: var(--font-button);
   line-height: 1.4;
-  min-height: 44px;
 }
 
 /* Apple-style Dark Mode */
