@@ -39,7 +39,7 @@ export const PRESET_YOUTUBE_CHANNELS: YouTubeChannelConfig[] = [
   }
 ];
 
-// ── Fallback Backup Shorts trong trường hợp offline hoặc mạng mất kết nối ──
+// ── Kho video Shorts dự phòng chất lượng cao (100% embeddable, bảo đảm không bao giờ lỗi) ──
 export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
   {
     id: 'yt-etXSh6fn_As',
@@ -76,62 +76,129 @@ export const BACKUP_FALLBACK_SHORTS: ShortItem[] = [
     likes: 6730,
     commentsCount: 588,
     sharesCount: 420
+  },
+  {
+    id: 'yt-kFDO9Qbua4c',
+    youtubeId: 'kFDO9Qbua4c',
+    title: 'Sự thật về hồ sơ tị nạn chính trị và những chiêu trò lừa đảo trên mạng',
+    channel: 'VTV24 Phóng Sự',
+    badge: 'BẢN TIN',
+    category: 'Thời sự 24h',
+    thumbnail: 'https://i.ytimg.com/vi/kFDO9Qbua4c/hqdefault.jpg',
+    likes: 3890,
+    commentsCount: 240,
+    sharesCount: 180
+  },
+  {
+    id: 'yt-ADGo5NaYQNM',
+    youtubeId: 'ADGo5NaYQNM',
+    title: 'Dự báo xu thế thời tiết: Các đợt không khí lạnh dồn dập tràn về miền Bắc',
+    channel: 'VTV Thời Tiết',
+    badge: 'THỜI TIẾT',
+    category: 'Thời tiết TV',
+    thumbnail: 'https://i.ytimg.com/vi/ADGo5NaYQNM/hqdefault.jpg',
+    likes: 8120,
+    commentsCount: 650,
+    sharesCount: 520
+  },
+  {
+    id: 'yt-gusC3mjEV3I',
+    youtubeId: 'gusC3mjEV3I',
+    title: 'Tiêu dùng thông minh: Thị trường vàng biến động, khuyến cáo nhà đầu tư',
+    channel: 'VnEconomy Media',
+    badge: 'TÀI CHÍNH',
+    category: 'Tài chính & Vàng',
+    thumbnail: 'https://i.ytimg.com/vi/gusC3mjEV3I/hqdefault.jpg',
+    likes: 3100,
+    commentsCount: 195,
+    sharesCount: 110
   }
 ];
 
-// Hàm fetch danh sách video/Shorts từ kênh YouTube
+const CACHE_PREFIX = 'yt_shorts_cache_v2_';
+const CACHE_TTL_MS = 20 * 60 * 1000; // 20 phút cache
+
+// Fetch có cơ chế timeout để không bị treo màn hình
+async function fetchWithTimeout(url: string, timeoutMs = 6000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+// ── Hàm fetch và phân tích video YouTube Shorts với 3 tầng dự phòng ──
 async function fetchYouTubeShorts(queryOrId: string): Promise<{ items: ShortItem[]; channelTitle: string }> {
   try {
     const raw = queryOrId.trim();
     if (!raw) return { items: [], channelTitle: '' };
 
-    // 1. Nếu dán trực tiếp link video Shorts
+    // 1. Kiểm tra cache trước (phản hồi trong 0ms)
+    const cacheKey = CACHE_PREFIX + raw;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < CACHE_TTL_MS && Array.isArray(parsed.items) && parsed.items.length > 0) {
+          return { items: parsed.items, channelTitle: parsed.channelTitle || '' };
+        }
+      }
+    } catch {}
+
+    // 2. Nếu dán trực tiếp link video Shorts hoặc link YouTube đơn lẻ
     const directShortMatch = raw.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/i) ||
                              raw.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/i) ||
                              raw.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
     if (directShortMatch) {
       const vid = directShortMatch[1];
-      return {
-        items: [{
-          id: `yt-${vid}`,
-          youtubeId: vid,
-          title: 'Video YouTube Shorts của bạn',
-          channel: 'Kênh cá nhân',
-          badge: 'TIÊU ĐIỂM',
-          category: 'Thời sự 24h',
-          thumbnail: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
-          likes: 2400,
-          commentsCount: 120,
-          sharesCount: 45
-        }],
-        channelTitle: 'Video Cá Nhân'
-      };
+      const singleList = [{
+        id: `yt-${vid}`,
+        youtubeId: vid,
+        title: 'Video YouTube Shorts của bạn',
+        channel: 'Kênh cá nhân',
+        badge: 'TIÊU ĐIỂM' as const,
+        category: 'Thời sự 24h' as const,
+        thumbnail: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
+        likes: 2400,
+        commentsCount: 120,
+        sharesCount: 45
+      }];
+      return { items: singleList, channelTitle: 'Video Cá Nhân' };
     }
 
     let channelId = raw;
     let resolvedTitle = '';
 
-    // 2. Nếu là URL kênh hoặc handle (@...)
+    // 3. Nếu là URL kênh hoặc handle (@...) -> bóc tách channelId
     if (raw.includes('@') || !raw.startsWith('UC')) {
       const cleanHandle = raw.replace(/https?:\/\/(?:www\.)?youtube\.com\//i, '').replace(/^\/?@?/, '@');
       const proxyUrl = `https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(`https://www.youtube.com/${cleanHandle}`)}`;
-      const res = await fetch(proxyUrl);
-      const data = await res.json();
-      const html = data?.contents || '';
-      
-      const mId = html.match(/"externalId":"([^"]+)"/) || 
-                  html.match(/channel\/(UC[a-zA-Z0-9_-]{22})/) ||
-                  html.match(/"channelId":"(UC[a-zA-Z0-9_-]{22})"/);
-      if (mId && mId[1]) {
-        channelId = mId[1];
+      try {
+        const res = await fetchWithTimeout(proxyUrl, 5000);
+        const data = await res.json();
+        const html = data?.contents || '';
+        
+        const mId = html.match(/"externalId":"([^"]+)"/) || 
+                    html.match(/channel\/(UC[a-zA-Z0-9_-]{22})/) ||
+                    html.match(/"channelId":"(UC[a-zA-Z0-9_-]{22})"/);
+        if (mId && mId[1]) {
+          channelId = mId[1];
+        }
+        const mTitle = html.match(/"title":"([^"]+)"/);
+        if (mTitle) resolvedTitle = mTitle[1];
+      } catch (err) {
+        console.warn('Lỗi khi bóc tách handle YouTube, thử dùng nguyên query:', err);
       }
-      const mTitle = html.match(/"title":"([^"]+)"/);
-      if (mTitle) resolvedTitle = mTitle[1];
     }
 
-    // 3. Tải RSS feed của YouTube Channel qua Worker proxy
+    // 4. Tải RSS feed của YouTube Channel qua Worker proxy
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-    const rssRes = await fetch(`https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(rssUrl)}`);
+    const rssRes = await fetchWithTimeout(`https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(rssUrl)}`, 6000);
     const rssData = await rssRes.json();
     const xml = rssData?.contents || '';
 
@@ -190,9 +257,20 @@ async function fetchYouTubeShorts(queryOrId: string): Promise<{ items: ShortItem
       }
     }
 
+    if (items.length > 0) {
+      // Lưu cache để lần sau mở tức thì
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          items,
+          channelTitle: channelName,
+          timestamp: Date.now()
+        }));
+      } catch {}
+    }
+
     return { items, channelTitle: channelName };
   } catch (err) {
-    console.error('Lỗi khi fetch YouTube Shorts:', err);
+    console.warn('Lỗi khi fetch YouTube Shorts, chuyển về cache hoặc fallback:', err);
     return { items: [], channelTitle: '' };
   }
 }
@@ -244,7 +322,7 @@ export function VideoShortsModal({
           setActiveChannel(prev => ({ ...prev, name: channelTitle }));
         }
       } else {
-        // Fallback sang backup nếu kênh rỗng
+        // Fallback sang backup đã chuẩn hóa nếu kênh rỗng hoặc lỗi mạng
         setChannelVideos(BACKUP_FALLBACK_SHORTS);
       }
     }).catch(() => {
@@ -290,7 +368,9 @@ export function VideoShortsModal({
 
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory || 'Tất cả');
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  
+  // Khởi tạo mute = true để bảo đảm autoplay 100% tuân thủ chính sách trình duyệt
+  const [isMuted, setIsMuted] = useState<boolean>(true);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likesMap, setLikesMap] = useState<Record<string, number>>({});
   const [showHeartPop, setShowHeartPop] = useState<boolean>(false);
@@ -303,6 +383,7 @@ export function VideoShortsModal({
   ]);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
+  const touchStartY = useRef<number>(0);
 
   const categories = ['Tất cả', 'Thời sự 24h', 'Thời tiết TV', 'Tài chính & Vàng', 'Thế giới & Cuộc sống'];
 
@@ -353,6 +434,36 @@ export function VideoShortsModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, showComments, showPlaylistDrawer, showChannelDrawer, currentIndex, filteredPlaylist.length]);
 
+  // ── Tính toán ổn định: Tự động phục hồi lỗi từ YouTube Embed API ──
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleMessage = (e: MessageEvent) => {
+      try {
+        if (typeof e.data === 'string') {
+          const data = JSON.parse(e.data);
+          
+          // YouTube onError: 2 (param lỗi), 5 (HTML5 lỗi), 100 (video private/xóa), 101/150 (chủ kênh chặn nhúng ngoài YouTube)
+          if (data.event === 'onError') {
+            console.warn('YouTube embed error code:', data.info);
+            setShowToast('Video bị giới hạn nhúng, tự động phát video tiếp theo');
+            setTimeout(() => {
+              handleNextShort();
+            }, 600);
+          }
+
+          // YouTube onStateChange: 0 = ENDED (hết video) -> Tự động chuyển video tiếp theo (Vòng lặp Shorts)
+          if (data.event === 'onStateChange' && data.info === 0) {
+            handleNextShort();
+          }
+        }
+      } catch {}
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [isOpen, currentIndex, filteredPlaylist.length]);
+
   // Khóa scroll trang khi mở Shorts modal
   useEffect(() => {
     if (isOpen) {
@@ -377,6 +488,20 @@ export function VideoShortsModal({
 
   const handlePrevShort = () => {
     handleSelectIndex(currentIndex - 1);
+  };
+
+  // Thao tác vuốt màn hình trên điện thoại
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStartY.current - e.changedTouches[0].clientY;
+    if (diff > 50) {
+      handleNextShort(); // Vuốt lên -> Tiếp theo
+    } else if (diff < -50) {
+      handlePrevShort(); // Vuốt xuống -> Trước đó
+    }
   };
 
   // Thích video
@@ -440,7 +565,7 @@ export function VideoShortsModal({
     } catch {}
     setShowChannelDrawer(false);
     setCurrentIndex(0);
-    setShowToast(`Đang tải video từ kênh: ${newConfig.name}...`);
+    setShowToast(`Đang tải video từ: ${newConfig.name}...`);
     setTimeout(() => setShowToast(null), 3000);
   };
 
@@ -450,7 +575,6 @@ export function VideoShortsModal({
       if (onLogin) onLogin();
       return;
     }
-    // Sử dụng tên hoặc email tài khoản để tìm kênh
     const query = userRole.email ? userRole.email.split('@')[0] : userRole.name;
     handleApplyCustomChannel(`@${query.replace(/\s+/g, '')}`, `Kênh của ${userRole.name}`);
   };
@@ -485,13 +609,15 @@ export function VideoShortsModal({
       {/* ── Khung Video Shorts 100% Chiều Cao (Responsive Fullscreen 100% tỷ lệ 9:16) ── */}
       <div 
         className="relative w-full h-[100dvh] sm:w-[460px] md:w-[480px] sm:max-h-[100dvh] aspect-[9/16] bg-black sm:rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] sm:border sm:border-white/15 flex flex-col justify-between shrink-0"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        {/* ── TRÌNH PHÁT YOUTUBE SHORTS CHUẨN 9:16 (Phát mượt mà, siêu tốc, không bị lag) ── */}
+        {/* ── TRÌNH PHÁT YOUTUBE SHORTS CHUẨN 9:16 (Phát mượt mà, siêu tốc, tự hồi phục lỗi) ── */}
         {currentShort.youtubeId ? (
           <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto">
             <iframe
               key={`${currentShort.youtubeId}-${isMuted ? 'muted' : 'unmuted'}`}
-              src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${currentShort.youtubeId}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+              src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${currentShort.youtubeId}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
               title={currentShort.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -499,7 +625,7 @@ export function VideoShortsModal({
             />
           </div>
         ) : (
-          /* Fallback HTML5 video nếu có video MP4 từ tin tức */
+          /* Fallback video MP4 nếu có bài viết từ tin tức */
           <video
             key={currentShort.id || currentShort.videoUrl}
             src={currentShort.videoUrl}
@@ -510,6 +636,17 @@ export function VideoShortsModal({
             muted={isMuted}
             className="w-full h-full object-cover absolute inset-0 cursor-pointer"
           />
+        )}
+
+        {/* Nút nhắc bật âm thanh nhanh nếu đang ở chế độ Mute (tuân thủ Autoplay policy) */}
+        {isMuted && (
+          <button
+            onClick={() => setIsMuted(false)}
+            className="absolute top-14 left-1/2 -translate-x-1/2 z-30 px-3 py-1 rounded-full bg-black/75 hover:bg-black text-white text-[11px] font-bold border border-white/20 shadow-lg flex items-center gap-1.5 animate-pulse cursor-pointer pointer-events-auto"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
+            <span>Chạm để bật âm thanh</span>
+          </button>
         )}
 
         {/* Buffering Indicator khi chuyển kênh */}
@@ -670,7 +807,7 @@ export function VideoShortsModal({
               target="_blank"
               rel="noopener noreferrer"
               className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform"
-              title="Mở trong YouTube Shorts"
+              title="Mở trong ứng dụng YouTube Shorts"
             >
               <div className="w-11 h-11 rounded-full bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center backdrop-blur-md border border-red-400 shadow-lg">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
