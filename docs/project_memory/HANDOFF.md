@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `fa360c1` (chuẩn bị commit)
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 445ms, 471.36 kB).
+- **Commit gần nhất**: `f250ef7 (fix(shorts): optimize responsive design across Mobile, Tablet, PC, remove redundant mobile controls, use 100% YouTube sources and expand multi-channel news)`
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 426ms, 471.36 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
 1. **Lấy Shorts 100% YouTube Chính Thống, Không Lấy Video Tại Trang**:
