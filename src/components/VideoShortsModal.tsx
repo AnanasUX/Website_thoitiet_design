@@ -282,6 +282,53 @@ export function VideoShortsModal({
   const [isLandscape, setIsLandscape] = useState<boolean>(false);
   const modalContainerRef = useRef<HTMLDivElement>(null);
 
+  // Logo & thương hiệu website AnX
+  const siteBaseUrl = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') + '/';
+  const siteLogoUrl = `${siteBaseUrl}favicon.png`;
+  const siteAppleIconUrl = `${siteBaseUrl}icons/apple-touch-icon.png`;
+
+  // Tự động ẩn các nút điều khiển & tiêu đề khi không có tương tác sau 3.5s
+  const [isControlsVisible, setIsControlsVisible] = useState<boolean>(true);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetInactivityTimer = () => {
+    setIsControlsVisible(true);
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    // Nếu đang mở Drawer bình luận hoặc playlist thì không tự ẩn controls
+    if (showComments || showPlaylistDrawer) return;
+
+    inactivityTimerRef.current = setTimeout(() => {
+      setIsControlsVisible(false);
+    }, 3500);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    resetInactivityTimer();
+
+    const handleUserActivity = () => {
+      resetInactivityTimer();
+    };
+
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('mousedown', handleUserActivity);
+    window.addEventListener('touchstart', handleUserActivity, { passive: true });
+    window.addEventListener('touchmove', handleUserActivity, { passive: true });
+    window.addEventListener('keydown', handleUserActivity);
+
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('mousedown', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      window.removeEventListener('touchmove', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+    };
+  }, [isOpen, showComments, showPlaylistDrawer]);
+
   // Xoay ngang / dọc màn hình để xem trọn vẹn video
   const toggleOrientation = async () => {
     const nextState = !isLandscape;
@@ -508,7 +555,7 @@ export function VideoShortsModal({
     }
   };
 
-  // Double tap để thả tim
+  // Double tap để thả tim, Chạm 1 lần để bật/tắt các nút điều khiển
   const lastTapRef = useRef<number>(0);
   const handleOverlayClick = () => {
     const now = Date.now();
@@ -516,6 +563,15 @@ export function VideoShortsModal({
       handleLike();
       setShowHeartPop(true);
       setTimeout(() => setShowHeartPop(false), 800);
+      setIsControlsVisible(true);
+      resetInactivityTimer();
+    } else {
+      // Chạm 1 lần: ẩn hoặc hiện lại controls
+      setIsControlsVisible(prev => {
+        const next = !prev;
+        if (next) resetInactivityTimer();
+        return next;
+      });
     }
     lastTapRef.current = now;
   };
@@ -764,27 +820,54 @@ export function VideoShortsModal({
 
         {/* ── Top Header Overlay (Tràn 100% nổi trên video, tinh gọn và thoáng đãng) ── */}
         <div className="absolute top-0 inset-x-0 z-30 pt-3 px-3.5 pb-8 bg-gradient-to-b from-black/85 via-black/35 to-transparent flex items-center justify-between pointer-events-none">
-          {/* Logo Brand tinh tế bên trái (Đã bỏ logo SHORTS gradient và nút chọn kênh thừa) */}
-          <div className="flex items-center gap-2 pointer-events-auto">
-            <span className="text-white font-extrabold text-[14px] tracking-tight drop-shadow">
-              Anx. Shorts
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-            <span className="text-[11px] text-white/70 font-semibold drop-shadow hidden xs:inline">
-              {isLandscape ? 'Toàn cảnh 16:9' : 'Tin nóng 24h'}
-            </span>
+          {/* Logo Brand & Tên Trang bên trái (LUÔN HIỂN THỊ cả khi controls tự ẩn, theo đúng yêu cầu) */}
+          <div className="flex items-center gap-2.5 pointer-events-auto">
+            <div 
+              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className="w-8 h-8 rounded-full overflow-hidden border border-white/30 shadow-md shrink-0 bg-black/60 flex items-center justify-center backdrop-blur-sm"
+            >
+              <img
+                src={siteLogoUrl}
+                alt="Logo AnX"
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.tried1) {
+                    target.dataset.tried1 = '1';
+                    target.src = siteAppleIconUrl;
+                  } else if (!target.dataset.tried2) {
+                    target.dataset.tried2 = '1';
+                    target.src = './favicon.png';
+                  }
+                }}
+              />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-white font-extrabold text-[13.5px] tracking-tight drop-shadow leading-tight">
+                  Anx. Shorts
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+              </div>
+              <span className="text-[10px] text-white/75 font-semibold drop-shadow truncate">
+                {isLandscape ? 'AnX 16:9 · Toàn cảnh' : 'AnX · Thời Tiết & Tin Tức 24h'}
+              </span>
+            </div>
           </div>
 
-          {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tất cả icon tròn chuẩn width=height 36px) */}
-          <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tự động ẩn sau 3.5s khi không tương tác) */}
+          <div className={`flex items-center gap-2 pointer-events-auto transition-opacity duration-300 ${
+            isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}>
             {/* Nút Quay Ngang Màn Hình (Xem video 16:9 trọn vẹn) */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleOrientation();
+                resetInactivityTimer();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', padding: 0 }}
-              className={`w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className={`w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 border backdrop-blur-md cursor-pointer active:scale-90 transition-all ${
                 isLandscape
                   ? 'bg-[#ff315f] hover:bg-[#ff315f]/90 text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.6)]'
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
@@ -792,7 +875,7 @@ export function VideoShortsModal({
               title={isLandscape ? "Quay về màn hình dọc (Shorts 9:16) [R]" : "Quay ngang màn hình (Xem video 16:9 trọn vẹn) [R]"}
             >
               {isLandscape ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 block m-auto">
                   <rect x="6" y="3" width="12" height="18" rx="2" />
                   <path d="M2 10l2-2 2 2" />
                   <path d="M4 8v5a3 3 0 0 0 3 3" />
@@ -800,7 +883,7 @@ export function VideoShortsModal({
                   <path d="M20 16v-5a3 3 0 0 0-3-3" />
                 </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 block m-auto">
                   <rect x="3" y="6" width="18" height="12" rx="2" />
                   <path d="M10 2l-2 2 2 2" />
                   <path d="M8 4h5a3 3 0 0 1 3 3" />
@@ -815,9 +898,10 @@ export function VideoShortsModal({
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMuted(!isMuted);
+                resetInactivityTimer();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', padding: 0 }}
-              className={`w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
+              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className={`w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all ${
                 isMuted 
                   ? 'bg-red-600/80 hover:bg-red-600 text-white border-red-400 shadow-md' 
                   : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
@@ -825,9 +909,9 @@ export function VideoShortsModal({
               title={isMuted ? 'Đang tắt tiếng - Nhấn để Bật âm thanh (M)' : 'Đang bật âm thanh - Nhấn để Tắt tiếng (M)'}
             >
               {isMuted ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/></svg>
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
               )}
             </button>
 
@@ -836,12 +920,13 @@ export function VideoShortsModal({
               onClick={(e) => {
                 e.stopPropagation();
                 setShowPlaylistDrawer(!showPlaylistDrawer);
+                resetInactivityTimer();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', padding: 0 }}
-              className="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-transform"
+              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-transform"
               title="Danh sách Shorts"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </button>
 
             {/* Close Button */}
@@ -850,119 +935,137 @@ export function VideoShortsModal({
                 e.stopPropagation();
                 onClose();
               }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', padding: 0 }}
-              className="w-9 h-9 min-w-[36px] min-h-[36px] max-w-[36px] max-h-[36px] aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
+              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 bg-black/60 hover:bg-red-600 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all"
               title="Đóng (Esc)"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         </div>
 
-        {/* ── Cột Tương Tác: Like, Comment, Share, YouTube (Tối ưu ngang/dọc, icon tròn 100% không bị dài) ── */}
-        <div className={`absolute z-30 select-none pointer-events-auto transition-all ${
+        {/* ── Cột Tương Tác: Like, Comment, Share, YouTube (Icon tròn 100% không bị méo, tự ẩn khi không tương tác) ── */}
+        <div className={`absolute z-30 select-none transition-opacity duration-300 ${
           isLandscape 
             ? 'right-4 bottom-3 flex flex-row items-center gap-3' 
             : 'right-3 bottom-16 flex flex-col items-center gap-3.5'
-        }`}>
+        } ${isControlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
           
           {/* Like ❤️ Button */}
-          <button
-            onClick={handleLike}
-            className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform min-h-0 shrink-0"
-            title="Thích video"
-          >
-            <div 
-              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-              className={`w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-lg ${
+          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLike();
+                resetInactivityTimer();
+              }}
+              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className={`w-[42px] h-[42px] aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-lg cursor-pointer active:scale-90 border ${
                 likedMap[currentShort.id]
-                  ? 'bg-red-600 text-white shadow-red-500/50'
-                  : 'bg-black/50 text-white hover:bg-black/70 border border-white/15'
+                  ? 'bg-red-600 text-white border-red-500 shadow-red-500/50'
+                  : 'bg-black/50 text-white hover:bg-black/70 border-white/20'
               }`}
+              title="Thích video"
             >
-              <svg className={`w-5 h-5 shrink-0 ${likedMap[currentShort.id] ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg className={`w-5 h-5 shrink-0 block m-auto ${likedMap[currentShort.id] ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-            </div>
+            </button>
             <span className="text-[10px] font-bold text-white drop-shadow">
               {(likesMap[currentShort.id] ?? currentShort.likes).toLocaleString('vi-VN')}
             </span>
-          </button>
+          </div>
 
           {/* Comments 💬 Button */}
-          <button
-            onClick={() => setShowComments(!showComments)}
-            className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform min-h-0 shrink-0"
-            title="Bình luận"
-          >
-            <div 
-              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-              className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg"
+          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowComments(!showComments);
+                resetInactivityTimer();
+              }}
+              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className="w-[42px] h-[42px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg cursor-pointer active:scale-90 transition-all"
+              title="Bình luận"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 block m-auto"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
             <span className="text-[10px] font-bold text-white drop-shadow">
               {currentShort.commentsCount || 140}
             </span>
-          </button>
+          </div>
 
           {/* Share ↗️ Button */}
-          <button
-            onClick={handleShare}
-            className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform min-h-0 shrink-0"
-            title="Chia sẻ video"
-          >
-            <div 
-              style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-              className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg"
+          <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare();
+                resetInactivityTimer();
+              }}
+              style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className="w-[42px] h-[42px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg cursor-pointer active:scale-90 transition-all"
+              title="Chia sẻ video"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 block m-auto"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
             <span className="text-[10px] font-bold text-white drop-shadow">
               Chia sẻ
             </span>
-          </button>
+          </div>
 
           {/* Nút Xem trên YouTube */}
           {currentShort.youtubeId && (
-            <a
-              href={`https://www.youtube.com/shorts/${currentShort.youtubeId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-1 group cursor-pointer active:scale-90 transition-transform min-h-0 shrink-0"
-              title="Xem trực tiếp trên YouTube"
-            >
-              <div 
-                style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-                className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md border border-white/15 shadow-lg group-hover:border-red-500/50 transition-colors"
+            <div className="flex flex-col items-center gap-1 shrink-0 select-none">
+              <a
+                href={`https://www.youtube.com/shorts/${currentShort.youtubeId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => resetInactivityTimer()}
+                style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+                className="w-[42px] h-[42px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg active:scale-90 transition-all group-hover:border-red-500/50"
+                title="Xem trực tiếp trên YouTube"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white group-hover:text-red-500 transition-colors shrink-0"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white group-hover:text-red-500 transition-colors shrink-0 block m-auto"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
               <span className="text-[10px] font-bold text-white drop-shadow">
                 YouTube
               </span>
-            </a>
+            </div>
           )}
         </div>
 
-        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags ── */}
-        <div className={`absolute bottom-0 inset-x-0 z-20 p-4 ${isLandscape ? 'pb-3 pr-[260px]' : 'pb-4 pr-16'} bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 pointer-events-none`}>
+        {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags (Tự động ẩn sau 3.5s) ── */}
+        <div className={`absolute bottom-0 inset-x-0 z-20 p-4 ${isLandscape ? 'pb-3 pr-[260px]' : 'pb-4 pr-16'} bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-2 transition-opacity duration-300 ${
+          isControlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}>
           
-          {/* Channel Info, Nhãn BẢN TIN TRANG & Nút Chuông Theo Dõi Kênh (Icon tròn tuyệt đối 32px) */}
-          <div className="flex items-center gap-2 pointer-events-auto flex-wrap">
+          {/* Channel Info, Logo Trang, Nhãn BẢN TIN TRANG & Nút Chuông (Icon tròn 100% không méo) */}
+          <div className="flex items-center gap-2 pointer-events-auto max-w-full overflow-hidden">
             <div 
-              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px' }}
-              className="w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px] shadow-md shrink-0"
+              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className="w-8 h-8 rounded-full overflow-hidden border border-white/25 shadow-md shrink-0 bg-[#ff315f] flex items-center justify-center font-black text-white text-[12px]"
             >
-              {currentShort.channel.charAt(0)}
+              {currentShort.isSiteNews || currentShort.badge === 'BẢN TIN TRANG' ? (
+                <img 
+                  src={siteLogoUrl} 
+                  alt="Logo" 
+                  className="w-full h-full object-cover rounded-full" 
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = siteAppleIconUrl;
+                  }}
+                />
+              ) : (
+                <span>{currentShort.channel.charAt(0)}</span>
+              )}
             </div>
-            <div className="flex items-center gap-1 min-w-0">
+            <div className="flex items-center gap-1 min-w-0 shrink">
               <span className="font-extrabold text-[13px] text-white truncate drop-shadow">
                 @{currentShort.channel}
               </span>
               <span 
-                style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px', maxWidth: '14px', maxHeight: '14px' }}
-                className="w-3.5 h-3.5 min-w-[14px] min-h-[14px] max-w-[14px] max-h-[14px] aspect-square rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shrink-0 font-bold"
+                style={{ width: '14px', height: '14px', minWidth: '14px', minHeight: '14px', maxWidth: '14px', maxHeight: '14px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+                className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] shrink-0 font-bold"
               >
                 ✓
               </span>
@@ -985,19 +1088,20 @@ export function VideoShortsModal({
               onClick={(e) => {
                 e.stopPropagation();
                 toggleFollowChannel();
+                resetInactivityTimer();
               }}
-              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', padding: 0 }}
-              className={`w-8 h-8 min-w-[32px] min-h-[32px] max-w-[32px] max-h-[32px] aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 border backdrop-blur-md cursor-pointer transition-all active:scale-90 ml-1 ${
+              style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
+              className={`w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 border backdrop-blur-md cursor-pointer transition-all active:scale-90 ml-1 ${
                 isFollowingChannel
                   ? 'bg-[#ff315f] border-[#ff315f] text-white shadow-[0_0_10px_rgba(255,49,95,0.5)]'
-                  : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-300 hover:text-white'
+                  : 'bg-white/10 hover:bg-white/20 border-white/25 text-neutral-300 hover:text-white'
               }`}
               title={isFollowingChannel ? "Đang theo dõi kênh" : "Nhấn để quan tâm/theo dõi kênh"}
             >
               {isFollowingChannel ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 block m-auto"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
               )}
             </button>
           </div>

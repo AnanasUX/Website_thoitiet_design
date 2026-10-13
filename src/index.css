@@ -71,6 +71,17 @@ button {
   line-height: 1.4;
 }
 
+/* Đảm bảo khung outline các icon tròn luôn tuyệt đối 1:1, không bị méo */
+.aspect-square,
+[class*="aspect-square"],
+button.rounded-full,
+a.rounded-full {
+  box-sizing: border-box !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
+  flex-shrink: 0 !important;
+}
+
 /* Apple-style Dark Mode */
 html.dark {
   color-scheme: dark;
