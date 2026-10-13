@@ -32,9 +32,11 @@ function parseDurationSeconds(d?: string): number {
 }
 
 // ── Hàm tắt triệt để phụ đề và dịch tự động trên trình phát YouTube Shorts ──
-export function disableCaptionsAndAutoTranslation(targetWin?: Window | null) {
+export function suppressAdsAndCaptions(targetWin?: Window | null) {
   if (!targetWin) return;
   try {
+    // 0. Tự động skip/bỏ qua quảng cáo YouTube nếu có
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'skipAd' }), '*');
     // 1. Gỡ bỏ hoàn toàn module phụ đề/dịch tự động
     targetWin.postMessage(JSON.stringify({ event: 'command', func: 'unloadModule', args: ['captions'] }), '*');
     // 2. Tắt track phụ đề (set track object rỗng)
@@ -361,50 +363,24 @@ export function VideoShortsModal({
   }, [isOpen, showComments, showPlaylistDrawer]);
 
   // Xoay ngang / dọc màn hình để xem trọn vẹn video
-  const toggleOrientation = async () => {
+  const toggleOrientation = () => {
     const nextState = !isLandscape;
     setIsLandscape(nextState);
     setShowToast(nextState ? 'Đã quay ngang màn hình (Xem video 16:9 trọn vẹn)' : 'Đã về chế độ dọc Shorts');
     setTimeout(() => setShowToast(null), 2200);
-
-    try {
-      if (nextState) {
-        const elem = modalContainerRef.current || document.documentElement;
-        if (!document.fullscreenElement && (elem as any).requestFullscreen) {
-          await (elem as any).requestFullscreen().catch(() => {});
-        }
-        if (window.screen?.orientation && 'lock' in window.screen.orientation) {
-          await (window.screen.orientation as any).lock('landscape').catch(() => {});
-        }
-      } else {
-        if (document.fullscreenElement && document.exitFullscreen) {
-          await document.exitFullscreen().catch(() => {});
-        }
-        if (window.screen?.orientation && 'unlock' in window.screen.orientation) {
-          (window.screen.orientation as any).unlock?.();
-        }
-      }
-    } catch {}
   };
 
   // Lắng nghe thay đổi kích thước và xoay màn hình tự nhiên
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && isLandscape && window.innerWidth < 768) {
-        setIsLandscape(false);
-      }
-    };
     const handleResize = () => {
       if (window.innerWidth > window.innerHeight && window.innerHeight < 600 && !isLandscape) {
         setIsLandscape(true);
       }
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
     };
@@ -684,9 +660,25 @@ export function VideoShortsModal({
         }
         if (!data || typeof data !== 'object') return;
 
-        // Tắt triệt để phụ đề và dịch tự động mỗi khi YouTube sẵn sàng hoặc đổi trạng thái phát
+        // Triệt tiêu phụ đề, dịch tự động và chặn quảng cáo khi YouTube phát
         if (iframeRef.current?.contentWindow) {
-          disableCaptionsAndAutoTranslation(iframeRef.current.contentWindow);
+          suppressAdsAndCaptions(iframeRef.current.contentWindow);
+        }
+
+        // Tự động bỏ qua / skip quảng cáo ngay lập tức
+        if (
+          data.event === 'onAdStart' ||
+          data.event === 'adPlaying' ||
+          data.info?.adState === 1 ||
+          data.info?.isAd === true ||
+          data.info?.videoData?.isAd === true
+        ) {
+          if (iframeRef.current?.contentWindow) {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func: 'skipAd' }),
+              '*'
+            );
+          }
         }
 
         // YouTube onError (101, 150): Tự động nhảy sang video sau
@@ -770,9 +762,7 @@ export function VideoShortsModal({
   // Chia sẻ
   const handleShare = () => {
     if (!currentShort) return;
-    const shareUrl = currentShort.youtubeId 
-      ? `https://www.youtube.com/shorts/${currentShort.youtubeId}`
-      : window.location.href;
+    const shareUrl = window.location.href;
 
     if (navigator.share) {
       navigator.share({
@@ -864,10 +854,9 @@ export function VideoShortsModal({
               <iframe
                 ref={iframeRef}
                 key={`${currentShort.youtubeId}-${isMuted ? 'muted' : 'unmuted'}`}
-                src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
+                src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&fs=0&disablekb=1&hl=vi&origin=${encodeURIComponent(window.location.origin)}&widget_referrer=${encodeURIComponent(window.location.origin)}`}
                 title={cleanVideoTitle(currentShort.title)}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
                 className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"
                 onLoad={(e) => {
                   const ifr = e.target as HTMLIFrameElement;
@@ -876,11 +865,11 @@ export function VideoShortsModal({
                       JSON.stringify({ event: 'listening' }),
                       '*'
                     );
-                    // Tắt ngay phụ đề / dịch tự động của YouTube
-                    disableCaptionsAndAutoTranslation(ifr?.contentWindow);
-                    setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 400);
-                    setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 1200);
-                    setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 2500);
+                    // Triệt tiêu ngay quảng cáo, phụ đề và dịch tự động của YouTube
+                    suppressAdsAndCaptions(ifr?.contentWindow);
+                    setTimeout(() => suppressAdsAndCaptions(ifr?.contentWindow), 400);
+                    setTimeout(() => suppressAdsAndCaptions(ifr?.contentWindow), 1200);
+                    setTimeout(() => suppressAdsAndCaptions(ifr?.contentWindow), 2500);
                   } catch {}
                 }}
               />
@@ -934,44 +923,10 @@ export function VideoShortsModal({
             </span>
           </div>
 
-          {/* Controls: Quay ngang, Âm thanh, Playlist, Đóng (Tự động ẩn sau 5s khi không tương tác) */}
+          {/* Controls: Âm thanh, Playlist, Đóng (Tự động ẩn sau 5s khi không tương tác) */}
           <div className={`flex items-center gap-2 pointer-events-auto transition-opacity duration-300 ${
             isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}>
-            {/* Nút Quay Ngang Màn Hình (Xem video 16:9 trọn vẹn) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleOrientation();
-                resetInactivityTimer();
-              }}
-              style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-              className={`w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 min-h-0 p-0 m-0 border backdrop-blur-md cursor-pointer active:scale-90 transition-all ${
-                isLandscape
-                  ? 'bg-[#ff315f] hover:bg-[#ff315f]/90 text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.6)]'
-                  : 'bg-black/60 hover:bg-black/80 text-white border-white/20'
-              }`}
-              title={isLandscape ? "Quay về màn hình dọc (Shorts 9:16) [R]" : "Quay ngang màn hình (Xem video 16:9 trọn vẹn) [R]"}
-            >
-              {isLandscape ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 block m-auto">
-                  <rect x="6" y="3" width="12" height="18" rx="2" />
-                  <path d="M2 10l2-2 2 2" />
-                  <path d="M4 8v5a3 3 0 0 0 3 3" />
-                  <path d="M22 14l-2 2-2-2" />
-                  <path d="M20 16v-5a3 3 0 0 0-3-3" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 block m-auto">
-                  <rect x="3" y="6" width="18" height="12" rx="2" />
-                  <path d="M10 2l-2 2 2 2" />
-                  <path d="M8 4h5a3 3 0 0 1 3 3" />
-                  <path d="M14 22l2-2-2-2" />
-                  <path d="M16 20h-5a3 3 0 0 1-3-3" />
-                </svg>
-              )}
-            </button>
-
             {/* Quick sound toggle */}
             <button
               onClick={(e) => {
@@ -1092,26 +1047,6 @@ export function VideoShortsModal({
               Chia sẻ
             </span>
           </div>
-
-          {/* Nút Xem trên YouTube */}
-          {currentShort.youtubeId && (
-            <div className="flex flex-col items-center gap-1 shrink-0 select-none">
-              <a
-                href={`https://www.youtube.com/shorts/${currentShort.youtubeId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => resetInactivityTimer()}
-                style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0, margin: 0, boxSizing: 'border-box' }}
-                className="w-[42px] h-[42px] aspect-square shrink-0 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-md border border-white/20 shadow-lg active:scale-90 transition-all group-hover:border-red-500/50"
-                title="Xem trực tiếp trên YouTube"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white group-hover:text-red-500 transition-colors shrink-0 block m-auto"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              </a>
-              <span className="text-[10px] font-bold text-white drop-shadow">
-                YouTube
-              </span>
-            </div>
-          )}
         </div>
 
         {/* ── Bottom Video Overlay: Kênh, Tiêu Đề & Hashtags (Tự động ẩn sau 5s khi không thao tác) ── */}

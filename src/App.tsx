@@ -770,13 +770,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlStr, 'text/html');
 
-      // Giữ lại các iframe video hợp lệ (YouTube, TikTok, Facebook, Vimeo)
+      // Giữ lại các iframe video hợp lệ (YouTube, TikTok, Facebook, Vimeo) và chuẩn hoá chặn quảng cáo
       doc.querySelectorAll('iframe').forEach(ifr => {
-        const src = (ifr.getAttribute('src') || ifr.getAttribute('data-src') || '').trim();
+        let src = (ifr.getAttribute('src') || ifr.getAttribute('data-src') || '').trim();
         const isVideoIframe = /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
         if (!isVideoIframe) {
           ifr.remove();
         } else {
+          if (/youtube\.com|youtu\.be/i.test(src)) {
+            const ytMatch = src.match(/(?:embed\/|shorts\/|v=|\/v\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (ytMatch && ytMatch[1]) {
+              src = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1&playsinline=1`;
+              ifr.setAttribute('src', src);
+            }
+          }
           ifr.setAttribute('data-keep-video', 'true');
         }
       });
@@ -790,8 +797,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       // Pre-cleaning selector loại bỏ rác, quảng cáo, và script (GIỮ LẠI các khối bài viết liên quan)
       doc.querySelectorAll(`
-        script, style, nav, footer, header, .ads, .social, .comment, 
-        iframe:not([data-keep-video="true"]), .banner, .return-thread-body-btn, 
+        script, style, nav, footer, header, .ads, .ad, .advertisement, .qc, .banner, .banner-ads,
+        ins.adsbygoogle, .google-auto-placed, [class*="ad-"], [id*="ad-"], [class*="banner"],
+        .social, .comment, iframe:not([data-keep-video="true"]), .return-thread-body-btn, 
         .readmore-body-btn, .box-author-detail, .author-info, .bread-crumb, 
         .breadcrumb, .share, .like-fb
       `).forEach(el => el.remove());
@@ -1306,15 +1314,21 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                   );
                 }
                 if (block.type === 'iframe') {
+                  let finalSrc = block.src;
+                  if (/youtube\.com|youtu\.be/i.test(finalSrc)) {
+                    const ytMatch = finalSrc.match(/(?:embed\/|shorts\/|v=|\/v\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                    if (ytMatch && ytMatch[1]) {
+                      finalSrc = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1&playsinline=1`;
+                    }
+                  }
                   if (block.isShort) {
                     return (
                       <div key={idx} className="my-6 flex flex-col items-center justify-center w-full">
                         <div className="relative w-full max-w-[340px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
                           <iframe
-                            src={block.src}
+                            src={finalSrc}
                             className="w-full h-full border-0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
                           />
                         </div>
                       </div>
@@ -1327,10 +1341,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         <span>BẢN TIN TRUYỀN HÌNH</span>
                       </div>
                       <iframe
-                        src={block.src}
+                        src={finalSrc}
                         className="w-full h-full border-0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
                       />
                     </div>
                   );
