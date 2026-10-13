@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `264d884 (docs: establish always-on project memory protocol in AGENTS.md and initialize docs/project_memory)`
+- **Commit gần nhất**: `ce673a3 (fix(shorts): define missing parseDurationSeconds, suppressAdsAndCaptions, and fix duplicate server in vite.config)`
 - **Trạng thái Build**: Đã kiểm tra `npm run build` thành công 100% không có lỗi biên dịch.
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
