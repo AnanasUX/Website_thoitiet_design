@@ -13,6 +13,14 @@ export interface YouTubeNewsItem {
   likes?: number;
 }
 
+// ── Loại bỏ các nhãn dịch tự động hoặc auto-translation khỏi tiêu đề ──
+export function cleanVideoTitle(title?: string): string {
+  if (!title) return '';
+  return title
+    .replace(/\s*[\(\[\{]?(?:dịch tự động|tự động dịch|bản dịch tự động|auto[\s-]translated?)[\)\]\}]?/gi, '')
+    .trim();
+}
+
 export const YOUTUBE_NEWS_DATABASE: YouTubeNewsItem[] = [
   // ── Bản tin Shorts Thời sự & Video Nóng (Định dạng dọc 9:16 chuẩn Shorts) ──
   {
@@ -450,8 +458,11 @@ export function YouTubeBroadcastPlayer({
                 </div>
 
                 {/* News Title */}
-                <p className="text-white font-bold text-[13px] sm:text-[14px] leading-snug line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                  {selectedVideo.title}
+                <p 
+                  className="text-white font-bold text-[13px] sm:text-[14px] leading-snug line-clamp-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] notranslate"
+                  translate="no"
+                >
+                  {cleanVideoTitle(selectedVideo.title)}
                 </p>
 
                 {/* Thời tiết / Vàng ticker */}
@@ -544,8 +555,11 @@ export function YouTubeBroadcastPlayer({
                       <span className="text-[10px] text-amber-300 font-bold truncate">
                         {item.channel}
                       </span>
-                      <p className="text-white font-bold text-[12px] leading-snug line-clamp-2 drop-shadow group-hover:text-amber-200 transition-colors">
-                        {item.title}
+                      <p 
+                        className="text-white font-bold text-[12px] leading-snug line-clamp-2 drop-shadow group-hover:text-amber-200 transition-colors notranslate"
+                        translate="no"
+                      >
+                        {cleanVideoTitle(item.title)}
                       </p>
                       <div className="flex items-center justify-between text-[10px] text-slate-300 pt-0.5">
                         <span>❤️ {item.likes || 1200}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { YOUTUBE_NEWS_DATABASE } from './YouTubeBroadcastPlayer';
+import { YOUTUBE_NEWS_DATABASE, cleanVideoTitle } from './YouTubeBroadcastPlayer';
 
 export interface ShortItem {
   id: string;
@@ -31,12 +31,25 @@ function parseDurationSeconds(d?: string): number {
   return 0;
 }
 
+// ── Hàm tắt triệt để phụ đề và dịch tự động trên trình phát YouTube Shorts ──
+export function disableCaptionsAndAutoTranslation(targetWin?: Window | null) {
+  if (!targetWin) return;
+  try {
+    // 1. Gỡ bỏ hoàn toàn module phụ đề/dịch tự động
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'unloadModule', args: ['captions'] }), '*');
+    // 2. Tắt track phụ đề (set track object rỗng)
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'track', {}] }), '*');
+    // 3. Tắt nạp lại phụ đề
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'reload', false] }), '*');
+    // 4. Giảm kích thước font phụ đề về 0 nếu trình duyệt vẫn cố hiển thị
+    targetWin.postMessage(JSON.stringify({ event: 'command', func: 'setOption', args: ['captions', 'fontSize', -1] }), '*');
+  } catch {}
+}
+
 // ── Danh sách các nguồn tin tức & phóng sự lớn nhất trong ngày ──
 export const FEATURED_NEWS_CHANNELS = [
   { id: 'UCabsTV34JwALXKGMqHpvUiA', name: 'VTV24' },
-  { id: 'UCIW9cGgoRuGJnky3K3tbzNg', name: 'Báo Thanh Niên' },
-  { id: 'UCteGrHMrnQwx7Scx--7nyoA', name: 'Báo Tuổi Trẻ' },
-  { id: 'UCFN0IoARjOAgx-OWr-JBIHg', name: 'Báo Lao Động' }
+  { id: 'UCIW9cGgoRuGJnky3K3tbzNg', name: 'Báo Thanh Niên' }
 ];
 
 // ── Kho video Shorts dự phòng chất lượng cao (100% embeddable, bảo đảm không bao giờ lỗi) ──
@@ -190,8 +203,8 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
           const pubMatch = entryXml.match(/<published>([^<]+)<\/published>/i);
 
           if (vidMatch && titleMatch) {
-            const vid = vidMatch[1];
-            const rawTitle = titleMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+            let rawTitle = titleMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+            rawTitle = cleanVideoTitle(rawTitle);
 
             let category: 'Thời sự 24h' | 'Thời tiết TV' | 'Tài chính & Vàng' | 'Thế giới & Cuộc sống' = 'Thời sự 24h';
             if (/thời tiết|mưa|bão|nắng|lũ|áp thấp|triều cường|không khí lạnh|nhiệt độ/i.test(rawTitle)) {
@@ -306,6 +319,7 @@ export function VideoShortsModal({
   const [showPlaylistDrawer, setShowPlaylistDrawer] = useState<boolean>(false);
   const [isLandscape, setIsLandscape] = useState<boolean>(false);
   const modalContainerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Tự động ẩn các nút điều khiển & tiêu đề khi không có tương tác sau 5s (theo đúng yêu cầu người dùng)
   const [isControlsVisible, setIsControlsVisible] = useState<boolean>(true);
@@ -642,6 +656,11 @@ export function VideoShortsModal({
         }
         if (!data || typeof data !== 'object') return;
 
+        // Tắt triệt để phụ đề và dịch tự động mỗi khi YouTube sẵn sàng hoặc đổi trạng thái phát
+        if (iframeRef.current?.contentWindow) {
+          disableCaptionsAndAutoTranslation(iframeRef.current.contentWindow);
+        }
+
         // YouTube onError (101, 150): Tự động nhảy sang video sau
         if (data.event === 'onError' || data.info === 101 || data.info === 150) {
           setShowToast('Video giới hạn nhúng, tự chuyển clip tiếp theo');
@@ -782,20 +801,27 @@ export function VideoShortsModal({
       >
         {/* ── TRÌNH PHÁT YOUTUBE SHORTS HOẶC VIDEO BẢN TIN TRANG ── */}
         {currentShort.youtubeId ? (
-          <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto">
+          <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto notranslate" translate="no">
             <iframe
+              ref={iframeRef}
               key={`${currentShort.youtubeId}-${isMuted ? 'muted' : 'unmuted'}`}
-              src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
-              title={currentShort.title}
+              src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
+              title={cleanVideoTitle(currentShort.title)}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
               className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"
               onLoad={(e) => {
+                const ifr = e.target as HTMLIFrameElement;
                 try {
-                  (e.target as HTMLIFrameElement)?.contentWindow?.postMessage(
+                  ifr?.contentWindow?.postMessage(
                     JSON.stringify({ event: 'listening' }),
                     '*'
                   );
+                  // Tắt ngay phụ đề / dịch tự động của YouTube
+                  disableCaptionsAndAutoTranslation(ifr?.contentWindow);
+                  setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 400);
+                  setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 1200);
+                  setTimeout(() => disableCaptionsAndAutoTranslation(ifr?.contentWindow), 2500);
                 } catch {}
               }}
             />
@@ -1093,8 +1119,11 @@ export function VideoShortsModal({
           </div>
 
           {/* Title & Description */}
-          <p className={`text-[13px] sm:text-[13.5px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[90%]' : 'line-clamp-2'} drop-shadow leading-snug`}>
-            {currentShort.title}
+          <p 
+            className={`text-[13px] sm:text-[13.5px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[90%]' : 'line-clamp-2'} drop-shadow leading-snug notranslate`}
+            translate="no"
+          >
+            {cleanVideoTitle(currentShort.title)}
           </p>
 
           {/* Hashtags (chữ thường, màu #000000, nền sáng thanh lịch tránh sặc sỡ) & Số thứ tự clip */}
