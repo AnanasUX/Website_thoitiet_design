@@ -16,16 +16,18 @@
    - Thêm dải chọn nhanh kênh (Quick TV Channel Pills) và hỗ trợ phím tắt `C` để mở menu kênh TV.
 3. **Bộ Lọc Phân Tab Media**:
    - Tích hợp 3 tab: `Tất cả`, `🎬 Video trên kênh` (bản tin, phóng sự 16:9), `⚡ Shorts ngắn` (9:16).
-4. **Tối Ưu Trải Nghiệm Màn Hình PC (Widescreen Theater & Auto-Orientation)**:
-   - Tự động nhận diện thiết bị PC (`window.innerWidth >= 1024`), mặc định mở ở chế độ **16:9 Toàn Cảnh** rực rỡ, không bị co cụm thành dải hẹp giữa màn hình.
-   - Gỡ bỏ giới hạn cố định `max-w-[1100px]`, mở rộng khung video lên đến `min(95vh, 1020px)` và chiều rộng linh hoạt `1400px - 1700px` trên màn hình lớn.
-   - Bổ sung nút chuyển đổi tức thì `[🖥️ 16:9 Toàn cảnh]` / `[📱 9:16 Dọc]` (phím tắt `R`) ngay trên thanh điều khiển.
-   - Đồng bộ chiều cao tuyệt đối giữa Video Player và Desktop Playlist Sidebar trên màn hình `xl:` và `2xl:`.
-5. **Tự động ẩn Controls sau 5s & Chặn YouTube Redirect**:
-   - Controls tự động ẩn sau 5s khi xem video, chạm vào thì hiện lại.
-   - Khi chuyển video không làm lộ controls ẩn.
-   - Chặn tuyệt đối nút nhảy trang sang YouTube; triệt tiêu phụ đề dịch tự động và skip quảng cáo.
-   - Chuẩn hóa 100% icon thành hình tròn tỉ lệ 1:1, không méo mó trên mọi thiết bị.
+4. **Trải Nghiệm Fullscreen Toàn Cảnh (True Fullscreen Cinema)**:
+   - Toàn bộ khung Video Player chuyển sang chế độ **Fullscreen tràn viền 100vw x 100vh** (không còn viền bo ngoài, không còn khoảng trống hay ambient bao quanh khi xem 16:9).
+   - Tích hợp nút Toàn Màn Hình Trình Duyệt `[⛶ Fullscreen]` (phím tắt `F` hoặc F11) hỗ trợ chuyển sang chế độ borderless toàn màn hình sạch sẽ.
+5. **Danh Sách Phát Hiển Thị TRỰC TIẾP TRÊN VIDEO (On-Video Playlist Overlay)**:
+   - Loại bỏ hoàn toàn sidebar cứng bên ngoài gây chèn ép video.
+   - Danh sách video chuyển thành **Overlay kính mờ (Frosted Glass Drawer) hiển thị TRÊN video** (`z-40`, trượt từ cạnh phải sang). Video vẫn tiếp tục phát toàn màn hình bên dưới.
+   - Khi đóng danh sách (bấm nút `✕`, click vùng mờ bên trái, phím `Esc`, `L`, `P`), video đạt 100% không gian hiển thị không một gợn cản trở.
+   - Tích hợp bộ lọc định dạng (`📺 Tất cả`, `🎬 Video kênh`, `⚡ Shorts`) và dải chọn kênh nhanh ngay trong danh sách phát.
+6. **Xử Lý Lại Toàn Diện Giao Diện (UI/UX Refinement)**:
+   - Header Bar trên cùng: Brand `Anx. TV`, nút chọn kênh EPG `[🔴 CH 01 • VTV24 ▾]`, dải phân tab media đặt ở trung tâm, nút `[📋 Danh sách (${playlist.length})]`, `[🖥️ 16:9 / 📱 9:16]`, `[🔊 / 🔇]`, `[⛶]`, `[✕]`.
+   - Right Actions: Nút Thích, Bình luận, Chia sẻ và nút mở nhanh Danh sách phát chuẩn tỉ lệ tròn 1:1.
+   - Tự động ẩn controls sau 5 giây không thao tác để giữ trải nghiệm rạp chiếu phim tối đa.
 
 ## 3. CÔNG VIỆC TIẾP THEO & ĐIỀU CẦN CHÚ Ý
 - Khi tiếp nhận bất kỳ yêu cầu mới nào từ người dùng, **bắt buộc tuân thủ `# SYSTEM ADDENDUM — ALWAYS-ON PROJECT MEMORY PROTOCOL`** được quy định trong `AGENTS.md`.

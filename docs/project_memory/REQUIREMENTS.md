@@ -10,11 +10,11 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 
 ### 2.1. Giao diện & Hiển thị trên mọi nền tảng
 - **Đa thiết bị (Mobile, Tablet, Desktop)**:
-  - Hỗ trợ xem dạng dọc chuẩn Shorts (9:16) và chế độ quay ngang toàn cảnh (16:9).
-  - **Trên PC / Desktop (>= 1024px)**: Mặc định phát ở chế độ **16:9 Toàn Cảnh (Widescreen Theater)**, không ép video vào khung dọc 9:16 gây ra 2 dải đen lớn hai bên.
-  - Video Player mở rộng tối ưu không gian hiển thị (`min(95vh, 1020px)`), tỉ lệ 16:9 lấp đầy 80-90% màn hình, không bị giới hạn cứng `1100px`.
-  - Desktop Playlist Sidebar hiển thị trên màn hình `xl:` (>= 1280px) và `2xl:`, đồng bộ chiều cao 100% với Video Player.
-  - Cung cấp nút chuyển đổi trực quan `[🖥️ 16:9 Toàn cảnh]` / `[📱 9:16 Dọc]` (phím tắt `R`) để người dùng tự do chuyển đổi.
+  - **Trải nghiệm Fullscreen Cinema Toàn Màn Hình**: Trình phát chiếm trọn 100% diện tích hiển thị (100vw x 100vh), không viền bo ngoài, không ambient bao quanh khi ở chế độ 16:9.
+  - Hỗ trợ xem dạng dọc chuẩn Shorts (9:16) và chế độ quay ngang toàn cảnh (16:9), tự động ưu tiên 16:9 trên PC/Desktop.
+  - Tích hợp nút Toàn Màn Hình Trình Duyệt `[⛶ Fullscreen]` (phím tắt `F` hoặc F11).
+  - **Danh sách phát hiển thị TRÊN VIDEO (On-Video Playlist Overlay)**: Không dùng sidebar bên ngoài đẩy video. Danh sách hiển thị dưới dạng drawer kính mờ trượt ra trên video (`z-40`), có thể bật/tắt tự do bằng nút `[📋 Danh sách]` hoặc phím `L`/`P`.
+  - Cung cấp nút chuyển đổi trực quan `[🖥️ 16:9 Toàn cảnh]` / `[📱 9:16 Dọc]` (phím tắt `R`).
   - Tuyệt đối không bị vỡ bố cục trên Tablet (kể cả khi cầm đứng hay xoay ngang).
 - **Quy chuẩn Icon & Nút tương tác (Bắt buộc không được vi phạm)**:
   - Tất cả icon tròn (avatar, like, comment, share, chuông, âm lượng, đóng, menu) phải có tỉ lệ chính xác 1:1 (`aspect-ratio: 1 / 1`).
