@@ -985,28 +985,73 @@ export function VideoShortsModal({
   const modalContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Bật / Thoát Fullscreen
-  const toggleBrowserFullscreen = () => {
+  // Bật / Thoát Fullscreen trình duyệt (Phím F hoặc nút ⛶)
+  const toggleBrowserFullscreen = useCallback(() => {
     try {
-      if (!document.fullscreenElement) {
-        modalContainerRef.current?.requestFullscreen?.().catch(() => {});
+      const isCurrentlyFs = Boolean(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      if (!isCurrentlyFs) {
+        // Tự động bung toàn cảnh 16:9 Cinema Fullscreen để video tràn trọn vẹn màn hình 100vw x 100vh
+        setIsLandscape(true);
+        const el = modalContainerRef.current || document.documentElement;
+        if (el.requestFullscreen) {
+          el.requestFullscreen().catch(() => {});
+        } else if ((el as any).webkitRequestFullscreen) {
+          (el as any).webkitRequestFullscreen();
+        } else if ((el as any).mozRequestFullScreen) {
+          (el as any).mozRequestFullScreen();
+        } else if ((el as any).msRequestFullscreen) {
+          (el as any).msRequestFullscreen();
+        }
         setIsFullscreen(true);
-        setShowToast('⛶ Đã mở Toàn Màn Hình Fullscreen');
+        setShowToast('⛶ Đã mở Toàn Màn Hình Fullscreen (F)');
       } else {
-        document.exitFullscreen?.().catch(() => {});
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          (document as any).msExitFullscreen();
+        }
         setIsFullscreen(false);
-        setShowToast('Đã thoát Toàn Màn Hình');
+        setShowToast('Đã thoát Toàn Màn Hình (F)');
       }
       setTimeout(() => setShowToast(null), 2000);
-    } catch {}
-  };
+    } catch (err) {
+      console.warn('Fullscreen toggle error:', err);
+    }
+  }, []);
 
   useEffect(() => {
     const handleFsChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      const isFs = Boolean(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      setIsFullscreen(isFs);
+      if (isFs) {
+        setIsLandscape(true);
+      }
     };
     document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    document.addEventListener('mozfullscreenchange', handleFsChange);
+    document.addEventListener('MSFullscreenChange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+      document.removeEventListener('mozfullscreenchange', handleFsChange);
+      document.removeEventListener('MSFullscreenChange', handleFsChange);
+    };
   }, []);
 
   // Tự động ẩn controls sau 5s khi không thao tác
@@ -1379,6 +1424,15 @@ export function VideoShortsModal({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Bỏ qua nếu người dùng đang nhập văn bản (bình luận, tìm kiếm)
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        if (e.key === 'Escape') {
+          target.blur();
+        }
+        return;
+      }
+
       if ((showComments || showChannelMenu) && e.key !== 'Escape') return;
 
       if (e.key === 'ArrowDown' || e.key === 'PageDown') {
@@ -1412,6 +1466,14 @@ export function VideoShortsModal({
           setShowComments(false);
         } else if (showPlaylistDrawer) {
           setShowPlaylistDrawer(false);
+        } else if (isFullscreen || Boolean(document.fullscreenElement || (document as any).webkitFullscreenElement)) {
+          // Thoát toàn màn hình trước thay vì đóng modal đột ngột
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if ((document as any).webkitExitFullscreen) {
+            (document as any).webkitExitFullscreen();
+          }
+          setIsFullscreen(false);
         } else {
           onClose();
         }
@@ -1420,7 +1482,7 @@ export function VideoShortsModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, handleNextShort, handlePrevShort, resetInactivityTimer, onClose]);
+  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, isFullscreen, handleNextShort, handlePrevShort, toggleBrowserFullscreen, resetInactivityTimer, onClose]);
 
   // Toggling âm thanh tức thì qua postMessage (Không reload iframe)
   const toggleMute = () => {
@@ -1649,7 +1711,8 @@ export function VideoShortsModal({
   return (
     <div 
       ref={modalContainerRef}
-      className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh]"
+      className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh] max-w-full max-h-full"
+      style={{ width: '100vw', height: '100vh' }}
       onWheel={handleWheel}
     >
       {/* ── Ambient Backdrop Glow ── */}
@@ -1680,7 +1743,7 @@ export function VideoShortsModal({
       {/* ── Khung Video Chính (Fullscreen Cinema 100vw x 100vh) ── */}
       <div 
         className={`relative bg-black overflow-hidden flex flex-col justify-between shrink-0 transition-all duration-300 ${
-          isLandscape
+          isLandscape || isFullscreen
             ? 'w-full h-full max-w-full max-h-[100dvh] rounded-none border-none shadow-none'
             : 'w-full h-[100dvh] sm:w-auto sm:h-full aspect-[9/16] max-w-[100vw] sm:rounded-2xl sm:border sm:border-white/15 sm:shadow-[0_0_80px_rgba(0,0,0,0.95)]'
         }`}
@@ -1940,25 +2003,23 @@ export function VideoShortsModal({
                 )}
               </button>
 
-              {/* Fullscreen trình duyệt (chỉ hiện trên màn hình ngang desktop) */}
-              {isLandscape && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleBrowserFullscreen();
-                    resetInactivityTimer();
-                  }}
-                  style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-                  className="w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all hidden sm:flex"
-                  title={isFullscreen ? 'Thoát toàn màn hình (F)' : 'Toàn màn hình trình duyệt (F)'}
-                >
-                  {isFullscreen ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-                  ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                  )}
-                </button>
-              )}
+              {/* Fullscreen trình duyệt (hiện trên màn hình desktop & tablet) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleBrowserFullscreen();
+                  resetInactivityTimer();
+                }}
+                style={{ width: '34px', height: '34px', minWidth: '34px', minHeight: '34px', maxWidth: '34px', maxHeight: '34px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                className="w-[34px] h-[34px] aspect-square rounded-full items-center justify-center shrink-0 bg-black/60 hover:bg-black/80 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all hidden sm:flex"
+                title={isFullscreen ? 'Thoát toàn màn hình (F)' : 'Toàn màn hình trình duyệt (F)'}
+              >
+                {isFullscreen ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                )}
+              </button>
 
               {/* Đóng Modal */}
               <button

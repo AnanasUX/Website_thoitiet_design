@@ -12,7 +12,10 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 - **Đa thiết bị (Mobile, Tablet, Desktop)**:
   - **Trải nghiệm Fullscreen Cinema Toàn Màn Hình**: Trình phát chiếm trọn 100% diện tích hiển thị (100vw x 100vh), không viền bo ngoài, không ambient bao quanh khi ở chế độ 16:9.
   - Hỗ trợ xem dạng dọc chuẩn Shorts (9:16) và chế độ quay ngang toàn cảnh (16:9), tự động ưu tiên 16:9 trên PC/Desktop.
-  - Tích hợp nút Toàn Màn Hình Trình Duyệt `[⛶ Fullscreen]` (phím tắt `F` hoặc F11).
+  - **Tích hợp nút Toàn Màn Hình Trình Duyệt `[⛶ Fullscreen]` (phím tắt `F` hoặc F11)**:
+    - Khi bấm `F` hoặc click nút `[⛶]`: Hệ thống lập tức kích hoạt Fullscreen trình duyệt và tự động bung chế độ Toàn Cảnh 16:9 Cinema (`isLandscape = true`), tràn trọn vẹn 100% màn hình thiết bị (100vw x 100vh), loại bỏ mọi viền bo cong và dải đen thừa thãi.
+    - Nút Fullscreen `[⛶]` hiển thị trực quan trên Header ở mọi chế độ hiển thị trên Desktop và Tablet (`hidden sm:flex`).
+    - Khi bấm `Escape` trong trạng thái Fullscreen: chỉ thoát chế độ Fullscreen, tuyệt đối không đóng modal video đột ngột.
   - **Danh sách phát hiển thị TRỰC TIẾP TRÊN VIDEO (On-Video Playlist Overlay)**: Không dùng sidebar bên ngoài đẩy video. Danh sách hiển thị dưới dạng drawer kính mờ trượt ra trên video (`z-40`), có thể bật/tắt tự do bằng nút `[📋 Danh sách]` hoặc phím `L`/`P`.
   - Cung cấp nút chuyển đổi trực quan `[🖥️ 16:9 Toàn cảnh]` / `[📱 9:16 Dọc]` (phím tắt `R`).
   - Tuyệt đối không bị vỡ bố cục trên Tablet (kể cả khi cầm đứng hay xoay ngang).
