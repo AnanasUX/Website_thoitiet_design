@@ -2,11 +2,17 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `1500592 (docs(memory): document desktop main layout padding adjustments)`
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 428ms, `index-BmogQZyt.js` 476.27 kB).
+- **Commit gần nhất**: `3803815 (fix(news): expand category tabs bar max-width to 872px on PC layout)`
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 414ms, `index-B4N-oSGN.js` 476.27 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Tinh Chỉnh Padding Khung Bố Cục Chính Trên Desktop (`DesktopLayout`) Theo Yêu Cầu DevTools**:
+1. **Mở Rộng Chiều Rộng Tối Đa Dải Nút Cuộn Danh Mục Tin Tức Trên PC Lên 872px**:
+   - **Vấn đề**: Thanh cuộn danh mục tin tức trên giao diện máy tính (`DesktopLayout`) trước đây bị giới hạn ở `max-w-[650px]`, khiến các nút danh mục bị co ngắn và phải cuộn nhiều để xem các mục phía sau.
+   - **Giải pháp**:
+     + Nâng cấp class chứa dải nút từ `max-w-[650px]` lên `max-w-[872px]` theo đúng thông số DevTools yêu cầu.
+     + Giúp dải danh mục (Tất cả, Thời tiết, Giá vàng, Chính trị, Đời sống, Con người, Doanh nghiệp, Công nghệ...) trải dài tự nhiên, thoáng đãng, tận dụng tối đa không gian cột tin tức trên màn hình PC.
+
+2. **Tinh Chỉnh Padding Khung Bố Cục Chính Trên Desktop (`DesktopLayout`) Theo Yêu Cầu DevTools**:
    - **Vấn đề**: Vùng chứa nội dung chính trên desktop (`max-w-[1536px]`) bị khoảng đệm quá lớn (`py-[var(--section-gap)] px-[var(--page-padding)]` tạo ra `padding: 64px 32px 64px 32px`), làm đẩy nội dung thời tiết và tin tức xuống quá xa so với thanh tin vắn `LiveNewsTicker` và thụt mép hai bên.
    - **Giải pháp dứt điểm chuẩn xác theo DevTools người dùng cung cấp**:
      + Áp dụng `style={{ paddingTop: '10px', paddingLeft: '0px', paddingRight: '0px' }}` trực tiếp vào container `<div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">`.

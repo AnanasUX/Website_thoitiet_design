@@ -121,6 +121,9 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
     - `padding-left: 0px` và `padding-right: 0px`: Đưa khoảng đệm 2 bên về 0px để tận dụng tối đa chiều rộng của khung 1536px, loại bỏ 32px thụt lề thừa bên trong container.
     - Giữ nguyên `padding-bottom: 64px` (`py-[var(--section-gap)]`) để phần chân trang có khoảng thoáng thẩm mỹ.
 
+- **Dải nút danh mục tin tức (News Category Tabs Bar)**:
+  - `max-width: 872px`: Dải nút cuộn danh mục tin tức trên desktop (`DesktopLayout`) mở rộng lên tối đa 872px (`max-w-[872px]`) giúp hiển thị thoải mái nhiều chuyên mục cùng lúc (Tất cả, Thời tiết, Giá vàng, Chính trị, Đời sống, Con người...) mà không bị co cụm sớm ở 650px.
+
 ---
 
 ## 3. TIÊU CHÍ NGHIỆM THU (ACCEPTANCE CRITERIA)
@@ -132,4 +135,5 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 6. Các nút tương tác (Like, Subscribe, Comment) hoạt động thực tế với tài khoản Google đã đăng nhập và lưu bền vững.
 7. Khi mở bài viết chi tiết có tác giả (ví dụ tác giả trên Dân Trí, VnExpress): ảnh tác giả CHỈ hiển thị là logo avatar tròn nhỏ ở dưới tiêu đề kèm tên tác giả và ngày giờ, tuyệt đối không bị phóng to thành ảnh bài viết mờ nhòe.
 8. Trên giao diện Desktop, khung chứa nội dung chính (`max-w-[1536px]`) có padding-top đúng 10px và padding-left/right đúng 0px theo đúng kết quả kiểm thử trên DevTools.
+9. Dải nút danh mục tin tức trên Desktop mở rộng đạt chiều rộng tối đa 872px (`max-w-[872px]`), hiển thị thoáng đãng và giảm thiểu thao tác cuộn ngang.
 
