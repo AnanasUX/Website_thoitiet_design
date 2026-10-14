@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-dashboard-data.mjs && vite build",
     "build:app": "node -e \"process.env.BUILD_TARGET='app'; require('child_process').execSync('npx vite build', {stdio:'inherit', env:process.env})\"",
     "build:apk": "node scripts/build-apk.cjs",
     "preview": "vite preview",

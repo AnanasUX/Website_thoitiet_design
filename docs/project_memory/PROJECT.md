@@ -34,18 +34,11 @@ Website_thoitiet_design/
 │   ├── testwebsite.mjs         # Test runner tự động thực thi qua lệnh /testwebsite
 │   └── build-apk.cjs           # Script đóng gói APK Android
 ├── src/
-│   ├── components/             # Các khối giao diện nghiệp vụ
+│   ├── components/             # Các component tách biệt độc lập
 │   │   ├── VideoShortsModal.tsx# Trình phát Video Shorts & Trung tâm Smart TV EPG
-│   │   ├── NewsDetailView.tsx  # Trình đọc bài viết chi tiết & Thanh tác giả Byline
-│   │   ├── DesktopLayout.tsx   # Bố cục màn hình máy tính & dải tab chuyên mục 872px
-│   │   ├── TabletLayout.tsx    # Bố cục máy tính bảng
-│   │   ├── MobileLayout.tsx    # Bố cục di động
-│   │   ├── WeatherCard.tsx     # Khối hiển thị thời tiết hiện tại
-│   │   ├── HourlyForecast.tsx  # Biểu đồ đường cong nhiệt độ theo giờ (SVG)
-│   │   ├── MarketWatch.tsx     # Bảng giá vàng, tỷ giá ngoại tệ, xăng dầu
-│   │   └── ...
-│   ├── services/               # Tầng dịch vụ lấy dữ liệu (API, Scraper, Cache)
-│   ├── App.tsx                 # Điều phối giao diện trung tâm
+│   │   └── YouTubeBroadcastPlayer.tsx # Trình phát luồng trực tiếp tin tức
+│   ├── assets/                 # Tài nguyên hình ảnh, biểu tượng tĩnh
+│   ├── App.tsx                 # Điều phối giao diện trung tâm; chứa DesktopLayout, TabletLayout, MobileLayout, NewsDetailModal, WeatherSection, MarketWatch...
 │   ├── main.tsx                # Điểm khởi tạo ứng dụng React
 │   └── index.css               # Điểm nhập CSS toàn cục & cấu hình Tailwind v4
 └── package.json                # Định nghĩa thư viện & câu lệnh dự án
