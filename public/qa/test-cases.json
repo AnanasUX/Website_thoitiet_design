@@ -280,6 +280,21 @@
         "Xác nhận xuất bảng QA Release Audit Report và kết luận RELEASE GATE: PASSED"
       ],
       "expected": "20/20 ca kiểm thử ĐẠT (PASS), 0 thất bại, đủ điều kiện phát hành."
+    },
+    {
+      "id": "TC-021",
+      "title": "Phân quyền QA Dashboard chỉ cho mrkun28@gmail.com & Hiển thị Header/Fixed Widget",
+      "requirementIds": ["REQ-021"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm isUserAdminQA chỉ cho phép mrkun28@gmail.com",
+        "Kiểm tra QADashboardHeaderButton hiển thị trên MobileLayout, TabletLayout, DesktopLayout",
+        "Kiểm tra QADashboardFloatingWidget ghim cố định ở góc phải bên dưới",
+        "Kiểm tra link footer và dropdown avatar được bảo vệ bởi isUserAdminQA"
+      ],
+      "expected": "Chỉ tài khoản mrkun28@gmail.com thấy nút QA Dashboard tại Header, Fixed Widget và Menu Avatar; ẩn hoàn toàn với các tài khoản khác."
     }
   ]
 }

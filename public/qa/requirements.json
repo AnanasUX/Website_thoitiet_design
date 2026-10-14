@@ -273,6 +273,19 @@
       "evidence": ["testwebsite.mjs:TC-020:PASS", "commit-54d4fad"],
       "owner": "QA Lead",
       "notes": "20/20 test cases PASS, RELEASE GATE: PASSED"
+    },
+    {
+      "id": "REQ-021",
+      "title": "Phân quyền QA Dashboard chỉ cho mrkun28@gmail.com, hiển thị tại Header & Fixed Widget",
+      "description": "Nút và Widget QA Dashboard chỉ hiển thị duy nhất khi tài khoản người dùng đăng nhập là mrkun28@gmail.com; đặt tại Header (Mobile, Tablet, Desktop), Fixed Floating Widget (bottom-6 right-6) và dropdown Avatar để giải quyết vấn đề cuộn vô cực.",
+      "sourcePrompt": "PROMPT-20261014-09: QA Dashboard chỉ hiển thị ở tài khoản mrkun28@gmail.com; hiển thị ở đầu trang hoặc cố định trên màn hình tránh cuộn vô cực",
+      "priority": "P0",
+      "category": "qa-access-control",
+      "status": "PASS",
+      "testIds": ["TC-021"],
+      "evidence": ["testwebsite.mjs:TC-021:PASS", "commit-pending"],
+      "owner": "QA Lead",
+      "notes": "isUserAdminQA kiểm tra email mrkun28@gmail.com, ghim Header và Fixed Floating Widget"
     }
   ]
 }

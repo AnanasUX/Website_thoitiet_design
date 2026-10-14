@@ -3200,11 +3200,22 @@ export const isUserAdminQA = (role?: any): boolean => {
   return false;
 };
 
+export const getDashboardUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname.includes('github.io') || window.location.pathname.includes('/Website_thoitiet_design')) {
+      return `${window.location.origin}/Website_thoitiet_design/dashboard.html`;
+    }
+  }
+  const base = (import.meta as any).env?.BASE_URL || '/';
+  const cleanBase = base.endsWith('/') ? base : `${base}/`;
+  return `${cleanBase}dashboard.html`;
+};
+
 export function QADashboardHeaderButton({ userRole }: { userRole?: any }) {
   if (!isUserAdminQA(userRole)) return null;
   return (
     <a
-      href="/dashboard.html"
+      href={getDashboardUrl()}
       target="_blank"
       rel="noopener noreferrer"
       className="flex items-center gap-1.5 h-[32px] px-3 rounded-full bg-[#ecfdf3] hover:bg-[#d1fadf] border border-[#a6f4c5] text-[#027a48] font-bold text-[12px] shadow-sm transition-all cursor-pointer shrink-0"
@@ -3221,7 +3232,7 @@ export function QADashboardFloatingWidget({ userRole }: { userRole?: any }) {
   return (
     <div className="fixed bottom-6 right-6 z-[999] pointer-events-auto">
       <a
-        href="/dashboard.html"
+        href={getDashboardUrl()}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-2 bg-[#111827] hover:bg-[#1f2937] text-white px-3.5 py-2.5 rounded-full shadow-2xl border-2 border-[#12b76a] hover:scale-105 active:scale-95 transition-all cursor-pointer group"
@@ -3256,7 +3267,7 @@ function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () =>
             </div>
             {isUserAdminQA(userRole) && (
               <a 
-                href="/dashboard.html" 
+                href={getDashboardUrl()} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 onClick={() => setIsOpen(false)} 
@@ -4463,7 +4474,7 @@ useEffect(() => {
         <div className="flex items-center gap-4">
           {isUserAdminQA(userRole) && (
             <a 
-              href="/dashboard.html" 
+              href={getDashboardUrl()} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="flex items-center gap-1 font-semibold text-[#067647] hover:text-[#05603a] bg-[#ecfdf3] px-2.5 py-0.5 rounded-full border border-[#abefc6] transition-colors text-[11px]" 

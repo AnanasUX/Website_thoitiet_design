@@ -9,6 +9,7 @@
     2. **Fixed Floating Action Widget**: Widget nổi cố định ở góc dưới bên phải màn hình (`<QADashboardFloatingWidget />` - `fixed bottom-6 right-6 z-[999]`) với đèn báo nhấp nháy, huy hiệu ADMIN và hiệu ứng nổi bật.
     3. **Dropdown Menu Avatar**: Mục `🛡️ QA Dashboard (Admin)` dành riêng cho admin trong `UserAvatarMenu`.
     4. **Site Footer**: Bọc trong điều kiện bảo vệ `{isUserAdminQA(userRole) && (...)}`.
+  + ✅ **Sửa lỗi định tuyến 404 trên GitHub Pages**: Hàm `getDashboardUrl()` tự động chuyển hướng chính xác đến `https://ananasux.github.io/Website_thoitiet_design/dashboard.html` thay vì root domain `https://ananasux.github.io/dashboard.html` (triệt tiêu mã lỗi 404).
   + ✅ Tích hợp giao diện **Interactive Visual QA Dashboard** (`dashboard.html` & `public/dashboard.html`).
   + ✅ Đồng bộ toàn bộ dữ liệu JSON có cấu trúc: `qa/requirements.json` và `qa/test-cases.json` đủ **21 yêu cầu** và **21 test case** đã xác minh có bằng chứng.
   + ✅ Hoàn thiện script `scripts/build-dashboard-data.mjs` (`npm run qa:dashboard`) kiểm tra tính hợp lệ hai chiều giữa yêu cầu và test case.

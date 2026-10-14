@@ -35,4 +35,14 @@ if (errors.length) {
   const covered = requirements.requirements.filter(r => r.testIds.every(id => caseIds.has(id))).length;
   console.log(`QA registry valid: ${requirements.requirements.length} requirements, ${cases.testCases.length} test cases, ${covered} requirements linked.`);
   console.log("Note: registry validity does not mean the website tests have passed.");
+
+  // Sync to public/qa and public/dashboard.html for Vite builds and GitHub Pages deployment
+  const publicQa = path.join(root, "public", "qa");
+  if (!fs.existsSync(publicQa)) fs.mkdirSync(publicQa, { recursive: true });
+  fs.copyFileSync(requirementsPath, path.join(publicQa, "requirements.json"));
+  fs.copyFileSync(casesPath, path.join(publicQa, "test-cases.json"));
+  if (fs.existsSync(path.join(root, "dashboard.html"))) {
+    fs.copyFileSync(path.join(root, "dashboard.html"), path.join(root, "public", "dashboard.html"));
+  }
+  console.log("Successfully synchronized QA assets to public/qa and public/dashboard.html");
 }

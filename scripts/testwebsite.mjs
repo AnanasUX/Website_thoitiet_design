@@ -334,12 +334,13 @@ try {
   const hasTabletHeader = /function TabletLayout[\s\S]*?QADashboardHeaderButton/.test(appCode);
   const hasDesktopHeader = /function DesktopLayout[\s\S]*?QADashboardHeaderButton/.test(appCode);
   const hasFloatingAtRoot = appCode.includes('<QADashboardFloatingWidget userRole={userRole} />');
-  const hasGuardedFooter = appCode.includes('isUserAdminQA(userRole)') && appCode.includes('/dashboard.html');
+  const hasGetDashboardUrl = appCode.includes('getDashboardUrl') && appCode.includes('Website_thoitiet_design/dashboard.html');
+  const hasGuardedFooter = appCode.includes('isUserAdminQA(userRole)') && appCode.includes('getDashboardUrl()');
 
-  if (hasAdminCheck && hasHeaderBtn && hasFloatingWidget && hasMobileHeader && hasTabletHeader && hasDesktopHeader && hasFloatingAtRoot && hasGuardedFooter) {
-    recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & Header/Widget', 'REQ-021', 'PASS', 'isUserAdminQA guard, Mobile/Tablet/Desktop Header + Fixed Floating Widget.');
+  if (hasAdminCheck && hasHeaderBtn && hasFloatingWidget && hasMobileHeader && hasTabletHeader && hasDesktopHeader && hasFloatingAtRoot && hasGuardedFooter && hasGetDashboardUrl) {
+    recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & GitHub Pages URL', 'REQ-021', 'PASS', 'isUserAdminQA guard, Header + Fixed Widget + getDashboardUrl (/Website_thoitiet_design/dashboard.html).');
   } else {
-    recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & Header/Widget', 'REQ-021', 'FAIL', `adminCheck:${hasAdminCheck}, mobile:${hasMobileHeader}, tablet:${hasTabletHeader}, desktop:${hasDesktopHeader}, floating:${hasFloatingAtRoot}, footer:${hasGuardedFooter}`);
+    recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & GitHub Pages URL', 'REQ-021', 'FAIL', `adminCheck:${hasAdminCheck}, mobile:${hasMobileHeader}, tablet:${hasTabletHeader}, desktop:${hasDesktopHeader}, floating:${hasFloatingAtRoot}, footer:${hasGuardedFooter}, getUrl:${hasGetDashboardUrl}`);
   }
 } catch (e) {
   recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & Header/Widget', 'REQ-021', 'FAIL', e.message);
