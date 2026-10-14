@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `cfd3bb4` (Đang chuẩn bị commit tính năng fix hiển thị tác giả bài viết)
+- **Commit gần nhất**: `1bae5eb (fix(article): render author avatar as small byline icon and prevent enlarging as article image)`
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 6.73s, `index-CljyEJx1.js` 476.21 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
