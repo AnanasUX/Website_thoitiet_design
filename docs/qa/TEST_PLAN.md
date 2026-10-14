@@ -24,6 +24,7 @@
 | **TC-018** | Kiểm tra biên dịch sản phẩm (Vite build sạch sẽ, 0 lỗi TypeScript) | REQ-018 | P0 (Bắt buộc) | Build Runner (`npm run build`) | ✅ PASS |
 | **TC-019** | Tính vẹn toàn bộ nhớ dự án (Tất cả tài liệu chuẩn tồn tại và đồng nhất) | REQ-019 | P0 (Bắt buộc) | Registry Validator | ✅ PASS |
 | **TC-020** | Bộ chạy kiểm thử tự động `/testwebsite` xuất báo cáo có bằng chứng | REQ-020 | P0 (Bắt buộc) | CLI Test Runner Script | ✅ PASS |
+| **TC-021** | Phân quyền QA Dashboard (mrkun28@gmail.com) & Hiển thị Header/Widget cố định | REQ-021 | P0 (Bắt buộc) | Automated Role & Placement Assertion | ✅ PASS |
 
 ---
 
@@ -98,4 +99,19 @@
 - **Kết quả mong đợi**: Mã thoát 0, tạo file `dist/assets/index-*.js` và `dist/assets/index-*.css`.
 
 #### TC-019 & TC-020: Vẹn toàn bộ nhớ & Báo cáo `/testwebsite`
-- **Mục tiêu**: Khi chạy lệnh `/testwebsite`, test runner tự động kiểm tra toàn bộ 20 ca kiểm thử và in bảng báo cáo tổng kết có bằng chứng xác minh.
+- **Mục tiêu**: Khi chạy lệnh `/testwebsite`, test runner tự động kiểm tra toàn bộ 21 ca kiểm thử và in bảng báo cáo tổng kết có bằng chứng xác minh.
+
+---
+
+### Nhóm 5: Phân Quyền & Giám Sát Chất Lượng Quản Trị
+
+#### TC-021: Phân quyền QA Dashboard chỉ cho tài khoản mrkun28@gmail.com & Hiển thị Header/Fixed Widget
+- **Mục tiêu**: Bảng điều khiển QA Dashboard chỉ được phép hiển thị khi đăng nhập đúng email `mrkun28@gmail.com`. Do trang áp dụng tải tin vô cực (infinite scroll) đẩy footer ra xa tầm mắt, nút truy cập bắt buộc phải nằm ở đầu trang (Header) và ghim cố định trên màn hình (Floating Widget).
+- **Tiền điều kiện**: Ứng dụng chạy trên web; tài khoản xác thực qua `userRole` hoặc `localStorage`.
+- **Các bước thực hiện**:
+  1. Kiểm tra hàm `isUserAdminQA` trong `src/App.tsx`: trả về `true` với email `mrkun28@gmail.com` và `false` với tất cả các email khác hoặc khi chưa đăng nhập.
+  2. Kiểm tra `QADashboardHeaderButton` xuất hiện trên thanh Header của `MobileLayout`, `TabletLayout`, và `DesktopLayout`.
+  3. Kiểm tra `QADashboardFloatingWidget` được render tại gốc `App`, có thuộc tính fixed bottom right (`fixed bottom-6 right-6 z-[999]`).
+  4. Kiểm tra menu dropdown Avatar (`UserAvatarMenu`) có mục `🛡️ QA Dashboard (Admin)` được bảo vệ bởi `isUserAdminQA(userRole)`.
+  5. Kiểm tra link QA Dashboard ở chân trang `Site Footer` được bảo vệ bởi `{isUserAdminQA(userRole) && (...)}`.
+- **Kết quả mong đợi**: Người dùng vãng lai hoặc tài khoản khác không bao giờ nhìn thấy nút QA Dashboard. Khi đăng nhập `mrkun28@gmail.com`, người dùng luôn thấy nút QA tại Header và nút nổi cố định ở góc màn hình bất kể cuộn trang đến độ sâu nào.

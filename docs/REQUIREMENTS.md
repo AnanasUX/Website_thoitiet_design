@@ -35,6 +35,7 @@
 | REQ-018 | PROMPT-20261014-07 | Kiểm tra biên dịch sản phẩm hoàn hảo với 0 lỗi TypeScript, 0 lỗi đóng gói Vite | P0 | Build / Artifact | TC-018 | PASS | testwebsite.mjs:TC-018 | npm run build exits 0 in 3.11s |
 | REQ-019 | PROMPT-20261014-08 | Tính vẹn toàn hồ sơ bộ nhớ dự án (đủ 8 tệp hồ sơ chuẩn, đồng bộ và có cấu trúc) | P0 | QA / Memory | TC-019 | PASS | testwebsite.mjs:TC-019 | All 8 persistent docs verified |
 | REQ-020 | PROMPT-20261014-08 | Bộ chạy kiểm thử tự động toàn diện qua lệnh /testwebsite (npm run testwebsite) | P0 | QA / Automation | TC-020 | PASS | testwebsite.mjs:TC-020 | 20/20 test cases executed with report |
+| REQ-021 | PROMPT-20261014-09 | Phân quyền QA Dashboard chỉ cho mrkun28@gmail.com, hiển thị tại Header & Fixed Widget nổi | P0 | QA / Access Control | TC-021 | PASS | testwebsite.mjs:TC-021 | isUserAdminQA guard, Header button & Fixed floating widget |
 
 ## Prompt intake log
 
@@ -52,3 +53,4 @@
 | PROMPT-20261014-06 | 2026-10-14 | Mở rộng dải nút danh mục tin tức desktop lên 872px (max-w-[872px]) | REQ-015 | Resolved | Approved |
 | PROMPT-20261014-07 | 2026-10-14 | Kiểm thử build sạch sẽ 0 lỗi trước khi phát hành | REQ-018 | None | Approved |
 | PROMPT-20261014-08 | 2026-10-14 | Tích hợp gói QA, bộ nhớ dự án bền vững và lệnh /testwebsite tự động | REQ-019, REQ-020 | Resolved | Approved |
+| PROMPT-20261014-09 | 2026-10-14 | QA Dashboard chỉ hiển thị ở tài khoản mrkun28@gmail.com; hiển thị ở đầu trang hoặc cố định trên màn hình tránh cuộn vô cực | REQ-021 | Resolved | Approved |

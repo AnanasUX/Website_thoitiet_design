@@ -61,6 +61,14 @@
     + Kế thừa `padding-bottom: 64px` từ biến `--section-gap` thông qua lớp `py-[var(--section-gap)]`.
   - Dải thanh cuộn danh mục tin tức: Nâng cấp chiều rộng tối đa lên `872px` (`max-w-[872px]`) thay vì `650px`, mở rộng tầm nhìn các chuyên mục và tối ưu hóa không gian màn hình lớn.
 
+- **Kiến Trúc Phân Quyền & Vị Trí Hiển Thị Bảng QA Dashboard (`isUserAdminQA`)**:
+  - *Phân quyền quản trị nghiêm ngặt*: Nút truy cập và widget `[🛡️ QA Dashboard]` CHỈ hiển thị duy nhất khi tài khoản người dùng đăng nhập là `"mrkun28@gmail.com"` (kiểm tra qua `userRole?.email` và fallback `localStorage.getItem('user_auth')`). Tuyệt đối ẩn hoàn toàn khỏi mọi tài khoản người dùng khác và người dùng ẩn danh (khách).
+  - *Giải pháp tiếp cận vượt qua Cuộn Vô Cực (Infinite Scroll Resolution)*: Do website tích hợp tính năng tải tin tức vô cực (`InfiniteScrollTrigger`), chân trang (Footer) liên tục bị đẩy xuống dưới sâu và hầu như người dùng không thể cuộn tới đáy. Do đó, nút truy cập QA Dashboard được bố trí tại 3 vị trí chiến lược:
+    1. **Top Header**: Nút ghim cố định trên thanh tiêu đề của cả Mobile (`MobileLayout`), Tablet (`TabletLayout`) và Desktop (`DesktopLayout`) cạnh Avatar.
+    2. **Fixed Floating Action Widget**: Widget nổi cố định ở góc dưới bên phải màn hình (`fixed bottom-6 right-6 z-[999] pointer-events-auto`) luôn nổi trên mọi tầng nội dung và cuộn trang.
+    3. **Menu Avatar Quản Trị**: Mục `🛡️ QA Dashboard (Admin)` trong dropdown menu người dùng.
+    4. **Site Footer**: Bọc trong điều kiện bảo vệ `{isUserAdminQA(userRole) && (...)}`.
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
@@ -79,3 +87,5 @@
 - **Từ chối**: Hiển thị dải Quick Channel Pills trên mobile portrait (gây đè nút Header và xuất hiện thanh cuộn xám).
 - **Từ chối**: Sử dụng video MP4 nội bộ lưu trữ tại trang cho luồng Shorts (gây thiếu phong phú, lỗi codec hoặc độ trễ tải, thay vào đó lấy 100% video YouTube chính thống).
 - **Từ chối**: Nhồi nhét các nút điều khiển xoay 16:9, playlist drawer trùng lặp hay fullscreen lên Top Header trên Mobile (làm tràn mép và đè lên tên kênh, gây hỏng giao diện di động).
+- **Từ chối**: Chỉ đặt nút QA Dashboard ở chân trang Footer mà không có ở Header hay Floating Widget (khiến người dùng không thể bấm được do tính năng tải vô cực liên tục đẩy Footer xuống).
+- **Từ chối**: Hiển thị công khai QA Dashboard cho mọi tài khoản hoặc khách vãng lai chưa đăng nhập (đây là công cụ quản trị kỹ thuật chỉ cấp phép cho mrkun28@gmail.com).

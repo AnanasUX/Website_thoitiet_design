@@ -1613,6 +1613,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
               )}
           </div>
 
+          <QADashboardHeaderButton userRole={userRole} />
+
           {userRole && userRole.picture ? (
             <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
           ) : (
@@ -1784,6 +1786,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             )}
           </div>
+          <QADashboardHeaderButton userRole={userRole} />
           {userRole && userRole.picture ? (
             <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
           ) : (
@@ -1962,6 +1965,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             )}
           </div>
+          <QADashboardHeaderButton userRole={userRole} />
           {userRole && userRole.picture ? (
             <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
           ) : (
@@ -3179,6 +3183,61 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
   );
 }
 
+// ── QA Dashboard Admin Role Verification ──────────────────────────────────
+export const isUserAdminQA = (role?: any): boolean => {
+  if (role?.email && role.email.toLowerCase().trim() === 'mrkun28@gmail.com') {
+    return true;
+  }
+  try {
+    const cached = localStorage.getItem('user_auth');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed?.email && parsed.email.toLowerCase().trim() === 'mrkun28@gmail.com') {
+        return true;
+      }
+    }
+  } catch (e) {}
+  return false;
+};
+
+export function QADashboardHeaderButton({ userRole }: { userRole?: any }) {
+  if (!isUserAdminQA(userRole)) return null;
+  return (
+    <a
+      href="/dashboard.html"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 h-[32px] px-3 rounded-full bg-[#ecfdf3] hover:bg-[#d1fadf] border border-[#a6f4c5] text-[#027a48] font-bold text-[12px] shadow-sm transition-all cursor-pointer shrink-0"
+      title="Bảng Giám Sát & Kiểm Thử QA (Dành riêng cho mrkun28@gmail.com)"
+    >
+      <span className="w-2 h-2 rounded-full bg-[#12b76a] animate-pulse"></span>
+      <span>🛡️ QA</span>
+    </a>
+  );
+}
+
+export function QADashboardFloatingWidget({ userRole }: { userRole?: any }) {
+  if (!isUserAdminQA(userRole)) return null;
+  return (
+    <div className="fixed bottom-6 right-6 z-[999] pointer-events-auto">
+      <a
+        href="/dashboard.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 bg-[#111827] hover:bg-[#1f2937] text-white px-3.5 py-2.5 rounded-full shadow-2xl border-2 border-[#12b76a] hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+        title="Bảng Giám Sát & Kiểm Thử QA Toàn Hệ Thống (Dành riêng cho mrkun28@gmail.com)"
+      >
+        <span className="w-2.5 h-2.5 rounded-full bg-[#12b76a] animate-pulse shadow-[0_0_8px_#12b76a]"></span>
+        <span className="font-bold text-[13px] tracking-wide text-white flex items-center gap-1.5">
+          <span>🛡️</span>
+          <span>QA Dashboard</span>
+        </span>
+        <span className="text-[10px] bg-[#067647] text-white px-1.5 py-0.5 rounded-full font-mono font-bold">ADMIN</span>
+      </a>
+    </div>
+  );
+}
+
 function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -3195,6 +3254,18 @@ function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () =>
               <span className="text-[13px] font-semibold text-[#182033] line-clamp-1">{userRole.name}</span>
               <span className="text-[11px] text-[#5f687b] line-clamp-1">{userRole.email}</span>
             </div>
+            {isUserAdminQA(userRole) && (
+              <a 
+                href="/dashboard.html" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                onClick={() => setIsOpen(false)} 
+                className="px-4 py-2 text-left text-[13px] text-[#027a48] hover:bg-[#ecfdf3] font-semibold transition-colors w-full flex items-center gap-2 border-b border-[#e3e7ef]"
+              >
+                <span>🛡️</span>
+                <span>QA Dashboard (Admin)</span>
+              </a>
+            )}
             <button onClick={() => { setIsOpen(false); onLogout(); }} className="px-4 py-2 text-left text-[13px] text-[#ef4444] hover:bg-[#fef2f2] font-medium transition-colors w-full flex items-center gap-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
               Đăng xuất
@@ -4390,22 +4461,27 @@ useEffect(() => {
       <footer className="w-full border-t border-[#e3e7ef] bg-white py-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[12px] text-[#94a3b8]">
         <p>© 2026 <span className="font-semibold text-[#5f687b]">Anx.</span> — Thời tiết &amp; Tin tức</p>
         <div className="flex items-center gap-4">
-          <a 
-            href="/dashboard.html" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex items-center gap-1 font-semibold text-[#067647] hover:text-[#05603a] bg-[#ecfdf3] px-2.5 py-0.5 rounded-full border border-[#abefc6] transition-colors text-[11px]" 
-            title="Mở bảng kiểm thử và giám sát chất lượng QA"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#12b76a] animate-pulse"></span>
-            🛡️ QA Dashboard
-          </a>
+          {isUserAdminQA(userRole) && (
+            <a 
+              href="/dashboard.html" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="flex items-center gap-1 font-semibold text-[#067647] hover:text-[#05603a] bg-[#ecfdf3] px-2.5 py-0.5 rounded-full border border-[#abefc6] transition-colors text-[11px]" 
+              title="Mở bảng kiểm thử và giám sát chất lượng QA (mrkun28@gmail.com)"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#12b76a] animate-pulse"></span>
+              🛡️ QA Dashboard
+            </a>
+          )}
           <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
             Chính sách Bảo mật
           </button>
           <a href="https://github.com/AnanasUX" target="_blank" rel="noopener" className="hover:text-[#3a7bd5] transition-colors">GitHub</a>
         </div>
       </footer>
+
+      {/* Floating QA Dashboard Widget for Admin mrkun28@gmail.com */}
+      <QADashboardFloatingWidget userRole={userRole} />
 
       {/* Privacy Policy Overlay */}
       {showPrivacyPolicy && (

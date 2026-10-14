@@ -321,6 +321,31 @@ try {
 }
 
 // -------------------------------------------------------------
+// TC-021: QA Dashboard Access Control & Placement
+// -------------------------------------------------------------
+try {
+  const appPath = path.join(rootDir, 'src', 'App.tsx');
+  const appCode = fs.readFileSync(appPath, 'utf8');
+
+  const hasAdminCheck = appCode.includes('mrkun28@gmail.com') && appCode.includes('isUserAdminQA');
+  const hasHeaderBtn = appCode.includes('QADashboardHeaderButton');
+  const hasFloatingWidget = appCode.includes('QADashboardFloatingWidget');
+  const hasMobileHeader = /function MobileLayout[\s\S]*?QADashboardHeaderButton/.test(appCode);
+  const hasTabletHeader = /function TabletLayout[\s\S]*?QADashboardHeaderButton/.test(appCode);
+  const hasDesktopHeader = /function DesktopLayout[\s\S]*?QADashboardHeaderButton/.test(appCode);
+  const hasFloatingAtRoot = appCode.includes('<QADashboardFloatingWidget userRole={userRole} />');
+  const hasGuardedFooter = appCode.includes('isUserAdminQA(userRole)') && appCode.includes('/dashboard.html');
+
+  if (hasAdminCheck && hasHeaderBtn && hasFloatingWidget && hasMobileHeader && hasTabletHeader && hasDesktopHeader && hasFloatingAtRoot && hasGuardedFooter) {
+    recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & Header/Widget', 'REQ-021', 'PASS', 'isUserAdminQA guard, Mobile/Tablet/Desktop Header + Fixed Floating Widget.');
+  } else {
+    recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & Header/Widget', 'REQ-021', 'FAIL', `adminCheck:${hasAdminCheck}, mobile:${hasMobileHeader}, tablet:${hasTabletHeader}, desktop:${hasDesktopHeader}, floating:${hasFloatingAtRoot}, footer:${hasGuardedFooter}`);
+  }
+} catch (e) {
+  recordTest('TC-021', 'Phân quyền QA Dashboard mrkun28@gmail.com & Header/Widget', 'REQ-021', 'FAIL', e.message);
+}
+
+// -------------------------------------------------------------
 // TC-020: Automated Test Runner Report
 // -------------------------------------------------------------
 recordTest('TC-020', 'Bộ chạy kiểm thử tự động qua lệnh /testwebsite', 'REQ-020', 'PASS', 'Script testwebsite.mjs thực thi đầy đủ và xuất bảng báo cáo đối chiếu.');

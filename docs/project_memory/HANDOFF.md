@@ -2,15 +2,19 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Tích Hợp Toàn Diện Gói QA & Dashboard (`website_qa_kit.zip` & `website_qa_integration_pack.zip`)**:
-  + ✅ Đã tích hợp giao diện **Interactive Visual QA Dashboard** (`dashboard.html` & `public/dashboard.html`) cho phép người dùng mở trực tiếp từ trình duyệt để theo dõi toàn bộ 20 yêu cầu, độ bao phủ 100%, bộ lọc trạng thái và nạp báo cáo.
-  + ✅ Đã cấu hình nút truy cập nhanh **`[🛡️ QA Dashboard]`** ngay chân trang (Footer) của website với đèn báo xanh nhấp nháy.
-  + ✅ Đồng bộ toàn bộ dữ liệu JSON có cấu trúc: `qa/requirements.json` và `qa/test-cases.json` đủ 20 yêu cầu và 20 test case đã xác minh có bằng chứng.
+- **Kết quả Tích Hợp Toàn Diện Gói QA & Phân Quyền Quản Trị (`REQ-021` / `TC-021`)**:
+  + ✅ **Phân quyền người dùng nghiêm ngặt**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` (kiểm tra qua `userRole?.email` và fallback `localStorage.getItem('user_auth')`) mới được xem và truy cập `[🛡️ QA Dashboard]`. Mọi tài khoản khác và khách chưa đăng nhập hoàn toàn không nhìn thấy.
+  + ✅ **Giải pháp định vị vượt qua Cuộn Vô Cực (Infinite Scroll)**: Thay vì chỉ nằm ở Footer (vốn bị cuộn vô cực đẩy xuống sâu và khó nhìn thấy), nút QA Dashboard được bố trí ghim nổi bật ở 3 vị trí chiến lược:
+    1. **Top Header**: Nút `<QADashboardHeaderButton />` xuất hiện trên thanh header của `MobileLayout`, `TabletLayout` và `DesktopLayout`.
+    2. **Fixed Floating Action Widget**: Widget nổi cố định ở góc dưới bên phải màn hình (`<QADashboardFloatingWidget />` - `fixed bottom-6 right-6 z-[999]`) với đèn báo nhấp nháy, huy hiệu ADMIN và hiệu ứng nổi bật.
+    3. **Dropdown Menu Avatar**: Mục `🛡️ QA Dashboard (Admin)` dành riêng cho admin trong `UserAvatarMenu`.
+    4. **Site Footer**: Bọc trong điều kiện bảo vệ `{isUserAdminQA(userRole) && (...)}`.
+  + ✅ Tích hợp giao diện **Interactive Visual QA Dashboard** (`dashboard.html` & `public/dashboard.html`).
+  + ✅ Đồng bộ toàn bộ dữ liệu JSON có cấu trúc: `qa/requirements.json` và `qa/test-cases.json` đủ **21 yêu cầu** và **21 test case** đã xác minh có bằng chứng.
   + ✅ Hoàn thiện script `scripts/build-dashboard-data.mjs` (`npm run qa:dashboard`) kiểm tra tính hợp lệ hai chiều giữa yêu cầu và test case.
-  + ✅ Cấu hình sẵn sàng Playwright E2E browser tests: `playwright.config.js`, `tests/site-audit.spec.js` và CI workflow `.github/workflows/website-qa.yml`.
-  + ✅ Chuỗi lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) tự động thực thi 3 tầng: `validate-registry` ➔ `build-dashboard-data` ➔ `testwebsite.mjs` đạt **20/20 PASS** (0 FAIL).
+  + ✅ Chuỗi lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) tự động thực thi 3 tầng: `validate-registry` ➔ `build-dashboard-data` ➔ `testwebsite.mjs` đạt **21/21 PASS** (0 FAIL).
   + ✅ Cổng kiểm duyệt phát hành: **RELEASE GATE: PASSED**.
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.18s).
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.04s).
 
 ---
 
@@ -33,7 +37,10 @@
    - Dữ liệu thời tiết tức thời & đồ thị SVG spline mượt mà.
    - Bảng giá thị trường vàng, ngoại tệ, xăng dầu hoạt động ổn định.
    - Hệ thống hồ sơ dự án chuẩn hóa (`PROJECT.md`, `REQUIREMENTS.md`, `DECISIONS.md`, `HANDOFF.md`, `CHANGELOG.md`, `TEST_PLAN.md`, `RELEASE_GATE.md`).
-   - Lệnh tự động `/testwebsite` (qua `npm run testwebsite`) chạy kiểm thử toàn trang và xuất báo cáo có bằng chứng (20/20 PASS).
+   - Lệnh tự động `/testwebsite` (qua `npm run testwebsite`) chạy kiểm thử toàn trang và xuất báo cáo có bằng chứng (21/21 PASS).
+5. **[REQ-021] Phân Quyền QA Dashboard & Vị Trí Hiển Thị Tránh Cuộn Vô Cực**:
+   - Chỉ tài khoản `mrkun28@gmail.com` nhìn thấy QA Dashboard.
+   - Hiển thị trên Top Header (Mobile, Tablet, Desktop), Fixed Floating Widget góc phải dưới và Menu Avatar.
 
 ---
 
