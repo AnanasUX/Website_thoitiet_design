@@ -2,11 +2,31 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `c37c168 (docs(memory): document category tabs max-width upgrade to 872px)`
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 414ms, `index-B4N-oSGN.js` 476.27 kB).
+- **Commit gần nhất**: `9803675 (fix(shorts): integrate 97 verified real YouTube videos across 10 channels, remove subCategory filter, optimize mobile layout and error recovery)`
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 1.68s, `index-ClFDWprr.js` 487.70 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Mở Rộng Chiều Rộng Tối Đa Dải Nút Cuộn Danh Mục Tin Tức Trên PC Lên 872px**:
+1. **Nâng Cấp Toàn Diện Trình Phát Video Shorts & Tích Hợp 97 Video YouTube Thực Tế Đã Xác Minh**:
+   - **Loại bỏ 100% video lỗi / 404 / video MP4 nội bộ**: Quét và xác thực qua YouTube oEmbed API toàn bộ video, loại bỏ các ID chết (như `mBwR5jE57gA`) và các video MP4 không chính thống.
+   - **Tích hợp 97 video YouTube thực tế cho 10 đài truyền hình & báo chí hàng đầu**:
+     + VTV24 (10 clip): Bản tin thời sự nóng, thế giới toàn cảnh, tài chính, cụm tin hôm nay.
+     + Báo Tiền Phong (10 clip): Mưa lũ, thời sự nóng 14/10, vấn đề nghị trường, thể thao.
+     + Báo Tuổi Trẻ (10 clip): Bản tin 30s Nóng, phóng sự điều tra, đời sống xã hội.
+     + VTC NOW (10 clip): Phim tài liệu AI, thời sự số 24/7, tiêu điểm kinh tế.
+     + Báo Lao Động (10 clip): Lao động việc làm, đời sống công nhân, kinh tế thị trường.
+     + VTV Thời Tiết (10 clip): Dự báo thời tiết các miền, cảnh báo bão lũ, thời tiết nông vụ & du lịch.
+     + ANTV (10 clip): An ninh trật tự, phòng chống tội phạm, thời sự công an nhân dân.
+     + VnExpress TV (10 clip): Văn hóa ẩm thực, podcast tài chính cá nhân, tin tức công nghệ.
+     + Báo Thanh Niên (7 clip): Sự kiện văn hóa, phóng sự xã hội, đời sống giới trẻ.
+     + Báo Dân Trí (10 clip): Tin tức ngân hàng, tỷ giá, doanh nghiệp, xã hội.
+   - **Khắc phục lỗi trống danh sách phát (Empty Playlist)**: Xóa bỏ bộ lọc cứng `selectedSubCategory` trong `playlist` useMemo, đảm bảo khi người dùng chuyển sang bất kỳ kênh nào cũng luôn có đủ danh sách video phong phú phát tức thì.
+   - **Tách biệt tối ưu giao diện Mobile - Tablet - PC**:
+     + *Trên Mobile (< 640px)*: Ẩn nút xoay 16:9/9:16 trên Header, chỉ giữ Logo + Nút kênh bên trái và Nút âm thanh + Nút đóng bên phải. Khoảng đệm chữ đáy có an toàn `pr-13`. Drawers mở dạng Bottom Sheet trượt từ đáy màn hình.
+     + *Trên Tablet (640px - 1023px)*: Khung dọc rạp chiếu 420px ở giữa màn hình kèm ambient glow, hỗ trợ nút xoay ngang 16:9 và Fullscreen.
+     + *Trên PC (>= 1024px)*: Tự động kích hoạt chế độ Toàn cảnh 16:9 Cinema, dải Quick Channel Pills, bảng phím tắt TV và cuộn chuột mượt mà.
+   - **Cơ chế phục hồi lỗi tự động (Error Auto-Recovery)**: Phát hiện lỗi YouTube embed (100, 101, 150) và tự động chuyển clip sau 2.2 giây kèm spinner thông báo êm dịu, không bao giờ để người dùng bị kẹt lại ở màn hình lỗi.
+
+2. **Mở Rộng Chiều Rộng Tối Đa Dải Nút Cuộn Danh Mục Tin Tức Trên PC Lên 872px**:
    - **Vấn đề**: Thanh cuộn danh mục tin tức trên giao diện máy tính (`DesktopLayout`) trước đây bị giới hạn ở `max-w-[650px]`, khiến các nút danh mục bị co ngắn và phải cuộn nhiều để xem các mục phía sau.
    - **Giải pháp**:
      + Nâng cấp class chứa dải nút từ `max-w-[650px]` lên `max-w-[872px]` theo đúng thông số DevTools yêu cầu.

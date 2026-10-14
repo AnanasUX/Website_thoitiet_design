@@ -80,9 +80,27 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
     + `🌍 Thế giới toàn cảnh`
     + `📊 Tin tức thời sự & Kinh tế`
   - Cho phép người dùng chuyển đổi chuyên mục trực quan qua dải nút chip trên Header (Row 3) và trong Drawer Playlist.
-  - Khi chọn chuyên mục, danh sách phát lọc tức thì và phát ngay từ video mới nhất của chuyên mục đó.
+  - **Chống lỗi danh sách rỗng (Empty Playlist)**: Khi người dùng đổi kênh TV, hệ thống không áp đặt cứng bộ lọc chuyên mục của kênh cũ lên kênh mới, luôn đảm bảo kênh mới có danh sách phát đầy đủ video ngay tức thì.
 
-### 2.4. Tương Tác Thực Tế & Kết Nối Tài Khoản Google / Gmail
+### 2.4. Cơ Sở Dữ Liệu 97 Video YouTube Thực Tế Đã Xác Minh & Cơ Chế Tự Phục Hồi Lỗi
+- **Cơ sở dữ liệu 97 video YouTube chuẩn từ 10 kênh báo chí & đài truyền hình lớn**:
+  - 100% video được quét và xác thực hoạt động thực tế qua YouTube oEmbed API, loại bỏ toàn bộ ID chết (404) và các đường link video nội bộ MP4 giả lập.
+  - Phân bổ 10 kênh chính thống:
+    + VTV24: 10 clips
+    + Báo Tiền Phong: 10 clips
+    + Báo Tuổi Trẻ: 10 clips
+    + VTC NOW: 10 clips
+    + Báo Lao Động: 10 clips
+    + VTV Thời Tiết: 10 clips
+    + ANTV: 10 clips
+    + VnExpress TV: 10 clips
+    + Báo Thanh Niên: 7 clips
+    + Báo Dân Trí: 10 clips
+- **Cơ Chế Tự Phục Hồi Lỗi (YouTube Embed Error Auto-Recovery)**:
+  - Bắt các mã lỗi YouTube player (`onError` = 100, 101, 150 hoặc lỗi nhúng).
+  - Tự động hiển thị spinner thông báo êm dịu và tự động nhảy sang video khả dụng kế tiếp sau 2.2 giây, tuyệt đối không để người dùng bị kẹt lại ở màn hình lỗi đen xì.
+
+### 2.5. Tương Tác Thực Tế & Kết Nối Tài Khoản Google / Gmail
 - **Nhận diện Tài Khoản**:
   - Tự động nhận diện tài khoản Google đã đăng nhập qua prop `userRole` hoặc `localStorage.getItem('user_auth')`.
   - Hiển thị tên thật và avatar Google thật của người dùng.
@@ -99,7 +117,7 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 - **Chia Sẻ (Share)**:
   - Tích hợp Web Share API và sao chép liên kết video chính thống nhanh gọn.
 
-### 2.5. Quy Chuẩn Hiển Thị Tác Giả & Nội Dung Chi Tiết Bài Viết (`NewsDetailView`)
+### 2.6. Quy Chuẩn Hiển Thị Tác Giả & Nội Dung Chi Tiết Bài Viết (`NewsDetailView`)
 - **Tác giả và Ảnh đại diện tác giả (Author Byline)**:
   - Khi bóc tách bài viết từ các trang báo chính thống (như Dân Trí, VnExpress, Tuổi Trẻ, Thanh Niên...):
     + Thông tin tác giả gồm Tên tác giả (`authorName`), Ảnh đại diện tròn (`authorAvatar`) và Thời gian xuất bản (`authorDate`).
@@ -114,7 +132,7 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
     + Thực hiện pre-cleaning loại bỏ triệt để các container tác giả khỏi cây DOM của thân bài trước khi trích xuất đoạn văn và hình ảnh.
     + Thêm bộ lọc bảo vệ 2 lớp trong `processNode` và JSX renderer để phát hiện và loại bỏ mọi ảnh có kích thước avatar (24px, 36px, `zoom/36_36`, `avatar`, `rounded-full`) hoặc có `alt`/`caption` trùng tên tác giả.
 
-### 2.6. Quy Chuẩn Khoảng Đệm & Bố Cục Trang Chính (`DesktopLayout`)
+### 2.7. Quy Chuẩn Khoảng Đệm & Bố Cục Trang Chính (`DesktopLayout`)
 - **Khoảng đệm khung chứa chính (Main Container Padding)**:
   - Khung nội dung chính (`max-w-[1536px] mx-auto` chứa cột Thời tiết 420px và cột Tin tức / Thị trường):
     - `padding-top: 10px`: Giảm khoảng đệm trên xuống đúng 10px để nội dung thời tiết và tin tức nằm sát dưới thanh LiveNewsTicker, không bị khoảng trống 64px đẩy xuống quá xa.
@@ -129,11 +147,12 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 ## 3. TIÊU CHÍ NGHIỆM THU (ACCEPTANCE CRITERIA)
 1. Video phát mượt, mở lên có tiếng ngay, chuyển clip tức thì không bị giật lag hay reload iframe không cần thiết.
 2. Không chuyển hướng người dùng sang youtube.com dưới bất kỳ hình thức nào.
-3. Không bị vỡ bố cục trên mọi kích thước màn hình (Mobile, Tablet, Desktop).
-4. Khắc phục triệt để lỗi đè header trên Shorts và lỗi thẻ card lệch nhau trong EPG TV Guide.
-5. Menu kênh TV hoạt động chính xác: chọn kênh là chỉ phát video của kênh đó và bắt đầu từ video mới nhất.
+3. Không bị vỡ bố cục trên mọi kích thước màn hình (Mobile, Tablet, Desktop); các nút trên Top Header của Mobile không bị chèn ép hoặc đè lên badge kênh.
+4. Cơ sở dữ liệu 97 video YouTube từ 10 kênh hoạt động 100%, không còn bất kỳ video nào bị lỗi 404 hoặc bị kẹt màn hình đen.
+5. Menu kênh TV hoạt động chính xác: chọn kênh là chỉ phát video của kênh đó và bắt đầu từ video mới nhất, danh sách phát không bao giờ bị rỗng (empty).
 6. Các nút tương tác (Like, Subscribe, Comment) hoạt động thực tế với tài khoản Google đã đăng nhập và lưu bền vững.
 7. Khi mở bài viết chi tiết có tác giả (ví dụ tác giả trên Dân Trí, VnExpress): ảnh tác giả CHỈ hiển thị là logo avatar tròn nhỏ ở dưới tiêu đề kèm tên tác giả và ngày giờ, tuyệt đối không bị phóng to thành ảnh bài viết mờ nhòe.
 8. Trên giao diện Desktop, khung chứa nội dung chính (`max-w-[1536px]`) có padding-top đúng 10px và padding-left/right đúng 0px theo đúng kết quả kiểm thử trên DevTools.
 9. Dải nút danh mục tin tức trên Desktop mở rộng đạt chiều rộng tối đa 872px (`max-w-[872px]`), hiển thị thoáng đãng và giảm thiểu thao tác cuộn ngang.
+10. Kịch bản kiểm thử toàn trang được văn bản hóa chi tiết, bao quát mọi tính năng, thiết bị và kịch bản biên để bảo đảm chất lượng chuyển giao.
 

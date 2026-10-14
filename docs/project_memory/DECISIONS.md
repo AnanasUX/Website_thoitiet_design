@@ -18,11 +18,18 @@
 - **Phân Loại 2 Luồng Dữ Liệu Rõ Rệt**:
   - `🎬 Video trên kênh`: Các bản tin phóng sự dài 16:9 lấy từ trang chủ của kênh, tự động ưu tiên chế độ Toàn Cảnh 16:9 trên PC.
   - `⚡ Video Shorts`: Các video dạng ngắn dọc 9:16 lấy từ danh sách phát Shorts của YouTube của các đài.
-- **Kiến trúc Header & Responsive Đa Nền Tảng**:
+- **Kiến Trúc Cơ Sở Dữ Liệu 97 Video YouTube Thực Tế & Cơ Chế Khôi Phục Lỗi**:
+  - Tích hợp sẵn 97 video tin tức & Shorts YouTube chính thống đã qua xác thực trực tiếp bằng YouTube oEmbed API trên 10 kênh báo đài lớn hàng đầu Việt Nam.
+  - Không dựa dẫm đơn độc vào các CORS proxy công cộng (như Cloudflare worker hay corsproxy.io vốn hay bị chặn hoặc dính CAPTCHA của Google), bảo đảm người dùng luôn có video để xem 100% trong mọi điều kiện mạng.
+  - Cơ chế tự phục hồi lỗi nhúng (Error Auto-Recovery): Lắng nghe mã lỗi `100`, `101`, `150` từ YouTube player để lập tức hiển thị spinner êm dịu và tự động chuyển sang video tiếp theo sau 2.2 giây, ngăn ngừa triệt để tình trạng kẹt màn hình lỗi xám hoặc đen.
+- **Chống Lỗi Danh Sách Phát Trống (Empty Playlist Prevention)**:
+  - Loại bỏ hoàn toàn điều kiện lọc cứng `selectedSubCategory` trong hàm tính toán `playlist` (`useMemo`). Khi người dùng chuyển sang kênh mới (ví dụ từ VTV24 sang Tiền Phong hay Lao Động), playlist luôn trả về toàn bộ danh sách video của kênh đó mà không bị rỗng do kênh mới không có chuyên mục giống hệt kênh cũ.
+- **Kiến Trúc Header & Responsive Đa Nền Tảng (Mobile, Tablet, PC)**:
+  - *Trên Mobile (< 640px)*: Header tinh gọn tối đa, ẩn nút xoay tỉ lệ 16:9/9:16 trên Top Header (`hidden sm:flex`), chỉ hiển thị Logo + Badge kênh ở bên trái và Âm thanh + Đóng ở bên phải. Điều này triệt tiêu hoàn toàn nguy cơ đè nút hoặc chèn ép badge kênh trên màn hình hẹp (360px - 390px). Các bảng Drawer (Bình luận, Playlist, EPG Guide) trượt lên dạng Bottom Sheet từ đáy màn hình.
+  - *Trên Tablet (640px - 1023px)*: Khung dọc rạp chiếu 420px ở giữa màn hình kèm hiệu ứng ambient glow, cho phép xoay ngang 16:9 linh hoạt và bật Toàn màn hình `[⛶ Fullscreen]`.
+  - *Trên PC (>= 1024px)*: Mặc định bật chế độ Toàn Cảnh 16:9 Cinema, dải phím tắt TV (`Space`, `↑`/`↓`, `M`, `L`, `C`, `F`, `R`) và cuộn chuột mượt mà.
   - Hợp nhất toàn bộ Header và dải Kênh TV vào **MỘT container duy nhất** (`flex flex-col gap-2.5`), triệt tiêu hoàn toàn lỗi chồng đè do sử dụng các div `absolute top-0` và `absolute top-14` riêng rẽ.
-  - Ràng buộc trực tiếp các thanh điều khiển mở rộng (Quick Format Tabs & Quick TV Channel Pills) bằng điều kiện `{isLandscape && ...}`:
-    - Khi ở chế độ Dọc Shorts 9:16 (`!isLandscape`), header duy trì đúng 1 dòng tối giản duy nhất (Logo + Badge Kênh + Nút điều khiển), không render các tab/dải kênh gây vỡ bố cục trên khung dọc.
-    - Người dùng truy cập phân loại Kênh và Định dạng thông qua nút Badge EPG `[🔴 CH 01 ▾]` hoặc Drawer Danh sách phát.
+  - Ràng buộc trực tiếp các thanh điều khiển mở rộng (Quick Format Tabs & Quick TV Channel Pills) bằng điều kiện `{isLandscape && ...}`.
   - Áp dụng kỹ thuật triệt tiêu triệt để scrollbar xám trên mọi trình duyệt (`[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden`).
   - Đồng bộ kích thước card Smart TV Guide với `min-h-[135px]` và tagline `min-h-[32px] line-clamp-2` để giải quyết vĩnh viễn hiện tượng xô lệch chiều cao.
 - **Tương Tác Thực Tế & Lưu Trữ Bền Vững**:
@@ -53,6 +60,9 @@
   - Dải thanh cuộn danh mục tin tức: Nâng cấp chiều rộng tối đa lên `872px` (`max-w-[872px]`) thay vì `650px`, mở rộng tầm nhìn các chuyên mục và tối ưu hóa không gian màn hình lớn.
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Sử dụng video ID YouTube chưa được kiểm chứng hoặc chứa video 404 chết (gây lỗi đen màn hình player).
+- **Từ chối**: Áp bộ lọc `selectedSubCategory` cứng vào `playlist` khi chuyển kênh (khiến playlist bị trống 0 video khi người dùng đổi sang các kênh không có chuyên mục trùng khớp).
+- **Từ chối**: Hiển thị nút xoay tỉ lệ `[16:9/9:16]` trên Top Header của màn hình điện thoại thoại di động (< 640px) gây chèn ép, đè lấn badge kênh TV `[CH 01...]`.
 - **Từ chối**: Giới hạn dải danh mục tin tức ở `650px` trên PC (làm co hẹp tầm nhìn, buộc người dùng phải cuộn ngang để bấm các danh mục cơ bản như Đời sống, Con người, Doanh nghiệp).
 - **Từ chối**: Giữ nguyên khoảng đệm 64px đỉnh và 32px hai bên (`padding: 64px 32px`) trên khung desktop `max-w-[1536px]` (tạo ra khoảng trống quá lớn đẩy nội dung xuống sâu và làm hẹp chiều ngang hiển thị của các khối tin tức / thời tiết).
 - **Từ chối**: Phóng to ảnh đại diện tác giả (24px, 36px) thành ảnh bài viết toàn chiều rộng (`w-full`) trong thân bài (gây vỡ hình, mờ nhòe và sai lệch nghiêm trọng với giao diện trang báo chính thống).
