@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `3803815 (fix(news): expand category tabs bar max-width to 872px on PC layout)`
+- **Commit gần nhất**: `c37c168 (docs(memory): document category tabs max-width upgrade to 872px)`
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 414ms, `index-B4N-oSGN.js` 476.27 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
