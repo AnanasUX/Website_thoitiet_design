@@ -40,9 +40,21 @@ This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin con
 
 ## HỒ SƠ BỘ NHỚ DỰ ÁN (PROJECT MEMORY REGISTRY)
 Mọi tác nhân khi làm việc với dự án BẮT BUỘC phải đọc và cập nhật các tài liệu lưu trữ chuẩn sau đây:
-- **HANDOFF**: `docs/project_memory/HANDOFF.md` — Trạng thái mới nhất của dự án, nhánh git, commit gần nhất, tiến độ và công việc tiếp theo.
-- **REQUIREMENTS**: `docs/project_memory/REQUIREMENTS.md` — Toàn bộ các yêu cầu chức năng, phi chức năng, quy chuẩn giao diện và tiêu chí nghiệm thu đã chốt.
-- **DECISIONS**: `docs/project_memory/DECISIONS.md` — Quyết định kiến trúc, lựa chọn kỹ thuật, các phương án đã thống nhất và phương án bị loại bỏ.
+- **PROJECT**: `docs/PROJECT.md` — Kiến trúc tổng thể, công nghệ và phân hệ chức năng.
+- **REQUIREMENTS**: `docs/REQUIREMENTS.md` — Danh mục toàn bộ các yêu cầu gốc mã `REQ-xxx`, nguồn prompt và tiêu chí nghiệm thu.
+- **DECISIONS**: `docs/DECISIONS.md` — Quyết định kiến trúc, lựa chọn kỹ thuật, các phương án đã thống nhất và phương án bị loại bỏ.
+- **HANDOFF**: `docs/HANDOFF.md` — Trạng thái mới nhất của dự án, nhánh git, commit gần nhất, tiến độ và công việc tiếp theo.
+- **TEST_PLAN**: `docs/qa/TEST_PLAN.md` — Kế hoạch kiểm thử toàn trang, ma trận truy vết `REQ-xxx` <-> `TC-xxx`.
+- **RELEASE_GATE**: `docs/qa/RELEASE_GATE.md` — Tiêu chuẩn và checklist bắt buộc trước khi phát hành.
+- **PROTOCOL**: `AI_PROJECT_PROTOCOL.md` — Quy trình 5 bước bắt buộc từ tiếp nhận yêu cầu đến kiểm thử và phát hành.
+
+## LỆNH KIỂM THỬ TOÀN TRANG: `/testwebsite`
+Khi người dùng nhập `/testwebsite` (hoặc yêu cầu kiểm thử hệ thống trước khi hoàn thành):
+1. Tác nhân BẮT BUỘC phải chạy bộ kiểm thử tự động toàn diện: `npm run testwebsite` (hoặc `node scripts/testwebsite.mjs`).
+2. Đối chiếu toàn bộ các ca kiểm thử trong `docs/qa/TEST_PLAN.md` (`TC-001` đến `TC-020`) với mã yêu cầu `REQ-xxx`.
+3. Kiểm tra các điều kiện trong `docs/qa/RELEASE_GATE.md`.
+4. Xuất Báo Cáo Kiểm Duyệt Phát Hành (QA Release Audit Report) chi tiết từng ca kèm bằng chứng (pass/fail) rõ ràng.
+5. Tuyệt đối không được bỏ qua hoặc tự nhận hoàn thành nếu chưa chạy kiểm thử thực tế.
 
 ## 1. PHẠM VI ÁP DỤNG
 
@@ -56,7 +68,7 @@ Khi nhận bất kỳ tin nhắn mới nào liên quan đến dự án, hãy th�
 
 BƯỚC 1 — Xác định dự án và nhiệm vụ liên quan.
 
-BƯỚC 2 — Đọc hồ sơ trạng thái mới nhất của dự án, bao gồm HANDOFF, REQUIREMENTS, DECISIONS và các tài liệu liên quan trực tiếp.
+BƯỚC 2 — Đọc hồ sơ trạng thái mới nhất của dự án, bao gồm PROJECT, HANDOFF, REQUIREMENTS, DECISIONS, TEST_PLAN, RELEASE_GATE và các tài liệu liên quan trực tiếp.
 
 BƯỚC 3 — Đọc các yêu cầu cũ, quyết định, giới hạn và điều kiện nghiệm thu có liên quan đến câu hỏi mới.
 

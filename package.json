@@ -9,7 +9,8 @@
     "build:app": "node -e \"process.env.BUILD_TARGET='app'; require('child_process').execSync('npx vite build', {stdio:'inherit', env:process.env})\"",
     "build:apk": "node scripts/build-apk.cjs",
     "preview": "vite preview",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "testwebsite": "node scripts/testwebsite.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",

@@ -1,10 +1,12 @@
-# ARCHITECTURAL DECISIONS & TECHNICAL CHOICES
+# QUYẾT ĐỊNH KIẾN TRÚC & LỰA CHỌN KỸ THUẬT (ARCHITECTURAL DECISIONS)
 
 ## 1. CÔNG NGHỆ & THƯ VIỆN CỐT LÕI
 - **Frontend Framework**: React 19 + React DOM 19.
 - **Build Tooling**: Vite 8, TypeScript 5.7.
 - **Styling**: Tailwind CSS v4 với `@tailwindcss/vite` plugin (cấu hình trong `vite.config.ts`, import qua `@import 'tailwindcss';` trong `src/index.css`).
 - **Icons**: SVG inline thuần túy và Lucide icons, kiểm soát chặt chẽ kích thước bằng CSS/inline-styles để tránh méo icon.
+
+---
 
 ## 2. KIẾN TRÚC VIDEO SHORTS & MULTI-CHANNEL NEWS
 - **Mặc định BẬT ÂM THANH (Unmuted Autoplay)**:
@@ -58,6 +60,8 @@
     + Đưa padding trái và phải về 0px giúp tận dụng triệt để chiều rộng của khung 1536px, loại bỏ khoảng hụt lề 32px thừa thãi.
     + Kế thừa `padding-bottom: 64px` từ biến `--section-gap` thông qua lớp `py-[var(--section-gap)]`.
   - Dải thanh cuộn danh mục tin tức: Nâng cấp chiều rộng tối đa lên `872px` (`max-w-[872px]`) thay vì `650px`, mở rộng tầm nhìn các chuyên mục và tối ưu hóa không gian màn hình lớn.
+
+---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
 - **Từ chối**: Sử dụng video ID YouTube chưa được kiểm chứng hoặc chứa video 404 chết (gây lỗi đen màn hình player).
