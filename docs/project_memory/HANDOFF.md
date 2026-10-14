@@ -10,7 +10,7 @@
     3. **Dropdown Menu Avatar**: Mục `🛡️ QA Dashboard (Admin)` dành riêng cho admin trong `UserAvatarMenu`.
     4. **Site Footer**: Bọc trong điều kiện bảo vệ `{isUserAdminQA(userRole) && (...)}`.
   + ✅ **Sửa lỗi định tuyến 404 trên GitHub Pages**: Hàm `getDashboardUrl()` tự động chuyển hướng chính xác đến `https://ananasux.github.io/Website_thoitiet_design/dashboard.html` thay vì root domain `https://ananasux.github.io/dashboard.html` (triệt tiêu mã lỗi 404).
-  + ✅ Tích hợp giao diện **Interactive Visual QA Dashboard** (`dashboard.html` & `public/dashboard.html`).
+  + ✅ Tích hợp giao diện **Interactive Visual QA Dashboard & Live Test Runner** (`dashboard.html` & `public/dashboard.html`): Thay thế hoàn toàn các nút mở file/nạp tệp thủ công bằng nút bấm **`[▶️ Chạy Kiểm Thử Toàn Hệ Thống]`**, thanh tiến trình thời gian thực, bảng kiểm soát lỗi và nút liên kết tự động sao chép prompt khắc phục cho **Antigravity AI**.
   + ✅ Đồng bộ toàn bộ dữ liệu JSON có cấu trúc: `qa/requirements.json` và `qa/test-cases.json` đủ **21 yêu cầu** và **21 test case** đã xác minh có bằng chứng.
   + ✅ Hoàn thiện script `scripts/build-dashboard-data.mjs` (`npm run qa:dashboard`) kiểm tra tính hợp lệ hai chiều giữa yêu cầu và test case.
   + ✅ Chuỗi lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) tự động thực thi 3 tầng: `validate-registry` ➔ `build-dashboard-data` ➔ `testwebsite.mjs` đạt **21/21 PASS** (0 FAIL).

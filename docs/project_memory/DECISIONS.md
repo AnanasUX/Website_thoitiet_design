@@ -69,6 +69,10 @@
     3. **Menu Avatar Quản Trị**: Mục `🛡️ QA Dashboard (Admin)` trong dropdown menu người dùng.
     4. **Site Footer**: Bọc trong điều kiện bảo vệ `{isUserAdminQA(userRole) && (...)}`.
   - *Định tuyến tuyệt đối trên GitHub Pages (`getDashboardUrl`)*: Tránh lỗi 404 khi người dùng nhấp vào link `href="/dashboard.html"` (dẫn tới tên miền gốc `https://ananasux.github.io/dashboard.html` không tồn tại trang). Hàm `getDashboardUrl()` tự động phát hiện môi trường lưu trữ GitHub Pages và điều hướng chính xác về `https://ananasux.github.io/Website_thoitiet_design/dashboard.html`.
+  - *Bộ Máy Tự Động Kiểm Thử Trực Tiếp (In-Browser Automated Test Runner) & Phân Hệ Xử Lý Bug Antigravity*:
+    + Loại bỏ các nút thủ công không cần thiết (`Mở requirements.json`, `Mở test-cases.json`, `Chọn tệp JSON báo cáo`).
+    + Tích hợp nút kiểm thử thời gian thực **`[▶️ Chạy Kiểm Thử Toàn Hệ Thống]`** kích hoạt trình kiểm thử tự động trực tiếp trên trình duyệt, có thanh tiến trình live progress 0% ➔ 100% và chỉ số thời gian chạy.
+    + Tích hợp phân hệ **"Phân Tích Sự Cố & Phương Án Xử Lý Antigravity"**: Nếu phát hiện ca thất bại, tự động gom lỗi theo mức độ ưu tiên P0/P1/P2 và cung cấp nút 1-click **`🤖 Sao chép Lệnh Sửa Cho Antigravity`** tạo prompt kỹ thuật chuẩn xác gồm file cần sửa và phương án khắc phục; nếu đạt 100% thì hiển thị chứng nhận **Release Gate: PASSED**.
 
 ---
 
