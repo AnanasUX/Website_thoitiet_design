@@ -313,6 +313,24 @@
         "Kiểm thử Luồng 7: Lịch vạn niên, kiểm tra năm nhuận getDaysInMonth, thứ đầu tháng, giải mã thực thể HTML decodeHTMLEntities"
       ],
       "expected": "100% (134/134) assertions logic và xử lý thông tin nghiệp vụ ĐẠT (PASS), 0 lỗi tính toán hoặc rò rỉ dữ liệu."
+    },
+    {
+      "id": "TC-023",
+      "title": "Kiểm thử trải nghiệm người dùng (UX) và toàn bộ các tương tác luồng thông tin trên hệ thống",
+      "requirementIds": ["REQ-023"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kịch bản 1: UX Đọc tin tức & Audio TTS: mở modal bài viết, khóa cuộn body, click Nghe đọc kích hoạt âm thanh/trạng thái, phím Escape thoát modal và khôi phục cuộn trang",
+        "Kịch bản 2: UX Shorts Player: phím Space (play/pause), phím M (mute/unmute), phím ArrowDown (chuyển video), phím Escape đóng player",
+        "Kịch bản 3: UX Đồ thị tài chính: hover hiển thị tooltip giờ/giá tiền thực tế & dự kiến, mouseleave tự động ẩn tooltip",
+        "Kịch bản 4: UX Danh mục tin tức: chuyển đổi giữa các chuyên mục, cập nhật active pill màu hồng nổi bật tức thì",
+        "Kịch bản 5: UX Dark Mode: click chuyển đổi chế độ tối, kiểm tra class .dark và ghi nhớ localStorage",
+        "Kịch bản 6: UX Thời tiết: thông số công thái học đầy đủ (PM2.5, nhiệt độ, độ ẩm, gió), cuộn ngang dự báo giờ mượt mà",
+        "Kịch bản 7: UX Vùng chạm và khả năng tiếp cận: các phần tử tương tác đáp ứng kích thước chuẩn ngón tay bấm / phím bấm"
+      ],
+      "expected": "Toàn bộ 7 kịch bản UX luồng thông tin ĐẠT (PASS), tương tác trực tiếp trơn tru, không có xung đột phím tắt hoặc giật lag layout."
     }
   ]
 }

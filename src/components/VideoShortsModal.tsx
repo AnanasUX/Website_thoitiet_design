@@ -2627,8 +2627,8 @@ export function VideoShortsModal({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, isFullscreen, handleNextShort, handlePrevShort, toggleBrowserFullscreen, resetInactivityTimer, onClose]);
 
   // Toggling âm thanh tức thì qua postMessage (Không reload iframe)
@@ -2869,6 +2869,8 @@ export function VideoShortsModal({
   return (
     <div 
       ref={modalContainerRef}
+      data-testid="video-shorts-modal"
+      tabIndex={-1}
       className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh] max-w-full max-h-full"
       style={{ width: '100vw', height: '100vh' }}
       onWheel={handleWheel}
@@ -3214,6 +3216,7 @@ export function VideoShortsModal({
 
               {/* Đóng Modal (Hiện trên MỌI thiết bị) */}
               <button
+                data-testid="close-shorts-btn"
                 onClick={(e) => {
                   e.stopPropagation();
                   onClose();

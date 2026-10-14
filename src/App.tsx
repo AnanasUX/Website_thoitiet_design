@@ -672,6 +672,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [fullContent, setFullContent] = useState<string>('RICH_RENDER');
   const [isLoadingFull, setIsLoadingFull] = useState(false);
   const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isSpeechPaused, setIsSpeechPaused] = useState(false);
 
   const related = useMemo(() => {
     const pool = Array.isArray(allNews) && allNews.length > 0 ? allNews : DEFAULT_NEWS_FEED;
@@ -685,8 +687,62 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = 'auto'; };
-  }, []);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => { 
+      document.body.style.overflow = 'auto'; 
+      window.removeEventListener('keydown', handleKeyDown);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [onClose]);
+
+  const handleToggleAudio = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      alert('Trình duyệt của bạn chưa hỗ trợ tính năng chuyển văn bản thành giọng nói.');
+      return;
+    }
+    const synth = window.speechSynthesis;
+    if (isSpeaking) {
+      if (isSpeechPaused) {
+        synth.resume();
+        setIsSpeechPaused(false);
+      } else {
+        synth.pause();
+        setIsSpeechPaused(true);
+      }
+      return;
+    }
+
+    synth.cancel();
+    const titleText = article.author || article.title || '';
+    const bodyText = article.body || '';
+    const plainText = `${titleText}. ${bodyText}`.replace(/<[^>]*>/g, '');
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.lang = 'vi-VN';
+    utterance.rate = 1.0;
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setIsSpeechPaused(false);
+    };
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setIsSpeechPaused(false);
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setIsSpeechPaused(false);
+    };
+    synth.speak(utterance);
+  };
 
   useEffect(() => {
     if (!article.link) return;
@@ -1198,14 +1254,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       const title = article.author || article.title || "Tin tức";
       fallbackBlocks.push({ type: 'title', content: title });
 
-      if (article.src || article.pubDate) {
-        fallbackBlocks.push({
-          type: 'author',
-          name: article.src || "Ban biên tập",
-          avatar: article.logo || "",
-          date: article.pubDate || ""
-        });
-      }
+      fallbackBlocks.push({
+        type: 'author',
+        name: article.src || article.source || "Ban biên tập",
+        avatar: article.logo || "",
+        date: article.pubDate || "Vừa xong"
+      });
 
       if (article.videoSrc) {
         fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: title });
@@ -1383,11 +1437,38 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 transition-colors text-[11px] font-medium shrink-0 cursor-pointer select-none">
-                        <svg className="w-3.5 h-3.5 text-red-600" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                        </svg>
-                        <span>Nghe đọc</span>
+                      <div 
+                        data-testid="article-tts-btn"
+                        onClick={handleToggleAudio}
+                        role="button"
+                        tabIndex={0}
+                        title={isSpeaking ? (isSpeechPaused ? "Tiếp tục đọc" : "Tạm dừng đọc") : "Nghe đọc bản tin"}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all text-[11px] font-medium shrink-0 cursor-pointer select-none ${
+                          isSpeaking && !isSpeechPaused 
+                            ? 'bg-red-500 text-white border-red-600 shadow-sm animate-pulse' 
+                            : (isSpeechPaused ? 'bg-amber-50 text-amber-700 border-amber-300' : 'bg-slate-50 border-slate-200/80 text-slate-600 hover:bg-slate-100')
+                        }`}
+                      >
+                        {isSpeaking && !isSpeechPaused ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                            <span>Đang đọc...</span>
+                          </>
+                        ) : isSpeechPaused ? (
+                          <>
+                            <svg className="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="currentColor">
+                              <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            <span>Tiếp tục</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5 text-red-600" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                            </svg>
+                            <span>Nghe đọc</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   );

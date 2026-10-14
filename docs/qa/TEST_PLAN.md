@@ -156,3 +156,35 @@
      - Tính số ngày trong tháng (`getDaysInMonth`) xử lý chính xác năm nhuận tháng 2 (2024 = 29 ngày, 2025/2026 = 28 ngày, 2000 = 29 ngày, 1900 = 28 ngày).
      - Xác định thứ của ngày đầu tháng (`getFirstDayOfMonth`).
 - **Kết quả mong đợi**: 134/134 assertions logic ĐẠT (PASS 100%), 0 lỗi hồi quy, hệ thống hoàn toàn đồng bộ giữa code và dữ liệu.
+
+### Nhóm 7: Kiểm Thử Trải Nghiệm Người Dùng (UX) & Tương Tác Luồng Thực Tế
+
+#### TC-023: Kiểm thử toàn diện 7 Kịch bản Trải nghiệm Người dùng (UX Scenarios)
+- **Mục tiêu**: Đảm bảo toàn bộ tương tác người dùng (User Experience / UX) qua bàn phím, chuột, cảm ứng, phản hồi trạng thái âm thanh và chuyển động thị giác đều mượt mà, phản hồi lập tức và chuẩn công thái học.
+- **Tiền điều kiện**: Chạy trên Google Chrome thật qua Playwright (`scripts/test-ux-flows.mjs` hoặc lệnh `/testwebsite`).
+- **7 Kịch Bản Trải Nghiệm Người Dùng Thực Tế**:
+  1. **UX Luồng Đọc Tin Tức, Audio TTS & Khóa Cuộn Body**:
+     - Mở bài viết chi tiết, kiểm tra khóa cuộn trang nền `document.body.style.overflow = "hidden"` (Body scroll lock).
+     - Nút "Nghe đọc" trong Byline Bar phản hồi tức thì, kích hoạt Web Speech API tiếng Việt và cập nhật trạng thái "Đang đọc..." kèm hiệu ứng animate-pulse.
+     - Phím tắt `Escape` đóng modal ngay lập tức, ngắt audio và khôi phục cuộn trang nền.
+  2. **UX Trình Phát Shorts & Smart TV Player (Keyboard Shortcuts & Inactivity)**:
+     - Phím `Space`: Tạm dừng / Phát tiếp video tức thời.
+     - Phím `M`: Bật/Tắt âm thanh (Mute/Unmute toggle).
+     - Phím `ArrowDown`: Chuyển video kế tiếp mượt mà không khựng hình.
+     - Phím `Escape`: Đóng trình phát Shorts, khôi phục trang chính.
+  3. **UX Đồ Thị Giá Vàng & Tooltip Trực Quan (Market Tooltip UX)**:
+     - Tương tác di chuột hiển thị Tooltip giá tại đúng tọa độ, phân biệt rõ "Thực tế: ... Tr" và "Dự kiến: ... Tr".
+     - Tự động ẩn Tooltip khi chuột rời khỏi vùng đồ thị (`mouseleave dismissal`).
+  4. **UX Dải Danh Mục Tin Tức & Phản Hồi Trực Quan (Category Pills UX)**:
+     - Chuyển đổi chuyên mục cập nhật highlight pill màu hồng (`#ff315f`) tức thì.
+     - Lọc danh sách bài viết theo chuyên mục mượt mà, không giật layout.
+  5. **UX Chuyển Đổi Giao Diện Tối / Sáng (Dark Mode Toggle UX)**:
+     - Click nút Dark Mode trên Header: Cập nhật class `.dark` trên thẻ `<html>` và lưu `localStorage`.
+     - Click lại: Phục hồi giao diện sáng thanh lịch.
+  6. **UX Thời Tiết Công Thái Học & Cuộn Ngang Dự Báo (Weather UX)**:
+     - Hiển thị đầy đủ thông số sức khỏe (nhiệt độ, PM2.5, độ ẩm, gió).
+     - Khung dự báo 24h hỗ trợ cuộn ngang mượt mà (`overflow-x-auto scrollbar-hide`).
+  7. **UX Đa Màn Hình & Vùng Chạm Ngón Tay (Touch Targets & a11y)**:
+     - Các phần tử tương tác đáp ứng chuẩn công thái học (touch area >= 40px), không bị đè nút điều khiển.
+- **Kết quả mong đợi**: 7/7 kịch bản UX tương tác luồng ĐẠT (PASS 100%), trải nghiệm liền mạch và tự nhiên.
+

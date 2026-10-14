@@ -299,6 +299,19 @@
       "evidence": ["testwebsite.mjs:TC-022:PASS", "test-logic-flows.mjs:134-assertions:PASS"],
       "owner": "QA Lead",
       "notes": "134/134 assertions logic đạt chuẩn, kết nối trực tiếp vào /testwebsite và simulator"
+    },
+    {
+      "id": "REQ-023",
+      "title": "Kiểm thử toàn diện trải nghiệm người dùng (UX) và các luồng tương tác thực tế",
+      "description": "Kiểm thử tự động trên Chrome thật cho toàn bộ 7 kịch bản trải nghiệm người dùng (UX Scenarios): (1) Đọc tin tức, khóa cuộn trang nền (body scroll lock), nút Nghe đọc (TTS audio reader) phản hồi tức thì, phím Escape thoát modal mượt mà; (2) Trình phát Shorts & Smart TV: điều hướng bàn phím phím tắt (Space, M, ArrowUp/Down, ESC), hiệu ứng mờ controls sau 5s; (3) Đồ thị thị trường: hiển thị tooltip đúng tọa độ, so sánh giá Thực tế vs Dự kiến, tự ẩn tooltip khi rời chuột (mouseleave); (4) Dải danh mục: active pill nổi bật tức thời, lọc tin mượt mà, không vỡ layout; (5) Giao diện Tối/Sáng: Dark Mode toggle cập nhật class .dark và lưu localStorage; (6) Khối thời tiết công thái học: thông số sức khỏe (nhiệt độ, PM2.5, độ ẩm, gió), cuộn ngang dự báo hàng giờ không tràn viền; (7) Công thái học đa màn hình: vùng chạm tương tác touch targets chuẩn, chống đè nút điều khiển.",
+      "sourcePrompt": "PROMPT-20261014-11: Test cả logic các luồng nữa chứ có phải test mỗi UI đâu cả UX nữa",
+      "priority": "P0",
+      "category": "qa-ux-flows",
+      "status": "PASS",
+      "testIds": ["TC-023"],
+      "evidence": ["testwebsite.mjs:TC-023:PASS", "test-ux-flows.mjs:7-scenarios:PASS"],
+      "owner": "QA Lead",
+      "notes": "Toàn bộ 7 kịch bản UX tương tác luồng đạt chuẩn 100% trên Chrome thật"
     }
   ]
 }

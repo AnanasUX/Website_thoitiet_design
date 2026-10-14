@@ -90,6 +90,15 @@
       6. *Luồng Bảo Mật & Phân Quyền*: Ma trận chân trị `isUserAdminQA` (chặn khách và email khác, chỉ cấp quyền cho `mrkun28@gmail.com`), định tuyến URL dashboard chuẩn xác trên Localhost và GitHub Pages (`getDashboardUrl`).
       7. *Luồng Lịch Vạn Niên & Tiện Ích Ngày Tháng*: Thuật toán tính ngày trong tháng `getDaysInMonth` xử lý chính xác năm nhuận tháng 2 (2024 = 29 ngày, 2025/2026 = 28 ngày, thế kỷ 2000 = 29 ngày, 1900 = 28 ngày), xác định thứ ngày đầu tháng `getFirstDayOfMonth`.
     + **Tích hợp vào cổng `/testwebsite` và Dashboard Live Simulator**: Chạy 134 assertions logic trước khi mở trình duyệt Chrome, đồng thời trang bị bảng điều khiển **Nhật Ký Thực Thi Thời Gian Thực (Connected Live Execution Console)** trên Dashboard với nhịp độ tương tác trực quan, streaming log sống động và liên kết chặt chẽ với DOM thực tế của hệ thống.
+  - *Kiến Trúc Kiểm Thử Trải Nghiệm Người Dùng (UX) & Toàn Bộ Tương Tác Luồng (`REQ-023` / `TC-023`)*:
+    + **UX Luồng Đọc Tin Tức & Audio TTS**: Tích hợp Web Speech API giọng đọc tiếng Việt (`vi-VN`) cho nút "Nghe đọc" trong Byline Bar, phản hồi tức thì với trạng thái "Đang đọc..." kèm hiệu ứng animate-pulse và hỗ trợ tạm dừng/tiếp tục.
+    + **Khóa cuộn trang nền (Body Scroll Lock)**: Tự động gán `document.body.style.overflow = 'hidden'` khi mở modal bài viết và khôi phục khi đóng, loại bỏ hoàn toàn hiện tượng cuộn nền hỗn loạn khi đang đọc bài.
+    + **Đa phương thức thoát modal**: Cho phép người dùng nhấn phím `Escape` trên bàn phím để đóng modal bài viết ngay lập tức, tự động ngắt âm thanh đọc và phục hồi vị trí trang chính.
+    + **Điều hướng bàn phím Shorts Player (Keyboard UX)**: Hỗ trợ phím `Space` (Play/Pause), `M` (Mute/Unmute), `ArrowDown`/`PageDown` (Next short), `ArrowUp`/`PageUp` (Prev short), `F` (Fullscreen) và `Escape` (Đóng player).
+    + **Công thái học Đồ thị & Tooltip (Market Hover UX)**: Hover chuột lên điểm đồ thị hiển thị Tooltip giá và thời gian với tọa độ x/y chuẩn xác; tự động ẩn tooltip khi chuột rời khỏi vùng đồ thị (`mouseleave dismissal`).
+    + **Dải danh mục tin tức (Pill Carousel UX)**: Chuyển đổi chuyên mục cập nhật highlight pill màu hồng (`#ff315f`) tức thì, lọc tin mượt mà không làm giật layout.
+    + **Giao diện Tối/Sáng (Dark Mode Toggle UX)**: Nút bấm trên Header kích hoạt class `.dark` trên thẻ `<html>`, chuyển đổi màu nền tương thích và lưu trữ bền vững trong `localStorage`.
+    + **Bộ kiểm thử tự động UX thực tế (`scripts/test-ux-flows.mjs`)**: Thực thi 7 kịch bản UX tương tác luồng trực tiếp trên Chrome thật qua Playwright, tích hợp vào cổng `/testwebsite` và bộ giả lập `dashboard.html`.
 
 ---
 

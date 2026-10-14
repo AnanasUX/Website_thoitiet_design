@@ -30,4 +30,10 @@
 - Xây dựng module xử lý logic độc lập `src/utils/logicFlows.ts` bao phủ 7 luồng thông tin: Thời tiết, Tài chính (hỗ trợ phân tách hàng nghìn chấm và thập phân phẩy), Lọc trùng tin tức (chuẩn hóa URL canonical), Trình bóc tách bài viết & Chống phóng to avatar tác giả, Video Shorts & TV đa kênh, Auth phân quyền, Lịch vạn niên (thuật toán năm nhuận).
 - Thiết lập bộ test logic chuyên sâu `scripts/test-logic-flows.mjs` với 134 assertions tự động đạt tỷ lệ 100% PASS.
 - Nâng cấp `dashboard.html` bổ sung cửa sổ Nhật Ký Thực Thi Thời Gian Thực (`#liveConsoleOutput`) với live tags và tương tác DOM thực tế trên iframe hệ thống.
-- Toàn bộ 22/22 ca kiểm thử (`TC-001` đến `TC-022`) vượt qua cổng kiểm duyệt phát hành RELEASE GATE.
+
+### 6. Kiểm Thử Toàn Diện Trải Nghiệm Người Dùng (UX) & Tương Tác Luồng Thực Tế (REQ-023)
+- Tích hợp tính năng Text-to-Speech (Audio Reader) tiếng Việt (`vi-VN`) vào nút "Nghe đọc" trong Byline Bar của `NewsDetailView`, kèm trạng thái "Đang đọc...", animation pulse và hỗ trợ tạm dừng/tiếp tục.
+- Khóa cuộn trang nền `document.body.style.overflow = "hidden"` khi mở modal bài viết và hỗ trợ phím `Escape` để thoát modal nhanh chóng.
+- Xây dựng bộ kiểm thử 7 kịch bản UX (`scripts/test-ux-flows.mjs`) kiểm tra: Audio TTS, phím tắt Shorts (`Space`, `M`, `ArrowDown`, `ESC`), Tooltip đồ thị giá vàng và tự ẩn khi mouseleave, chọn chuyên mục với highlight pill hồng, Dark mode toggle và touch targets công thái học.
+- Nâng cấp cổng kiểm duyệt phát hành `/testwebsite` đạt **23/23 PASS** (0 FAIL).
+

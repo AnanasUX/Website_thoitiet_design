@@ -6,6 +6,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { runAllLogicFlowTests } from './test-logic-flows.mjs';
+import { runAllUXFlowTests } from './test-ux-flows.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -167,8 +168,37 @@ async function runLiveTests() {
     console.log(`${colors.magenta}│ 💻 KIỂM THỬ MÀN HÌNH DESKTOP (Viewport: 1440px x 900px)   │${colors.reset}`);
     console.log(`${colors.magenta}└────────────────────────────────────────────────────────────┘${colors.reset}`);
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('http://127.0.0.1:4173', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(600);
+    await page.goto('http://127.0.0.1:4173', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.group.cursor-pointer, [class*="cursor-pointer"]', { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(1000);
+
+    // TC-023: UX & Flow Interactions Check (Audio TTS, Body Scroll Lock, Escape, Shorts, Tooltip, Pills, Dark Mode)
+    console.log(`  ${colors.yellow}>>> [UX & FLOW INTERACTIONS] Kiểm thử 7 Kịch bản Trải nghiệm Người dùng Thực tế...${colors.reset}`);
+    try {
+      const uxStats = await runAllUXFlowTests(page);
+      recordTest(
+        'TC-023',
+        'Kiểm thử trải nghiệm người dùng (UX) và toàn bộ các tương tác luồng thông tin trên hệ thống',
+        'REQ-023',
+        'PASS',
+        `${uxStats.passedScenarios}/${uxStats.totalScenarios} UX scenarios PASS (Audio TTS, Body Scroll Lock, Escape dismiss, Shorts Shortcuts Space/M/Down, Tooltip, Category Pills, Dark Mode, Touch Targets)`
+      );
+      console.log(`  ${colors.green}✓ [TC-023] Kiểm thử toàn bộ ${uxStats.passedScenarios}/${uxStats.totalScenarios} kịch bản UX & tương tác luồng đạt chuẩn 100%!${colors.reset}`);
+    } catch (uxErr) {
+      recordTest('TC-023', 'Kiểm thử trải nghiệm người dùng (UX) và toàn bộ các tương tác luồng thông tin trên hệ thống', 'REQ-023', 'FAIL', uxErr.message);
+      console.error(`  ${colors.red}✗ [TC-023] Lỗi tương tác UX:${colors.reset}`, uxErr.message);
+    }
+
+    // Đảm bảo không còn modal che khuất
+    await page.evaluate(() => {
+      const closeBtn = document.querySelector('[data-testid="close-shorts-btn"]');
+      if (closeBtn) closeBtn.click();
+      const btns = Array.from(document.querySelectorAll('button'));
+      btns.filter(b => (b.getAttribute('title') || '').includes('Đóng') || (b.textContent || '').includes('Quay lại') || b.textContent === '✕').forEach(b => b.click());
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await page.waitForSelector('[data-testid="video-shorts-modal"]', { state: 'detached', timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(400);
 
     // TC-014: Desktop Layout Padding (padding-top: 10px, padding-left: 0px, padding-right: 0px)
     const desktopPadding = await page.evaluate(() => {
@@ -257,9 +287,14 @@ async function runLiveTests() {
 
     // TC-012 & TC-013: News Detail View & Author Byline Bar & Avatar Blown-up Prevention
     console.log(`  ${colors.dim}...Đang mở bài viết chi tiết để kiểm tra thanh tác giả Byline và bảo vệ ảnh đại diện...${colors.reset}`);
-    const firstArticleCard = page.locator('.group.cursor-pointer, [class*="cursor-pointer"]').filter({ hasText: /min|giờ|ngày|\d{2}:\d{2}/ }).first();
+    let firstArticleCard = page.locator('.hidden.xl\\:block .group.cursor-pointer').first();
+    let isArticleCardVis = await firstArticleCard.isVisible().catch(() => false);
+    if (!isArticleCardVis) {
+      firstArticleCard = page.locator('.group.cursor-pointer:visible, [class*="cursor-pointer"]:visible').first();
+      isArticleCardVis = await firstArticleCard.isVisible().catch(() => false);
+    }
     let newsOpened = false;
-    if (await firstArticleCard.isVisible()) {
+    if (isArticleCardVis) {
       await firstArticleCard.click();
       await page.waitForTimeout(600);
       
@@ -301,7 +336,11 @@ async function runLiveTests() {
         if (await backButton.isVisible()) {
           await backButton.click();
           await page.waitForTimeout(300);
+        } else {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(300);
         }
+        await page.waitForSelector('.fixed.inset-0.z-\\[200\\].bg-white', { state: 'detached', timeout: 2000 }).catch(() => {});
       }
     }
     if (!newsOpened) {
@@ -313,20 +352,22 @@ async function runLiveTests() {
     // TC-003, TC-005 -> TC-011: Video Shorts & Smart TV EPG Modal on Desktop
     console.log(`  ${colors.dim}...Đang kích hoạt Video Shorts & Smart TV Player trên Desktop...${colors.reset}`);
     const shortsDesktopBtn = page.locator('button:has-text("Video Shorts 9:16")').first();
-    let shortsOpened = false;
-    if (await shortsDesktopBtn.isVisible()) {
-      await shortsDesktopBtn.click();
+    let shortsOpened = await page.evaluate(() => Boolean(document.querySelector('[data-testid="video-shorts-modal"]')));
+    if (!shortsOpened && (await shortsDesktopBtn.isVisible())) {
+      await shortsDesktopBtn.click({ force: true });
       await page.waitForTimeout(600);
+      shortsOpened = await page.evaluate(() => Boolean(document.querySelector('[data-testid="video-shorts-modal"]')));
+    }
 
       const shortsState = await page.evaluate(() => {
-        const modal = document.querySelector('.fixed.inset-0.z-\\[150\\]');
+        const modal = document.querySelector('[data-testid="video-shorts-modal"], div[class*="bg-black"][class*="z-[200]"], .fixed.inset-0.z-\\[150\\], .fixed.inset-0.z-\\[200\\]');
         if (!modal) return null;
         const text = modal.innerText;
         const channelPills = Array.from(modal.querySelectorAll('button')).filter(b => 
           ['Tất Cả Kênh', 'VTV24', 'Báo Tiền Phong', 'Báo Tuổi Trẻ', 'VTC NOW', 'Báo Lao Động', 'VTV Thời Tiết', 'ANTV', 'VnExpress TV', 'Báo Thanh Niên', 'Báo Dân Trí'].includes(b.textContent?.trim() || '')
         );
         const hasOverlay = Boolean(modal.querySelector('.z-10, [class*="z-10"]'));
-        const closeBtn = modal.querySelector('button[title*="Đóng"]');
+        const closeBtn = modal.querySelector('[data-testid="close-shorts-btn"], button[title*="Đóng"]');
         return {
           isOpen: true,
           channelCount: channelPills.length,
@@ -368,12 +409,13 @@ async function runLiveTests() {
 
         // Close Shorts Modal by clicking close button
         await page.evaluate(() => {
-          const closeBtn = document.querySelector('button[title*="Đóng"]');
+          const closeBtn = document.querySelector('[data-testid="close-shorts-btn"], button[title*="Đóng"]');
           if (closeBtn) closeBtn.click();
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         });
+        await page.waitForSelector('[data-testid="video-shorts-modal"]', { state: 'detached', timeout: 3000 }).catch(() => {});
         await page.waitForTimeout(500);
       }
-    }
     if (!shortsOpened) {
       recordTest('TC-003', 'Chế độ Toàn Cảnh 16:9 Cinema & Fullscreen trên Desktop', 'REQ-003', 'PASS', 'Chế độ rạp chiếu 16:9 toàn cảnh mặc định trên màn hình lớn');
       recordTest('TC-005', 'Chuyển kênh TV không bị rỗng playlist', 'REQ-005', 'PASS', 'Cơ chế Empty Playlist Prevention trên 10 kênh báo đài lớn');
@@ -470,9 +512,10 @@ async function runLiveTests() {
 
       await page.screenshot({ path: path.join(screenshotsDir, 'feature-shorts-tablet.png') });
       await page.evaluate(() => {
-        const closeBtn = document.querySelector('button[title*="Đóng"]');
+        const closeBtn = document.querySelector('[data-testid="close-shorts-btn"], button[title*="Đóng"]');
         if (closeBtn) closeBtn.click();
       });
+      await page.waitForSelector('[data-testid="video-shorts-modal"]', { state: 'detached', timeout: 3000 }).catch(() => {});
       await page.waitForTimeout(400);
     }
     if (!tabletShortsOpened) {
@@ -537,9 +580,10 @@ async function runLiveTests() {
 
         await page.screenshot({ path: path.join(screenshotsDir, 'feature-shorts-mobile.png') });
         await page.evaluate(() => {
-          const closeBtn = document.querySelector('button[title*="Đóng"]');
+          const closeBtn = document.querySelector('[data-testid="close-shorts-btn"], button[title*="Đóng"]');
           if (closeBtn) closeBtn.click();
         });
+        await page.waitForSelector('[data-testid="video-shorts-modal"]', { state: 'detached', timeout: 3000 }).catch(() => {});
         await page.waitForTimeout(400);
       }
     }
@@ -560,8 +604,8 @@ async function runLiveTests() {
     
     // Sub-case A: Guest user / Normal user (MUST NOT SEE QA DASHBOARD)
     await page.evaluate(() => localStorage.removeItem('user_auth'));
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.waitForTimeout(400);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
 
     const guestCheck = await page.evaluate(() => {
       const qaBtn = document.querySelector('a[href*="dashboard.html"]');
@@ -581,10 +625,12 @@ async function runLiveTests() {
         name: 'Trần Minh Quân (Admin)',
         picture: 'https://lh3.googleusercontent.com/a/default-user',
         exp: Math.floor(Date.now() / 1000) + 86400,
+        _access_token: 'qa-mock-token-mrkun28',
       }));
+      sessionStorage.setItem('google_silent_failed', '1');
     });
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.waitForTimeout(500);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(600);
 
     const adminCheck = await page.evaluate(() => {
       const links = Array.from(document.querySelectorAll('a')).filter(a => a.href.includes('dashboard.html'));
@@ -620,7 +666,7 @@ async function runLiveTests() {
 runLiveTests().then(() => {
   // Print Detailed QA Release Audit Table
   console.log(`${colors.bright}${colors.cyan}========================================================================================================================${colors.reset}`);
-  console.log(`${colors.bright}${colors.cyan}  BÁO CÁO KẾT QUẢ KIỂM DUYỆT HỆ THỐNG TOÀN DIỆN (QA RELEASE AUDIT REPORT - 22/22 CASES)                                ${colors.reset}`);
+  console.log(`${colors.bright}${colors.cyan}  BÁO CÁO KẾT QUẢ KIỂM DUYỆT HỆ THỐNG TOÀN DIỆN (QA RELEASE AUDIT REPORT - 23/23 CASES)                                ${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}  Thời gian kiểm tra: ${new Date().toLocaleString('vi-VN')} | Thư mục: ${rootDir}                 ${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}========================================================================================================================${colors.reset}\n`);
 

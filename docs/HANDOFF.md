@@ -2,23 +2,21 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Kiểm Thử Toàn Diện Logic Luồng & Hệ Thống Đa Màn Hình (`REQ-022` / `TC-022`)**:
-  + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**:
-    1. *Weather Flow*: `detectConditionKey`, `mapBotStatusToCondKey`, `pm25Icon`, `getWindDirection`, `calculateSplinePoints` (15 đường cong SVG).
-    2. *Financial Flow*: `parseCurrencyValue` (xử lý định dạng dấu chấm phân tách hàng nghìn và dấu phẩy thập phân kiểu Việt Nam), `calculateSpread`, `formatVND`, `calculatePriceChange`.
-    3. *News Deduplication Flow*: `getUniqueKey` (chuẩn hóa URL canonical), `filterDeduplicatedNews`, `filterNewsByCategory`, `paginateNews`.
-    4. *Parser & Avatar Guard Flow*: `isBoilerplate` (khử quảng cáo và khối "Xem thêm"), `isAuthorAvatar` (bộ lọc kép chống phóng to avatar tác giả trong thân bài), `decodeHTMLEntities`.
-    5. *Video Shorts Flow*: `validateYouTubeId` (regex 11 ký tự Base64URL), `matchesChannel`, `generateChannelPlaylist` (Empty Playlist Prevention trên 10 kênh báo đài), `shouldAutoRecoverOnPlaybackError` (tự chuyển video khi lỗi 100/101/150), `calculateControlsVisibility` (ẩn controls sau 5000ms).
-    6. *Auth Flow*: `isUserAdminQA` (chỉ cấp quyền admin cho `mrkun28@gmail.com`), `getDashboardUrl` (tự động trỏ `/Website_thoitiet_design/dashboard.html` trên GitHub Pages).
-    7. *Calendar Flow*: `getDaysInMonth` (xử lý năm nhuận 2024=29, năm thường 2025/2026=28, năm thế kỷ 2000=29, 1900=28), `getFirstDayOfMonth`.
-    -> **134/134 assertions logic passed (100% PASS, 0 FAIL)**.
-  + ✅ **Nhật Ký Thực Thi Thời Gian Thực & Giả Lập Trực Tiếp (Live Console & Simulator)**:
-    - Bổ sung cửa sổ terminal thời gian thực (`#liveConsoleOutput` & `#liveLogCounter`) ngay trên `dashboard.html` và `public/dashboard.html` với các tag trực quan `[LOGIC-FLOW]`, `[SIMULATOR]`, `[DOM-ACTION]`, `[RELEASE-GATE]`.
-    - Trực tiếp tương tác với iframe hệ thống thật: chuyển tab giá vàng, mở modal bài viết, đo đạc avatar Byline, mở trình phát Shorts, đổi kênh TV và đổi kích thước đa màn hình với nhịp độ thực tế (~9-11 giây).
+- **Kết quả Kiểm Thử Toàn Diện Trải Nghiệm Người Dùng (UX), Logic Luồng & Hệ Thống Đa Màn Hình (`REQ-023` / `TC-023`)**:
+  + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**:
+    1. *News Reader & Audio TTS*: Khóa cuộn trang nền `document.body.style.overflow = "hidden"`, nút "Nghe đọc" kích hoạt Web Speech API tiếng Việt (`vi-VN`) với trạng thái "Đang đọc..." kèm animate-pulse, phím tắt `Escape` thoát modal và khôi phục cuộn trang.
+    2. *Video Shorts Keyboard Shortcuts*: Phím `Space` (Play/Pause), `M` (Mute/Unmute), `ArrowDown` (Chuyển video kế tiếp), `Escape` (Thoát modal).
+    3. *Market Chart Tooltip*: Di chuột hiển thị tooltip giá và giờ theo tọa độ chính xác, tự động đóng khi rời chuột (`mouseleave dismissal`).
+    4. *Category Carousel*: Chuyển đổi tab cập nhật highlight pill màu hồng (`#ff315f`) tức thì, lọc tin mượt mà không vỡ layout.
+    5. *Dark Mode Toggle*: Chuyển đổi giao diện tối/sáng, cập nhật class `.dark` trên thẻ `<html>` và lưu trữ bền vững trong `localStorage`.
+    6. *Weather Ergonomics*: Hiển thị đầy đủ thông số sức khỏe (nhiệt độ, PM2.5, độ ẩm, gió), khung 24h hỗ trợ cuộn ngang mượt mà.
+    7. *Multi-Screen Ergonomics & Touch Targets*: Vùng bấm tương tác chuẩn công thái học (touch area >= 40px), không đè nút điều khiển.
+  + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 134/134 assertions logic passed (100% PASS, 0 FAIL).
+  + ✅ **Nhật Ký Thực Thi Thời Gian Thực & Giả Lập Trực Tiếp (Live Console & Simulator)**: Bổ sung cửa sổ terminal thời gian thực (`#liveConsoleOutput`) với live tags trên `dashboard.html` và `public/dashboard.html`.
   + ✅ **Kiểm thử xuyên suốt 3 kích thước màn hình chuẩn**: Desktop (1440x900), Tablet (768x1024), Mobile (375x812).
   + ✅ **Kho ảnh chụp bằng chứng thực tế (Screenshot Audit Evidence)**: Chụp và lưu trữ ảnh màn hình thực tế từ Chrome thật tại `qa/screenshots/` và `public/qa/screenshots/`.
   + ✅ **Phân quyền người dùng nghiêm ngặt (`REQ-021` / `TC-021`)**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` mới nhìn thấy QA Dashboard.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **22/22 PASS** (0 FAIL).
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **23/23 PASS** (0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -51,6 +49,11 @@
    - Module hóa thuần túy `src/utils/logicFlows.ts` cho 7 luồng cốt lõi: Thời tiết, Thị trường tài chính, Lọc trùng tin tức, Parser & Avatar Guard, Video Shorts & TV, Auth phân quyền, Lịch vạn niên.
    - 134 bài test logic tự động (`scripts/test-logic-flows.mjs`) kiểm tra chặt chẽ biên dữ liệu, format tiền tệ Việt Nam, năm nhuận, regex YouTube, auto-skip, avatar guard.
    - Nâng cấp `dashboard.html` thành bộ giả lập trực tiếp với Live Terminal Console, tương tác thực tế với DOM iframe và nhịp độ thực tế.
+7. **[REQ-023] Kiểm Thử Toàn Diện Trải Nghiệm Người Dùng (UX) & Các Tương Tác Luồng Thực Tế**:
+   - Xây dựng bộ kiểm thử 7 kịch bản UX (`scripts/test-ux-flows.mjs`) chạy trên Chrome thật.
+   - Tích hợp Web Speech API tiếng Việt (`vi-VN`) cho nút "Nghe đọc" với trạng thái "Đang đọc..." kèm animate-pulse.
+   - Phím tắt `Escape` đóng modal bài viết ngay lập tức, ngắt audio và khôi phục cuộn trang nền `document.body.style.overflow = "auto"`.
+   - Kiểm tra tương tác phím tắt Shorts (`Space`, `M`, `ArrowDown`, `ESC`), Tooltip đồ thị giá vàng, chuyển tab chuyên mục, Dark mode toggle và touch targets công thái học.
 
 ---
 
