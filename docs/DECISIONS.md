@@ -79,6 +79,17 @@
     + Thực thi tương tác thật trên DOM sống: đo đạc kích thước thật (`padding-top: 10px`, dải danh mục `max-w-[872px]`, khung tablet `420px`), bấm chuyển tab danh mục tin tức, mở bài viết chi tiết kiểm tra Byline Bar và bảo vệ ảnh tác giả, kích hoạt Video Shorts & Smart TV kiểm tra 10 kênh, âm thanh unmuted, lớp overlay và đếm lùi 5s, kiểm thử phân quyền admin `mrkun28@gmail.com`.
     + Chụp ảnh bằng chứng thực tế tại từng màn hình lưu trữ tại `qa/screenshots/` và đồng bộ sang `public/qa/screenshots/`.
     + Tích hợp bộ giả lập màn hình **Interactive Multi-Screen Simulator & Preview** ngay trên `dashboard.html` cho phép người dùng chuyển đổi trực tiếp giữa Desktop, Tablet và Mobile.
+  - *Kiến Trúc Kiểm Thử Toàn Diện 7 Luồng Logic Nghiệp Vụ & Dữ Liệu (`REQ-022` / `TC-022`)*:
+    + **Chuẩn hóa module logic nghiệp vụ (`src/utils/logicFlows.ts`)**: Tách biệt các hàm xử lý dữ liệu và thuật toán cốt lõi ra module độc lập, thuần túy và có thể kiểm thử tự động với Node.js và trình duyệt.
+    + **Bộ kiểm thử 7 luồng nghiệp vụ với 134 assertions thực tế (`scripts/test-logic-flows.mjs`)**:
+      1. *Luồng Thời Tiết*: `detectConditionKey`, `mapBotStatusToCondKey`, phân cấp bụi mịn PM2.5 theo WHO (`pm25Icon`), đổi góc la bàn 16 hướng gió (`getWindDirection`), tính toán toạ độ đường cong Bézier SVG (`calculateSplinePoints`).
+      2. *Luồng Thị Trường & Tài Chính*: Bóc tách số tiền và giá hỗ trợ dấu chấm phân cách hàng nghìn và phẩy thập phân kiểu Việt Nam (`parseCurrencyValue`), tính độ chênh lệch Spread Mua-Bán vàng SJC/DOJI (`calculateSpread`), tỷ lệ % biên độ, định dạng tiền tệ VND (`formatVND`), đo lường biến động giá tăng/giảm/đi ngang (`calculatePriceChange`).
+      3. *Luồng RSS Tin Tức & Khử Trùng Lặp*: Thuật toán trích xuất Canonical Key chuẩn hóa URL (`getUniqueKey`), bộ lọc khử trùng bài viết (`filterDeduplicatedNews`), phân loại 10 danh mục tin tức, phân trang cuộn vô cực an toàn (`paginateNews`).
+      4. *Luồng Bóc Tách Bài Báo & Bảo Vệ Avatar*: Bộ lọc rác và quảng cáo (`isBoilerplate`), bộ bảo vệ hai lớp nhận diện avatar tác giả (`isAuthorAvatar`) ngăn chặn triệt để lỗi phóng to avatar thành ảnh bài viết, giải mã thực thể HTML và khối CDATA (`decodeHTMLEntities`).
+      5. *Luồng Video Shorts & Smart TV*: Xác thực 97/97 video YouTube thực tế đúng 11 ký tự Base64URL (`validateYouTubeId`), ánh xạ 10 kênh truyền hình báo chí chính thống (`matchesChannel`), cơ chế chống rỗng danh sách phát (`generateChannelPlaylist`), tự động phục hồi lỗi nhúng YouTube sau 2.2s (`shouldAutoRecoverOnPlaybackError`), đếm lùi 5000ms ẩn controls (`calculateControlsVisibility`).
+      6. *Luồng Bảo Mật & Phân Quyền*: Ma trận chân trị `isUserAdminQA` (chặn khách và email khác, chỉ cấp quyền cho `mrkun28@gmail.com`), định tuyến URL dashboard chuẩn xác trên Localhost và GitHub Pages (`getDashboardUrl`).
+      7. *Luồng Lịch Vạn Niên & Tiện Ích Ngày Tháng*: Thuật toán tính ngày trong tháng `getDaysInMonth` xử lý chính xác năm nhuận tháng 2 (2024 = 29 ngày, 2025/2026 = 28 ngày, thế kỷ 2000 = 29 ngày, 1900 = 28 ngày), xác định thứ ngày đầu tháng `getFirstDayOfMonth`.
+    + **Tích hợp vào cổng `/testwebsite` và Dashboard Live Simulator**: Chạy 134 assertions logic trước khi mở trình duyệt Chrome, đồng thời trang bị bảng điều khiển **Nhật Ký Thực Thi Thời Gian Thực (Connected Live Execution Console)** trên Dashboard với nhịp độ tương tác trực quan, streaming log sống động và liên kết chặt chẽ với DOM thực tế của hệ thống.
 
 ---
 
@@ -100,5 +111,7 @@
 - **Từ chối**: Nhồi nhét các nút điều khiển xoay 16:9, playlist drawer trùng lặp hay fullscreen lên Top Header trên Mobile (làm tràn mép và đè lên tên kênh, gây hỏng giao diện di động).
 - **Từ chối**: Chỉ đặt nút QA Dashboard ở chân trang Footer mà không có ở Header hay Floating Widget (khiến người dùng không thể bấm được do tính năng tải vô cực liên tục đẩy Footer xuống).
 - **Từ chối**: Hiển thị công khai QA Dashboard cho mọi tài khoản hoặc khách vãng lai chưa đăng nhập (đây là công cụ quản trị kỹ thuật chỉ cấp phép cho mrkun28@gmail.com).
-- **Từ chối**: Chạy kiểm thử giả lập hình thức bằng vòng lặp setTimeout sinh số ngẫu nhiên hoặc chỉ regex chuỗi mã nguồn mà không có kết nối DOM thực tế với website đang chạy.
-- **Từ chối**: Tuyên bố kiểm thử thành công nếu chưa chạy qua hệ thống Chrome E2E thực tế trên đầy đủ 3 màn hình Desktop, Tablet và Mobile.
+- **Từ chối**: Chỉ kiểm thử giao diện bề ngoài hoặc dùng kiểm thử hình thức bằng regex chuỗi mà bỏ qua việc kiểm chứng các luồng logic và thuật toán xử lý dữ liệu nghiệp vụ cốt lõi.
+- **Từ chối**: Chạy kiểm thử giả lập lướt nhanh với các độ trễ setTimeout cứng ngắc không có tính liên kết tương tác với hệ thống đang chạy.
+- **Từ chối**: Tuyên bố kiểm thử thành công nếu chưa chạy qua hệ thống Chrome E2E thực tế trên đầy đủ 3 màn hình Desktop, Tablet, Mobile và chưa kiểm thử toàn bộ 7 luồng logic nghiệp vụ.
+

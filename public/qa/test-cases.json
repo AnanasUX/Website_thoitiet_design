@@ -295,6 +295,24 @@
         "Kiểm tra link footer và dropdown avatar được bảo vệ bởi isUserAdminQA"
       ],
       "expected": "Chỉ tài khoản mrkun28@gmail.com thấy nút QA Dashboard tại Header, Fixed Widget và Menu Avatar; ẩn hoàn toàn với các tài khoản khác."
+    },
+    {
+      "id": "TC-022",
+      "title": "Kiểm thử toàn bộ 7 luồng logic và xử lý thông tin nghiệp vụ hệ thống",
+      "requirementIds": ["REQ-022"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm thử Luồng 1: Thời tiết, PM2.5 AQI, 16 hướng la bàn gió, SVG Bézier curve",
+        "Kiểm thử Luồng 2: Thị trường, độ chênh lệch Spread Mua-Bán vàng SJC/DOJI, tỷ giá Vietcombank, giá xăng dầu Petrolimex",
+        "Kiểm thử Luồng 3: RSS Feed Ingestion, thuật toán khử trùng lặp getUniqueKey, 10 danh mục tin, phân trang vô cực",
+        "Kiểm thử Luồng 4: Bóc tách bài viết parseHTMLToBlocks, bộ lọc rác isBoilerplate, bảo vệ avatar tác giả isAuthorAvatar",
+        "Kiểm thử Luồng 5: Kho 97 YouTube IDs chuẩn 11 ký tự, 10 kênh Smart TV chống rỗng playlist, error recovery 2.2s, ẩn controls 5s",
+        "Kiểm thử Luồng 6: Ma trận phân quyền isUserAdminQA (khách = false, user thường = false, mrkun28@gmail.com = true), định tuyến getDashboardUrl",
+        "Kiểm thử Luồng 7: Lịch vạn niên, kiểm tra năm nhuận getDaysInMonth, thứ đầu tháng, giải mã thực thể HTML decodeHTMLEntities"
+      ],
+      "expected": "100% (134/134) assertions logic và xử lý thông tin nghiệp vụ ĐẠT (PASS), 0 lỗi tính toán hoặc rò rỉ dữ liệu."
     }
   ]
 }

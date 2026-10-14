@@ -6,6 +6,63 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { VideoShortsModal } from "./components/VideoShortsModal";
+import {
+  type ConditionKey,
+  detectConditionKey,
+  mapBotStatusToCondKey,
+  pm25Icon,
+  getWindDirection,
+  calculateSplinePoints,
+  parseCurrencyValue,
+  calculateSpread,
+  formatVND,
+  calculatePriceChange,
+  getUniqueKey,
+  filterDeduplicatedNews,
+  filterNewsByCategory,
+  paginateNews,
+  isBoilerplate,
+  isAuthorAvatar,
+  validateYouTubeId,
+  matchesChannel,
+  generateChannelPlaylist,
+  shouldAutoRecoverOnPlaybackError,
+  calculateControlsVisibility,
+  isUserAdminQA,
+  getDashboardUrl,
+  getDaysInMonth,
+  getFirstDayOfMonth,
+  decodeHTMLEntities,
+} from "./utils/logicFlows";
+
+export {
+  type ConditionKey,
+  detectConditionKey,
+  mapBotStatusToCondKey,
+  pm25Icon,
+  getWindDirection,
+  calculateSplinePoints,
+  parseCurrencyValue,
+  calculateSpread,
+  formatVND,
+  calculatePriceChange,
+  getUniqueKey,
+  filterDeduplicatedNews,
+  filterNewsByCategory,
+  paginateNews,
+  isBoilerplate,
+  isAuthorAvatar,
+  validateYouTubeId,
+  matchesChannel,
+  generateChannelPlaylist,
+  shouldAutoRecoverOnPlaybackError,
+  calculateControlsVisibility,
+  isUserAdminQA,
+  getDashboardUrl,
+  getDaysInMonth,
+  getFirstDayOfMonth,
+  decodeHTMLEntities,
+};
 
 const assetPathPrefix = (import.meta.env.BASE_URL === "/" ? "" : import.meta.env.BASE_URL.replace(/\/$/, "")) + "/assets";
 
@@ -33,8 +90,6 @@ const imgDesktopNews4 = `${assetPathPrefix}/6ef75.png`;
 const imgDesktopNews5 = `${assetPathPrefix}/740c6.png`;
 
 // ── Weather condition theme map ───────────────────────────────────────────────
-
-type ConditionKey = "binh-thuong" | "nang" | "nang-gat" | "am-u" | "mua-nho" | "mua-dong";
 
 interface WeatherTheme {
   key: ConditionKey;
@@ -143,18 +198,6 @@ const WEATHER_THEMES: Record<ConditionKey, WeatherTheme> = {
     ],
   },
 };
-
-// ── Detect condition key from real weather data ───────────────────────────────
-
-function detectConditionKey(conditionLabel: string): ConditionKey {
-  const s = conditionLabel.toLowerCase();
-  if (s.includes("dông") || s.includes("dong")) return "mua-dong";
-  if (s.includes("mưa") || s.includes("mua")) return "mua-nho";
-  if (s.includes("nắng gắt") || s.includes("nang gat")) return "nang-gat";
-  if (s.includes("nắng") || s.includes("nang")) return "nang";
-  if (s.includes("âm u") || s.includes("am u")) return "am-u";
-  return "binh-thuong";
-}
 
 // ── Weather data type ─────────────────────────────────────────────────────────
 type HourlyItem = { time: string; icon: string; temp: number; pop: number; };
@@ -269,24 +312,6 @@ const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
   ]
 ,
 };
-
-// ── Ánh xạ trạng thái bot (BINH_THUONG, MUA_DONG …) → ConditionKey ───────────
-function mapBotStatusToCondKey(status: string): ConditionKey {
-  const s = status.toUpperCase();
-  if (s === "MUA_BAO" || s === "MUA_DONG") return "mua-dong";
-  if (s === "MUA_NHO" || s === "MUA_NHE") return "mua-nho";
-  if (s === "NANG_GAT") return "nang-gat";
-  if (s === "NANG") return "nang";
-  if (s === "AM_U") return "am-u";
-  return "binh-thuong";
-}
-
-// ── PM2.5 icon helper ─────────────────────────────────────────────────────────
-function pm25Icon(val: number): string {
-  if (val <= 12) return "✅";
-  if (val <= 35.4) return "⚠️";
-  return "❌";
-}
 
 // ── Shared weather section ────────────────────────────────────────────────────
 
@@ -2443,42 +2468,6 @@ export const RSS_FEEDS_DB = [
   { category: "Giải trí", name: "Kenh14 • Star", url: "https://kenh14.vn/rss/home.rss" }
 ];
 
-
-
-export function decodeHTMLEntities(text: string) {
-  if (!text) return "";
-  try {
-    let decoded = text.replace(/<\!\[CDATA\[(.*?)\]\]>/gs, '$1');
-    decoded = decoded.replace(/&amp;/g, '&'); 
-    const doc = new DOMParser().parseFromString(decoded, "text/html");
-    Array.from(doc.querySelectorAll('script, style, noscript, iframe')).forEach(el => el.remove());
-    decoded = doc.body.textContent || "";
-    // If still double encoded somehow
-    if (decoded.includes('&')) {
-       const doc2 = new DOMParser().parseFromString(decoded, "text/html");
-       Array.from(doc2.querySelectorAll('script, style, noscript, iframe')).forEach(el => el.remove());
-       decoded = doc2.body.textContent || "";
-    }
-    // Deep clean specific problematic sequences
-    decoded = decoded.replace(/&#34;/g, '"')
-                     .replace(/&quot;/g, '"')
-                     .replace(/&#39;/g, "'")
-                     .replace(/&#8230;/g, "...")
-                     .replace(/&apos;/g, "'")
-                     .replace(/&lt;/g, "<")
-                     .replace(/&gt;/g, ">")
-                     .replace(/&nbsp;/g, " ")
-                     .replace(/\r?\n|\r/g, " ")
-                     .replace(/\s+/g, " ")
-                       .replace(/[^\u0000-\uFFFF]/g, "") // remove extremely weird unicode blocks if needed
-                     .trim();
-    return decoded;
-  } catch(e) {
-    return text.replace(/<[^>]+>/g, '').trim();
-  }
-}
-
-
 // ── Per-Section Skeleton Components ─────────────────────────────────────────
 function SkeletonBox({ className }: { className?: string }) {
   return <div className={`bg-gradient-to-r from-[#e3e7ef] via-[#f4f6fa] to-[#e3e7ef] animate-pulse rounded ${className}`} style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite ease-in-out' }} />;
@@ -2652,20 +2641,6 @@ export function getProxyImageUrl(url: string, width = 450, quality = 75) {
     } catch { return false; }
   };
 
-
-  const getWindDirection = (deg: number) => {
-    if (deg >= 337.5 || deg < 22.5) return 'Bắc';
-    if (deg >= 22.5 && deg < 67.5) return 'Đông Bắc';
-    if (deg >= 67.5 && deg < 112.5) return 'Đông';
-    if (deg >= 112.5 && deg < 157.5) return 'Đông Nam';
-    if (deg >= 157.5 && deg < 202.5) return 'Nam';
-    if (deg >= 202.5 && deg < 247.5) return 'Tây Nam';
-    if (deg >= 247.5 && deg < 292.5) return 'Tây';
-    if (deg >= 292.5 && deg < 337.5) return 'Tây Bắc';
-    return '';
-  };
-
-
 function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
   useEffect(() => {
@@ -2739,9 +2714,6 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
 
   // Show skeleton only on first load when we have a token
   if (accessToken && !initialLoaded && loadingEvents) return <CalendarSectionSkeleton />;
-
-  const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
-  const getFirstDayOfMonth = (y: number, m: number) => new Date(y, m, 1).getDay();
 
   const daysInMonth = getDaysInMonth(year, month);
   let firstDay = getFirstDayOfMonth(year, month);
@@ -3182,34 +3154,6 @@ function CustomLoginButton({ onLoginSuccess }: { onLoginSuccess: (res: any) => v
     </div>
   );
 }
-
-// ── QA Dashboard Admin Role Verification ──────────────────────────────────
-export const isUserAdminQA = (role?: any): boolean => {
-  if (role?.email && role.email.toLowerCase().trim() === 'mrkun28@gmail.com') {
-    return true;
-  }
-  try {
-    const cached = localStorage.getItem('user_auth');
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed?.email && parsed.email.toLowerCase().trim() === 'mrkun28@gmail.com') {
-        return true;
-      }
-    }
-  } catch (e) {}
-  return false;
-};
-
-export const getDashboardUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    if (window.location.hostname.includes('github.io') || window.location.pathname.includes('/Website_thoitiet_design')) {
-      return `${window.location.origin}/Website_thoitiet_design/dashboard.html`;
-    }
-  }
-  const base = (import.meta as any).env?.BASE_URL || '/';
-  const cleanBase = base.endsWith('/') ? base : `${base}/`;
-  return `${cleanBase}dashboard.html`;
-};
 
 export function QADashboardHeaderButton({ userRole }: { userRole?: any }) {
   if (!isUserAdminQA(userRole)) return null;

@@ -21,6 +21,13 @@
 
 ### 4. Hệ Thống Quản Lý Yêu Cầu, Bộ Nhớ Dự Án & Tự Động Hóa QA
 - Tích hợp bộ hồ sơ bộ nhớ dự án chuẩn hóa: `PROJECT.md`, `REQUIREMENTS.md`, `DECISIONS.md`, `HANDOFF.md`, `docs/qa/TEST_PLAN.md`, `docs/qa/RELEASE_GATE.md`, `AI_PROJECT_PROTOCOL.md`, `AGENTS.md`.
-- Kích hoạt lệnh kiểm thử tự động `/testwebsite` qua script `scripts/testwebsite.mjs` đạt kết quả 20/20 PASS.
+- Kích hoạt lệnh kiểm thử tự động `/testwebsite` qua script `scripts/testwebsite.mjs`.
 - Sửa lỗi lệch chỉ số cột và hoàn thiện script kiểm tra registry `scripts/validate-registry.mjs`.
 - Bổ sung quy trình CI tự động `.github/workflows/qa-registry.yml`.
+
+### 5. Phân Quyền QA Dashboard & Kiểm Thử Toàn Diện Logic Luồng (REQ-021 & REQ-022)
+- Cấu hình phân quyền nghiêm ngặt: Chỉ tài khoản `mrkun28@gmail.com` mới có quyền truy cập QA Dashboard trên Top Header, Floating Widget và Menu Avatar.
+- Xây dựng module xử lý logic độc lập `src/utils/logicFlows.ts` bao phủ 7 luồng thông tin: Thời tiết, Tài chính (hỗ trợ phân tách hàng nghìn chấm và thập phân phẩy), Lọc trùng tin tức (chuẩn hóa URL canonical), Trình bóc tách bài viết & Chống phóng to avatar tác giả, Video Shorts & TV đa kênh, Auth phân quyền, Lịch vạn niên (thuật toán năm nhuận).
+- Thiết lập bộ test logic chuyên sâu `scripts/test-logic-flows.mjs` với 134 assertions tự động đạt tỷ lệ 100% PASS.
+- Nâng cấp `dashboard.html` bổ sung cửa sổ Nhật Ký Thực Thi Thời Gian Thực (`#liveConsoleOutput`) với live tags và tương tác DOM thực tế trên iframe hệ thống.
+- Toàn bộ 22/22 ca kiểm thử (`TC-001` đến `TC-022`) vượt qua cổng kiểm duyệt phát hành RELEASE GATE.

@@ -115,3 +115,44 @@
   4. Kiểm tra menu dropdown Avatar (`UserAvatarMenu`) có mục `🛡️ QA Dashboard (Admin)` được bảo vệ bởi `isUserAdminQA(userRole)`.
   5. Kiểm tra link QA Dashboard ở chân trang `Site Footer` được bảo vệ bởi `{isUserAdminQA(userRole) && (...)}`.
 - **Kết quả mong đợi**: Người dùng vãng lai hoặc tài khoản khác không bao giờ nhìn thấy nút QA Dashboard. Khi đăng nhập `mrkun28@gmail.com`, người dùng luôn thấy nút QA tại Header và nút nổi cố định ở góc màn hình bất kể cuộn trang đến độ sâu nào.
+
+---
+
+### Nhóm 6: Kiểm Thử Toàn Diện Luồng Logic & Dữ Liệu Nghiệp Vụ
+
+#### TC-022: Kiểm thử 7 Luồng Logic & Dữ Liệu Nghiệp Vụ Toàn Hệ Thống
+- **Mục tiêu**: Đảm bảo 100% các thuật toán tính toán, chuyển đổi dữ liệu và nghiệp vụ cốt lõi chạy chính xác tuyệt đối, không giả lập, không dựa vào kiểm tra chuỗi hình thức.
+- **Tiền điều kiện**: Chạy qua `node scripts/test-logic-flows.mjs` hoặc lệnh tự động `/testwebsite`.
+- **7 Phân Hệ Kiểm Thử Thực Tế**:
+  1. **Luồng Thời Tiết (Weather Logic Flow)**:
+     - Chuyển đổi trạng thái `detectConditionKey` và `mapBotStatusToCondKey` (10 condition keys chuẩn).
+     - Phân cấp chỉ số bụi PM2.5 `pm25Icon` theo chuẩn WHO (Tốt <=12, Nhạy cảm <=35.4, Nguy hại >35.4).
+     - Đổi góc la bàn 0°-360° sang 16 hướng gió tiếng Việt (`getWindDirection`).
+     - Tính toán toạ độ Bézier Spline (`calculateSplinePoints`) mượt mà cho đồ thị nhiệt độ SVG.
+  2. **Luồng Thị Trường & Tài Chính (Market Finance Flow)**:
+     - Bóc tách số tiền và giá (`parseCurrencyValue`) hỗ trợ dấu chấm phân cách hàng nghìn và dấu phẩy thập phân kiểu Việt Nam.
+     - Tính độ chênh lệch Spread Mua-Bán vàng SJC, DOJI (`calculateSpread`) và % biên độ.
+     - Định dạng tiền tệ VND (`formatVND`) chuẩn đẹp.
+     - Đo lường biến động giá tăng/giảm/đi ngang (`calculatePriceChange`).
+  3. **Luồng Tin Tức & Khử Trùng Lặp (News Ingestion & Deduplication Flow)**:
+     - Trích xuất khoá duy nhất chuẩn hoá (`getUniqueKey`) loại bỏ query params, hash và giao thức.
+     - Lọc khử trùng lặp tin tức (`filterDeduplicatedNews`) ngăn chặn hiển thị bài viết trùng.
+     - Lọc theo 10 danh mục chủ đề (`filterNewsByCategory`).
+     - Phân trang cuộn vô cực an toàn (`paginateNews`).
+  4. **Luồng Bóc Tách Bài Báo & Bảo Vệ Avatar (Parser & Avatar Guard Flow)**:
+     - Bộ lọc rác và banner quảng cáo (`isBoilerplate`).
+     - Bộ bảo vệ hai lớp nhận diện avatar tác giả (`isAuthorAvatar`), ngăn chặn triệt để lỗi phóng to avatar thành ảnh bài viết.
+     - Giải mã thực thể HTML và khối CDATA (`decodeHTMLEntities`).
+  5. **Luồng Video Shorts & Smart TV (Shorts & TV State Machine Flow)**:
+     - Xác thực 97/97 video YouTube thực tế đúng chuẩn 11 ký tự Base64URL (`validateYouTubeId`).
+     - Ánh xạ video vào 10 kênh truyền hình báo chí chính thống (`matchesChannel`).
+     - Khắc phục rỗng danh sách phát (`generateChannelPlaylist` - Empty Playlist Prevention).
+     - Cơ chế Error Auto-Recovery tự động chuyển video sau 2.2 giây khi gặp lỗi nhúng 100/101/150 (`shouldAutoRecoverOnPlaybackError`).
+     - Bộ đếm thời gian 5000ms tự động làm mờ và ẩn controls (`calculateControlsVisibility`).
+  6. **Luồng Bảo Mật & Phân Quyền (Auth & Security Flow)**:
+     - Ma trận chân trị hàm `isUserAdminQA` (Khách = false, Email khác = false, `mrkun28@gmail.com` = true).
+     - Phân giải URL dashboard (`getDashboardUrl`) tương thích Localhost và GitHub Pages.
+  7. **Luồng Lịch Vạn Niên & Tiện Ích Ngày Tháng (Calendar & Dates Flow)**:
+     - Tính số ngày trong tháng (`getDaysInMonth`) xử lý chính xác năm nhuận tháng 2 (2024 = 29 ngày, 2025/2026 = 28 ngày, 2000 = 29 ngày, 1900 = 28 ngày).
+     - Xác định thứ của ngày đầu tháng (`getFirstDayOfMonth`).
+- **Kết quả mong đợi**: 134/134 assertions logic ĐẠT (PASS 100%), 0 lỗi hồi quy, hệ thống hoàn toàn đồng bộ giữa code và dữ liệu.

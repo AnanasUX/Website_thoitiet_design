@@ -286,6 +286,19 @@
       "evidence": ["testwebsite.mjs:TC-021:PASS", "commit-pending"],
       "owner": "QA Lead",
       "notes": "isUserAdminQA kiểm tra email mrkun28@gmail.com, ghim Header và Fixed Floating Widget"
+    },
+    {
+      "id": "REQ-022",
+      "title": "Kiểm thử chuyên sâu 7 luồng logic và xử lý thông tin nghiệp vụ toàn hệ thống",
+      "description": "Kiểm thử tự động thực tế cho 7 luồng xử lý dữ liệu và thuật toán nghiệp vụ cốt lõi: (1) Thời tiết & chỉ số PM2.5, hướng gió, đường cong Bézier SVG; (2) Thị trường vàng SJC/DOJI spread, ngoại tệ Vietcombank, xăng dầu Petrolimex; (3) Ingestion RSS & thuật toán khử trùng tin getUniqueKey, 10 danh mục, phân trang vô cực; (4) Bóc tách HTML báo chí parseHTMLToBlocks, khử rác isBoilerplate, bảo vệ avatar tác giả isAuthorAvatar; (5) Kho 97 YouTube IDs chuẩn, playlist 10 kênh truyền hình chống rỗng, error auto-recovery 2.2s, ẩn controls 5s; (6) Ma trận phân quyền isUserAdminQA (khách = false, user = false, mrkun28@gmail.com = true) và định tuyến getDashboardUrl; (7) Lịch vạn niên, kiểm tra năm nhuận getDaysInMonth, thứ đầu tháng, unescape HTML entities.",
+      "sourcePrompt": "PROMPT-20261014-10: Test toàn bộ chức năng của các luồng thông tin trên website hiện tại tôi mới chỉ thấy hệ thống test trên luồng giao diện là nhiều, chưa test các luồng logic của hệ thống",
+      "priority": "P0",
+      "category": "qa-logic-flows",
+      "status": "PASS",
+      "testIds": ["TC-022"],
+      "evidence": ["testwebsite.mjs:TC-022:PASS", "test-logic-flows.mjs:134-assertions:PASS"],
+      "owner": "QA Lead",
+      "notes": "134/134 assertions logic đạt chuẩn, kết nối trực tiếp vào /testwebsite và simulator"
     }
   ]
 }

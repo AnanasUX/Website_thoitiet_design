@@ -2,18 +2,23 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Nâng Cấp Hệ Thống Kiểm Thử Thực Tế Đa Màn Hình & Toàn Bộ Tính Năng (`REQ-020` / `TC-020`)**:
-  + ✅ **Kiểm thử tự động thực tế kết nối hệ thống (Connected Live E2E Suite)**: Nâng cấp script `scripts/testwebsite.mjs` tích hợp `playwright-core` điều khiển trực tiếp trình duyệt Google Chrome thật. Loại bỏ hoàn toàn kiểm thử regex chuỗi hình thức.
-  + ✅ **Kiểm thử xuyên suốt 3 kích thước màn hình chuẩn**:
-    1. **Desktop (1440px x 900px)**: Kiểm tra padding-top 10px, padding-left/right 0px; dải danh mục 872px và tương tác click tab; widget thời tiết & 15 đường cong SVG; bảng giá vàng, ngoại tệ, xăng dầu; mở bài viết chi tiết kiểm tra Byline Bar và khử phóng to avatar; mở Video Shorts kiểm tra chế độ 16:9 Cinema, ambient glow, 10 kênh truyền hình, âm thanh unmuted, overlay z-10 và đếm lùi 5s.
-    2. **Tablet (768px x 1024px)**: Kiểm tra hiển thị TabletLayout (ẩn Desktop/Mobile); mở Shorts kiểm tra khung rạp chiếu 420px; đồng bộ chiều cao thẻ kênh min-h-[135px].
-    3. **Mobile (375px x 812px)**: Kiểm tra hiển thị MobileLayout; mở Shorts qua banner di động; xác minh nút xoay 16:9 được ẩn hoàn toàn (display=none) để chống đè nút header.
-  + ✅ **Bộ Giả Lập Màn Hình Trực Tiếp Trên Dashboard (`dashboard.html` & `public/dashboard.html`)**:
-    - Tích hợp khung **Connected Live Multi-Screen Simulator** với 3 nút chuyển đổi: `[💻 Desktop (100%)]`, `[📱 Tablet (768px)]`, `[📱 Mobile (375px)]`.
-    - Khi bấm `[▶️ Chạy Kiểm Thử Toàn Hệ Thống]`, hệ thống tự động đổi kích thước iframe giả lập, đo đạc DOM thật, tương tác trực tiếp với các phần tử và báo cáo kết quả trung thực sau ~5-7s.
-  + ✅ **Kho ảnh chụp bằng chứng thực tế (Screenshot Audit Evidence)**: Chụp và lưu trữ ảnh màn hình thực tế từ Chrome thật tại `qa/screenshots/` và `public/qa/screenshots/` (`screen-desktop-1440.png`, `screen-tablet-768.png`, `screen-mobile-375.png`, `feature-shorts-mobile.png`, `feature-shorts-tablet.png`).
-  + ✅ **Phân quyền người dùng nghiêm ngặt (`REQ-021` / `TC-021`)**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` mới nhìn thấy QA Dashboard tại Top Header, Floating Action Widget (góc phải dưới) và Menu Avatar.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **21/21 PASS** (0 FAIL).
+- **Kết quả Kiểm Thử Toàn Diện Logic Luồng & Hệ Thống Đa Màn Hình (`REQ-022` / `TC-022`)**:
+  + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**:
+    1. *Weather Flow*: `detectConditionKey`, `mapBotStatusToCondKey`, `pm25Icon`, `getWindDirection`, `calculateSplinePoints` (15 đường cong SVG).
+    2. *Financial Flow*: `parseCurrencyValue` (xử lý định dạng dấu chấm phân tách hàng nghìn và dấu phẩy thập phân kiểu Việt Nam), `calculateSpread`, `formatVND`, `calculatePriceChange`.
+    3. *News Deduplication Flow*: `getUniqueKey` (chuẩn hóa URL canonical), `filterDeduplicatedNews`, `filterNewsByCategory`, `paginateNews`.
+    4. *Parser & Avatar Guard Flow*: `isBoilerplate` (khử quảng cáo và khối "Xem thêm"), `isAuthorAvatar` (bộ lọc kép chống phóng to avatar tác giả trong thân bài), `decodeHTMLEntities`.
+    5. *Video Shorts Flow*: `validateYouTubeId` (regex 11 ký tự Base64URL), `matchesChannel`, `generateChannelPlaylist` (Empty Playlist Prevention trên 10 kênh báo đài), `shouldAutoRecoverOnPlaybackError` (tự chuyển video khi lỗi 100/101/150), `calculateControlsVisibility` (ẩn controls sau 5000ms).
+    6. *Auth Flow*: `isUserAdminQA` (chỉ cấp quyền admin cho `mrkun28@gmail.com`), `getDashboardUrl` (tự động trỏ `/Website_thoitiet_design/dashboard.html` trên GitHub Pages).
+    7. *Calendar Flow*: `getDaysInMonth` (xử lý năm nhuận 2024=29, năm thường 2025/2026=28, năm thế kỷ 2000=29, 1900=28), `getFirstDayOfMonth`.
+    -> **134/134 assertions logic passed (100% PASS, 0 FAIL)**.
+  + ✅ **Nhật Ký Thực Thi Thời Gian Thực & Giả Lập Trực Tiếp (Live Console & Simulator)**:
+    - Bổ sung cửa sổ terminal thời gian thực (`#liveConsoleOutput` & `#liveLogCounter`) ngay trên `dashboard.html` và `public/dashboard.html` với các tag trực quan `[LOGIC-FLOW]`, `[SIMULATOR]`, `[DOM-ACTION]`, `[RELEASE-GATE]`.
+    - Trực tiếp tương tác với iframe hệ thống thật: chuyển tab giá vàng, mở modal bài viết, đo đạc avatar Byline, mở trình phát Shorts, đổi kênh TV và đổi kích thước đa màn hình với nhịp độ thực tế (~9-11 giây).
+  + ✅ **Kiểm thử xuyên suốt 3 kích thước màn hình chuẩn**: Desktop (1440x900), Tablet (768x1024), Mobile (375x812).
+  + ✅ **Kho ảnh chụp bằng chứng thực tế (Screenshot Audit Evidence)**: Chụp và lưu trữ ảnh màn hình thực tế từ Chrome thật tại `qa/screenshots/` và `public/qa/screenshots/`.
+  + ✅ **Phân quyền người dùng nghiêm ngặt (`REQ-021` / `TC-021`)**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` mới nhìn thấy QA Dashboard.
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **22/22 PASS** (0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -42,6 +47,10 @@
 5. **[REQ-021] Phân Quyền QA Dashboard & Vị Trí Hiển Thị Tránh Cuộn Vô Cực**:
    - Chỉ tài khoản `mrkun28@gmail.com` nhìn thấy QA Dashboard.
    - Hiển thị trên Top Header (Mobile, Tablet, Desktop), Fixed Floating Widget góc phải dưới và Menu Avatar.
+6. **[REQ-022] Kiểm Thử Chuyên Sâu Toàn Bộ Logic Các Luồng Thông Tin & Live Simulation**:
+   - Module hóa thuần túy `src/utils/logicFlows.ts` cho 7 luồng cốt lõi: Thời tiết, Thị trường tài chính, Lọc trùng tin tức, Parser & Avatar Guard, Video Shorts & TV, Auth phân quyền, Lịch vạn niên.
+   - 134 bài test logic tự động (`scripts/test-logic-flows.mjs`) kiểm tra chặt chẽ biên dữ liệu, format tiền tệ Việt Nam, năm nhuận, regex YouTube, auto-skip, avatar guard.
+   - Nâng cấp `dashboard.html` thành bộ giả lập trực tiếp với Live Terminal Console, tương tác thực tế với DOM iframe và nhịp độ thực tế.
 
 ---
 
