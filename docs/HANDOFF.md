@@ -2,9 +2,14 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Kiểm duyệt `/testwebsite`**: ✅ **20/20 Ca kiểm thử ĐẠT (PASS)** - Cổng kiểm duyệt phát hành: **RELEASE GATE: PASSED**.
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.01s).
-- **Trạng thái Test Tự Động**: `npm run testwebsite` hoàn thành trong 3.05s với 0 lỗi.
+- **Kết quả Kiểm duyệt Gói Tích Hợp (`website_qa_integration_pack.zip`)**:
+  + ✅ Đã giải nén, rà soát và tích hợp 14/14 tệp từ gói tích hợp vào dự án thực tế.
+  + ✅ Sửa lỗi lệch chỉ số cột (column index offset) trong `scripts/validate-registry.mjs` giúp script kiểm tra chính xác 100%.
+  + ✅ Bảng yêu cầu `docs/REQUIREMENTS.md` chuẩn hóa theo cấu trúc 9 cột chuẩn và đầy đủ nhật ký tiếp nhận prompt (`Prompt intake log`).
+  + ✅ Lệnh `npm run qa:registry` thực thi thành công: `Registry syntax check passed for 20 requirement rows`.
+  + ✅ Lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) đạt **20/20 PASS** (0 FAIL).
+  + ✅ Cổng kiểm duyệt phát hành: **RELEASE GATE: PASSED**.
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.16s).
 
 ---
 
@@ -26,7 +31,7 @@
 4. **[REQ-016 -> REQ-020] Thời Tiết, Thị Trường, Build & Tự Động Hóa QA**:
    - Dữ liệu thời tiết tức thời & đồ thị SVG spline mượt mà.
    - Bảng giá thị trường vàng, ngoại tệ, xăng dầu hoạt động ổn định.
-   - Hệ thống hồ sơ dự án chuẩn hóa (`PROJECT.md`, `REQUIREMENTS.md`, `DECISIONS.md`, `HANDOFF.md`, `TEST_PLAN.md`, `RELEASE_GATE.md`).
+   - Hệ thống hồ sơ dự án chuẩn hóa (`PROJECT.md`, `REQUIREMENTS.md`, `DECISIONS.md`, `HANDOFF.md`, `CHANGELOG.md`, `TEST_PLAN.md`, `RELEASE_GATE.md`).
    - Lệnh tự động `/testwebsite` (qua `npm run testwebsite`) chạy kiểm thử toàn trang và xuất báo cáo có bằng chứng (20/20 PASS).
 
 ---

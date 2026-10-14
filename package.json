@@ -10,7 +10,8 @@
     "build:apk": "node scripts/build-apk.cjs",
     "preview": "vite preview",
     "format": "oxfmt",
-    "testwebsite": "node scripts/testwebsite.mjs"
+    "qa:registry": "node scripts/validate-registry.mjs",
+    "testwebsite": "node scripts/validate-registry.mjs && node scripts/testwebsite.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",
