@@ -112,6 +112,13 @@
     + **Định danh quản trị viên Pro**: Tích hợp tài khoản quản trị `mrkun28@gmail.com` gắn cờ Pro Tier, tự động xác thực và cấp quyền điều phối lỗi kỹ thuật.
     + **Cơ chế tự động báo bug vào Antigravity AI khi test lỗi**: Khi bộ kiểm thử chạy xong mà phát hiện bất kỳ ca kiểm thử nào thất bại (`problems > 0`), hệ thống QA tự động kích hoạt âm thanh cảnh báo, mở hộp thoại điều phối `copilotModal`, đóng gói toàn bộ danh sách lỗi, tệp liên quan, bằng chứng vào chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` và lưu vào `localStorage.antigravity_active_task`.
     + **Nút Thử Nghiệm Báo Lỗi (`copilotSimulateBugBtn`)**: Trang bị tính năng mô phỏng thử nghiệm 1 lỗi kỹ thuật để người dùng kiểm chứng ngay lập tức luồng tự động báo bug và khôi phục lại trạng thái PASS 100%.
+  - *Kiến Trúc Mở Rộng Ma Trận Toàn Hệ Thống 30 Yêu Cầu & Ca Kiểm Thử (`REQ-025` -> `REQ-030` / `TC-025` -> `TC-030`)*:
+    + **REQ-025 / TC-025 - Quản Lý Xác Thực Google OAuth 2.0 & Phiên Người Dùng**: Tích hợp Google Identity Services OAuth 2.0 (`UserAvatarMenu.tsx`), duy trì phiên đăng nhập bền vững qua `localStorage.getItem('user_auth')`, đồng bộ cookie bảo mật và menu quản lý hồ sơ / đăng xuất an toàn.
+    + **REQ-026 / TC-026 - Phân Hệ Lịch Vạn Niên Âm - Dương & Google Calendar**: Thuật toán tính toán ngày âm dương chính xác kết hợp can chi hoàng đạo, điều hướng tháng trước/sau và hỗ trợ nút liên kết đồng bộ Google Calendar API.
+    + **REQ-027 / TC-027 - Thu Thập Tin Tức RSS Đa Kênh Hơn 38 Nguồn & Cuộn Nạp Vô Cực**: Cơ chế thu thập dữ liệu RSS qua Worker proxy mrkun28, tự động phân loại vào 10 chuyên mục, giải mã CDATA và nạp gia số 15 bài/lần thông qua `InfiniteScrollTrigger`.
+    + **REQ-028 / TC-028 - Định Tuyến URL Ảo Chuẩn SEO & Lịch Sử Popstate**: Cập nhật URL chi tiết bài báo theo định dạng chuẩn SEO `/Website_thoitiet_design/chi-tiet-[slug]` thông qua `history.pushState` khi mở modal đọc bài, và lắng nghe sự kiện `popstate` để tự động đóng modal khôi phục URL trang chủ khi người dùng nhấn nút Back trình duyệt.
+    + **REQ-029 / TC-029 - Trang Chính Sách Bảo Mật Minh Bạch (Privacy Policy)**: Thành phần `PrivacyPolicyPage.tsx` dạng full overlay `z-[300]` hiển thị 6 điều khoản cam kết quyền riêng tư và an toàn dữ liệu người dùng theo đúng tiêu chuẩn Google OAuth 2.0 Client Verification.
+    + **REQ-030 / TC-030 - Bảng Điều Khiển Thời Tiết Nhà Phát Triển (Dev Weather Panel)**: Kích hoạt bảng điều khiển bí mật `DevWeatherPanel.tsx` thông qua cử chỉ triple-tap logo Anx., cho phép mô phỏng tức thì 9 trạng thái thời tiết động (mưa dông, nắng đẹp, mây rải rác, tuyết rơi...).
 
 ---
 

@@ -325,6 +325,84 @@
       "evidence": ["testwebsite.mjs:TC-024:PASS", "test-visual-fullsystem.mjs:5-phases:PASS"],
       "owner": "QA Lead",
       "notes": "Kiểm thử tương tác cuộn/click thực chiến và quét sạch lỗi giao diện trực quan"
+    },
+    {
+      "id": "REQ-025",
+      "title": "Quản lý xác thực Google OAuth 2.0, duy trì phiên đăng nhập & Trình đơn hồ sơ người dùng",
+      "description": "Hỗ trợ xác thực đăng nhập tài khoản Google qua Google Identity Services OAuth 2.0, lưu thông tin phiên bền vững trong localStorage và cookie user_auth, hiển thị avatar và tên người dùng tại UserAvatarMenu, hỗ trợ đăng xuất an toàn xóa sạch token.",
+      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "priority": "P0",
+      "category": "auth-session",
+      "status": "PASS",
+      "testIds": ["TC-025"],
+      "evidence": ["testwebsite.mjs:TC-025:PASS"],
+      "owner": "Security Lead",
+      "notes": "Đăng nhập Google, lưu trữ phiên localStorage/cookie và đăng xuất an toàn"
+    },
+    {
+      "id": "REQ-026",
+      "title": "Phân hệ Lịch Vạn Niên Âm - Dương, điều hướng tháng & Tích hợp Google Calendar cá nhân",
+      "description": "Hiển thị lịch dương kèm lịch âm (Can Chi, hoàng đạo), thuật toán tính ngày trong tháng getDaysInMonth chính xác năm nhuận, điều hướng chuyển tháng trước/sau mượt mà, và liên kết sự kiện cá nhân qua Google Calendar API khi có token hợp lệ.",
+      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "priority": "P1",
+      "category": "calendar-integration",
+      "status": "PASS",
+      "testIds": ["TC-026"],
+      "evidence": ["testwebsite.mjs:TC-026:PASS"],
+      "owner": "Frontend Lead",
+      "notes": "Lịch âm dương, tính toán năm nhuận và tích hợp Google Calendar"
+    },
+    {
+      "id": "REQ-027",
+      "title": "Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống, nạp vô cực & Cập nhật nền",
+      "description": "Tích hợp hơn 38 nguồn RSS báo đài lớn Việt Nam kèm proxy Worker mrkun28, cơ chế tải vô cực (InfiniteScrollTrigger) tự động nạp tiếp 15 bài từ kho pool khi cuộn đến cuối, và tự động làm mới tin sau 2 phút khi người dùng idle > 30s.",
+      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "priority": "P0",
+      "category": "news-ingestion",
+      "status": "PASS",
+      "testIds": ["TC-027"],
+      "evidence": ["testwebsite.mjs:TC-027:PASS"],
+      "owner": "Data Lead",
+      "notes": "Hơn 38 nguồn RSS, infinite scroll phân trang 15 bài và cập nhật nền thông minh"
+    },
+    {
+      "id": "REQ-028",
+      "title": "Định tuyến URL ảo chuẩn SEO cho bài viết chi tiết & Đồng bộ lịch sử điều hướng Popstate",
+      "description": "Khi bấm xem chi tiết bài báo, URL tự động cập nhật chuẩn SEO theo định dạng /Website_thoitiet_design/chi-tiet-[slug] qua history.pushState mà không reload trang; khi người dùng nhấn nút Back của trình duyệt hoặc phím Escape, sự kiện popstate tự động đóng modal và phục hồi URL trang chủ.",
+      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "priority": "P1",
+      "category": "routing-navigation",
+      "status": "PASS",
+      "testIds": ["TC-028"],
+      "evidence": ["testwebsite.mjs:TC-028:PASS"],
+      "owner": "Frontend Lead",
+      "notes": "SEO virtual routing /chi-tiet-[slug] và đồng bộ lịch sử duyệt trang popstate"
+    },
+    {
+      "id": "REQ-029",
+      "title": "Trang Chính Sách Bảo Mật minh bạch (Privacy Policy) & Kiểm soát dữ liệu người dùng",
+      "description": "Cung cấp trang Chính Sách Bảo Mật toàn diện (PrivacyPolicyPage) mở từ chân trang Footer với lớp phủ z-[300], công khai minh bạch 6 phần điều khoản về thông tin thu thập, xử lý client-side không lưu trữ máy chủ, và hướng dẫn thu hồi quyền Google.",
+      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "priority": "P1",
+      "category": "compliance-privacy",
+      "status": "PASS",
+      "testIds": ["TC-029"],
+      "evidence": ["testwebsite.mjs:TC-029:PASS"],
+      "owner": "Security Lead",
+      "notes": "Chính sách bảo mật 6 phần minh bạch, modal overlay z-[300] an toàn"
+    },
+    {
+      "id": "REQ-030",
+      "title": "Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua cử chỉ Triple-tap",
+      "description": "Tích hợp menu công cụ DevWeatherPanel bí mật dành cho nhà phát triển và kiểm thử viên, kích hoạt bằng thao tác Triple-tap (3 lần nhấn liên tiếp) vào logo Anx. hoặc thẻ phiên bản, cho phép ép chọn nhanh bất kỳ trạng thái thời tiết nào trong 9 trạng thái để kiểm thử trực quan.",
+      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "priority": "P2",
+      "category": "developer-tools",
+      "status": "PASS",
+      "testIds": ["TC-030"],
+      "evidence": ["testwebsite.mjs:TC-030:PASS"],
+      "owner": "QA Lead",
+      "notes": "DevWeatherPanel kích hoạt qua cử chỉ triple-tap cho phép ép chọn 9 trạng thái thời tiết"
     }
   ]
 }

@@ -347,6 +347,97 @@
         "Giai đoạn 5: Bộ Quét Lỗi Giao Diện Trực Quan - Quét tràn viền ngang (Horizontal Overflow), ảnh hỏng (Broken Images), vùng chạm (Touch Targets) và console errors"
       ],
       "expected": "5/5 giai đoạn kiểm thử tương tác thực chiến đạt chuẩn; 0 lỗi tràn viền ngang, 0 ảnh hỏng, 0 lỗi runtime JavaScript trên cả Desktop, Tablet và Mobile."
+    },
+    {
+      "id": "TC-025",
+      "title": "Quản lý xác thực Google OAuth 2.0, phiên đăng nhập & Trình đơn hồ sơ người dùng",
+      "requirementIds": ["REQ-025"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra nút đăng nhập Google CustomLoginButton trên Header khi chưa đăng nhập",
+        "Mô phỏng phiên đăng nhập Google lưu thông tin vào localStorage('user_auth') và cookie",
+        "Xác nhận UserAvatarMenu hiển thị avatar, tên người dùng và dropdown menu",
+        "Thao tác click Đăng xuất và xác nhận xóa sạch localStorage và cookie phiên"
+      ],
+      "expected": "Luồng đăng nhập Google và quản lý phiên hoạt động an toàn, chính xác và bảo mật."
+    },
+    {
+      "id": "TC-026",
+      "title": "Phân hệ Lịch Vạn Niên Âm - Dương, điều hướng tháng & Tích hợp Google Calendar",
+      "requirementIds": ["REQ-026"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hiển thị khối CalendarSection gồm lịch dương và lịch âm hoàng đạo",
+        "Kiểm tra nút chuyển tháng trước (<) và tháng sau (>)",
+        "Xác thực thuật toán tính ngày trong tháng xử lý chính xác năm nhuận",
+        "Kiểm tra trạng thái liên kết Google Calendar API cá nhân"
+      ],
+      "expected": "Lịch âm dương hiển thị đầy đủ, chuyển tháng mượt mà, tính toán ngày chính xác."
+    },
+    {
+      "id": "TC-027",
+      "title": "Thu thập tin tức RSS từ hơn 38 nguồn báo chí, nạp vô cực & Cập nhật nền",
+      "requirementIds": ["REQ-027"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra tải tin từ các kênh RSS báo chí chính thống",
+        "Kiểm tra thành phần InfiniteScrollTrigger nạp tiếp 15 bài khi cuộn xuống",
+        "Xác nhận cơ chế cập nhật tin nền sau 2 phút khi người dùng idle > 30s",
+        "Kiểm tra thanh tin tức chạy chữ LiveNewsTicker và timeline cập nhật"
+      ],
+      "expected": "Tin tức cập nhật phong phú, không bị gián đoạn, cuộn vô cực mượt mà."
+    },
+    {
+      "id": "TC-028",
+      "title": "Định tuyến URL ảo chuẩn SEO cho bài viết chi tiết & Lịch sử Popstate",
+      "requirementIds": ["REQ-028"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Click chọn một bài viết tin tức trên trang",
+        "Xác nhận URL cập nhật định dạng /Website_thoitiet_design/chi-tiet-[slug] qua pushState",
+        "Kích hoạt sự kiện popstate hoặc nhấn Escape đóng modal",
+        "Xác nhận URL tự động phục hồi về /Website_thoitiet_design/ mà không reload trang"
+      ],
+      "expected": "Định tuyến ảo chuẩn SEO hoạt động đồng bộ với lịch sử trình duyệt, trải nghiệm SPA mượt mà."
+    },
+    {
+      "id": "TC-029",
+      "title": "Trang Chính Sách Bảo Mật minh bạch (Privacy Policy) & Kiểm soát dữ liệu",
+      "requirementIds": ["REQ-029"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Click liên kết 'Chính sách Bảo mật' tại chân trang Footer",
+        "Xác nhận modal PrivacyPolicyPage mở lên với lớp phủ z-[300]",
+        "Kiểm tra hiển thị đầy đủ 6 phần điều khoản bảo mật và cam kết xử lý client-side",
+        "Click nút 'Quay lại' và xác nhận modal đóng an toàn"
+      ],
+      "expected": "Trang chính sách bảo mật hiển thị đầy đủ, minh bạch và đóng mở dễ dàng."
+    },
+    {
+      "id": "TC-030",
+      "title": "Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua Triple-tap",
+      "requirementIds": ["REQ-030"],
+      "type": "automated",
+      "priority": "P2",
+      "status": "PASS",
+      "steps": [
+        "Thực hiện cử chỉ triple-tap (3 lần nhấn liên tiếp) vào khu vực logo Anx.",
+        "Xác nhận modal DevWeatherPanel mở ra với danh sách 9 trạng thái thời tiết",
+        "Chọn thử một trạng thái (ví dụ Nắng gắt hoặc Mưa dông)",
+        "Xác nhận giao diện cập nhật ngay màu gradient nền và lời khuyên tương ứng",
+        "Đóng panel kiểm thử"
+      ],
+      "expected": "Menu nhà phát triển phản hồi nhạy với cử chỉ bí mật, hỗ trợ kiểm thử tức thì 9 hình thái thời tiết."
     }
   ]
 }

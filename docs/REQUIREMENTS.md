@@ -39,6 +39,12 @@
 | REQ-022 | PROMPT-20261014-10 | Kiểm thử chuyên sâu 7 luồng logic và xử lý thông tin nghiệp vụ toàn hệ thống | P0 | Logic / Business Flows | TC-022 | PASS | test-logic-flows.mjs:TC-022 | 134/134 assertions PASS covering all 7 core flows |
 | REQ-023 | PROMPT-20261014-11 | Kiểm thử toàn diện trải nghiệm người dùng (UX) và các luồng tương tác thực tế | P0 | UX / Interaction Flows | TC-023 | PASS | test-ux-flows.mjs:TC-023 | 7/7 UX Scenarios PASS: Audio TTS, Escape dismiss, Shorts Shortcuts, Tooltip, Category Pills, Dark Mode, Touch Targets |
 | REQ-024 | PROMPT-20261014-12 | Kiểm thử toàn diện tương tác thực chiến đa màn hình (cuộn, click mọi khối) & Bộ quét lỗi giao diện trực quan | P0 | Visual / Interaction Scanner | TC-024 | PASS | test-visual-fullsystem.mjs:TC-024 | 5 phases: Scroll/ScrollToTop, News Detail/TTS, Shorts/Calendar/DarkMode, Tablet/Mobile, 0 overflow, 0 broken imgs |
+| REQ-025 | PROMPT-20261014-13 | Quản lý xác thực Google OAuth 2.0, phiên đăng nhập & Trình đơn hồ sơ người dùng | P0 | Auth / Session | TC-025 | PASS | testwebsite.mjs:TC-025 | Google OAuth2 login button, localStorage user_auth, UserAvatarMenu & logout |
+| REQ-026 | PROMPT-20261014-13 | Phân hệ Lịch Vạn Niên Âm - Dương, điều hướng tháng & Tích hợp Google Calendar | P1 | Calendar / Integration | TC-026 | PASS | testwebsite.mjs:TC-026 | Solar/Lunar calendar, leap year calculations, month switcher & Google Calendar link |
+| REQ-027 | PROMPT-20261014-13 | Thu thập tin tức RSS từ hơn 38 nguồn báo chí, nạp vô cực & Cập nhật nền | P0 | News Ingestion / Feeds | TC-027 | PASS | testwebsite.mjs:TC-027 | 38+ RSS feeds, InfiniteScrollTrigger batch 15 articles, idle auto-refresh |
+| REQ-028 | PROMPT-20261014-13 | Định tuyến URL ảo chuẩn SEO cho bài viết chi tiết & Lịch sử Popstate | P1 | Routing / Navigation | TC-028 | PASS | testwebsite.mjs:TC-028 | Virtual SEO /chi-tiet-[slug] pushState & popstate modal synchronization |
+| REQ-029 | PROMPT-20261014-13 | Trang Chính Sách Bảo Mật minh bạch (Privacy Policy) & Kiểm soát dữ liệu | P1 | Compliance / Privacy | TC-029 | PASS | testwebsite.mjs:TC-029 | PrivacyPolicyPage z-[300], 6 terms sections, client-side only transparency |
+| REQ-030 | PROMPT-20261014-13 | Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua Triple-tap | P2 | Developer / Tools | TC-030 | PASS | testwebsite.mjs:TC-030 | DevWeatherPanel 9 weather condition simulator triggered by secret triple-tap |
 
 ## Prompt intake log
 
@@ -60,5 +66,6 @@
 | PROMPT-20261014-10 | 2026-10-14 | Test toàn bộ chức năng các luồng thông tin & logic hệ thống (thời tiết, thị trường, tin tức, parser, shorts, auth, lịch) | REQ-022 | None | Approved |
 | PROMPT-20261014-11 | 2026-10-14 | Test cả logic các luồng nữa chứ có phải test mỗi UI đâu cả UX nữa | REQ-023 | None | Approved |
 | PROMPT-20261014-12 | 2026-10-14 | Tất cả chức năng trên website chứ vuốt lên vuốt xuống, click và chi tiết, lỗi giao diện xem trên giao diện chứ chưa thấy test kiểm thử gì là toàn hệ thống chi tiết chức năng cả. | REQ-024 | None | Approved |
+| PROMPT-20261014-13 | 2026-10-14 | Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống | REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030 | None | Approved |
 
 

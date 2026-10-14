@@ -48,3 +48,14 @@
   - Bổ sung nút `[🧪 Thử Nghiệm Báo Lỗi]` (`copilotSimulateBugBtn`) cho phép mô phỏng báo lỗi thử nghiệm và khôi phục trạng thái PASS 100%.
 - Nâng cấp bộ kiểm thử toàn diện `/testwebsite` đạt **24/24 PASS (100% ĐẠT, 0 FAIL)**, thông qua cổng kiểm duyệt phát hành **RELEASE GATE: PASSED**.
 
+### 8. Mở Rộng Hệ Thống 30/30 Yêu Cầu & Ca Kiểm Thử Toàn Diện (REQ-025 -> REQ-030)
+- Tích hợp và chuẩn hóa 6 phân hệ nâng cao vào ma trận yêu cầu và kiểm thử tự động:
+  1. **REQ-025 / TC-025**: Quản lý xác thực Google OAuth 2.0, phiên đăng nhập bền vững (`user_auth`) và UserAvatarMenu.
+  2. **REQ-026 / TC-026**: Lịch Vạn Niên Âm - Dương, điều hướng tháng trước/sau và nút tích hợp Google Calendar.
+  3. **REQ-027 / TC-027**: Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống qua proxy, 10 chuyên mục và cuộn nạp vô cực.
+  4. **REQ-028 / TC-028**: Định tuyến URL ảo chuẩn SEO `/Website_thoitiet_design/chi-tiet-[slug]` và đồng bộ popstate khôi phục trang chủ.
+  5. **REQ-029 / TC-029**: Trang Chính Sách Bảo Mật minh bạch (`PrivacyPolicyPage`) overlay z-[300] chuẩn Google OAuth Client.
+  6. **REQ-030 / TC-030**: Bảng điều khiển thời tiết nhà phát triển (`DevWeatherPanel`) kích hoạt qua triple-tap logo Anx.
+- Đồng bộ dữ liệu kiểm thử trực tiếp trên `dashboard.html` (Live Execution Console, Fallback Data, Test Definitions, Runner Execution Loop) hỗ trợ kiểm tra thời gian thực 30 ca.
+- Thực thi toàn diện lệnh kiểm duyệt `/testwebsite` (`npm run testwebsite`) đạt **30/30 PASS (100% ĐẠT, 0 FAIL)**, xác thực thành công **RELEASE GATE: PASSED**.
+

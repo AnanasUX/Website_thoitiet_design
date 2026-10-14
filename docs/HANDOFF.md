@@ -18,7 +18,7 @@
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
   + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 134/134 assertions logic passed.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **24/24 PASS** (100% PASS, 0 FAIL).
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **30/30 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -60,6 +60,13 @@
    - Xây dựng bộ kiểm thử tương tác thực chiến (`scripts/test-visual-fullsystem.mjs`) thẩm định toàn diện: vuốt cuộn sâu y > 1500px, nút ScrollToTop cuộn mượt về đỉnh (`scrollY = 0`), mở chi tiết bài báo, đọc TTS Web Speech API, chuyển kênh Shorts 16:9 Cinema, Dark mode toggle, điều hướng lịch âm dương.
    - Bộ quét lỗi giao diện trực quan (Visual Defect Scanner): 0 lỗi tràn viền ngang (Horizontal Overflow), 0 ảnh hỏng (Broken Images) trên cả 3 màn hình Desktop, Tablet, Mobile.
    - Tích hợp Động Cơ Điều Phối Lỗi Tự Động Antigravity Copilot Pro cho tài khoản quản trị `mrkun28@gmail.com`: Tự động cảnh báo và đóng gói chỉ thị xử lý lỗi khi kiểm thử thất bại, kèm nút thử nghiệm báo lỗi `copilotSimulateBugBtn` để kiểm tra luồng tự động.
+9. **[REQ-025 -> REQ-030] Phân Hệ Nâng Cao Toàn Trang & Đạt Độ Bao Phủ 30/30 Yêu Cầu**:
+   - [REQ-025 / TC-025] Quản lý xác thực Google OAuth 2.0, phiên đăng nhập bền vững (`user_auth`) và `UserAvatarMenu`.
+   - [REQ-026 / TC-026] Lịch Vạn Niên Âm - Dương, điều hướng tháng trước/sau và nút tích hợp Google Calendar.
+   - [REQ-027 / TC-027] Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống, 10 chuyên mục và cuộn nạp vô cực.
+   - [REQ-028 / TC-028] Định tuyến URL ảo chuẩn SEO `/Website_thoitiet_design/chi-tiet-[slug]` và xử lý `popstate`.
+   - [REQ-029 / TC-029] Trang Chính Sách Bảo Mật minh bạch (`PrivacyPolicyPage`) overlay z-[300].
+   - [REQ-030 / TC-030] Bảng điều khiển thời tiết nhà phát triển (`DevWeatherPanel`) qua cử chỉ triple-tap logo Anx.
 
 ---
 

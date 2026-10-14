@@ -220,4 +220,31 @@
      - Lắng nghe Console errors: 0 uncaught runtime exceptions trong suốt toàn bộ phiên.
 - **Kết quả mong đợi**: 5/5 giai đoạn tương tác thực chiến ĐẠT (PASS 100%), 0 lỗi tràn viền, 0 ảnh hỏng, đủ điều kiện phát hành.
 
+### Nhóm 9: Kiểm Thử Toàn Diện Các Phân Hệ Nâng Cao & Luồng Hệ Thống Mở Rộng
+
+#### TC-025: Quản lý xác thực Google OAuth 2.0, phiên đăng nhập & Trình đơn hồ sơ người dùng
+- **Mục tiêu**: Thẩm định luồng xác thực đăng nhập Google, lưu trữ thông tin người dùng an toàn trong `localStorage` và `cookie`, hiển thị giao diện người dùng (`UserAvatarMenu`) và đăng xuất an toàn.
+- **Tiêu chí nghiệm thu**: Khách thấy nút đăng nhập Google; khi đăng nhập hiển thị avatar + tên người dùng; click đăng xuất xóa token và cookie phiên sạch sẽ.
+
+#### TC-026: Phân hệ Lịch Vạn Niên Âm - Dương, điều hướng tháng & Tích hợp Google Calendar cá nhân
+- **Mục tiêu**: Thẩm định khối hiển thị lịch dương và lịch âm hoàng đạo, thuật toán năm nhuận `getDaysInMonth`, chuyển tháng trước/sau và trạng thái liên kết Google Calendar API.
+- **Tiêu chí nghiệm thu**: Hiển thị đầy đủ ngày âm/dương, chuyển tháng mượt mà không lỗi rendering, tính chính xác năm nhuận.
+
+#### TC-027: Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống, nạp vô cực & Cập nhật nền
+- **Mục tiêu**: Thẩm định luồng nạp tin tức RSS đa kênh, cơ chế phân trang vô cực `InfiniteScrollTrigger` (15 bài/lần) và tự động làm mới nền sau 2 phút khi người dùng idle > 30s.
+- **Tiêu chí nghiệm thu**: Tải tin phong phú, cuộn xuống nạp thêm bài mới, cập nhật thanh LiveNewsTicker và timeline liên tục.
+
+#### TC-028: Định tuyến URL ảo chuẩn SEO cho bài viết chi tiết & Đồng bộ lịch sử Popstate
+- **Mục tiêu**: Thẩm định cơ chế cập nhật URL chuẩn SEO `/Website_thoitiet_design/chi-tiet-[slug]` qua `history.pushState` khi mở bài báo và khôi phục về `/Website_thoitiet_design/` khi nhấn nút Back/Escape qua `popstate`.
+- **Tiêu chí nghiệm thu**: Trải nghiệm SPA mượt mà, URL chuẩn SEO phản ánh đúng bài viết, không tải lại toàn trang.
+
+#### TC-029: Trang Chính Sách Bảo Mật minh bạch (Privacy Policy) & Kiểm soát dữ liệu người dùng
+- **Mục tiêu**: Thẩm định trang Chính Sách Bảo Mật toàn diện mở từ chân trang Footer với modal overlay `z-[300]`, minh bạch 6 phần điều khoản thu thập, xử lý client-side và quyền thu hồi Google.
+- **Tiêu chí nghiệm thu**: Modal mở nhanh, cuộn đọc đầy đủ 6 phần điều khoản, bấm "Quay lại" đóng modal an toàn.
+
+#### TC-030: Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua cử chỉ Triple-tap
+- **Mục tiêu**: Thẩm định cử chỉ gõ 3 lần liên tiếp (Triple-tap) vào logo Anx. để mở bảng điều khiển `DevWeatherPanel` bí mật, ép chọn nhanh 9 hình thái thời tiết phục vụ kiểm thử giao diện trực quan.
+- **Tiêu chí nghiệm thu**: Cử chỉ triple-tap nhạy bén, bảng điều khiển mở ra cho phép chọn 9 trạng thái thời tiết, đổi màu gradient và lời khuyên tức thời.
+
+
 
