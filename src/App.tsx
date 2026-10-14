@@ -795,13 +795,83 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         ''
       ).replace(/\s+/g, ' ').trim();
 
-      // Pre-cleaning selector loại bỏ rác, quảng cáo, và script (GIỮ LẠI các khối bài viết liên quan)
+      // Trích xuất thông tin tác giả, avatar tác giả và thời gian xuất bản từ trang báo chính thống
+      let authorName = '';
+      let authorAvatar = '';
+      let authorDate = '';
+
+      // 1. Trích xuất thời gian xuất bản
+      const timeEl = doc.querySelector('time, [data-slot="date"], .date-time, .datetime, .dt-text-13px, meta[property="article:published_time"]');
+      if (timeEl) {
+        const rawTime = timeEl.getAttribute('content') || timeEl.textContent?.trim() || '';
+        if (rawTime && (/\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2}|-\s*\d{1,2}:\d{2}/.test(rawTime) || rawTime.length > 8)) {
+          authorDate = rawTime.replace(/\s+/g, ' ').trim();
+        }
+      }
+
+      // 2. Trích xuất Avatar tác giả (ưu tiên ảnh nhỏ, rounded-full, nằm trong khối author)
+      const authorAvatarEl = doc.querySelector(
+        'a[data-content-piece*="avatar"] img, a[rel="author"] img, [data-content-piece*="author-position_1-avatar"] img, .author-avatar img, .avatar-author img, [class*="author"] img[class*="rounded-full"], [class*="author"] img[class*="avatar"], .box-author img'
+      );
+      if (authorAvatarEl) {
+        const rawAvatar = authorAvatarEl.getAttribute('data-src') || authorAvatarEl.getAttribute('data-original') || authorAvatarEl.getAttribute('src') || '';
+        if (rawAvatar && !rawAvatar.startsWith('data:') && !rawAvatar.includes('blank.gif') && !rawAvatar.includes('1x1')) {
+          authorAvatar = rawAvatar.trim();
+        }
+        if (!authorName) {
+          authorName = authorAvatarEl.getAttribute('alt')?.trim() || '';
+        }
+      }
+
+      // 3. Trích xuất Tên tác giả
+      if (!authorName) {
+        const authorNameEl = doc.querySelector(
+          '[data-content-piece*="author-position_1-name"], a[rel="author"], a[href*="/tac-gia/"], .author-name, .author_name, .details__author, .article__author, [itemprop="author"], .box-author .name, .author'
+        );
+        if (authorNameEl) {
+          authorName = authorNameEl.textContent?.trim() || '';
+        }
+      }
+
+      // 4. Fallback từ JSON-LD schema
+      if (!authorName || !authorAvatar || !authorDate) {
+        for (const s of ldJsonMatches) {
+          try {
+            let jsonText = s.replace(/<script[^>]*>|<\/script>/gi, '').trim().replace(/[\u0000-\u001F\u007F-\u009F]/g, c => (c === '\n' || c === '\r' ? ' ' : ''));
+            const parsed = JSON.parse(jsonText);
+            const list = Array.isArray(parsed) ? parsed : [parsed];
+            for (const item of list) {
+              if (!authorName && item.author) {
+                const a = Array.isArray(item.author) ? item.author[0] : item.author;
+                authorName = typeof a === 'string' ? a : (a.name || '');
+                if (!authorAvatar && a && a.image) {
+                  authorAvatar = typeof a.image === 'string' ? a.image : (a.image.url || '');
+                }
+              }
+              if (!authorDate && item.datePublished) {
+                try {
+                  const d = new Date(item.datePublished);
+                  if (!isNaN(d.getTime())) {
+                    authorDate = d.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                  }
+                } catch(e) {}
+              }
+            }
+          } catch(e) {}
+        }
+      }
+
+      // Pre-cleaning selector loại bỏ rác, quảng cáo, script và các khối tác giả để KHÔNG bị parse thành ảnh hay đoạn văn trong thân bài
       doc.querySelectorAll(`
         script, style, nav, footer, header, .ads, .ad, .advertisement, .qc, .banner, .banner-ads,
         ins.adsbygoogle, .google-auto-placed, [class*="ad-"], [id*="ad-"], [class*="banner"],
         .social, .comment, iframe:not([data-keep-video="true"]), .return-thread-body-btn, 
         .readmore-body-btn, .box-author-detail, .author-info, .bread-crumb, 
-        .breadcrumb, .share, .like-fb
+        .breadcrumb, .share, .like-fb,
+        [data-content-name="article-author"], [data-content-piece*="author"],
+        a[rel="author"], a[href*="/tac-gia/"], .author-avatar, .article-author, .dt-author,
+        .box-author, .details__author, .article__author,
+        [data-module="article-audio-new"], [data-module="article-audio"], time
       `).forEach(el => el.remove());
 
       const contentSelectors = [
@@ -928,12 +998,26 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           }
         }
 
+        const isAuthorAvatar = (imgEl: Element | null, captionText: string, imgSrc: string) => {
+          if (!imgEl) return false;
+          const cleanCap = (captionText || '').trim().toLowerCase();
+          const cleanAuth = (authorName || '').trim().toLowerCase();
+          if (cleanAuth && cleanCap && (cleanCap === cleanAuth || cleanCap.includes(cleanAuth))) return true;
+          if (imgEl.classList?.contains('dt-rounded-full') || imgEl.classList?.contains('avatar')) return true;
+          if (imgEl.getAttribute('height') === '24' || imgEl.getAttribute('width') === '24') return true;
+          if (imgEl.getAttribute('height') === '36' || imgEl.getAttribute('width') === '36') return true;
+          if (/zoom\/(?:24|36|48)_(?:24|36|48)|avatar|author/i.test(imgSrc)) return true;
+          if (imgEl.closest?.('[rel="author"], [href*="/tac-gia/"], [data-content-piece*="author"]')) return true;
+          return false;
+        };
+
         if (tag === 'figure' || tag === 'picture') {
           const img = el.querySelector('img');
           if (img) {
             const src = getBestImgSrc(img);
+            const caption = el.querySelector('figcaption')?.textContent?.trim() || img.getAttribute('alt') || '';
+            if (isAuthorAvatar(img, caption, src)) return;
             if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif')) {
-              const caption = el.querySelector('figcaption')?.textContent?.trim() || img.getAttribute('alt') || '';
               blocks.push({ type: 'image', src: getProxyImageUrl(src), caption });
             }
           }
@@ -942,8 +1026,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
         if (tag === 'img') {
           const src = getBestImgSrc(el);
+          const caption = el.getAttribute('alt') || '';
+          if (isAuthorAvatar(el, caption, src)) return;
           if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif')) {
-            blocks.push({ type: 'image', src: getProxyImageUrl(src), caption: el.getAttribute('alt') || '' });
+            blocks.push({ type: 'image', src: getProxyImageUrl(src), caption });
           }
           return;
         }
@@ -1016,6 +1102,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           } else {
             const cleanHtml = sanitizeInnerHtml(el.innerHTML.trim());
             const textContent = el.textContent?.trim();
+            if (textContent && authorName && textContent.toLowerCase() === authorName.toLowerCase()) {
+              return; // BỎ QUA tên tác giả bị lọt lại dưới dạng đoạn văn đơn độc
+            }
             if (cleanHtml && textContent) {
               blocks.push({ 
                 type: tag === 'blockquote' ? 'quote' : (tag.startsWith('h') ? 'heading' : 'text'), 
@@ -1062,17 +1151,36 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         return !isBoilerplate(text);
       });
 
+      const resBlocks: any[] = [];
       if (pageTitle) {
-        const filtered = cleanedBlocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
-        return [{ type: 'title', content: pageTitle }, ...filtered];
+        resBlocks.push({ type: 'title', content: pageTitle });
       }
-      return cleanedBlocks;
+      if (authorName || authorAvatar) {
+        resBlocks.push({
+          type: 'author',
+          name: authorName || (article.src || 'Ban biên tập'),
+          avatar: authorAvatar ? getProxyImageUrl(authorAvatar) : '',
+          date: authorDate || article.pubDate || ''
+        });
+      }
+      const filtered = cleanedBlocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
+      resBlocks.push(...filtered);
+      return resBlocks;
     };
 
     const buildFallbackBlocks = () => {
       const fallbackBlocks: any[] = [];
       const title = article.author || article.title || "Tin tức";
       fallbackBlocks.push({ type: 'title', content: title });
+
+      if (article.src || article.pubDate) {
+        fallbackBlocks.push({
+          type: 'author',
+          name: article.src || "Ban biên tập",
+          avatar: article.logo || "",
+          date: article.pubDate || ""
+        });
+      }
 
       if (article.videoSrc) {
         fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: title });
@@ -1181,7 +1289,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       <div className="p-5 w-full md:max-w-3xl flex flex-col gap-4 pb-12">
         <div className="flex items-center gap-3 w-full">
-            <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || article.img} loading="lazy" decoding="async" data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+            <img alt="" className="rounded-full w-8 h-8 object-cover border border-gray-100" referrerPolicy="no-referrer" src={article.logo || getNewspaperLogo(article.link || "") || article.img} loading="lazy" decoding="async" data-fallback={article.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
             <p className="font-medium text-[#5f687b] text-[14px]">{article.src}</p>
          </div>
 
@@ -1219,6 +1327,46 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             >
               {contentBlocks.map((block: any, idx: number) => {
                 if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
+                if (block.type === 'author') {
+                  return (
+                    <div key={idx} className="flex items-center justify-between py-2.5 my-1 border-b border-gray-100 w-full text-slate-600">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {block.avatar ? (
+                          <img
+                            src={block.avatar}
+                            alt={block.name || 'Tác giả'}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 shrink-0 aspect-square shadow-2xs"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const el = e.currentTarget as HTMLImageElement;
+                              el.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-red-50 text-red-600 border border-red-200 flex items-center justify-center font-bold text-xs shrink-0 aspect-square">
+                            {(block.name || 'TG').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                          <span className="font-semibold text-[14px] sm:text-[15px] text-[#182033] truncate">
+                            {block.name}
+                          </span>
+                          {block.date && (
+                            <span className="text-[12px] sm:text-[13px] text-gray-400 shrink-0">
+                              • {block.date}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 transition-colors text-[11px] font-medium shrink-0 cursor-pointer select-none">
+                        <svg className="w-3.5 h-3.5 text-red-600" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                        </svg>
+                        <span>Nghe đọc</span>
+                      </div>
+                    </div>
+                  );
+                }
                 if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                 if (block.type === 'heading') {
                   if (block.tag === 'h2') {
@@ -1256,28 +1404,34 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                     </div>
                   );
                 }
-                if (block.type === 'image') return (
-                  <figure key={idx} className="my-5 w-full">
-                    <div className="relative w-full rounded-xl overflow-hidden bg-slate-100 shadow-xs flex items-center justify-center min-h-[160px]">
-                      <img
-                        src={block.src}
-                        alt={block.caption || ''}
-                        className="w-full h-auto object-cover rounded-xl transition-all duration-300"
-                        loading={idx <= 1 ? "eager" : "lazy"}
-                        fetchPriority={idx <= 1 ? "high" : "auto"}
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const el = e.currentTarget as HTMLImageElement;
-                          if (!el.src.includes('unsplash.com')) {
-                            el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70";
-                          }
-                        }}
-                      />
-                    </div>
-                    {block.caption && <figcaption className="text-center text-[13px] md:text-[14px] mt-2 italic text-[#5f687b]" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
-                  </figure>
-                );
+                if (block.type === 'image') {
+                  // Khử triệt để trường hợp avatar tác giả bị lọt vào làm ảnh bài viết
+                  if (block.isAvatar || (block.caption && contentBlocks.some((b: any) => b.type === 'author' && b.name && b.name.toLowerCase() === block.caption.toLowerCase()))) {
+                    return null;
+                  }
+                  return (
+                    <figure key={idx} className="my-5 w-full">
+                      <div className="relative w-full rounded-xl overflow-hidden bg-slate-100 shadow-xs flex items-center justify-center min-h-[160px]">
+                        <img
+                          src={block.src}
+                          alt={block.caption || ''}
+                          className="w-full h-auto object-cover rounded-xl transition-all duration-300"
+                          loading={idx <= 1 ? "eager" : "lazy"}
+                          fetchPriority={idx <= 1 ? "high" : "auto"}
+                          decoding="async"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            const el = e.currentTarget as HTMLImageElement;
+                            if (!el.src.includes('unsplash.com')) {
+                              el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=450&auto=format&fit=crop&q=70";
+                            }
+                          }}
+                        />
+                      </div>
+                      {block.caption && <figcaption className="text-center text-[13px] md:text-[14px] mt-2 italic text-[#5f687b]" dangerouslySetInnerHTML={{__html: block.caption}}></figcaption>}
+                    </figure>
+                  );
+                }
                if (block.type === 'video') {
                   if (block.isShort) {
                     return (

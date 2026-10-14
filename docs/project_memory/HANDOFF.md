@@ -2,11 +2,23 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `cfd3bb4 (fix(player): fix Top Header controls overlap in portrait mode by hiding duplicate playlist button and compacting ratio toggle)`
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 466ms, 471.72 kB).
+- **Commit gần nhất**: `cfd3bb4` (Đang chuẩn bị commit tính năng fix hiển thị tác giả bài viết)
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 6.73s, `index-CljyEJx1.js` 476.21 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Khắc Phục Triệt Để Lỗi Chèn Ép & Đè Nút Trên Top Header Ở Chế Độ Dọc (Ảnh Người Dùng Gửi)**:
+1. **Khắc Phục Triệt Để Lỗi Phóng To Ảnh Tác Giả & Chuẩn Hóa Hiển Thị Tác Giả Bài Viết (Ảnh Người Dùng Gửi)**:
+   - **Nguyên nhân gốc rễ**: Khi cào dữ liệu toàn văn từ các trang báo chính thống (như Dân Trí `dantri.com.vn`), vùng chứa bài viết `<article>` bao gồm cả cụm thông tin tác giả (`<a rel="author"><img alt="Hải Nam" src="..." height="24" width="24">...</a>`). Trước đây, hàm duyệt cây DOM `processNode` đã bắt gặp thẻ `<img>` này và ngộ nhận là ảnh bài viết, dẫn đến việc render thành `<figure class="my-5 w-full"><img class="w-full h-auto ..."/>` phóng to mờ nhòe chiếm trọn chiều rộng bài viết kèm caption tên tác giả, và ngay dưới là đoạn text tên tác giả lặp lại.
+   - **Giải pháp dứt điểm theo quy chuẩn báo chính thống**:
+     + **Trích xuất thông minh**: Trích xuất chính xác Tên tác giả (`authorName`), Ảnh đại diện (`authorAvatar`), và Thời gian xuất bản (`authorDate`) từ cấu trúc DOM báo chí (`a[rel="author"]`, `[data-content-piece*="author"]`, `a[href*="/tac-gia/"]`, `time`, JSON-LD schema).
+     + **Tiền loại bỏ (Pre-cleaning)**: Dùng querySelector xóa sạch mọi khối container tác giả (`[data-content-name="article-author"]`, `a[rel="author"]`, `a[href*="/tac-gia/"]`, `.author-avatar`, `.box-author`, `.details__author`, `.article__author`, `time`) trước khi duyệt nội dung thân bài.
+     + **Bộ lọc kiểm tra kép (Dual-layer Guard)**: Khử toàn bộ ảnh có kích thước avatar (<= 36px, `zoom/36_36`, `avatar`, `rounded-full`) hoặc caption trùng tên tác giả ở cả `processNode` và JSX rendering loop.
+     + **Thanh tác giả chuẩn báo chính thống (Byline Bar)**:
+       * Đặt trang nhã ngay dưới tiêu đề bài viết.
+       * Ảnh đại diện tác giả là **logo/avatar tròn bé** (`w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 aspect-square`), không bao giờ bị méo hay phóng to. Nếu không có ảnh thì hiển thị huy hiệu chữ cái đầu tiên.
+       * Tên tác giả in đậm trang nhã (`font-semibold text-[14px] sm:text-[15px] text-[#182033]`), kèm dấu chấm và thời gian xuất bản bài viết (`• {date}`).
+       * Nút tiện ích "Nghe đọc" phong cách báo chí hiện đại với biểu tượng loa đỏ nổi bật, chuẩn xác 100% với giao diện gốc của báo Dân Trí như trong ảnh mẫu người dùng gửi (`media_1791941000285_68fb28ae.png`).
+
+2. **Khắc Phục Triệt Để Lỗi Chèn Ép & Đè Nút Trên Top Header Ở Chế Độ Dọc**:
    - **Nguyên nhân gốc rễ**: Khi ở chế độ Dọc Shorts (`!isLandscape`), chiều rộng khung video chỉ khoảng 390px - 420px. Việc render cả nút `[= Danh sách 55]` (chiếm hơn 115px) và nút tỉ lệ `[📱 9:16]` trên Header đã làm cụm điều khiển bên phải vượt quá 310px, đè bẹp dí nút Kênh TV `[🔴 CH 01 • VTV24 ▾]` ở bên trái.
    - **Giải pháp dứt điểm**:
      + Ẩn hoàn toàn nút `[= Danh sách]` trên Header khi ở chế độ dọc (vì ở góc dưới bên phải ĐÃ CÓ nút `[List]` chuyên dụng của Shorts). Nút này CHỈ hiển thị khi ở chế độ Toàn Cảnh 16:9 (`isLandscape`).

@@ -99,6 +99,21 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 - **Chia Sẻ (Share)**:
   - Tích hợp Web Share API và sao chép liên kết video chính thống nhanh gọn.
 
+### 2.5. Quy Chuẩn Hiển Thị Tác Giả & Nội Dung Chi Tiết Bài Viết (`NewsDetailView`)
+- **Tác giả và Ảnh đại diện tác giả (Author Byline)**:
+  - Khi bóc tách bài viết từ các trang báo chính thống (như Dân Trí, VnExpress, Tuổi Trẻ, Thanh Niên...):
+    + Thông tin tác giả gồm Tên tác giả (`authorName`), Ảnh đại diện tròn (`authorAvatar`) và Thời gian xuất bản (`authorDate`).
+    + **BẮT BUỘC hiển thị dưới dạng thanh thông tin tác giả (Byline Bar) nhỏ gọn ngay dưới tiêu đề bài viết**:
+      * Ảnh đại diện tác giả là **logo/avatar tròn bé** (`w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover`), tỉ lệ 1:1, viền nhẹ. Nếu không có ảnh thì hiển thị huy hiệu chữ cái đầu tiên.
+      * Tên tác giả in đậm trang nhã bên cạnh (`font-semibold text-[14px] sm:text-[15px]`), kèm dấu chấm và ngày giờ xuất bản (`• {date}`).
+      * Nút tiện ích "Nghe đọc" phong cách báo chí chính thống với icon loa đỏ thanh lịch.
+    + **TUYỆT ĐỐI KHÔNG phóng to ảnh đại diện của tác giả thành ảnh bài viết khổng lồ** (`<figure className="my-5 w-full"><img .../></figure>`).
+    + **TUYỆT ĐỐI KHÔNG để tên tác giả bị lọt lại dưới dạng một đoạn văn bản (paragraph `<p>`) mồ côi** trong thân bài.
+  - Bộ bóc tách DOM (`parseHTMLToBlocks`):
+    + Chủ động quét và trích xuất dữ liệu tác giả từ các cấu trúc DOM báo chí (`a[rel="author"]`, `[data-content-piece*="author"]`, `a[href*="/tac-gia/"]`, `time`, JSON-LD schema).
+    + Thực hiện pre-cleaning loại bỏ triệt để các container tác giả khỏi cây DOM của thân bài trước khi trích xuất đoạn văn và hình ảnh.
+    + Thêm bộ lọc bảo vệ 2 lớp trong `processNode` và JSX renderer để phát hiện và loại bỏ mọi ảnh có kích thước avatar (24px, 36px, `zoom/36_36`, `avatar`, `rounded-full`) hoặc có `alt`/`caption` trùng tên tác giả.
+
 ---
 
 ## 3. TIÊU CHÍ NGHIỆM THU (ACCEPTANCE CRITERIA)
@@ -108,3 +123,5 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 4. Khắc phục triệt để lỗi đè header trên Shorts và lỗi thẻ card lệch nhau trong EPG TV Guide.
 5. Menu kênh TV hoạt động chính xác: chọn kênh là chỉ phát video của kênh đó và bắt đầu từ video mới nhất.
 6. Các nút tương tác (Like, Subscribe, Comment) hoạt động thực tế với tài khoản Google đã đăng nhập và lưu bền vững.
+7. Khi mở bài viết chi tiết có tác giả (ví dụ tác giả trên Dân Trí, VnExpress): ảnh tác giả CHỈ hiển thị là logo avatar tròn nhỏ ở dưới tiêu đề kèm tên tác giả và ngày giờ, tuyệt đối không bị phóng to thành ảnh bài viết mờ nhòe.
+
