@@ -73,6 +73,12 @@
     + Loại bỏ các nút thủ công không cần thiết (`Mở requirements.json`, `Mở test-cases.json`, `Chọn tệp JSON báo cáo`).
     + Tích hợp nút kiểm thử thời gian thực **`[▶️ Chạy Kiểm Thử Toàn Hệ Thống]`** kích hoạt trình kiểm thử tự động trực tiếp trên trình duyệt, có thanh tiến trình live progress 0% ➔ 100% và chỉ số thời gian chạy.
     + Tích hợp phân hệ **"Phân Tích Sự Cố & Phương Án Xử Lý Antigravity"**: Nếu phát hiện ca thất bại, tự động gom lỗi theo mức độ ưu tiên P0/P1/P2 và cung cấp nút 1-click **`🤖 Sao chép Lệnh Sửa Cho Antigravity`** tạo prompt kỹ thuật chuẩn xác gồm file cần sửa và phương án khắc phục; nếu đạt 100% thì hiển thị chứng nhận **Release Gate: PASSED**.
+  - *Kiến Trúc Kiểm Thử Thực Tế Đa Màn Hình & Toàn Bộ Tính Năng (Connected Live Multi-Screen E2E)*:
+    + Nâng cấp toàn diện script `scripts/testwebsite.mjs` tích hợp `playwright-core` điều khiển trực tiếp trình duyệt Google Chrome thật trên hệ điều hành.
+    + Khởi động máy chủ cục bộ và tự động kiểm thử thực tế qua 3 kích thước màn hình chuẩn: **Desktop (1440px x 900px)**, **Tablet (768px x 1024px)**, và **Mobile (375px x 812px)**.
+    + Thực thi tương tác thật trên DOM sống: đo đạc kích thước thật (`padding-top: 10px`, dải danh mục `max-w-[872px]`, khung tablet `420px`), bấm chuyển tab danh mục tin tức, mở bài viết chi tiết kiểm tra Byline Bar và bảo vệ ảnh tác giả, kích hoạt Video Shorts & Smart TV kiểm tra 10 kênh, âm thanh unmuted, lớp overlay và đếm lùi 5s, kiểm thử phân quyền admin `mrkun28@gmail.com`.
+    + Chụp ảnh bằng chứng thực tế tại từng màn hình lưu trữ tại `qa/screenshots/` và đồng bộ sang `public/qa/screenshots/`.
+    + Tích hợp bộ giả lập màn hình **Interactive Multi-Screen Simulator & Preview** ngay trên `dashboard.html` cho phép người dùng chuyển đổi trực tiếp giữa Desktop, Tablet và Mobile.
 
 ---
 
@@ -94,3 +100,5 @@
 - **Từ chối**: Nhồi nhét các nút điều khiển xoay 16:9, playlist drawer trùng lặp hay fullscreen lên Top Header trên Mobile (làm tràn mép và đè lên tên kênh, gây hỏng giao diện di động).
 - **Từ chối**: Chỉ đặt nút QA Dashboard ở chân trang Footer mà không có ở Header hay Floating Widget (khiến người dùng không thể bấm được do tính năng tải vô cực liên tục đẩy Footer xuống).
 - **Từ chối**: Hiển thị công khai QA Dashboard cho mọi tài khoản hoặc khách vãng lai chưa đăng nhập (đây là công cụ quản trị kỹ thuật chỉ cấp phép cho mrkun28@gmail.com).
+- **Từ chối**: Chạy kiểm thử giả lập hình thức bằng vòng lặp setTimeout sinh số ngẫu nhiên hoặc chỉ regex chuỗi mã nguồn mà không có kết nối DOM thực tế với website đang chạy.
+- **Từ chối**: Tuyên bố kiểm thử thành công nếu chưa chạy qua hệ thống Chrome E2E thực tế trên đầy đủ 3 màn hình Desktop, Tablet và Mobile.

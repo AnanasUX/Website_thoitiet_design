@@ -2,20 +2,20 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Tích Hợp Toàn Diện Gói QA & Phân Quyền Quản Trị (`REQ-021` / `TC-021`)**:
-  + ✅ **Phân quyền người dùng nghiêm ngặt**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` (kiểm tra qua `userRole?.email` và fallback `localStorage.getItem('user_auth')`) mới được xem và truy cập `[🛡️ QA Dashboard]`. Mọi tài khoản khác và khách chưa đăng nhập hoàn toàn không nhìn thấy.
-  + ✅ **Giải pháp định vị vượt qua Cuộn Vô Cực (Infinite Scroll)**: Thay vì chỉ nằm ở Footer (vốn bị cuộn vô cực đẩy xuống sâu và khó nhìn thấy), nút QA Dashboard được bố trí ghim nổi bật ở 3 vị trí chiến lược:
-    1. **Top Header**: Nút `<QADashboardHeaderButton />` xuất hiện trên thanh header của `MobileLayout`, `TabletLayout` và `DesktopLayout`.
-    2. **Fixed Floating Action Widget**: Widget nổi cố định ở góc dưới bên phải màn hình (`<QADashboardFloatingWidget />` - `fixed bottom-6 right-6 z-[999]`) với đèn báo nhấp nháy, huy hiệu ADMIN và hiệu ứng nổi bật.
-    3. **Dropdown Menu Avatar**: Mục `🛡️ QA Dashboard (Admin)` dành riêng cho admin trong `UserAvatarMenu`.
-    4. **Site Footer**: Bọc trong điều kiện bảo vệ `{isUserAdminQA(userRole) && (...)}`.
-  + ✅ **Sửa lỗi định tuyến 404 trên GitHub Pages**: Hàm `getDashboardUrl()` tự động chuyển hướng chính xác đến `https://ananasux.github.io/Website_thoitiet_design/dashboard.html` thay vì root domain `https://ananasux.github.io/dashboard.html` (triệt tiêu mã lỗi 404).
-  + ✅ Tích hợp giao diện **Interactive Visual QA Dashboard & Live Test Runner** (`dashboard.html` & `public/dashboard.html`): Thay thế hoàn toàn các nút mở file/nạp tệp thủ công bằng nút bấm **`[▶️ Chạy Kiểm Thử Toàn Hệ Thống]`**, thanh tiến trình thời gian thực, bảng kiểm soát lỗi và nút liên kết tự động sao chép prompt khắc phục cho **Antigravity AI**.
-  + ✅ Đồng bộ toàn bộ dữ liệu JSON có cấu trúc: `qa/requirements.json` và `qa/test-cases.json` đủ **21 yêu cầu** và **21 test case** đã xác minh có bằng chứng.
-  + ✅ Hoàn thiện script `scripts/build-dashboard-data.mjs` (`npm run qa:dashboard`) kiểm tra tính hợp lệ hai chiều giữa yêu cầu và test case.
-  + ✅ Chuỗi lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) tự động thực thi 3 tầng: `validate-registry` ➔ `build-dashboard-data` ➔ `testwebsite.mjs` đạt **21/21 PASS** (0 FAIL).
-  + ✅ Cổng kiểm duyệt phát hành: **RELEASE GATE: PASSED**.
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.04s).
+- **Kết quả Nâng Cấp Hệ Thống Kiểm Thử Thực Tế Đa Màn Hình & Toàn Bộ Tính Năng (`REQ-020` / `TC-020`)**:
+  + ✅ **Kiểm thử tự động thực tế kết nối hệ thống (Connected Live E2E Suite)**: Nâng cấp script `scripts/testwebsite.mjs` tích hợp `playwright-core` điều khiển trực tiếp trình duyệt Google Chrome thật. Loại bỏ hoàn toàn kiểm thử regex chuỗi hình thức.
+  + ✅ **Kiểm thử xuyên suốt 3 kích thước màn hình chuẩn**:
+    1. **Desktop (1440px x 900px)**: Kiểm tra padding-top 10px, padding-left/right 0px; dải danh mục 872px và tương tác click tab; widget thời tiết & 15 đường cong SVG; bảng giá vàng, ngoại tệ, xăng dầu; mở bài viết chi tiết kiểm tra Byline Bar và khử phóng to avatar; mở Video Shorts kiểm tra chế độ 16:9 Cinema, ambient glow, 10 kênh truyền hình, âm thanh unmuted, overlay z-10 và đếm lùi 5s.
+    2. **Tablet (768px x 1024px)**: Kiểm tra hiển thị TabletLayout (ẩn Desktop/Mobile); mở Shorts kiểm tra khung rạp chiếu 420px; đồng bộ chiều cao thẻ kênh min-h-[135px].
+    3. **Mobile (375px x 812px)**: Kiểm tra hiển thị MobileLayout; mở Shorts qua banner di động; xác minh nút xoay 16:9 được ẩn hoàn toàn (display=none) để chống đè nút header.
+  + ✅ **Bộ Giả Lập Màn Hình Trực Tiếp Trên Dashboard (`dashboard.html` & `public/dashboard.html`)**:
+    - Tích hợp khung **Connected Live Multi-Screen Simulator** với 3 nút chuyển đổi: `[💻 Desktop (100%)]`, `[📱 Tablet (768px)]`, `[📱 Mobile (375px)]`.
+    - Khi bấm `[▶️ Chạy Kiểm Thử Toàn Hệ Thống]`, hệ thống tự động đổi kích thước iframe giả lập, đo đạc DOM thật, tương tác trực tiếp với các phần tử và báo cáo kết quả trung thực sau ~5-7s.
+  + ✅ **Kho ảnh chụp bằng chứng thực tế (Screenshot Audit Evidence)**: Chụp và lưu trữ ảnh màn hình thực tế từ Chrome thật tại `qa/screenshots/` và `public/qa/screenshots/` (`screen-desktop-1440.png`, `screen-tablet-768.png`, `screen-mobile-375.png`, `feature-shorts-mobile.png`, `feature-shorts-tablet.png`).
+  + ✅ **Phân quyền người dùng nghiêm ngặt (`REQ-021` / `TC-021`)**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` mới nhìn thấy QA Dashboard tại Top Header, Floating Action Widget (góc phải dưới) và Menu Avatar.
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **21/21 PASS** (0 FAIL).
+  + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
 ---
 

@@ -44,5 +44,13 @@ if (errors.length) {
   if (fs.existsSync(path.join(root, "dashboard.html"))) {
     fs.copyFileSync(path.join(root, "dashboard.html"), path.join(root, "public", "dashboard.html"));
   }
-  console.log("Successfully synchronized QA assets to public/qa and public/dashboard.html");
+  const qaScreenshots = path.join(root, "qa", "screenshots");
+  const publicScreenshots = path.join(publicQa, "screenshots");
+  if (fs.existsSync(qaScreenshots)) {
+    if (!fs.existsSync(publicScreenshots)) fs.mkdirSync(publicScreenshots, { recursive: true });
+    for (const f of fs.readdirSync(qaScreenshots)) {
+      fs.copyFileSync(path.join(qaScreenshots, f), path.join(publicScreenshots, f));
+    }
+  }
+  console.log("Successfully synchronized QA assets and screenshots to public/qa and public/dashboard.html");
 }
