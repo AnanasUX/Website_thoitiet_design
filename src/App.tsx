@@ -2008,7 +2008,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         </div>
         {/* Menu scroll danh mục trên PC theo đúng yêu cầu */}
-        <div className="flex overflow-x-auto gap-2 items-center max-w-[650px] scrollbar-hide py-1">
+        <div className="flex overflow-x-auto gap-2 items-center max-w-[872px] scrollbar-hide py-1">
           {NEWS_CATEGORIES.map(cat => (
             <button
               key={cat}
