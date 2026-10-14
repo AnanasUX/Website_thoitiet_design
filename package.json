@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "format": "oxfmt",
     "qa:registry": "node scripts/validate-registry.mjs",
-    "testwebsite": "node scripts/validate-registry.mjs && node scripts/testwebsite.mjs"
+    "qa:dashboard": "node scripts/build-dashboard-data.mjs",
+    "testwebsite": "node scripts/validate-registry.mjs && node scripts/build-dashboard-data.mjs && node scripts/testwebsite.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",

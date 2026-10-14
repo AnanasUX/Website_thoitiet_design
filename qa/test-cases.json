@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "testCases": [
+    {
+      "id": "TC-001",
+      "title": "Header Shorts trên Mobile: Gọn gàng, ẩn nút xoay 16:9",
+      "requirementIds": ["REQ-001"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Mở VideoShortsModal ở viewport < 640px",
+        "Kiểm tra class của nút xoay 16:9/9:16 trên Top Header",
+        "Xác nhận có lớp hidden sm:flex và badge kênh không bị đè"
+      ],
+      "expected": "Nút xoay 16:9 ẩn trên mobile, badge kênh có đủ không gian hiển thị."
+    },
+    {
+      "id": "TC-002",
+      "title": "Khung rạp chiếu Tablet 420px & Ambient Glow",
+      "requirementIds": ["REQ-002"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Mở Shorts ở viewport 768px (Tablet)",
+        "Kiểm tra khung chứa dọc 420px và hiệu ứng viền sáng ambient glow",
+        "Kiểm tra tính năng xoay ngang 16:9"
+      ],
+      "expected": "Khung dọc 420px phong cách rạp chiếu ở giữa màn hình kết hợp ambient glow."
+    },
+    {
+      "id": "TC-003",
+      "title": "Chế độ Toàn Cảnh 16:9 Cinema & Fullscreen trên Desktop",
+      "requirementIds": ["REQ-003"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Mở Shorts ở viewport >= 1024px",
+        "Kiểm tra chế độ mặc định 16:9 Cinema tràn viền 100vw x 100dvh",
+        "Thử bấm phím F hoặc nút Fullscreen và phím Escape"
+      ],
+      "expected": "Mặc định mở 16:9 Cinema, phím F phóng to toàn màn hình, Escape an toàn."
+    },
+    {
+      "id": "TC-004",
+      "title": "Đồng bộ chiều cao thẻ card Smart TV EPG Guide",
+      "requirementIds": ["REQ-004"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Mở menu chọn kênh EPG",
+        "Kiểm tra thuộc tính min-h-[135px] của card kênh",
+        "Kiểm tra tagline min-h-[32px] line-clamp-2"
+      ],
+      "expected": "Tất cả các thẻ card kênh có chiều cao đồng nhất, hàng nút chọn thẳng hàng."
+    },
+    {
+      "id": "TC-005",
+      "title": "Chuyển kênh TV không bị rỗng playlist (Empty Playlist Prevention)",
+      "requirementIds": ["REQ-005"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Chuyển lần lượt qua 10 kênh báo chí và truyền hình",
+        "Kiểm tra độ dài danh sách phát của từng kênh",
+        "Xác nhận không bị rỗng 0 video do lọc chuyên mục"
+      ],
+      "expected": "Cả 10 kênh đều có danh sách phát phong phú (length >= 7), phát tức thì."
+    },
+    {
+      "id": "TC-006",
+      "title": "Cơ sở dữ liệu 97 video YouTube thực tế đã xác minh",
+      "requirementIds": ["REQ-006"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Quét mảng BACKUP_FALLBACK_SHORTS",
+        "Kiểm tra định dạng 11 ký tự của youtubeId",
+        "Xác nhận 0 ID chết 404 (đã loại bỏ mBwR5jE57gA)"
+      ],
+      "expected": "Đủ 97 video YouTube thực tế hợp lệ từ 10 kênh chính thống."
+    },
+    {
+      "id": "TC-007",
+      "title": "Loại bỏ hoàn toàn video nội bộ MP4 giả lập khỏi Shorts",
+      "requirementIds": ["REQ-007"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Quét toàn bộ mã nguồn VideoShortsModal.tsx",
+        "Xác nhận không chứa link cdn2.tuoitre.vn",
+        "Xác nhận không chứa placeholder site- trong backup shorts"
+      ],
+      "expected": "100% video là video YouTube chính thống, không có video MP4 nội bộ."
+    },
+    {
+      "id": "TC-008",
+      "title": "Tự động phục hồi lỗi nhúng YouTube (Error Auto-Recovery)",
+      "requirementIds": ["REQ-008"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Bắt sự kiện lỗi onError từ YouTube iframe (100, 101, 150)",
+        "Kiểm tra timer tự động chuyển video 2200ms",
+        "Xác nhận hiển thị spinner thông báo êm dịu"
+      ],
+      "expected": "Tự động nhảy sang video kế tiếp sau 2.2 giây khi gặp lỗi nhúng."
+    },
+    {
+      "id": "TC-009",
+      "title": "Mặc định bật âm thanh (Unmuted Autoplay)",
+      "requirementIds": ["REQ-009"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Khởi tạo trình phát Shorts",
+        "Kiểm tra trạng thái isMuted khởi tạo là false",
+        "Kiểm tra lệnh postMessage unMute khi player sẵn sàng"
+      ],
+      "expected": "Video tự động phát có âm thanh trong trẻo, không bị tắt tiếng mặc định."
+    },
+    {
+      "id": "TC-010",
+      "title": "Lớp overlay trong suốt chặn nhảy trang sang YouTube",
+      "requirementIds": ["REQ-010"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra lớp overlay div z-10 phủ trên iframe player",
+        "Thử click/tap vào video",
+        "Xác nhận tương tác chỉ Play/Pause, không chuyển trang youtube.com"
+      ],
+      "expected": "Chặn tuyệt đối nhảy trang ngoài sang youtube.com."
+    },
+    {
+      "id": "TC-011",
+      "title": "Tự động ẩn controls sau 5 giây không tương tác",
+      "requirementIds": ["REQ-011"],
+      "type": "automated",
+      "priority": "P2",
+      "status": "PASS",
+      "steps": [
+        "Để yên chuột không tương tác trong 5000ms",
+        "Kiểm tra trạng thái làm mờ của Header và nút công cụ",
+        "Chạm hoặc di chuột để kiểm tra controls hiện lại ngay"
+      ],
+      "expected": "Controls tự ẩn sau 5s và hiện lại tức thì khi có tương tác."
+    },
+    {
+      "id": "TC-012",
+      "title": "Thanh tác giả (Byline Bar) chuẩn báo chính thống",
+      "requirementIds": ["REQ-012"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Mở bài viết chi tiết từ Dân Trí / VnExpress",
+        "Kiểm tra thanh tác giả dưới tiêu đề bài viết",
+        "Xác nhận logo avatar tròn 1:1, tên in đậm, ngày giờ và nút Nghe đọc"
+      ],
+      "expected": "Thanh Byline Bar hiển thị chuẩn mực theo mẫu báo chính thống."
+    },
+    {
+      "id": "TC-013",
+      "title": "Tiền loại bỏ khối tác giả & Khử phóng to avatar trong thân bài",
+      "requirementIds": ["REQ-013"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra pre-cleaning DOM thân bài",
+        "Kiểm tra bộ lọc kép khử avatar tác giả (zoom, avatar, <= 36px)",
+        "Kiểm tra không để tên tác giả rơi vào mảng đoạn văn thân bài"
+      ],
+      "expected": "0 ảnh avatar bị bung thành ảnh bài viết; 0 tên tác giả bị lọt mồ côi."
+    },
+    {
+      "id": "TC-014",
+      "title": "Khung bố cục Desktop có padding-top 10px, padding-left/right 0px",
+      "requirementIds": ["REQ-014"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra container DesktopLayout max-w-[1536px]",
+        "Kiểm tra inline style paddingTop: 10px, paddingLeft: 0px, paddingRight: 0px",
+        "Kiểm tra padding đáy giữ nguyên 64px"
+      ],
+      "expected": "Nội dung thời tiết và tin tức nằm sát dưới LiveNewsTicker, không thụt lề 32px thừa."
+    },
+    {
+      "id": "TC-015",
+      "title": "Nâng cấp chiều rộng tối đa dải danh mục tin tức lên 872px",
+      "requirementIds": ["REQ-015"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra container dải nút danh mục tin tức trên desktop",
+        "Xác nhận áp dụng class max-w-[872px] thay vì 650px",
+        "Kiểm tra khả năng hiển thị nhiều chuyên mục cùng lúc"
+      ],
+      "expected": "Dải danh mục rộng 872px, thông thoáng và giảm thao tác cuộn ngang."
+    },
+    {
+      "id": "TC-016",
+      "title": "Dữ liệu thời tiết hiện tại & Đồ thị dự báo hàng giờ SVG",
+      "requirementIds": ["REQ-016"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra card thời tiết: nhiệt độ, độ ẩm, gió, tầm nhìn, bụi PM2.5",
+        "Kiểm tra đồ thị dự báo hàng giờ bằng đường cong SVG spline",
+        "Xác nhận các điểm mốc nhiệt độ sắc nét"
+      ],
+      "expected": "Dữ liệu thời tiết thời gian thực hiển thị trực quan, đường cong mềm mại."
+    },
+    {
+      "id": "TC-017",
+      "title": "Bảng giá thị trường tài chính (Vàng, Ngoại tệ, Xăng dầu)",
+      "requirementIds": ["REQ-017"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra bảng giá vàng SJC/Doji/Bảo Tín Minh Châu",
+        "Kiểm tra tỷ giá ngoại tệ Vietcombank và giá xăng dầu Petrolimex",
+        "Xác nhận phân biệt màu tăng xanh / giảm đỏ"
+      ],
+      "expected": "Bảng giá thị trường tài chính hoạt động chính xác theo phiên giao dịch."
+    },
+    {
+      "id": "TC-018",
+      "title": "Biên dịch sản phẩm Vite Build (Zero Build Error)",
+      "requirementIds": ["REQ-018"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Thực thi npm run build trong thư mục dự án",
+        "Kiểm tra mã thoát exit code === 0",
+        "Kiểm tra kích thước bundle JavaScript và CSS"
+      ],
+      "expected": "Build thành công 100% trong < 4s, 0 lỗi TypeScript, 0 lỗi Vite."
+    },
+    {
+      "id": "TC-019",
+      "title": "Tính vẹn toàn hồ sơ bộ nhớ dự án bền vững",
+      "requirementIds": ["REQ-019"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra sự tồn tại của 8 tệp hồ sơ chuẩn hóa",
+        "Kiểm tra tính nhất quán giữa REQUIREMENTS, DECISIONS, HANDOFF, TEST_PLAN",
+        "Kiểm tra quy định AGENTS.md và AI_PROJECT_PROTOCOL.md"
+      ],
+      "expected": "Đầy đủ 8/8 tệp hồ sơ chuẩn, đồng bộ và có cấu trúc truy vết."
+    },
+    {
+      "id": "TC-020",
+      "title": "Bộ chạy kiểm thử tự động qua lệnh /testwebsite",
+      "requirementIds": ["REQ-020"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Chạy npm run testwebsite hoặc lệnh /testwebsite",
+        "Kiểm tra thực thi toàn bộ 20 ca kiểm thử",
+        "Xác nhận xuất bảng QA Release Audit Report và kết luận RELEASE GATE: PASSED"
+      ],
+      "expected": "20/20 ca kiểm thử ĐẠT (PASS), 0 thất bại, đủ điều kiện phát hành."
+    }
+  ]
+}

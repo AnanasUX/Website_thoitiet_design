@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Website QA Dashboard</title>
+  <style>
+    :root { color-scheme: light; --bg:#f4f6fa; --panel:#fff; --text:#172033; --muted:#667085; --line:#e4e7ec; --blue:#2459d3; --red:#b42318; --green:#067647; --amber:#b54708; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    header { background:#111827; color:white; padding:22px clamp(16px,4vw,42px); }
+    header h1 { margin:0 0 4px; font-size:clamp(22px,3vw,30px); }
+    header p { margin:0; color:#d0d5dd; }
+    main { max-width:1440px; margin:auto; padding:24px clamp(12px,3vw,32px) 48px; }
+    .toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:18px; }
+    button, input, select { font:inherit; }
+    button { cursor:pointer; border:1px solid var(--line); border-radius:9px; padding:9px 13px; background:white; color:var(--text); }
+    button.primary { background:var(--blue); border-color:var(--blue); color:white; }
+    .hint { color:var(--muted); font-size:12px; }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .card, .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px; min-width:0; }
+    .metric-label { color:var(--muted); font-size:12px; }
+    .metric { font-size:28px; font-weight:750; margin-top:5px; }
+    .panel { margin-top:16px; }
+    .panel h2 { margin:0 0 12px; font-size:17px; }
+    .progress { height:9px; border-radius:99px; overflow:hidden; background:#eaecf0; }
+    .progress > div { height:100%; width:0; background:var(--blue); transition:width .2s; }
+    .filters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 14px; }
+    .filters input, .filters select { min-height:38px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:white; }
+    .table-wrap { overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th, td { text-align:left; vertical-align:top; padding:11px 10px; border-bottom:1px solid var(--line); }
+    th { font-size:12px; color:var(--muted); font-weight:650; background:#f9fafb; }
+    code { font-size:12px; }
+    .status { display:inline-block; padding:3px 8px; border-radius:99px; font-size:11px; font-weight:700; background:#f2f4f7; white-space:nowrap; }
+    .PASS { color:var(--green); background:#ecfdf3; } .FAIL { color:var(--red); background:#fef3f2; }
+    .BLOCKED,.NEEDS_REVIEW { color:var(--amber); background:#fffaeb; } .NOT_TESTED { color:#475467; background:#f2f4f7; }
+    .empty { padding:24px; color:var(--muted); text-align:center; }
+    .warning { border-left:4px solid #f79009; background:#fffaeb; padding:12px 14px; border-radius:8px; margin:14px 0; }
+    footer { color:var(--muted); font-size:12px; margin-top:18px; }
+    @media(max-width:900px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(max-width:480px) { .grid { grid-template-columns:1fr 1fr; gap:8px; } .card { padding:12px; } .metric { font-size:23px; } }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Website QA Dashboard</h1>
+  <p>Theo dõi yêu cầu, độ bao phủ, test case và kết quả kiểm thử có bằng chứng.</p>
+</header>
+<main>
+  <div class="toolbar">
+    <button class="primary" id="loadBtn">Nạp dữ liệu QA</button>
+    <button id="requirementsBtn">Mở requirements.json</button>
+    <button id="testsBtn">Mở test-cases.json</button>
+    <label class="hint">Nạp báo cáo JSON <input type="file" id="reportFile" accept=".json,application/json"></label>
+    <span class="hint" id="dataState">Chưa nạp dữ liệu.</span>
+  </div>
+  <div class="warning"><strong>Lưu ý:</strong> Đây là dashboard tĩnh. Trạng thái chỉ phản ánh dữ liệu được nạp; không tự chạy test. Không xem yêu cầu là PASS nếu chưa có kết quả và bằng chứng kiểm thử.</div>
+  <section class="grid" aria-label="Chỉ số QA">
+    <div class="card"><div class="metric-label">Tổng yêu cầu</div><div class="metric" id="totalReq">—</div></div>
+    <div class="card"><div class="metric-label">Có liên kết test</div><div class="metric" id="coveredReq">—</div></div>
+    <div class="card"><div class="metric-label">Đã xác minh PASS</div><div class="metric" id="passedReq">—</div></div>
+    <div class="card"><div class="metric-label">FAIL / BLOCKED</div><div class="metric" id="problemReq">—</div></div>
+  </section>
+  <section class="panel">
+    <h2>Độ bao phủ yêu cầu</h2>
+    <div class="progress"><div id="coverageBar"></div></div>
+    <p id="coverageText" class="hint">Chưa có dữ liệu.</p>
+  </section>
+  <section class="panel">
+    <h2>Danh mục yêu cầu</h2>
+    <div class="filters">
+      <input id="search" type="search" placeholder="Tìm mã, tiêu đề, mô tả…" aria-label="Tìm yêu cầu">
+      <select id="statusFilter" aria-label="Lọc trạng thái">
+        <option value="">Tất cả trạng thái</option><option>NOT_TESTED</option><option>PASS</option><option>FAIL</option><option>BLOCKED</option><option>NEEDS_REVIEW</option><option>NOT_APPLICABLE</option>
+      </select>
+      <select id="priorityFilter" aria-label="Lọc ưu tiên">
+        <option value="">Tất cả ưu tiên</option><option>P0</option><option>P1</option><option>P2</option><option>P3</option>
+      </select>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Yêu cầu</th><th>Ưu tiên</th><th>Test case</th><th>Trạng thái</th><th>Bằng chứng</th></tr></thead><tbody id="reqRows"><tr><td colspan="6" class="empty">Nạp dữ liệu QA để bắt đầu.</td></tr></tbody></table></div>
+  </section>
+  <section class="panel">
+    <h2>Kết quả test run gần nhất</h2>
+    <p class="hint" id="runSummary">Chưa nạp báo cáo Playwright.</p>
+    <div class="table-wrap"><table><thead><tr><th>Test</th><th>Kết quả</th><th>Chi tiết</th></tr></thead><tbody id="testRows"><tr><td colspan="3" class="empty">Chưa có kết quả chạy.</td></tr></tbody></table></div>
+  </section>
+  <footer>QA starter kit • Trạng thái mặc định là NOT_TESTED • Hãy lưu báo cáo cùng commit/version để có thể truy vết.</footer>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let registry = null, cases = null, report = null;
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function statusBadge(status) { const s = status || "NOT_TESTED"; return `<span class="status ${esc(s)}">${esc(s)}</span>`; }
+  function render() {
+    const reqs = registry?.requirements || [];
+    const testCases = cases?.testCases || [];
+    const filtered = reqs.filter(r => {
+      const q = $("search").value.toLowerCase();
+      return (!q || `${r.id} ${r.title} ${r.description}`.toLowerCase().includes(q))
+        && (!$("statusFilter").value || r.status === $("statusFilter").value)
+        && (!$("priorityFilter").value || r.priority === $("priorityFilter").value);
+    });
+    const covered = reqs.filter(r => Array.isArray(r.testIds) && r.testIds.length && r.testIds.every(id => testCases.some(t => t.id === id))).length;
+    const passed = reqs.filter(r => r.status === "PASS" && Array.isArray(r.evidence) && r.evidence.length > 0).length;
+    const problems = reqs.filter(r => ["FAIL","BLOCKED"].includes(r.status)).length;
+    $("totalReq").textContent = reqs.length;
+    $("coveredReq").textContent = `${covered} / ${reqs.length}`;
+    $("passedReq").textContent = passed;
+    $("problemReq").textContent = problems;
+    const pct = reqs.length ? Math.round(covered * 100 / reqs.length) : 0;
+    $("coverageBar").style.width = pct + "%";
+    $("coverageText").textContent = `${pct}% yêu cầu có liên kết test case hợp lệ. Đây không phải tỷ lệ test đã đạt.`;
+    $("reqRows").innerHTML = filtered.length ? filtered.map(r => `<tr>
+      <td><code>${esc(r.id)}</code></td><td><strong>${esc(r.title)}</strong><br><span class="hint">${esc(r.description || "")}</span></td>
+      <td>${esc(r.priority || "—")}</td><td>${esc((r.testIds || []).join(", ") || "Chưa liên kết")}</td>
+      <td>${statusBadge(r.status)}</td><td>${esc((r.evidence || []).join("\n") || "Chưa có")}</td></tr>`).join("") : `<tr><td colspan="6" class="empty">Không có yêu cầu phù hợp.</td></tr>`;
+    if (report) {
+      const stats = report.stats || {};
+      $("runSummary").textContent = `Báo cáo được nạp. Passed: ${stats.expected ?? "—"}; Failed: ${stats.unexpected ?? "—"}; Skipped: ${stats.skipped ?? "—"}; Flaky: ${stats.flaky ?? "—"}. Lưu ý: định dạng JSON của Playwright có thể khác theo phiên bản.`;
+      const results = [];
+      function walk(suites) { for (const s of suites || []) { for (const spec of s.specs || []) for (const t of spec.tests || []) results.push({name: spec.title, outcome: t.results?.at(-1)?.status || t.status || "unknown", error: t.results?.at(-1)?.error?.message || ""}); walk(s.suites); } }
+      walk(report.suites);
+      $("testRows").innerHTML = results.length ? results.map(t => `<tr><td>${esc(t.name)}</td><td>${statusBadge(t.outcome === "expected" ? "PASS" : t.outcome === "unexpected" ? "FAIL" : t.outcome.toUpperCase())}</td><td>${esc(t.error || "—")}</td></tr>`).join("") : `<tr><td colspan="3" class="empty">Báo cáo đã nạp nhưng không nhận diện được test case; mở HTML report để xem chi tiết.</td></tr>`;
+    }
+    $("dataState").textContent = registry ? `Đã nạp ${reqs.length} yêu cầu và ${testCases.length} test case.` : "Chưa nạp dữ liệu.";
+  }
+  async function loadLocal() {
+    try {
+      const [r, t] = await Promise.all([fetch("./qa/requirements.json"), fetch("./qa/test-cases.json")]);
+      if (!r.ok || !t.ok) throw new Error("Không đọc được file JSON. Hãy chạy dashboard qua local server hoặc nạp file thủ công.");
+      registry = await r.json(); cases = await t.json(); render();
+    } catch (e) { $("dataState").textContent = e.message; }
+  }
+  $("loadBtn").addEventListener("click", loadLocal);
+  $("requirementsBtn").addEventListener("click", () => window.open("./qa/requirements.json", "_blank", "noopener"));
+  $("testsBtn").addEventListener("click", () => window.open("./qa/test-cases.json", "_blank", "noopener"));
+  $("reportFile").addEventListener("change", async e => {
+    const file = e.target.files?.[0]; if (!file) return;
+    try { report = JSON.parse(await file.text()); render(); }
+    catch { $("runSummary").textContent = "Không đọc được JSON báo cáo."; }
+  });
+  ["search","statusFilter","priorityFilter"].forEach(id => $(id).addEventListener("input", render));
+  // File protocol blocks fetch in many browsers. Dashboard can still be used by serving this folder locally.
+  loadLocal();
+})();
+</script>
+</body>
+</html>

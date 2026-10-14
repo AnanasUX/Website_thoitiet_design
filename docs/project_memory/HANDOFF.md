@@ -2,14 +2,15 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Kiểm duyệt Gói Tích Hợp (`website_qa_integration_pack.zip`)**:
-  + ✅ Đã giải nén, rà soát và tích hợp 14/14 tệp từ gói tích hợp vào dự án thực tế.
-  + ✅ Sửa lỗi lệch chỉ số cột (column index offset) trong `scripts/validate-registry.mjs` giúp script kiểm tra chính xác 100%.
-  + ✅ Bảng yêu cầu `docs/REQUIREMENTS.md` chuẩn hóa theo cấu trúc 9 cột chuẩn và đầy đủ nhật ký tiếp nhận prompt (`Prompt intake log`).
-  + ✅ Lệnh `npm run qa:registry` thực thi thành công: `Registry syntax check passed for 20 requirement rows`.
-  + ✅ Lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) đạt **20/20 PASS** (0 FAIL).
+- **Kết quả Tích Hợp Toàn Diện Gói QA & Dashboard (`website_qa_kit.zip` & `website_qa_integration_pack.zip`)**:
+  + ✅ Đã tích hợp giao diện **Interactive Visual QA Dashboard** (`dashboard.html` & `public/dashboard.html`) cho phép người dùng mở trực tiếp từ trình duyệt để theo dõi toàn bộ 20 yêu cầu, độ bao phủ 100%, bộ lọc trạng thái và nạp báo cáo.
+  + ✅ Đã cấu hình nút truy cập nhanh **`[🛡️ QA Dashboard]`** ngay chân trang (Footer) của website với đèn báo xanh nhấp nháy.
+  + ✅ Đồng bộ toàn bộ dữ liệu JSON có cấu trúc: `qa/requirements.json` và `qa/test-cases.json` đủ 20 yêu cầu và 20 test case đã xác minh có bằng chứng.
+  + ✅ Hoàn thiện script `scripts/build-dashboard-data.mjs` (`npm run qa:dashboard`) kiểm tra tính hợp lệ hai chiều giữa yêu cầu và test case.
+  + ✅ Cấu hình sẵn sàng Playwright E2E browser tests: `playwright.config.js`, `tests/site-audit.spec.js` và CI workflow `.github/workflows/website-qa.yml`.
+  + ✅ Chuỗi lệnh kiểm thử toàn diện `/testwebsite` (`npm run testwebsite`) tự động thực thi 3 tầng: `validate-registry` ➔ `build-dashboard-data` ➔ `testwebsite.mjs` đạt **20/20 PASS** (0 FAIL).
   + ✅ Cổng kiểm duyệt phát hành: **RELEASE GATE: PASSED**.
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.16s).
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 3.18s).
 
 ---
 

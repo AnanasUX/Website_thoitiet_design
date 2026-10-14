@@ -4390,6 +4390,16 @@ useEffect(() => {
       <footer className="w-full border-t border-[#e3e7ef] bg-white py-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[12px] text-[#94a3b8]">
         <p>© 2026 <span className="font-semibold text-[#5f687b]">Anx.</span> — Thời tiết &amp; Tin tức</p>
         <div className="flex items-center gap-4">
+          <a 
+            href="/dashboard.html" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-1 font-semibold text-[#067647] hover:text-[#05603a] bg-[#ecfdf3] px-2.5 py-0.5 rounded-full border border-[#abefc6] transition-colors text-[11px]" 
+            title="Mở bảng kiểm thử và giám sát chất lượng QA"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#12b76a] animate-pulse"></span>
+            🛡️ QA Dashboard
+          </a>
           <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
             Chính sách Bảo mật
           </button>
