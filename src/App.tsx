@@ -1972,7 +1972,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
-      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
+      <div 
+        className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto"
+        style={{ paddingTop: '10px', paddingLeft: '0px', paddingRight: '0px' }}
+      >
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
