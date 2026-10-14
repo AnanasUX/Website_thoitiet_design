@@ -331,6 +331,22 @@
         "Kịch bản 7: UX Vùng chạm và khả năng tiếp cận: các phần tử tương tác đáp ứng kích thước chuẩn ngón tay bấm / phím bấm"
       ],
       "expected": "Toàn bộ 7 kịch bản UX luồng thông tin ĐẠT (PASS), tương tác trực tiếp trơn tru, không có xung đột phím tắt hoặc giật lag layout."
+    },
+    {
+      "id": "TC-024",
+      "title": "Kiểm thử toàn diện tương tác thực chiến đa màn hình & Bộ quét lỗi giao diện trực quan",
+      "requirementIds": ["REQ-024"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Giai đoạn 1: Desktop - Thao tác cuộn trang từ 0 đến 2600px, kiểm tra xuất hiện nút Scroll To Top và click cuộn về đỉnh 0px",
+        "Giai đoạn 2: Desktop - Click mở chi tiết bài báo, cuộn đọc nội dung, kích hoạt Audio TTS Web Speech API, phím Escape đóng modal",
+        "Giai đoạn 3: Desktop - Mở Video Shorts 16:9 Cinema, phím tắt Space/M, click Dark Mode chuyển đổi giao diện, tương tác đổi tháng Lịch Vạn Niên",
+        "Giai đoạn 4: Tablet & Mobile - Kiểm thử thao tác cuộn trên Tablet 768px và cử chỉ vuốt chạm trên Mobile 375px",
+        "Giai đoạn 5: Bộ Quét Lỗi Giao Diện Trực Quan - Quét tràn viền ngang (Horizontal Overflow), ảnh hỏng (Broken Images), vùng chạm (Touch Targets) và console errors"
+      ],
+      "expected": "5/5 giai đoạn kiểm thử tương tác thực chiến đạt chuẩn; 0 lỗi tràn viền ngang, 0 ảnh hỏng, 0 lỗi runtime JavaScript trên cả Desktop, Tablet và Mobile."
     }
   ]
 }

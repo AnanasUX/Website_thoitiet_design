@@ -35,5 +35,16 @@
 - Tích hợp tính năng Text-to-Speech (Audio Reader) tiếng Việt (`vi-VN`) vào nút "Nghe đọc" trong Byline Bar của `NewsDetailView`, kèm trạng thái "Đang đọc...", animation pulse và hỗ trợ tạm dừng/tiếp tục.
 - Khóa cuộn trang nền `document.body.style.overflow = "hidden"` khi mở modal bài viết và hỗ trợ phím `Escape` để thoát modal nhanh chóng.
 - Xây dựng bộ kiểm thử 7 kịch bản UX (`scripts/test-ux-flows.mjs`) kiểm tra: Audio TTS, phím tắt Shorts (`Space`, `M`, `ArrowDown`, `ESC`), Tooltip đồ thị giá vàng và tự ẩn khi mouseleave, chọn chuyên mục với highlight pill hồng, Dark mode toggle và touch targets công thái học.
-- Nâng cấp cổng kiểm duyệt phát hành `/testwebsite` đạt **23/23 PASS** (0 FAIL).
+### 7. Kiểm Thử Tương Tác Sâu Đa Màn Hình, Bộ Quét Lỗi Trực Quan & Động Cơ Antigravity Copilot Pro (REQ-024)
+- Xây dựng bộ kiểm thử tương tác thực chiến 5 giai đoạn (`scripts/test-visual-fullsystem.mjs`):
+  1. Thao tác cuộn sâu Desktop > 1500px & kiểm tra nút `ScrollToTop` cuộn mượt về đỉnh (`scrollY = 0`).
+  2. Click mở modal bài viết chi tiết, cuộn bài, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan và phím `Escape` thoát bài.
+  3. Tương tác Shorts Player 16:9 Cinema, phím tắt `Space`/`M`, Dark Mode toggle và điều hướng lịch âm dương.
+  4. Bố cục Tablet (768px) & Cử chỉ vuốt chạm Mobile (375px).
+  5. Bộ quét lỗi giao diện trực quan tự động (Visual Defect Scanner): 0 lỗi tràn viền ngang (Horizontal Overflow), 0 ảnh hỏng (Broken Images) và vùng chạm công thái học $\ge 40\text{px}$.
+- Tích hợp Động Cơ Điều Phối Lỗi Tự Động Antigravity Copilot Pro cho tài khoản quản trị `mrkun28@gmail.com`:
+  - Hiển thị huy hiệu Pro Tier và cờ liên kết tự động.
+  - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, kích hoạt modal điều phối `#copilotModal`, định dạng chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` và lưu vào `localStorage.antigravity_active_task`.
+  - Bổ sung nút `[🧪 Thử Nghiệm Báo Lỗi]` (`copilotSimulateBugBtn`) cho phép mô phỏng báo lỗi thử nghiệm và khôi phục trạng thái PASS 100%.
+- Nâng cấp bộ kiểm thử toàn diện `/testwebsite` đạt **24/24 PASS (100% ĐẠT, 0 FAIL)**, thông qua cổng kiểm duyệt phát hành **RELEASE GATE: PASSED**.
 

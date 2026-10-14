@@ -2,21 +2,23 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Kiểm Thử Toàn Diện Trải Nghiệm Người Dùng (UX), Logic Luồng & Hệ Thống Đa Màn Hình (`REQ-023` / `TC-023`)**:
-  + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**:
-    1. *News Reader & Audio TTS*: Khóa cuộn trang nền `document.body.style.overflow = "hidden"`, nút "Nghe đọc" kích hoạt Web Speech API tiếng Việt (`vi-VN`) với trạng thái "Đang đọc..." kèm animate-pulse, phím tắt `Escape` thoát modal và khôi phục cuộn trang.
-    2. *Video Shorts Keyboard Shortcuts*: Phím `Space` (Play/Pause), `M` (Mute/Unmute), `ArrowDown` (Chuyển video kế tiếp), `Escape` (Thoát modal).
-    3. *Market Chart Tooltip*: Di chuột hiển thị tooltip giá và giờ theo tọa độ chính xác, tự động đóng khi rời chuột (`mouseleave dismissal`).
-    4. *Category Carousel*: Chuyển đổi tab cập nhật highlight pill màu hồng (`#ff315f`) tức thì, lọc tin mượt mà không vỡ layout.
-    5. *Dark Mode Toggle*: Chuyển đổi giao diện tối/sáng, cập nhật class `.dark` trên thẻ `<html>` và lưu trữ bền vững trong `localStorage`.
-    6. *Weather Ergonomics*: Hiển thị đầy đủ thông số sức khỏe (nhiệt độ, PM2.5, độ ẩm, gió), khung 24h hỗ trợ cuộn ngang mượt mà.
-    7. *Multi-Screen Ergonomics & Touch Targets*: Vùng bấm tương tác chuẩn công thái học (touch area >= 40px), không đè nút điều khiển.
-  + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 134/134 assertions logic passed (100% PASS, 0 FAIL).
-  + ✅ **Nhật Ký Thực Thi Thời Gian Thực & Giả Lập Trực Tiếp (Live Console & Simulator)**: Bổ sung cửa sổ terminal thời gian thực (`#liveConsoleOutput`) với live tags trên `dashboard.html` và `public/dashboard.html`.
-  + ✅ **Kiểm thử xuyên suốt 3 kích thước màn hình chuẩn**: Desktop (1440x900), Tablet (768x1024), Mobile (375x812).
-  + ✅ **Kho ảnh chụp bằng chứng thực tế (Screenshot Audit Evidence)**: Chụp và lưu trữ ảnh màn hình thực tế từ Chrome thật tại `qa/screenshots/` và `public/qa/screenshots/`.
-  + ✅ **Phân quyền người dùng nghiêm ngặt (`REQ-021` / `TC-021`)**: Chỉ tài khoản quản trị viên `"mrkun28@gmail.com"` mới nhìn thấy QA Dashboard.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **23/23 PASS** (0 FAIL).
+- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, Logic Luồng, Cử Chỉ Thực Chiến & Antigravity Copilot Pro) (`REQ-024` / `TC-024`)**:
+  + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
+    1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
+    2. *Click bài viết chi tiết*: Mở modal bài viết, cuộn nội dung, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan, thoát modal qua phím `Escape`.
+    3. *Shorts Player & Tiện ích*: Điều khiển 16:9 Cinema, phím tắt `Space` (Play/Pause), `M` (Mute/Unmute), Dark Mode toggle, chuyển đổi lịch âm dương.
+    4. *Bố cục Tablet (768px) & Cử chỉ vuốt chạm Mobile (375px)*: Thẩm định công thái học, không đè nút, cuộn mượt mà.
+    5. *Bộ quét lỗi trực quan tự động (Visual Defect Scanner)*:
+       - 0 lỗi tràn viền ngang (Horizontal Overflow: `scrollWidth <= clientWidth` trên Desktop, Tablet, Mobile).
+       - 0 ảnh hỏng (100% thẻ `<img>` có `naturalWidth > 0`).
+       - Vùng chạm ngón tay đạt chuẩn công thái học ($\ge 40\text{px}$), 0 xung đột z-index.
+  + ✅ **Động Cơ Điều Phối Lỗi Tự Động Antigravity Copilot Pro (`mrkun28@gmail.com`)**:
+    - Nhận diện tài khoản quản trị Pro `mrkun28@gmail.com`.
+    - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
+    - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
+  + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
+  + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 134/134 assertions logic passed.
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **24/24 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -54,6 +56,10 @@
    - Tích hợp Web Speech API tiếng Việt (`vi-VN`) cho nút "Nghe đọc" với trạng thái "Đang đọc..." kèm animate-pulse.
    - Phím tắt `Escape` đóng modal bài viết ngay lập tức, ngắt audio và khôi phục cuộn trang nền `document.body.style.overflow = "auto"`.
    - Kiểm tra tương tác phím tắt Shorts (`Space`, `M`, `ArrowDown`, `ESC`), Tooltip đồ thị giá vàng, chuyển tab chuyên mục, Dark mode toggle và touch targets công thái học.
+8. **[REQ-024] Kiểm Thử Tương Tác Sâu Đa Màn Hình, Bộ Quét Lỗi Giao Diện Trực Quan & Động Cơ Antigravity Copilot Pro**:
+   - Xây dựng bộ kiểm thử tương tác thực chiến (`scripts/test-visual-fullsystem.mjs`) thẩm định toàn diện: vuốt cuộn sâu y > 1500px, nút ScrollToTop cuộn mượt về đỉnh (`scrollY = 0`), mở chi tiết bài báo, đọc TTS Web Speech API, chuyển kênh Shorts 16:9 Cinema, Dark mode toggle, điều hướng lịch âm dương.
+   - Bộ quét lỗi giao diện trực quan (Visual Defect Scanner): 0 lỗi tràn viền ngang (Horizontal Overflow), 0 ảnh hỏng (Broken Images) trên cả 3 màn hình Desktop, Tablet, Mobile.
+   - Tích hợp Động Cơ Điều Phối Lỗi Tự Động Antigravity Copilot Pro cho tài khoản quản trị `mrkun28@gmail.com`: Tự động cảnh báo và đóng gói chỉ thị xử lý lỗi khi kiểm thử thất bại, kèm nút thử nghiệm báo lỗi `copilotSimulateBugBtn` để kiểm tra luồng tự động.
 
 ---
 

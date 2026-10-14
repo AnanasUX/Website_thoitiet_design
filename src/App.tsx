@@ -1358,9 +1358,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   }, [article.link]);
 
   return (
-    <div ref={detailContainerRef} className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
+    <div ref={detailContainerRef} data-testid="news-detail-modal" className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
       <div className="sticky top-0 bg-[inherit] border-b border-[#e3e7ef] px-4 py-3 flex items-center justify-between w-full md:max-w-3xl z-10">
-        <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-[#f4f6fa] text-[#182033] flex items-center gap-2">
+        <button onClick={onClose} data-testid="close-article-btn" className="p-2 -ml-2 rounded-full hover:bg-[#f4f6fa] text-[#182033] flex items-center gap-2">
            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
            <span className="font-bold text-[16px]">Quay lại</span>
         </button>
@@ -1711,7 +1711,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
               </p>
             </div>
           </div>
-          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer">
+          <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} data-testid="dark-mode-toggle" className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer" title={darkMode ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}>
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
               ) : (
@@ -1879,6 +1879,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </button>
 
           <div 
+            data-testid="dark-mode-toggle"
             onClick={() => setDarkMode && setDarkMode(!darkMode)} 
             role="button" 
             tabIndex={0} 
@@ -2058,6 +2059,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </button>
 
           <div 
+            data-testid="dark-mode-toggle"
             onClick={() => setDarkMode && setDarkMode(!darkMode)} 
             role="button" 
             tabIndex={0} 
@@ -2138,7 +2140,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
           {featured && (
-            <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex gap-[10px] items-center overflow-hidden w-full">
                 <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11 border border-gray-100">
@@ -2170,7 +2172,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {/* News grid */}
             <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
               {grid.map((item, i) => (
-                <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+                <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
                 <div className="h-[140px] relative w-full overflow-hidden">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i < 4 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
@@ -2731,6 +2733,7 @@ function ScrollToTop() {
   }, []);
   return isVisible ? (
     <button 
+      data-testid="scroll-to-top-btn"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
       className="fixed bottom-6 right-5 z-[80] bg-white border border-[#e3e7ef] shadow-[0_4px_16px_rgba(23,33,51,0.18)] hover:-translate-y-1 active:scale-90 transition-all duration-300 rounded-full size-11 flex items-center justify-center text-[#ff315f] group cursor-pointer"
       title="Cuộn lên đầu trang"

@@ -312,6 +312,19 @@
       "evidence": ["testwebsite.mjs:TC-023:PASS", "test-ux-flows.mjs:7-scenarios:PASS"],
       "owner": "QA Lead",
       "notes": "Toàn bộ 7 kịch bản UX tương tác luồng đạt chuẩn 100% trên Chrome thật"
+    },
+    {
+      "id": "REQ-024",
+      "title": "Kiểm thử toàn diện tương tác thực chiến đa màn hình & Bộ quét lỗi giao diện trực quan",
+      "description": "Kiểm thử tương tác sâu toàn diện (vuốt cuộn lên/xuống, cuộn ngang, click chi tiết mọi khối, nút ScrollToTop, nghe đọc TTS, video shorts, dark mode) kết hợp bộ quét lỗi giao diện trực quan (visual defect scanner) bảo đảm 0 lỗi tràn viền ngang (horizontal overflow), 0 ảnh hỏng, 0 xung đột z-index và 0 lỗi runtime trên mọi màn hình Desktop (1440px), Tablet (768px), Mobile (375px).",
+      "sourcePrompt": "PROMPT-20261014-12: Tất cả chức năng trên website chứ vuốt lên vuốt xuống, click và chi tiết, lỗi giao diện xem trên giao diện chứ chưa thấy test kiểm thử gì là toàn hệ thống chi tiết chức năng cả.",
+      "priority": "P0",
+      "category": "qa-visual-interaction",
+      "status": "PASS",
+      "testIds": ["TC-024"],
+      "evidence": ["testwebsite.mjs:TC-024:PASS", "test-visual-fullsystem.mjs:5-phases:PASS"],
+      "owner": "QA Lead",
+      "notes": "Kiểm thử tương tác cuộn/click thực chiến và quét sạch lỗi giao diện trực quan"
     }
   ]
 }

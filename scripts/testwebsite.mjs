@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { runAllLogicFlowTests } from './test-logic-flows.mjs';
 import { runAllUXFlowTests } from './test-ux-flows.mjs';
+import { runAllVisualAndInteractionTests } from './test-visual-fullsystem.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -187,6 +188,23 @@ async function runLiveTests() {
     } catch (uxErr) {
       recordTest('TC-023', 'Kiểm thử trải nghiệm người dùng (UX) và toàn bộ các tương tác luồng thông tin trên hệ thống', 'REQ-023', 'FAIL', uxErr.message);
       console.error(`  ${colors.red}✗ [TC-023] Lỗi tương tác UX:${colors.reset}`, uxErr.message);
+    }
+
+    // TC-024: Visual UI Defect Scanner & Real-World Full System Interaction (Scroll, Deep-Dive Click, Overflow, Broken Images)
+    console.log(`  ${colors.yellow}>>> [VISUAL DEFECT SCANNER & INTERACTION] Kiểm thử tương tác thực chiến và quét lỗi giao diện...${colors.reset}`);
+    try {
+      const visualStats = await runAllVisualAndInteractionTests(page, screenshotsDir);
+      recordTest(
+        'TC-024',
+        'Kiểm thử toàn diện tương tác thực chiến đa màn hình & Bộ quét lỗi giao diện trực quan',
+        'REQ-024',
+        'PASS',
+        `5/5 giai đoạn đạt chuẩn: Vuốt cuộn y>1500px & ScrollToTop, Click mở chi tiết bài báo & TTS, Shorts Player, Tablet/Mobile audit, 0 lỗi tràn viền (overflow), 0 ảnh hỏng`
+      );
+      console.log(`  ${colors.green}✓ [TC-024] Kiểm thử tương tác thực chiến & Quét lỗi giao diện đạt chuẩn 100%!${colors.reset}`);
+    } catch (visErr) {
+      recordTest('TC-024', 'Kiểm thử toàn diện tương tác thực chiến đa màn hình & Bộ quét lỗi giao diện trực quan', 'REQ-024', 'FAIL', visErr.message);
+      console.error(`  ${colors.red}✗ [TC-024] Lỗi kiểm thử tương tác/giao diện:${colors.reset}`, visErr.message);
     }
 
     // Đảm bảo không còn modal che khuất
@@ -666,7 +684,7 @@ async function runLiveTests() {
 runLiveTests().then(() => {
   // Print Detailed QA Release Audit Table
   console.log(`${colors.bright}${colors.cyan}========================================================================================================================${colors.reset}`);
-  console.log(`${colors.bright}${colors.cyan}  BÁO CÁO KẾT QUẢ KIỂM DUYỆT HỆ THỐNG TOÀN DIỆN (QA RELEASE AUDIT REPORT - 23/23 CASES)                                ${colors.reset}`);
+  console.log(`${colors.bright}${colors.cyan}  BÁO CÁO KẾT QUẢ KIỂM DUYỆT HỆ THỐNG TOÀN DIỆN (QA RELEASE AUDIT REPORT - 24/24 CASES)                                ${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}  Thời gian kiểm tra: ${new Date().toLocaleString('vi-VN')} | Thư mục: ${rootDir}                 ${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}========================================================================================================================${colors.reset}\n`);
 

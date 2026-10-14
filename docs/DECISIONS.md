@@ -99,6 +99,19 @@
     + **Dải danh mục tin tức (Pill Carousel UX)**: Chuyển đổi chuyên mục cập nhật highlight pill màu hồng (`#ff315f`) tức thì, lọc tin mượt mà không làm giật layout.
     + **Giao diện Tối/Sáng (Dark Mode Toggle UX)**: Nút bấm trên Header kích hoạt class `.dark` trên thẻ `<html>`, chuyển đổi màu nền tương thích và lưu trữ bền vững trong `localStorage`.
     + **Bộ kiểm thử tự động UX thực tế (`scripts/test-ux-flows.mjs`)**: Thực thi 7 kịch bản UX tương tác luồng trực tiếp trên Chrome thật qua Playwright, tích hợp vào cổng `/testwebsite` và bộ giả lập `dashboard.html`.
+  - *Kiến Trúc Tương Tác Thực Chiến Đa Màn Hình & Bộ Quét Lỗi Trực Quan (`REQ-024` / `TC-024`)*:
+    + **Thao tác cử chỉ cuộn sâu (Deep Scroll & ScrollToTop)**: Vuốt cuộn trang Desktop xuống > 1500px, kích hoạt nút `[Cuộn lên đầu trang]` (`data-testid="scroll-to-top-btn"`) và xác minh tự động cuộn mượt về đỉnh (`scrollY = 0`).
+    + **Click chi tiết và kiểm thử tương tác sâu**: Click mở modal bài viết chi tiết, cuộn bài đọc, kích hoạt Web Speech API TTS giọng đọc tiếng Việt, kiểm tra danh mục bài viết liên quan, và đóng modal an toàn qua phím `Escape`.
+    + **Tương tác Shorts Player & Tiện ích**: Điều khiển tỉ lệ 16:9, phím tắt `Space` (Play/Pause), `M` (Mute/Unmute), Dark Mode toggle và điều hướng lịch âm dương tháng trước/sau.
+    + **Kiểm thử bố cục Tablet (768px) & Cử chỉ vuốt chạm Mobile (375px)**: Xác minh độ mượt mà của cử chỉ touch scroll và tính năng phản hồi trên màn hình cảm ứng nhỏ.
+    + **Bộ quét lỗi giao diện trực quan tự động (Visual UI Defect Scanner)**:
+      1. *Quét tràn viền ngang (Horizontal Overflow)*: Kiểm tra `document.documentElement.scrollWidth <= window.innerWidth` trên cả 3 màn hình Desktop, Tablet, Mobile (0 lỗi tràn ngang).
+      2. *Quét ảnh hỏng (Broken Images)*: Kiểm tra 100% thẻ `<img>` đang hiển thị trên trang có `naturalWidth > 0` và tải thành công (0 ảnh hỏng).
+      3. *Quét công thái học & Vùng chạm (Ergonomics & Touch Targets)*: Kiểm tra kích thước nút bấm tối thiểu đạt chuẩn $\ge 40\text{px}$ và không có xung đột z-index che khuất.
+  - *Động Cơ Điều Phối Lỗi Tự Động Antigravity Copilot Pro (`mrkun28@gmail.com`)*:
+    + **Định danh quản trị viên Pro**: Tích hợp tài khoản quản trị `mrkun28@gmail.com` gắn cờ Pro Tier, tự động xác thực và cấp quyền điều phối lỗi kỹ thuật.
+    + **Cơ chế tự động báo bug vào Antigravity AI khi test lỗi**: Khi bộ kiểm thử chạy xong mà phát hiện bất kỳ ca kiểm thử nào thất bại (`problems > 0`), hệ thống QA tự động kích hoạt âm thanh cảnh báo, mở hộp thoại điều phối `copilotModal`, đóng gói toàn bộ danh sách lỗi, tệp liên quan, bằng chứng vào chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` và lưu vào `localStorage.antigravity_active_task`.
+    + **Nút Thử Nghiệm Báo Lỗi (`copilotSimulateBugBtn`)**: Trang bị tính năng mô phỏng thử nghiệm 1 lỗi kỹ thuật để người dùng kiểm chứng ngay lập tức luồng tự động báo bug và khôi phục lại trạng thái PASS 100%.
 
 ---
 

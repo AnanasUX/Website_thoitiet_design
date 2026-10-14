@@ -38,6 +38,7 @@
 | REQ-021 | PROMPT-20261014-09 | Phân quyền QA Dashboard chỉ cho mrkun28@gmail.com, hiển thị tại Header & Fixed Widget nổi | P0 | QA / Access Control | TC-021 | PASS | testwebsite.mjs:TC-021 | isUserAdminQA guard, Header button & Fixed floating widget |
 | REQ-022 | PROMPT-20261014-10 | Kiểm thử chuyên sâu 7 luồng logic và xử lý thông tin nghiệp vụ toàn hệ thống | P0 | Logic / Business Flows | TC-022 | PASS | test-logic-flows.mjs:TC-022 | 134/134 assertions PASS covering all 7 core flows |
 | REQ-023 | PROMPT-20261014-11 | Kiểm thử toàn diện trải nghiệm người dùng (UX) và các luồng tương tác thực tế | P0 | UX / Interaction Flows | TC-023 | PASS | test-ux-flows.mjs:TC-023 | 7/7 UX Scenarios PASS: Audio TTS, Escape dismiss, Shorts Shortcuts, Tooltip, Category Pills, Dark Mode, Touch Targets |
+| REQ-024 | PROMPT-20261014-12 | Kiểm thử toàn diện tương tác thực chiến đa màn hình (cuộn, click mọi khối) & Bộ quét lỗi giao diện trực quan | P0 | Visual / Interaction Scanner | TC-024 | PASS | test-visual-fullsystem.mjs:TC-024 | 5 phases: Scroll/ScrollToTop, News Detail/TTS, Shorts/Calendar/DarkMode, Tablet/Mobile, 0 overflow, 0 broken imgs |
 
 ## Prompt intake log
 
@@ -58,4 +59,6 @@
 | PROMPT-20261014-09 | 2026-10-14 | QA Dashboard chỉ hiển thị ở tài khoản mrkun28@gmail.com; hiển thị ở đầu trang hoặc cố định trên màn hình tránh cuộn vô cực | REQ-021 | Resolved | Approved |
 | PROMPT-20261014-10 | 2026-10-14 | Test toàn bộ chức năng các luồng thông tin & logic hệ thống (thời tiết, thị trường, tin tức, parser, shorts, auth, lịch) | REQ-022 | None | Approved |
 | PROMPT-20261014-11 | 2026-10-14 | Test cả logic các luồng nữa chứ có phải test mỗi UI đâu cả UX nữa | REQ-023 | None | Approved |
+| PROMPT-20261014-12 | 2026-10-14 | Tất cả chức năng trên website chứ vuốt lên vuốt xuống, click và chi tiết, lỗi giao diện xem trên giao diện chứ chưa thấy test kiểm thử gì là toàn hệ thống chi tiết chức năng cả. | REQ-024 | None | Approved |
+
 

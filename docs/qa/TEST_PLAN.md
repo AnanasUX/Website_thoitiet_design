@@ -188,3 +188,36 @@
      - Các phần tử tương tác đáp ứng chuẩn công thái học (touch area >= 40px), không bị đè nút điều khiển.
 - **Kết quả mong đợi**: 7/7 kịch bản UX tương tác luồng ĐẠT (PASS 100%), trải nghiệm liền mạch và tự nhiên.
 
+### Nhóm 8: Kiểm Thử Toàn Diện Tương Tác Thực Chiến Đa Màn Hình & Bộ Quét Lỗi Giao Diện Trực Quan
+
+#### TC-024: Kiểm thử thực chiến hành động người dùng (cuộn trang, cuộn ngang, click chi tiết mọi phân hệ, dark mode) và Bộ quét lỗi giao diện trực quan
+- **Mục tiêu**: Mô phỏng 100% chuỗi hành động của người dùng thực tế: vuốt cuộn lên/xuống toàn trang, kiểm tra nút ScrollToTop, click mở chi tiết từng bài báo (NewsDetailView), cuộn bài viết, nghe đọc TTS, mở Video Shorts 16:9, tương tác Lịch Vạn Niên, chuyển đổi Dark Mode, và quét sạch toàn bộ lỗi giao diện trực quan (tràn viền ngang, ảnh hỏng, xung đột z-index, touch targets, runtime errors) trên cả Desktop, Tablet và Mobile.
+- **Tiền điều kiện**: Chạy trên Chrome thật qua Playwright (`scripts/test-visual-fullsystem.mjs` hoặc lệnh `/testwebsite`).
+- **5 Giai Đoạn Kiểm Thử Thực Chiến & Quét Lỗi Trực Quan**:
+  1. **Giai đoạn 1: Desktop - Thao tác Vuốt Cuộn Toàn Trang & Nút Scroll To Top**:
+     - Cuộn từng bước từ đỉnh xuống 400px -> 1000px -> 1800px -> 2600px để kích hoạt toàn bộ lazy loading và infinite scroll.
+     - Kiểm tra nút "Cuộn lên đầu trang" (`ScrollToTop`) tự động xuất hiện khi `scrollY > 300`.
+     - Click nút ScrollToTop -> xác nhận trang cuộn mượt mà về đỉnh (`scrollY === 0`).
+     - Chụp ảnh bằng chứng: `screen-desktop-scrolled.png`.
+  2. **Giai đoạn 2: Desktop - Click & Xem Chi Tiết Bài Báo (News Detail View)**:
+     - Click vào card tin tức -> Modal toàn màn hình mở ra (`[data-testid="news-detail-modal"]`).
+     - Kiểm tra cuộn trang nền bị khóa (`document.body.style.overflow = "hidden"`).
+     - Cuộn đọc 350px bên trong bài viết, kiểm tra thanh tác giả Byline Bar.
+     - Bấm nút "Nghe đọc" -> Kích hoạt Web Speech API tiếng Việt và trạng thái "Đang đọc...".
+     - Chụp ảnh bằng chứng: `screen-desktop-news-detail.png`.
+     - Nhấn phím `Escape` -> Đóng modal, dừng audio, khôi phục cuộn trang nền (`overflow: auto`).
+  3. **Giai đoạn 3: Desktop - Tương Tác Các Phân Hệ Khác (Shorts, Thị Trường, Lịch, Dark Mode)**:
+     - Mở trình phát Shorts 16:9 Cinema, thử phím `Space` và `M`, chụp ảnh `screen-desktop-shorts.png`, đóng modal bằng `Escape`.
+     - Click nút Dark Mode -> Thẻ `<html>` chuyển class `.dark`, giao diện tối sang trọng, chụp ảnh `screen-desktop-darkmode.png`, click lại phục hồi Light Mode.
+     - Tương tác Lịch Vạn Niên: Click nút chuyển tháng tới và lùi tháng, cập nhật mượt mà.
+  4. **Giai đoạn 4: Audit Thiết Bị Di Động & Máy Tính Bảng (Tablet 768px & Mobile 375px)**:
+     - Tablet (768px): Cuộn trang, chụp ảnh `screen-tablet-full.png`, kiểm tra bố cục rạp chiếu 2 cột không vỡ layout.
+     - Mobile (375px): Cử chỉ vuốt chạm cuộn xuống 450px, chụp ảnh `screen-mobile-scrolled.png`, kiểm tra header tinh gọn không đè nút.
+  5. **Giai đoạn 5: Bộ Quét Lỗi Giao Diện Trực Quan (Visual UI Defect & Layout Scanner)**:
+     - Quét tràn viền ngang: Kiểm tra toàn bộ DOM trên Mobile và Desktop, đảm bảo `scrollWidth <= clientWidth + 2` (0 lỗi overflow).
+     - Quét ảnh hỏng: Duyệt mọi thẻ `<img>`, đảm bảo `naturalWidth > 0` và `naturalHeight > 0` (0 ảnh hỏng).
+     - Quét công thái học vùng chạm: Toàn bộ nút bấm đáp ứng kích thước chuẩn tiếp cận, không bị đè lấn.
+     - Lắng nghe Console errors: 0 uncaught runtime exceptions trong suốt toàn bộ phiên.
+- **Kết quả mong đợi**: 5/5 giai đoạn tương tác thực chiến ĐẠT (PASS 100%), 0 lỗi tràn viền, 0 ảnh hỏng, đủ điều kiện phát hành.
+
+
