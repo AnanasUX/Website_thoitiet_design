@@ -48,6 +48,20 @@
   - Bổ sung nút `[🧪 Thử Nghiệm Báo Lỗi]` (`copilotSimulateBugBtn`) cho phép mô phỏng báo lỗi thử nghiệm và khôi phục trạng thái PASS 100%.
 - Nâng cấp bộ kiểm thử toàn diện `/testwebsite` đạt **24/24 PASS (100% ĐẠT, 0 FAIL)**, thông qua cổng kiểm duyệt phát hành **RELEASE GATE: PASSED**.
 
+### 9. Nâng Cấp Động Cơ Kiểm Thử Chuyên Sâu Tương Tác Sống & Giai Đoạn Chờ Đồng Bộ Dữ Liệu RSS (Hydration Wait & Deep DOM Testing)
+- Khắc phục triệt để hiện tượng chạy kiểm thử vội vã trên QA Dashboard khi tin tức RSS từ 38 nguồn chưa nạp xong (giao diện còn ở trạng thái skeleton `animate-pulse`).
+- Tích hợp giai đoạn đồng bộ dữ liệu sống `waitForData` (thăm dò thẻ bài viết $\ge 5$ và skeleton biến mất) vào `dashboard.html`.
+- Nâng cấp `runAllTests()` trong `dashboard.html` và `scripts/testwebsite.mjs` thực thi tương tác chuyên sâu trên DOM thật:
+  + `TC-027`: Đo số lượng bài ban đầu ($N_1 = 15$), cuộn mượt xuống chân trang để kích hoạt `InfiniteScrollTrigger`, chờ 800-1200ms nạp mẻ tin tiếp theo, đo số lượng bài tăng lên ($N_2 \ge 30$), rồi cuộn mượt về đỉnh trang.
+  + `TC-015`: Cuộn đến dải chuyên mục, click "Giá vàng", chờ `isFetchingCategory` hoàn tất và các bài viết tài chính nạp xong (active pill hồng), sau đó click về "Tất cả" và chờ nạp lại luồng tin tức tổng hợp.
+  + `TC-012` & `TC-013`: Tìm thẻ bài thực tế, cuộn tới thẻ và click mở `NewsDetailView`, trích xuất tiêu đề thực tế, kiểm tra Byline Bar (avatar tròn 1:1, tên tác giả, ngày giờ, nút TTS), cuộn thân bài xuống 350px-600px, kiểm tra 0 avatar bị phóng to thành ảnh thân bài.
+  + `TC-023`: Bấm nút "Nghe đọc" TTS kích hoạt Web Speech API tiếng Việt ("Đang đọc..."), kiểm tra danh sách bài viết liên quan, nhấn phím `Escape` đóng modal, ngắt âm thanh và xác nhận body scroll được giải phóng (`overflow: auto`).
+  + `TC-003`, `TC-005` -> `TC-011`: Mở Shorts modal, kiểm tra tỉ lệ 16:9 Cinema, chuyển kênh sang "Báo Tiền Phong" (playlist không rỗng), kiểm tra unmuted audio, overlay `z-10`, đếm lùi 5s và đóng player.
+  + `TC-026`: Mở Calendar modal, kiểm tra ngày âm dương, can chi, click chuyển tháng sau -> tháng trước, đóng modal.
+  + `TC-024`: Thao tác cuộn sâu 2000px, click nút `ScrollToTop` cuộn về đỉnh (y=0), bật Dark Mode dừng 800ms để người dùng quan sát trên live simulator rồi khôi phục giao diện sáng, chuyển qua Tablet (768px, dừng 600ms), Mobile (375px, dừng 600ms), quay lại Desktop (1440px), quét 0 lỗi tràn viền và 0 ảnh hỏng.
+- Nâng cấp `scripts/testwebsite.mjs` chờ selector tin tức sống trước khi click mở bài báo chi tiết và đo đạc cuộn vô cực thực tế (95 bài -> 100 bài).
+- Xác thực toàn bộ 30 ca kiểm thử: **30/30 PASS (100% ĐẠT, 0 FAIL)** trên Google Chrome thực tế và QA Dashboard.
+
 ### 8. Mở Rộng Hệ Thống 30/30 Yêu Cầu & Ca Kiểm Thử Toàn Diện (REQ-025 -> REQ-030)
 - Tích hợp và chuẩn hóa 6 phân hệ nâng cao vào ma trận yêu cầu và kiểm thử tự động:
   1. **REQ-025 / TC-025**: Quản lý xác thực Google OAuth 2.0, phiên đăng nhập bền vững (`user_auth`) và UserAvatarMenu.

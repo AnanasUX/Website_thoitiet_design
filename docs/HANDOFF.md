@@ -47,6 +47,10 @@
 5. **[REQ-021] Phân Quyền QA Dashboard & Vị Trí Hiển Thị Tránh Cuộn Vô Cực**:
    - Chỉ tài khoản `mrkun28@gmail.com` nhìn thấy QA Dashboard.
    - Hiển thị trên Top Header (Mobile, Tablet, Desktop), Fixed Floating Widget góc phải dưới và Menu Avatar.
+10. **Động Cơ Kiểm Thử Tương Tác Sâu & Chờ Nạp Dữ Liệu Sống RSS (Live Hydration Wait Engine)**:
+    - Cơ chế `waitForData` trong `dashboard.html` tự động thăm dò tình trạng nạp dữ liệu sống từ 38 nguồn RSS, loại trừ hoàn toàn việc test lướt khi thẻ bài còn ở trạng thái skeleton `animate-pulse`.
+    - Trực tiếp thao tác cuộn vô cực (tăng bài $15 \to 30+$), chuyển tab danh mục có chờ nạp tin, mở bài đọc Byline bar và nghe TTS tiếng Việt, điều hướng lịch âm dương, đổi 10 kênh TV Báo Tiền Phong, đổi Dark Mode có độ dừng thị giác 800ms và quét trực quan 0 lỗi tràn viền, 0 ảnh hỏng.
+
 6. **[REQ-022] Kiểm Thử Chuyên Sâu Toàn Bộ Logic Các Luồng Thông Tin & Live Simulation**:
    - Module hóa thuần túy `src/utils/logicFlows.ts` cho 7 luồng cốt lõi: Thời tiết, Thị trường tài chính, Lọc trùng tin tức, Parser & Avatar Guard, Video Shorts & TV, Auth phân quyền, Lịch vạn niên.
    - 134 bài test logic tự động (`scripts/test-logic-flows.mjs`) kiểm tra chặt chẽ biên dữ liệu, format tiền tệ Việt Nam, năm nhuận, regex YouTube, auto-skip, avatar guard.
