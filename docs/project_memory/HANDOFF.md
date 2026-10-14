@@ -2,11 +2,18 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `1bae5eb (fix(article): render author avatar as small byline icon and prevent enlarging as article image)`
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 6.73s, `index-CljyEJx1.js` 476.21 kB).
+- **Commit gần nhất**: `0e9ecad (fix(layout): adjust main desktop container padding to pt-10px and px-0)`
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 428ms, `index-BmogQZyt.js` 476.27 kB).
 
 ## 2. CÁC TÍNH NĂNG VỪA HOÀN THIỆN
-1. **Khắc Phục Triệt Để Lỗi Phóng To Ảnh Tác Giả & Chuẩn Hóa Hiển Thị Tác Giả Bài Viết (Ảnh Người Dùng Gửi)**:
+1. **Tinh Chỉnh Padding Khung Bố Cục Chính Trên Desktop (`DesktopLayout`) Theo Yêu Cầu DevTools**:
+   - **Vấn đề**: Vùng chứa nội dung chính trên desktop (`max-w-[1536px]`) bị khoảng đệm quá lớn (`py-[var(--section-gap)] px-[var(--page-padding)]` tạo ra `padding: 64px 32px 64px 32px`), làm đẩy nội dung thời tiết và tin tức xuống quá xa so với thanh tin vắn `LiveNewsTicker` và thụt mép hai bên.
+   - **Giải pháp dứt điểm chuẩn xác theo DevTools người dùng cung cấp**:
+     + Áp dụng `style={{ paddingTop: '10px', paddingLeft: '0px', paddingRight: '0px' }}` trực tiếp vào container `<div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">`.
+     + Đưa padding trên xuống đúng **10px** (giảm từ 64px), đưa padding trái & phải về **0px** (thay vì 32px).
+     + Giữ nguyên padding dưới đáy (`padding-bottom: 64px` từ `var(--section-gap)`) giúp trang cân đối, hài hòa và thoáng đãng đúng theo thiết kế người dùng yêu cầu.
+
+2. **Khắc Phục Triệt Để Lỗi Phóng To Ảnh Tác Giả & Chuẩn Hóa Hiển Thị Tác Giả Bài Viết (Ảnh Người Dùng Gửi)**:
    - **Nguyên nhân gốc rễ**: Khi cào dữ liệu toàn văn từ các trang báo chính thống (như Dân Trí `dantri.com.vn`), vùng chứa bài viết `<article>` bao gồm cả cụm thông tin tác giả (`<a rel="author"><img alt="Hải Nam" src="..." height="24" width="24">...</a>`). Trước đây, hàm duyệt cây DOM `processNode` đã bắt gặp thẻ `<img>` này và ngộ nhận là ảnh bài viết, dẫn đến việc render thành `<figure class="my-5 w-full"><img class="w-full h-auto ..."/>` phóng to mờ nhòe chiếm trọn chiều rộng bài viết kèm caption tên tác giả, và ngay dưới là đoạn text tên tác giả lặp lại.
    - **Giải pháp dứt điểm theo quy chuẩn báo chính thống**:
      + **Trích xuất thông minh**: Trích xuất chính xác Tên tác giả (`authorName`), Ảnh đại diện (`authorAvatar`), và Thời gian xuất bản (`authorDate`) từ cấu trúc DOM báo chí (`a[rel="author"]`, `[data-content-piece*="author"]`, `a[href*="/tac-gia/"]`, `time`, JSON-LD schema).

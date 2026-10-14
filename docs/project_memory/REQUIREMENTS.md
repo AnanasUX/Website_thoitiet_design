@@ -114,6 +114,13 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
     + Thực hiện pre-cleaning loại bỏ triệt để các container tác giả khỏi cây DOM của thân bài trước khi trích xuất đoạn văn và hình ảnh.
     + Thêm bộ lọc bảo vệ 2 lớp trong `processNode` và JSX renderer để phát hiện và loại bỏ mọi ảnh có kích thước avatar (24px, 36px, `zoom/36_36`, `avatar`, `rounded-full`) hoặc có `alt`/`caption` trùng tên tác giả.
 
+### 2.6. Quy Chuẩn Khoảng Đệm & Bố Cục Trang Chính (`DesktopLayout`)
+- **Khoảng đệm khung chứa chính (Main Container Padding)**:
+  - Khung nội dung chính (`max-w-[1536px] mx-auto` chứa cột Thời tiết 420px và cột Tin tức / Thị trường):
+    - `padding-top: 10px`: Giảm khoảng đệm trên xuống đúng 10px để nội dung thời tiết và tin tức nằm sát dưới thanh LiveNewsTicker, không bị khoảng trống 64px đẩy xuống quá xa.
+    - `padding-left: 0px` và `padding-right: 0px`: Đưa khoảng đệm 2 bên về 0px để tận dụng tối đa chiều rộng của khung 1536px, loại bỏ 32px thụt lề thừa bên trong container.
+    - Giữ nguyên `padding-bottom: 64px` (`py-[var(--section-gap)]`) để phần chân trang có khoảng thoáng thẩm mỹ.
+
 ---
 
 ## 3. TIÊU CHÍ NGHIỆM THU (ACCEPTANCE CRITERIA)
@@ -124,4 +131,5 @@ Dự án Web Ứng Dụng Thời Tiết, Thị Trường & Bản Tin Thời Sự
 5. Menu kênh TV hoạt động chính xác: chọn kênh là chỉ phát video của kênh đó và bắt đầu từ video mới nhất.
 6. Các nút tương tác (Like, Subscribe, Comment) hoạt động thực tế với tài khoản Google đã đăng nhập và lưu bền vững.
 7. Khi mở bài viết chi tiết có tác giả (ví dụ tác giả trên Dân Trí, VnExpress): ảnh tác giả CHỈ hiển thị là logo avatar tròn nhỏ ở dưới tiêu đề kèm tên tác giả và ngày giờ, tuyệt đối không bị phóng to thành ảnh bài viết mờ nhòe.
+8. Trên giao diện Desktop, khung chứa nội dung chính (`max-w-[1536px]`) có padding-top đúng 10px và padding-left/right đúng 0px theo đúng kết quả kiểm thử trên DevTools.
 
