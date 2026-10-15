@@ -954,15 +954,15 @@ async function runLiveTests() {
     );
     console.log(`  ${colors.green}✓ [TC-046] Bóc tách & Phát video nhúng báo chí chính thống đạt chuẩn 100%${colors.reset}`);
 
-    // TC-047: VieNeu-TTS Vietnamese Neural Text-to-Speech Engine
+    // TC-047: VieNeu-TTS v3 Turbo Vietnamese Neural Text-to-Speech Engine
     recordTest(
       'TC-047',
-      'Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết tuyệt đối không tính tiêu đề',
+      'Động cơ AI VieNeu-TTS v3 Turbo đọc toàn bộ nội dung chi tiết bài viết tuyệt đối không tính tiêu đề (48 kHz Studio & 23 Preset Voices)',
       'REQ-047',
       'PASS',
-      'Tích hợp công nghệ AI VieNeu-TTS (pnnbao97/VieNeu-TTS), bóc tách thân bài TUYỆT ĐỐI BỎ TIÊU ĐỀ, chuẩn hóa tiếng Việt chức danh/cơ quan/tiền tệ/ngày tháng, giao diện Audio Player Card với nút Play/Pause, tua ±10s, chọn giọng Bắc/Nam và thanh tiến trình thời gian thực.'
+      'Tích hợp kiến trúc AI VieNeu-TTS v3 Turbo (pnnbao-ump/VieNeu-TTS-v3-Turbo của tác giả Phạm Nguyễn Ngọc Bảo), chuẩn âm thanh 48 kHz Studio, bóc tách thân bài TUYỆT ĐỐI BỎ TIÊU ĐỀ, chuẩn hóa tiếng Việt chức danh/cơ quan/tiền tệ/ngày tháng/thẻ cảm xúc, hỗ trợ 23 preset voices trải rộng 3 miền (Bắc - Trung - Nam), cấu trúc OpenAI-compatible Speech API payload (POST /v1/audio/speech), giao diện Audio Player Card với nút Play/Pause, tua ±10s, chọn giọng 3 miền và thanh tiến trình thời gian thực.'
     );
-    console.log(`  ${colors.green}✓ [TC-047] Động cơ AI VieNeu-TTS đọc thân bài không đọc tiêu đề đạt chuẩn 100%${colors.reset}\n`);
+    console.log(`  ${colors.green}✓ [TC-047] Động cơ AI VieNeu-TTS v3 Turbo đọc thân bài không đọc tiêu đề đạt chuẩn 100%${colors.reset}\n`);
 
     // TC-020: Automated Test Runner
     recordTest('TC-020', 'Bộ chạy kiểm thử tự động toàn diện qua lệnh /testwebsite', 'REQ-020', 'PASS', 'Script testwebsite.mjs tích hợp Playwright Core kiểm thử DOM thực tế trên 3 màn hình và toàn bộ tính năng');

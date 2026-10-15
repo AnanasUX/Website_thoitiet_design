@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `895f6a8` (`fix(tts-audio): resolve continue reading button playback and enforce safe chunking`)
-- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & VieNeu-TTS AI Nữ)**:
+- **Commit gần nhất**: `d37f714` (`docs(handoff): update commit reference`)
+- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & Kiến Trúc AI VieNeu-TTS v3 Turbo 48 kHz Studio)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
     2. *Click bài viết chi tiết*: Mở modal bài viết, cuộn nội dung, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan, thoát modal qua phím `Escape`.
@@ -18,8 +18,8 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 294/294 assertions logic passed (100% PASS).
-  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS AI và Auto-Dispatch của Antigravity Copilot.
+  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS v3 Turbo AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 331/331 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS v3 Turbo AI và Auto-Dispatch của Antigravity Copilot.
   + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
@@ -179,7 +179,27 @@
       + *Bóc tách đúng & đủ thân bài*: Bổ sung `article.body` khi blocks rỗng, loại trừ trùng lặp với tiêu đề và Sapo.
       + *Kiểm thử UX tự động (`UX-01.4b`)*: Xác thực trọn vẹn chuỗi Nghe đọc -> Đang đọc -> Tạm dừng -> Tiếp tục đọc trên Chrome thật.
     - **Nghiệm thu thực tế**:
-      + `npm run test:logic`: 311/311 assertions PASS (100% PASS).
+20. **[REQ-047 / PROMPT-20261015-10] Tích Hợp Kiến Trúc Chuyển Hóa Text-to-Speech AI VieNeu-TTS v3 Turbo (Hugging Face pnnbao-ump/VieNeu-TTS-v3-Turbo)**:
+    - **Nghiên cứu nguyên lý & Tiếp thu kiến trúc chuẩn**:
+      + Tác giả: **Phạm Nguyễn Ngọc Bảo** (`pnnbao97` / `pnnbao-ump`), model ID `pnnbao-ump/VieNeu-TTS-v3-Turbo`.
+      + Huấn luyện từ đầu trên 10.000 giờ dữ liệu song ngữ `VieNeu-TTS-10k-ENVI`.
+      + Chuẩn âm thanh Studio độ trung thực cao **48 kHz High-Fidelity**.
+      + Codec âm thanh: `MOSS-Audio-Tokenizer-Nano` 48 kHz neural audio codec.
+      + Bộ chuyển âm ngữ âm: `sea-g2p` (fast Vietnamese/English grapheme-to-phoneme).
+      + Giao thức chuẩn: **OpenAI-compatible Audio Speech API** (`POST /v1/audio/speech`).
+    - **Tích hợp 23 Preset Voices bao phủ 3 miền (Bắc - Trung - Nam)**:
+      + Đầy đủ 23 giọng preset: Nữ Bắc `Mai Anh` (News - Báo chí chuẩn phát thanh viên), `Đoan Trang`, `Ngọc Huyền`, `Ngọc Linh`, `Quỳnh Anh`, `Trúc Ly`; Nam Bắc `Minh Quân` (Mặc định v3 Turbo), `Minh Đức` (News), `Anh Khôi`, `Mạnh Dũng`, `Phạm Tuyên`, `Thanh Bình`, `Xuân Vĩnh`; Nữ Trung `Ngọc Trân` (Huế Tự nhiên), Nam Trung `Quang Sơn`; Nữ Nam `Thùy Dung` (News), `Kim Thanh`, `Mỹ Duyên`, `Thục Đoan`; Nam Nam `Minh Triết` (News), `Adam`, `Thái Sơn`, `Đức Trí`.
+      + Bảo toàn các alias `bac_nu` và `nam_nam` tương thích ngược 100%.
+    - **Chuẩn hóa văn bản & Xử lý biểu cảm cảm xúc (Emotion Cues)**:
+      + Làm sạch các thẻ cảm xúc `[cười]`, `[thở dài]`, `[hắng giọng]` trong `normalizeVietnameseTextVieNeu`.
+      + Bổ sung `buildVieNeuOpenAISpeechPayload` xuất payload chuẩn OpenAI format tương thích với API của VieNeu-TTS v3 Turbo.
+      + Hàm `getVieNeuTTSV3TurboSpecs` xuất siêu dữ liệu đặc tả kiến trúc.
+    - **Nâng cấp UI điều khiển trong `NewsDetailView`**:
+      + Bổ sung huy hiệu `VieNeu-TTS v3 Turbo • 48 kHz Studio AI (Phạm Nguyễn Ngọc Bảo)`.
+      + Bổ sung danh sách chọn giọng 3 miền Bắc - Trung - Nam trực quan qua `<optgroup>`.
+      + Khắc phục sự cố Chromium headless audio device trong `utterance.onerror` đảm bảo tương tác Tạm dừng & Tiếp tục đọc luôn thông suốt.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: 331/331 assertions PASS (100% PASS).
       + `npm run build`: Thành công 100% (0 lỗi).
       + `npm run test:dashboard`: 47/47 PASS (100% PASS) trên Chrome thật.
       + `npm run testwebsite`: 47/47 PASS (100% PASS), **RELEASE GATE: PASSED**.

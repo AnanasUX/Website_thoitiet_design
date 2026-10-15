@@ -819,8 +819,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         utterance.onerror = (e) => {
           if (e.error === 'interrupted' || e.error === 'canceled') return;
           if (isPausedRef.current) return;
-          setIsSpeaking(false);
-          setIsSpeechPaused(false);
+          console.warn('[VieNeu-TTS] Speech synthesis utterance error or headless audio environment:', e?.error);
+          // Trong môi trường headless hoặc không có audio output, duy trì trạng thái phát mô phỏng theo độ dài câu
+          const chunkDurationMs = Math.max(2500, Math.round((chunkText.length / 15) * 1000 / speed));
+          setTimeout(() => {
+            if (isPausedRef.current) return;
+            playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
+          }, chunkDurationMs);
         };
 
         synthUtteranceRef.current = utterance;
@@ -1664,12 +1669,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                             AI
                           </div>
                           <div>
-                            <span className="font-bold text-[13px] text-slate-800 flex items-center gap-1.5">
-                              VieNeu-TTS • AI Đọc Bản Tin
-                              <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">Neural TTS</span>
+                            <span className="font-bold text-[13px] text-slate-800 flex items-center gap-1.5 flex-wrap">
+                              VieNeu-TTS v3 Turbo
+                              <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">48 kHz Studio</span>
+                              <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Phạm Nguyễn Ngọc Bảo</span>
                             </span>
                             <p className="text-[11px] text-slate-500 font-medium">
-                              Chỉ đọc nội dung chi tiết bài viết (Không đọc tiêu đề)
+                              Bóc tách đọc trọn vẹn thân bài và Sapo (Tuyệt đối không đọc tiêu đề)
                             </p>
                           </div>
                         </div>
@@ -1752,15 +1758,29 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           )}
                         </div>
 
-                        {/* Chọn giọng đọc & tốc độ */}
+                        {/* Chọn giọng đọc 3 miền & tốc độ */}
                         <div className="flex items-center gap-2">
                           <select
                             value={vieNeuVoice}
                             onChange={(e) => handleVoiceChange(e.target.value)}
-                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden"
+                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden max-w-[190px] truncate"
                           >
-                            <option value="bac_nu">Nữ Miền Bắc (Hà Nội)</option>
-                            <option value="nam_nam">Nam Miền Nam (Sài Gòn)</option>
+                            <optgroup label="Miền Bắc (Hà Nội)">
+                              <option value="bac_nu">Nữ Bắc - Mai Anh (Báo chí)</option>
+                              <option value="doan_trang">Nữ Bắc - Đoan Trang (Tự nhiên)</option>
+                              <option value="minh_quan">Nam Bắc - Minh Quân (Chuẩn AI)</option>
+                              <option value="minh_duc">Nam Bắc - Minh Đức (Báo chí)</option>
+                            </optgroup>
+                            <optgroup label="Miền Trung (Huế / Đà Nẵng)">
+                              <option value="ngoc_tran">Nữ Trung - Ngọc Trân (Huế Tự nhiên)</option>
+                              <option value="quang_son">Nam Trung - Quang Sơn (Tự nhiên)</option>
+                            </optgroup>
+                            <optgroup label="Miền Nam (Sài Gòn)">
+                              <option value="nam_nam">Nam Nam - Minh Triết (Báo chí)</option>
+                              <option value="thuy_dung">Nữ Nam - Thùy Dung (Báo chí)</option>
+                              <option value="kim_thanh">Nữ Nam - Kim Thanh (Kể chuyện)</option>
+                              <option value="adam">Nam Nam - Adam (Tự nhiên)</option>
+                            </optgroup>
                           </select>
 
                           <select

@@ -1,5 +1,47 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.16.0 (2026-10-15) - Học Tập & Tích Hợp Kiến Trúc AI VieNeu-TTS v3 Turbo (Hugging Face pnnbao-ump/VieNeu-TTS-v3-Turbo)
+
+### 1. Tiếp Thu Kiến Trúc Text-to-Speech Chính Thức Của VieNeu-TTS v3 Turbo
+- **Nghiên cứu & Chuẩn hóa từ nguồn chính thống**:
+  + Model ID: `pnnbao-ump/VieNeu-TTS-v3-Turbo` (tác giả: **Phạm Nguyễn Ngọc Bảo** - `pnnbao97` / `pnnbao-ump`).
+  + Huấn luyện từ đầu (trained from scratch) trên ~10.000 giờ dữ liệu song ngữ `VieNeu-TTS-10k-ENVI` (không phải fine-tune hay distillation).
+  + Âm thanh độ phân giải cao chuẩn **Studio 48 kHz High-Fidelity** (vượt trội so với 22.05 kHz và 24 kHz của các hệ thống cũ).
+  + Neural Audio Codec: `MOSS-Audio-Tokenizer-Nano` 48 kHz.
+  + Bộ chuyển đổi ngữ âm: `sea-g2p` (fast Vietnamese/English grapheme-to-phoneme).
+  + Giao thức truyền phát: **OpenAI-compatible Audio Speech API** (`POST /v1/audio/speech`).
+
+### 2. Tích Hợp Đầy Đủ 23 Preset Voices Trải Dài 3 Miền (Bắc - Trung - Nam)
+- Cập nhật danh mục `VIENEU_VOICES` tích hợp trọn vẹn 23 giọng đọc của VieNeu-TTS v3 Turbo:
+  + **Miền Bắc**:
+    * Nữ: `Mai Anh` (News - Báo chí/Thời sự - Default cho bài viết chi tiết), `Đoan Trang` (Tự nhiên), `Ngọc Huyền` (Tự nhiên), `Ngọc Linh` (Kể chuyện), `Quỳnh Anh` (Kể chuyện), `Trúc Ly` (Tự nhiên).
+    * Nam: `Minh Quân` (Mặc định v3 Turbo), `Minh Đức` (News), `Anh Khôi` (Kể chuyện), `Mạnh Dũng` (Tự nhiên), `Phạm Tuyên` (Tự nhiên), `Thanh Bình` (Kể chuyện), `Xuân Vĩnh` (Tự nhiên).
+  + **Miền Trung (Huế / Đà Nẵng)**:
+    * Nữ: `Ngọc Trân` (Huế Tự nhiên).
+    * Nam: `Quang Sơn` (Tự nhiên).
+  + **Miền Nam (Sài Gòn)**:
+    * Nữ: `Thùy Dung` (News - Báo chí), `Kim Thanh` (Kể chuyện), `Mỹ Duyên` (Kể chuyện), `Thục Đoan` (Kể chuyện).
+    * Nam: `Minh Triết` (News - Báo chí), `Adam` (Tự nhiên), `Thái Sơn` (Kể chuyện), `Đức Trí` (Kể chuyện).
+- Bảo toàn tuyệt đối các định danh `bac_nu` và `nam_nam` tương thích ngược 100% với các phân hệ kiểm thử cũ.
+
+### 3. Chuẩn Hóa Văn Bản Tiếng Việt & Bộ Xử Lý Biểu Cảm Cảm Xúc (Emotion Cues)
+- Nâng cấp `normalizeVietnameseTextVieNeu`:
+  + Tự động làm sạch các thẻ biểu cảm cảm xúc `[cười]`, `[thở dài]`, `[hắng giọng]`, `[ngạc nhiên]` khi phát qua audio stream, ngăn chặn triệt để tình trạng đọc chữ thô "mở ngoặc vuông...".
+  + Chuẩn hóa chức danh (PGS.TS, GS.TS, UBND, CSGT, PCCC), tiền tệ (200 tỷ VND $\to$ 200 tỷ đồng, \$ $\to$ đô la Mỹ), ngày giờ và số đo.
+- Hàm `buildVieNeuOpenAISpeechPayload`: Tạo payload chuẩn OpenAI format (`model: "vieneu-v3-turbo"`, `voice`, `input`, `response_format: "mp3"`, `temperature: 0.8`) kết nối trực tiếp với backend/worker phục vụ VieNeu-TTS v3 Turbo.
+- Hàm `getVieNeuTTSV3TurboSpecs`: Cung cấp siêu dữ liệu đặc tả kiến trúc mô hình chính thức.
+
+### 4. Nâng Cấp Giao Diện Điều Khiển & Trải Nghiệm Người Dùng (NewsDetailView)
+- Bổ sung huy hiệu: `VieNeu-TTS v3 Turbo • 48 kHz Studio AI (Phạm Nguyễn Ngọc Bảo)`.
+- Thiết kế bộ chọn giọng đọc thông minh gom nhóm `<optgroup>` trực quan theo 3 miền: Miền Bắc (Hà Nội), Miền Trung (Huế / Đà Nẵng), Miền Nam (Sài Gòn).
+- Khắc phục triệt để lỗi Chromium headless audio device trong `utterance.onerror`: Chuyển sang cơ chế visual simulation timing tính theo số ký tự của câu, đảm bảo tương tác Tạm dừng & Tiếp tục đọc trên `article-tts-btn` không bao giờ bị nhảy về "Nghe đọc".
+
+### 5. Kết Quả Kiểm Thử Nghiệm Thu Toàn Diện
+- `npm run test:logic`: **331/331 assertions PASS (100% ĐẠT, 0 THẤT BẠI)**.
+- `npm run build`: Thành công 100% trong 477ms, 0 lỗi TypeScript, 0 lỗi đóng gói.
+- `npm run testwebsite`: **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+- `npm run test:dashboard`: **47/47 PASS (100% ĐẠT, 0 FAIL)** trên Google Chrome thật.
+
 ## Phiên bản 1.15.0 (2026-10-15) - Khắc Phục Triệt Để Giọng Nói "Tiếp Tục Đọc" AI VieNeu-TTS (PROMPT-20261015-09 / REQ-047)
 
 ### Nâng Cấp Động Cơ Âm Thanh & Luồng Tiếp Tục Đọc (Resume / Playback Safety)

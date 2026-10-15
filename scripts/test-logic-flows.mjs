@@ -89,7 +89,9 @@ import {
   buildVieNeuAudioUrl,
   findSystemFemaleVoice,
   VIENEU_VOICES,
-  VIENEU_SPEED_OPTIONS
+  VIENEU_SPEED_OPTIONS,
+  getVieNeuTTSV3TurboSpecs,
+  buildVieNeuOpenAISpeechPayload
 } from '../src/utils/logicFlows.ts';
 
 const rootDir = process.cwd();
@@ -1066,7 +1068,35 @@ export function runAllLogicFlowTests() {
   assert(safeChunks.length >= 2, "Tách câu dài thành ít nhất 2 chunks để stream âm thanh mượt mà");
   assert(safeChunks.every(c => c.length <= 160), "Mọi chunk đều nhỏ hơn hoặc bằng 160 ký tự, tránh quá tải audio buffer");
 
-  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS: Đạt 31/31 kiểm tra bóc tách KHÔNG TIÊU ĐỀ, đọc đúng đủ Sapo, chuẩn hóa tiếng Việt, giọng nữ hệ thống & stream âm thanh Neural${colors.reset}\n`);
+  // 10. KIỂM TRA ĐẶC TẢ KIẾN TRÚC MÔ HÌNH VIENEU-TTS V3 TURBO (pnnbao-ump/VieNeu-TTS-v3-Turbo)
+  const v3TurboSpecs = getVieNeuTTSV3TurboSpecs();
+  assert(v3TurboSpecs.author.includes("Phạm Nguyễn Ngọc Bảo"), "Tác giả chuẩn xác: Phạm Nguyễn Ngọc Bảo");
+  assert(v3TurboSpecs.modelId === "pnnbao-ump/VieNeu-TTS-v3-Turbo", "Model ID chính thức: pnnbao-ump/VieNeu-TTS-v3-Turbo");
+  assert(v3TurboSpecs.sampleRate === 48000, "Chuẩn âm thanh Studio 48 kHz High-Fidelity");
+  assert(v3TurboSpecs.totalPresetVoices === 23, "Cung cấp 23 preset voices bao phủ toàn diện 3 miền");
+  assert(v3TurboSpecs.apiProtocol.includes("POST /v1/audio/speech"), "Giao thức chuẩn công nghiệp: OpenAI-compatible Audio Speech API");
+  assert(v3TurboSpecs.streamingLatencyMs === 115, "Độ trễ phát âm thanh streaming thời gian thực ~115ms");
+
+  // 11. KIỂM TRA ĐẦY ĐỦ 23 PRESET VOICES TRẢI DÀI 3 MIỀN (BẮC - TRUNG - NAM)
+  assert(VIENEU_VOICES.length >= 23, "Danh mục hỗ trợ trọn vẹn 23 preset voices của VieNeu-TTS v3 Turbo");
+  assert(VIENEU_VOICES.some(v => v.id === 'mai_anh' && v.region === 'north' && v.character === 'news'), "Có giọng Nữ Bắc Mai Anh chuẩn News Báo chí");
+  assert(VIENEU_VOICES.some(v => v.id === 'doan_trang' && v.region === 'north' && v.character === 'natural'), "Có giọng Nữ Bắc Đoan Trang Tự nhiên");
+  assert(VIENEU_VOICES.some(v => v.id === 'minh_quan' && v.region === 'north' && v.gender === 'male'), "Có giọng Nam Bắc Minh Quân chuẩn AI mặc định");
+  assert(VIENEU_VOICES.some(v => v.id === 'ngoc_tran' && v.region === 'central' && v.gender === 'female'), "Có giọng Nữ Trung Huế / Đà Nẵng Ngọc Trân");
+  assert(VIENEU_VOICES.some(v => v.id === 'quang_son' && v.region === 'central' && v.gender === 'male'), "Có giọng Nam Trung Quang Sơn Tự nhiên");
+  assert(VIENEU_VOICES.some(v => v.id === 'thuy_dung' && v.region === 'south' && v.gender === 'female' && v.character === 'news'), "Có giọng Nữ Nam Thùy Dung chuẩn News Báo chí");
+  assert(VIENEU_VOICES.some(v => v.id === 'minh_triet' && v.region === 'south' && v.gender === 'male' && v.character === 'news'), "Có giọng Nam Nam Minh Triết chuẩn News Báo chí");
+
+  // 12. KIỂM TRA TẠO PAYLOAD CHUẨN OPENAI-COMPATIBLE SPEECH API (POST /v1/audio/speech)
+  const openAIPayload = buildVieNeuOpenAISpeechPayload("Bản tin sáng nay tại Hà Nội và TP.HCM [cười] rất sôi động.", "Mai Anh", "mp3");
+  assert(openAIPayload.model === "vieneu-v3-turbo", "Model payload đúng chuẩn vieneu-v3-turbo");
+  assert(openAIPayload.voice === "Mai Anh", "Giọng đọc được truyền đúng tham số");
+  assert(openAIPayload.response_format === "mp3", "Định dạng âm thanh phản hồi mp3");
+  assert(openAIPayload.temperature === 0.8, "Nhiệt độ tối ưu 0.8 cho v3 Turbo");
+  assert(!openAIPayload.input.includes("[cười]"), "Làm sạch thẻ cảm xúc [cười] khỏi văn bản phát âm thanh chuẩn");
+  assert(openAIPayload.input.includes("Thành phố Hồ Chí Minh"), "Văn bản trong payload được chuẩn hóa tiếng Việt chuẩn mực");
+
+  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS v3 Turbo: Đạt toàn bộ kiểm tra bóc tách KHÔNG TIÊU ĐỀ, chuẩn hóa tiếng Việt, 23 Preset Voices 3 miền, đặc tả 48 kHz & OpenAI-compatible Speech API${colors.reset}\n`);
 
 
 

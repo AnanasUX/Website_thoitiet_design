@@ -1987,8 +1987,27 @@
            .replace(/\$(\d+)/g, "$1 đô la Mỹ")
            .replace(/(\d+)\/(\d+)\/(\d{4})/g, "ngày $1 tháng $2 năm $3")
            .replace(/(\d+)°C\b/gi, "$1 độ C")
-           .replace(/(\d+)\s*km\/h\b/gi, "$1 ki lô mét một giờ");
+           .replace(/(\d+)\s*km\/h\b/gi, "$1 ki lô mét một giờ")
+           .replace(/\[(?:cười|thở dài|hắng giọng)\]/gi, " ");
       return s;
+    },
+    getVieNeuTTSV3TurboSpecs() {
+      return {
+        author: "Phạm Nguyễn Ngọc Bảo (pnnbao-ump / pnnbao97)",
+        modelId: "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+        sampleRate: 48000,
+        totalPresetVoices: 23,
+        apiProtocol: "OpenAI-compatible POST /v1/audio/speech"
+      };
+    },
+    buildVieNeuOpenAISpeechPayload(text, voiceName = "Mai Anh") {
+      return {
+        model: "vieneu-v3-turbo",
+        input: this.normalizeVietnameseTextVieNeu(text),
+        voice: voiceName,
+        response_format: "mp3",
+        temperature: 0.8
+      };
     }
   };
 
@@ -2635,7 +2654,7 @@
         evidence = "Trình phát video nhúng báo chí chính thống hoạt động trơn tru, không bị lọc mất khi cào tin";
         await new Promise(r => setTimeout(r, 180));
       } else if (id === 'TC-047') {
-        // Thực thi logic AI VieNeu-TTS: TUYỆT ĐỐI BỎ TIÊU ĐỀ + Chuẩn hóa tiếng Việt
+        // Thực thi logic AI VieNeu-TTS v3 Turbo: TUYỆT ĐỐI BỎ TIÊU ĐỀ + Chuẩn hóa tiếng Việt + 48kHz specs
         const sampleArticle = {
           title: "Bão số 5 suy yếu thành áp thấp",
           description: "Sáng nay bão số 5 đã suy yếu thành áp thấp nhiệt đới.",
@@ -2644,11 +2663,17 @@
         const extracted = SystemLogicEngine.extractContentForVieNeuTTS(sampleArticle);
         assertLogic(!extracted.includes("Bão số 5 suy yếu thành áp thấp"), "VieNeu-TTS TUYỆT ĐỐI BỎ TIÊU ĐỀ");
         assertLogic(extracted.includes("Sáng nay bão số 5"), "VieNeu-TTS trích xuất Sapo mở đầu");
-        const normText = SystemLogicEngine.normalizeVietnameseTextVieNeu("Đầu tư 200 tỷ VND, PGS.TS báo cáo tại UBND TP.HCM");
+        const normText = SystemLogicEngine.normalizeVietnameseTextVieNeu("Đầu tư 200 tỷ VND, PGS.TS báo cáo tại UBND TP.HCM [cười]");
         assertLogic(normText.includes("200 tỷ đồng") && normText.includes("Phó giáo sư Tiến sĩ") && normText.includes("Ủy ban nhân dân"), "Chuẩn hóa tiếng Việt VieNeu");
+        assertLogic(!normText.includes("[cười]"), "Làm sạch emotion cue [cười]");
 
-        appendLog("LOGIC-ASSERT", "✅ AI VieNeu-TTS: TUYỆT ĐỐI BỎ TIÊU ĐỀ (0% đọc tiêu đề) + Chuẩn hóa chức danh PGS.TS, tiền tệ tỷ VND");
-        evidence = "Động cơ AI VieNeu-TTS đọc bài báo tiếng Việt tự nhiên, chuẩn hóa văn bản và tuyệt đối không tính tiêu đề";
+        const v3Specs = SystemLogicEngine.getVieNeuTTSV3TurboSpecs();
+        assertLogic(v3Specs.sampleRate === 48000 && v3Specs.totalPresetVoices === 23, "VieNeu-TTS v3 Turbo: 48 kHz và 23 preset voices");
+        const openAIPayload = SystemLogicEngine.buildVieNeuOpenAISpeechPayload("Bản tin hôm nay", "Mai Anh");
+        assertLogic(openAIPayload.model === "vieneu-v3-turbo" && openAIPayload.voice === "Mai Anh", "Chuẩn giao thức OpenAI Audio Speech API");
+
+        appendLog("LOGIC-ASSERT", "✅ AI VieNeu-TTS v3 Turbo: BỎ TIÊU ĐỀ + Chuẩn hóa tiếng Việt + 48 kHz Studio + 23 Preset Voices 3 miền + OpenAI-compatible API");
+        evidence = "Động cơ AI VieNeu-TTS v3 Turbo (48 kHz Studio, 23 giọng đọc 3 miền, OpenAI-compatible API) bóc tách toàn bộ bài viết và tuyệt đối không tính tiêu đề";
         await new Promise(r => setTimeout(r, 200));
       } else if (id === 'TC-020') {
         appendLog("AUTOMATION", "Lệnh tự động /testwebsite (Playwright Chrome E2E) kiểm thử thực tế toàn bộ hệ thống");

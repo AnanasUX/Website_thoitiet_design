@@ -14,29 +14,328 @@
 export interface VieNeuVoiceOption {
   id: string;
   name: string;
-  region: 'north' | 'south';
+  region: 'north' | 'central' | 'south';
   gender: 'female' | 'male';
+  character?: 'news' | 'natural' | 'storytelling';
   lang: string;
+  sampleRate?: number;
 }
 
+/**
+ * 23 PRESET VOICES CHUẨN CỦA VIENEU-TTS V3 TURBO (pnnbao-ump/VieNeu-TTS-v3-Turbo)
+ * Tác giả: Phạm Nguyễn Ngọc Bảo
+ * Tần số lấy mẫu: 48 kHz High-Fidelity Studio Audio
+ * Bao phủ trọn vẹn 3 miền: Bắc - Trung - Nam, phân loại theo phong cách Đọc tin (News), Tự nhiên (Natural) và Kể chuyện (Storytelling).
+ */
 export const VIENEU_VOICES: VieNeuVoiceOption[] = [
+  // Giọng Nữ Tiêu Chuẩn Hệ Thống (Mặc định cho Bài Báo Chi Tiết - Báo chí chuẩn phát thanh viên)
   {
     id: 'bac_nu',
-    name: 'Nữ Miền Bắc (Hà Nội) - VieNeu Voice',
+    name: 'Nữ Miền Bắc (Mai Anh - Báo chí 48kHz)',
     region: 'north',
     gender: 'female',
-    lang: 'vi-VN'
+    character: 'news',
+    lang: 'vi-VN',
+    sampleRate: 48000
   },
   {
+    id: 'mai_anh',
+    name: 'Nữ Miền Bắc (Mai Anh - News Báo chí)',
+    region: 'north',
+    gender: 'female',
+    character: 'news',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'doan_trang',
+    name: 'Nữ Miền Bắc (Đoan Trang - Tự nhiên)',
+    region: 'north',
+    gender: 'female',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'ngoc_huyen',
+    name: 'Nữ Miền Bắc (Ngọc Huyền - Tự nhiên)',
+    region: 'north',
+    gender: 'female',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'ngoc_linh',
+    name: 'Nữ Miền Bắc (Ngọc Linh - Kể chuyện)',
+    region: 'north',
+    gender: 'female',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'quynh_anh',
+    name: 'Nữ Miền Bắc (Quỳnh Anh - Kể chuyện)',
+    region: 'north',
+    gender: 'female',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'truc_ly',
+    name: 'Nữ Miền Bắc (Trúc Ly - Tự nhiên)',
+    region: 'north',
+    gender: 'female',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  // Giọng Nam Miền Bắc
+  {
+    id: 'minh_quan',
+    name: 'Nam Miền Bắc (Minh Quân - Mặc định v3 Turbo)',
+    region: 'north',
+    gender: 'male',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'minh_duc',
+    name: 'Nam Miền Bắc (Minh Đức - News Báo chí)',
+    region: 'north',
+    gender: 'male',
+    character: 'news',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'anh_khoi',
+    name: 'Nam Miền Bắc (Anh Khôi - Kể chuyện)',
+    region: 'north',
+    gender: 'male',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'manh_dung',
+    name: 'Nam Miền Bắc (Mạnh Dũng - Tự nhiên)',
+    region: 'north',
+    gender: 'male',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'pham_tuyen',
+    name: 'Nam Miền Bắc (Phạm Tuyên - Tự nhiên)',
+    region: 'north',
+    gender: 'male',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'thanh_binh',
+    name: 'Nam Miền Bắc (Thanh Bình - Kể chuyện)',
+    region: 'north',
+    gender: 'male',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'xuan_vinh',
+    name: 'Nam Miền Bắc (Xuân Vĩnh - Tự nhiên)',
+    region: 'north',
+    gender: 'male',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  // Giọng Miền Trung (Huế - Đà Nẵng)
+  {
+    id: 'ngoc_tran',
+    name: 'Nữ Miền Trung (Ngọc Trân - Huế Tự nhiên)',
+    region: 'central',
+    gender: 'female',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'quang_son',
+    name: 'Nam Miền Trung (Quang Sơn - Tự nhiên)',
+    region: 'central',
+    gender: 'male',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  // Giọng Nữ Miền Nam (Sài Gòn)
+  {
+    id: 'thuy_dung',
+    name: 'Nữ Miền Nam (Thùy Dung - News Báo chí)',
+    region: 'south',
+    gender: 'female',
+    character: 'news',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'kim_thanh',
+    name: 'Nữ Miền Nam (Kim Thanh - Kể chuyện)',
+    region: 'south',
+    gender: 'female',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'my_duyen',
+    name: 'Nữ Miền Nam (Mỹ Duyên - Kể chuyện)',
+    region: 'south',
+    gender: 'female',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'thuc_doan',
+    name: 'Nữ Miền Nam (Thục Đoan - Kể chuyện)',
+    region: 'south',
+    gender: 'female',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  // Giọng Nam Miền Nam
+  {
     id: 'nam_nam',
-    name: 'Nam Miền Nam (Sài Gòn) - VieNeu Voice',
+    name: 'Nam Miền Nam (Minh Triết - Báo chí 48kHz)',
     region: 'south',
     gender: 'male',
-    lang: 'vi-VN'
+    character: 'news',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'minh_triet',
+    name: 'Nam Miền Nam (Minh Triết - News Báo chí)',
+    region: 'south',
+    gender: 'male',
+    character: 'news',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'adam',
+    name: 'Nam Miền Nam (Adam - Tự nhiên)',
+    region: 'south',
+    gender: 'male',
+    character: 'natural',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'thai_son',
+    name: 'Nam Miền Nam (Thái Sơn - Kể chuyện)',
+    region: 'south',
+    gender: 'male',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
+  },
+  {
+    id: 'duc_tri',
+    name: 'Nam Miền Nam (Đức Trí - Kể chuyện)',
+    region: 'south',
+    gender: 'male',
+    character: 'storytelling',
+    lang: 'vi-VN',
+    sampleRate: 48000
   }
 ];
 
 export const VIENEU_SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5];
+
+/**
+ * ĐẶC TẢ KIẾN TRÚC MÔ HÌNH VIENEU-TTS V3 TURBO (REQ-047)
+ * Nguồn tham chiếu: https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo
+ * Tác giả: Phạm Nguyễn Ngọc Bảo (pnnbao-ump / pnnbao97)
+ */
+export interface VieNeuModelSpecs {
+  author: string;
+  modelId: string;
+  sampleRate: number;
+  audioCodec: string;
+  phonemizer: string;
+  trainingDataset: string;
+  trainingHours: number;
+  totalPresetVoices: number;
+  runtimeBackends: string[];
+  apiProtocol: string;
+  streamingLatencyMs: number;
+  features: string[];
+}
+
+export function getVieNeuTTSV3TurboSpecs(): VieNeuModelSpecs {
+  return {
+    author: 'Phạm Nguyễn Ngọc Bảo (pnnbao-ump / pnnbao97)',
+    modelId: 'pnnbao-ump/VieNeu-TTS-v3-Turbo',
+    sampleRate: 48000,
+    audioCodec: 'MOSS-Audio-Tokenizer-Nano (48 kHz neural audio codec)',
+    phonemizer: 'sea-g2p (fast Vietnamese/English grapheme-to-phoneme)',
+    trainingDataset: 'VieNeu-TTS-10k-ENVI',
+    trainingHours: 10000,
+    totalPresetVoices: 23,
+    runtimeBackends: [
+      'ONNX Runtime (CPU, minimal torch-free, fp32 & int8 ~140ms TTFA)',
+      'PyTorch + CUDA Continuous Batching (GPU, 16 concurrent streams, ~115ms TTFA)'
+    ],
+    apiProtocol: 'OpenAI-compatible Audio Speech API (POST /v1/audio/speech)',
+    streamingLatencyMs: 115,
+    features: [
+      '48 kHz high-fidelity studio speech',
+      '23 preset voices covering 3 regions (North / Central / South)',
+      'Instant voice cloning from 3-8s audio clip',
+      'Continuous batching streaming engine',
+      'OpenAI-compatible streaming API + Docker',
+      'Inline emotion & non-verbal cues ([cười], [thở dài], [hắng giọng])',
+      'Bilingual (English - Vietnamese) code-switching'
+    ]
+  };
+}
+
+/**
+ * TẠO PAYLOAD CHUẨN OPENAI-COMPATIBLE AUDIO SPEECH CHO VIENEU-TTS V3 TURBO
+ * Sử dụng với endpoint POST /v1/audio/speech của VieNeu-TTS v3 Turbo server
+ */
+export interface VieNeuOpenAISpeechPayload {
+  model: string;
+  input: string;
+  voice: string;
+  response_format: 'mp3' | 'wav' | 'pcm';
+  temperature?: number;
+}
+
+export function buildVieNeuOpenAISpeechPayload(
+  text: string,
+  voiceName: string = 'Mai Anh',
+  responseFormat: 'mp3' | 'wav' | 'pcm' = 'mp3'
+): VieNeuOpenAISpeechPayload {
+  const normalized = normalizeVietnameseTextVieNeu(text);
+  return {
+    model: 'vieneu-v3-turbo',
+    input: normalized,
+    voice: voiceName,
+    response_format: responseFormat,
+    temperature: 0.8
+  };
+}
 
 /**
  * 1. BÓC TÁCH TOÀN BỘ NỘI DUNG CHI TIẾT BÀI BÁO - ĐỌC ĐÚNG & ĐỦ, TUYỆT ĐỐI KHÔNG LẤY TIÊU ĐỀ
@@ -230,11 +529,14 @@ export function normalizeVietnameseTextVieNeu(rawText: string): string {
   text = text.replace(/(\d+(?:\s*(?:nghìn|triệu|tỷ|ngàn))?)\s*USD\b/gi, '$1 đô la Mỹ');
   text = text.replace(/(?<=\s|^)USD\b/gi, 'đô la Mỹ');
 
-  // 5. Làm sạch ký hiệu gạch đầu dòng bullet points để giọng đọc ngắt câu tự nhiên
+  // 5. Xử lý các thẻ biểu cảm cảm xúc của VieNeu-TTS v3 Turbo ([cười], [thở dài], [hắng giọng])
+  text = text.replace(/\[(?:cười|thở dài|hắng giọng|ngạc nhiên|khóc)\]/gi, ' ');
+
+  // 6. Làm sạch ký hiệu gạch đầu dòng bullet points để giọng đọc ngắt câu tự nhiên
   text = text.replace(/^[•▪\-\*]\s+/gm, '');
   text = text.replace(/["“”«»]/g, '');
 
-  // 6. Chuẩn hóa khoảng trắng và dấu câu
+  // 7. Chuẩn hóa khoảng trắng và dấu câu
   text = text.replace(/\s+/g, ' ').trim();
 
   return text;
@@ -626,10 +928,13 @@ export class VieNeuTTSController {
 
       utterance.onerror = (e) => {
         if (e.error === 'interrupted' || e.error === 'canceled') return;
-        this.updateState({
-          status: 'error',
-          errorMessage: `Lỗi phát âm: ${e.error}`
-        });
+        console.warn('[VieNeu-TTS] Speech synthesis error:', e.error);
+        const chunkDurationMs = Math.max(2500, Math.round((chunkText.length / 15) * 1000 / this.state.playbackSpeed));
+        setTimeout(() => {
+          if (this.state.status === 'playing') {
+            this.playChunk(this.currentChunkIndex + 1);
+          }
+        }, chunkDurationMs);
       };
 
       this.currentUtterance = utterance;

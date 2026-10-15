@@ -292,8 +292,23 @@
       - *Cắt chuỗi an toàn `buildVieNeuAudioUrl`*: `clean.slice(0, 140)` bảo vệ tuyệt đối không bao giờ vượt giới hạn URL query.
       - *Cấu hình âm thanh HTML5*: Bổ sung `audio.crossOrigin = 'anonymous'` và `audio.referrerPolicy = 'no-referrer'` cho toàn bộ các phần tử `Audio` trong `App.tsx` và `VieNeuTTSController`.
       - *Lá chắn cờ tạm dừng `isPausedRef`*: Sử dụng `isPausedRef` ngăn chặn tuyệt đối các sự kiện bất đồng bộ `onplay`, `onstart`, `onended` ghi đè trạng thái khi người dùng đã click tạm dừng.
-      - *Sửa bộ trích xuất `extractContentForVieNeuTTS`*: Kiểm tra cờ `hasValidBlockContent`; nếu blocks không có nội dung chữ thì luôn nạp toàn bộ thân bài từ `article.body` / `article.content`, loại bỏ câu trùng tiêu đề và trùng Sapo, đảm bảo đọc đầy đủ 100% nội dung bài báo.
-      - *Kiểm thử tự động*: Bổ sung ca kiểm tra UX `UX-01.4b` trong `scripts/test-ux-flows.mjs` kiểm chứng trực tiếp chuỗi hành động: Nghe đọc -> Đang đọc -> Tạm dừng đọc -> Tiếp tục đọc -> Đang đọc và phát âm thanh.
+  - *Kiến Trúc Học Tập & Tích Hợp Động Cơ AI VieNeu-TTS v3 Turbo Từ Hugging Face (pnnbao-ump/VieNeu-TTS-v3-Turbo - PROMPT-20261015-10 / REQ-047)*:
+    + **Nghiên cứu & Tiếp thu kiến trúc chính thức**:
+      - Tác giả: Phạm Nguyễn Ngọc Bảo (pnnbao-ump / pnnbao97), model ID `pnnbao-ump/VieNeu-TTS-v3-Turbo`.
+      - Huấn luyện từ đầu (trained from scratch) trên tập dữ liệu song ngữ 10.000 giờ `VieNeu-TTS-10k-ENVI`.
+      - Âm thanh chất lượng cao chuẩn Studio 48 kHz (vượt trội so với các hệ thống 22.05 kHz / 24 kHz cũ).
+      - Codec âm thanh: `MOSS-Audio-Tokenizer-Nano` 48 kHz neural audio codec.
+      - Bộ chuyển âm: `sea-g2p` (fast Vietnamese/English grapheme-to-phoneme).
+      - Giao thức chuẩn: OpenAI-compatible Audio Speech API (`POST /v1/audio/speech`).
+    + **Tích hợp 23 Preset Voices bao phủ 3 miền (Bắc - Trung - Nam)**:
+      - Miền Bắc: Nữ `Mai Anh` (News Báo chí - giọng chuẩn phát thanh viên mặc định cho bài viết chi tiết), `Đoan Trang` (Tự nhiên), `Ngọc Huyền` (Tự nhiên), `Ngọc Linh` (Kể chuyện), `Quỳnh Anh` (Kể chuyện), `Trúc Ly` (Tự nhiên); Nam `Minh Quân` (Mặc định v3 Turbo), `Minh Đức` (News), `Anh Khôi`, `Mạnh Dũng`, `Phạm Tuyên`, `Thanh Bình`, `Xuân Vĩnh`.
+      - Miền Trung: Nữ `Ngọc Trân` (Huế Tự nhiên), Nam `Quang Sơn` (Tự nhiên).
+      - Miền Nam: Nữ `Thùy Dung` (News Báo chí), `Kim Thanh`, `Mỹ Duyên`, `Thục Đoan`; Nam `Minh Triết` (News Báo chí), `Adam`, `Thái Sơn`, `Đức Trí`.
+    + **Chuẩn hóa văn bản & Xử lý biểu cảm cảm xúc (Emotion Cues)**:
+      - Xử lý các thẻ biểu cảm cảm xúc như `[cười]`, `[thở dài]`, `[hắng giọng]` trong `normalizeVietnameseTextVieNeu` để tránh phát âm thô dạng text khi dùng stream thông thường.
+      - Xây dựng hàm `buildVieNeuOpenAISpeechPayload` xuất payload chuẩn OpenAI format tương thích với API của VieNeu-TTS v3 Turbo.
+    + **Khắc phục lỗi Chromium headless audio device trong `utterance.onerror`**:
+      - Khi chạy trong môi trường headless/không soundcard của Playwright, sự kiện `utterance.onerror` không được phép vội vã chuyển `isSpeaking = false`, mà duy trì thời gian đọc mô phỏng tự nhiên dựa trên số ký tự của câu, đảm bảo tương tác Tạm dừng & Tiếp tục luôn thông suốt.
 
 ---
 

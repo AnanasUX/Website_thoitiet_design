@@ -995,12 +995,16 @@ export {
   findSystemFemaleVoice,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS,
-  VieNeuTTSController
+  VieNeuTTSController,
+  getVieNeuTTSV3TurboSpecs,
+  buildVieNeuOpenAISpeechPayload
 } from './vieneuTTS.ts';
 
 export type {
   VieNeuVoiceOption,
-  VieNeuPlayerState
+  VieNeuPlayerState,
+  VieNeuModelSpecs,
+  VieNeuOpenAISpeechPayload
 } from './vieneuTTS.ts';
 
 
