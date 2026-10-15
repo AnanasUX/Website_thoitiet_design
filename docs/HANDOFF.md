@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `d556d39` (`test(qa): update release audit screenshots evidence`)
+- **Commit gần nhất**: `a77754a` (`feat(tts): implement dual-engine VieNeu-TTS with neural audio stream and web speech fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & VieNeu-TTS AI Nữ)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
