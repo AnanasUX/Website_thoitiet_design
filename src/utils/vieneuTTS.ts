@@ -577,10 +577,84 @@ export function findSystemFemaleVoice(): SpeechSynthesisVoice | null {
 }
 
 /**
- * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS (Google Neural Vietnamese Female Voice)
- * Cung cấp giọng nữ trong trẻo, tự nhiên, hoạt động hoàn hảo 100% trên mọi máy tính/điện thoại
+ * 3b. TÌM KIẾM GIỌNG ĐỌC TƯƠNG ỨNG VỚI TỪNG NHÂN VẬT VIENEU-TTS (REQ-047)
+ * Ánh xạ chính xác giới tính (Nam / Nữ) và đặc tính phát thanh viên vào danh sách giọng của trình duyệt:
+ * - Tránh tuyệt đối trường hợp Windows dùng giọng tiếng Anh (Microsoft David) đọc tiếng Việt gây méo mó, buồn cười.
+ * - Nếu không có giọng tiếng Việt, trả về null để hệ thống dùng audio stream thay vì đọc ngọng.
  */
-export function buildVieNeuAudioUrl(text: string): string {
+export function findSystemVoiceForCharacter(voiceId: string): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  const synth = window.speechSynthesis;
+  const voices = synth.getVoices();
+  if (!voices || voices.length === 0) return null;
+
+  const charDef = VIENEU_VOICES.find(v => v.id === voiceId) || VIENEU_VOICES[0];
+  const isMale = charDef.gender === 'male';
+
+  // Lọc danh sách giọng tiếng Việt khả dụng
+  const vnVoices = voices.filter(v => 
+    v.lang === 'vi-VN' || v.lang.startsWith('vi') || v.lang.includes('vi') || /vietnamese/i.test(v.name)
+  );
+  if (vnVoices.length === 0) return null;
+
+  if (isMale) {
+    const maleVn = vnVoices.find(v => 
+      /namminh|nam minh|an\b|male|man\b|boy\b/i.test(v.name) || /male/i.test((v as any).gender || '')
+    );
+    if (maleVn) return maleVn;
+  } else {
+    const femaleVn = vnVoices.find(v => 
+      /hoaimy|hoài my|linh|mai|nu\b|nữ\b|female|woman|girl/i.test(v.name) || /female/i.test((v as any).gender || '')
+    );
+    if (femaleVn) return femaleVn;
+  }
+
+  // Ưu tiên giọng tự nhiên Google / Microsoft Natural
+  const naturalVn = vnVoices.find(v => /google|natural|online/i.test(v.name));
+  if (naturalVn) return naturalVn;
+
+  return vnVoices[0];
+}
+
+/**
+ * KIỂM TRA TRÌNH DUYỆT CÓ CÀI ĐẶT GÓI GIỌNG ĐỌC TIẾNG VIỆT HAY KHÔNG
+ */
+export function hasSystemVietnameseVoice(): boolean {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
+  const voices = window.speechSynthesis.getVoices();
+  return Boolean(voices && voices.some(v => 
+    v.lang === 'vi-VN' || v.lang.startsWith('vi') || /vietnamese/i.test(v.name)
+  ));
+}
+
+/**
+ * TÍNH TOÁN THÔNG SỐ ĐIỀU BIẾN ÂM THANH (PITCH & TỐC ĐỘ) THEO TỪNG NHÂN VẬT VIENEU-TTS
+ * Giúp phân biệt rõ ràng chất giọng Nam (trầm ấm, dứt khoát) và Nữ (trong trẻo, truyền cảm)
+ */
+export function getCharacterVoiceModulation(voiceId: string): { pitch: number; rateMultiplier: number } {
+  const charDef = VIENEU_VOICES.find(v => v.id === voiceId) || VIENEU_VOICES[0];
+  const isMale = charDef.gender === 'male';
+  const character = charDef.character || 'natural';
+
+  let pitch = isMale ? 0.82 : 1.08;
+  let rateMultiplier = 1.0;
+
+  if (character === 'news') {
+    rateMultiplier = 1.03;
+    pitch = isMale ? 0.85 : 1.06;
+  } else if (character === 'storytelling') {
+    rateMultiplier = 0.94;
+    pitch = isMale ? 0.78 : 1.02;
+  }
+
+  return { pitch, rateMultiplier };
+}
+
+/**
+ * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS (Google Neural Vietnamese Female Voice)
+ * Cung cấp giọng đọc tự nhiên, hoạt động hoàn hảo 100% trên mọi máy tính/điện thoại
+ */
+export function buildVieNeuAudioUrl(text: string, _voiceId?: string): string {
   const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
   return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;

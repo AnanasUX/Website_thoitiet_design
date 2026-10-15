@@ -92,6 +92,7 @@
 | PROMPT-20261015-07 | 2026-10-15 | Chức năng "Chạy Kiểm Thử Toàn Hệ Thống" vẫn chỉ điều chỉnh giao diện thôi việc này vẫn chỉ là test Ui bên ngoài còn luồng logic UX mong muốn thì hệ thống chưa xử lý được . | REQ-022, REQ-023, REQ-024 | None | Approved |
 | PROMPT-20261015-09 | 2026-10-15 | Tập trung chỉ xử lý giọng nói `<div data-testid="article-tts-btn" role="button" tabindex="0" title="Tiếp tục đọc" ...>...<span>Tiếp tục</span></div>` hiện tại đã chạy đâu | REQ-047 | None | Approved |
 | PROMPT-20261015-10 | 2026-10-15 | Đây là cách thức làm để tạo được giọng đọc thì hệ thống phải chuyển hóa thông tin từ việc chuyển text từ văn bản của bài viết để có thể thành giọng đọc máy. Cách thức thực hiện thì hệ thống sẽ học và tích hợp vào. https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo | REQ-047 | None | Approved |
+| PROMPT-20261015-11 | 2026-10-15 | Giọng AI áp dụng vào đâu trên hệ thống mà tôi vẫn thấy đọc rất buồn cười chưa có giọng đọc của 1 nhân vật nào trong thông tin trên | REQ-047 | None | Approved |
 
 
 

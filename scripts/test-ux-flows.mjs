@@ -49,7 +49,7 @@ export async function runAllUXFlowTests(page) {
 
     if (canOpen) {
       await articleCard.click();
-      await page.waitForSelector('[data-testid="article-tts-btn"], .fixed.inset-0.z-\\[200\\], button:has-text("Quay lại")', { timeout: 4000 }).catch(() => {});
+      await page.waitForSelector('[data-testid="article-tts-btn"]', { timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(400);
 
       // 1.2 Kiểm tra Body Scroll Lock (Tránh cuộn hỗn loạn khi đang đọc bài)

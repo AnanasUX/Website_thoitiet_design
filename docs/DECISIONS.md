@@ -309,6 +309,13 @@
       - Xây dựng hàm `buildVieNeuOpenAISpeechPayload` xuất payload chuẩn OpenAI format tương thích với API của VieNeu-TTS v3 Turbo.
     + **Khắc phục lỗi Chromium headless audio device trong `utterance.onerror`**:
       - Khi chạy trong môi trường headless/không soundcard của Playwright, sự kiện `utterance.onerror` không được phép vội vã chuyển `isSpeaking = false`, mà duy trì thời gian đọc mô phỏng tự nhiên dựa trên số ký tự của câu, đảm bảo tương tác Tạm dừng & Tiếp tục luôn thông suốt.
+    + **Xóa bỏ hiện tượng đọc méo mó "buồn cười", chặn ép giọng tiếng Anh và đồng bộ 23 nhân vật VieNeu-TTS**:
+      - *Hiện tượng*: Khi audio dính lỗi CORS (`crossOrigin = 'anonymous'`), hệ thống văng vào `fallbackToSynth()`. Trên các hệ điều hành Windows mặc định chỉ có 3 giọng tiếng Anh (`Microsoft David`, `Mark`, `Zira`). Khi gán chuỗi tiếng Việt cho `speechSynthesis` mà không có giọng tiếng Việt, Windows tự động ép giọng US `Microsoft David` đánh vần từng từ tiếng Việt bằng ngữ điệu Mỹ, phát ra âm thanh robot méo mó rất buồn cười.
+      - *Giải pháp 3 lớp bảo vệ*:
+        1. Gỡ bỏ `crossOrigin = 'anonymous'` trên thẻ `<audio>` để trình duyệt stream trực tiếp âm thanh tiếng Việt mượt mà qua audio element, không bị lỗi CORS chặn.
+        2. Bổ sung `hasSystemVietnameseVoice()` và `findSystemVoiceForCharacter(voiceId)`: Nếu máy tính người dùng hoàn toàn không cài gói ngôn ngữ tiếng Việt (chỉ có giọng US/UK), **TUYỆT ĐỐI CHẶN KHÔNG CHO PHÁT GIỌNG TIẾNG ANH ĐỌC TIẾNG VIỆT**, chỉ chạy bộ đếm nhịp visual an toàn hoặc chuyển tiếp sang stream backend.
+        3. Bổ sung `getCharacterVoiceModulation(voiceId)`: Tự động điều biến cao độ âm thanh (Pitch: $0.78 - 0.85$ cho giọng Nam trầm ấm, $1.05 - 1.12$ cho giọng Nữ trong trẻo) và tốc độ phát thanh theo từng nhân vật trong 23 preset voices.
+        4. Cung cấp dịch vụ backend Python `scripts/vieneu_service.py` chuẩn OpenAI `POST /v1/audio/speech` để nạp trực tiếp mô hình nơ-ron VieNeu-TTS v3 Turbo 48 kHz khi người dùng muốn chạy AI thật cục bộ.
 
 ---
 

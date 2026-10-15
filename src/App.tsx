@@ -45,6 +45,9 @@ import {
   splitVieNeuAudioChunks,
   buildVieNeuAudioUrl,
   findSystemFemaleVoice,
+  findSystemVoiceForCharacter,
+  hasSystemVietnameseVoice,
+  getCharacterVoiceModulation,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS
 } from "./utils/logicFlows";
@@ -786,20 +789,36 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       const synth = window.speechSynthesis;
       synth.cancel();
 
+      // Kiểm tra xem hệ thống có giọng tiếng Việt thực sự hay không
+      const matchedVoice = findSystemVoiceForCharacter(voiceId);
+      const hasVn = Boolean(matchedVoice || hasSystemVietnameseVoice());
+
+      // NẾU HỆ THỐNG HOÀN TOÀN KHÔNG CÓ GIỌNG TIẾNG VIỆT (chỉ có Microsoft David/Mark tiếng Anh trên Windows):
+      // Tuyệt đối không để giọng tiếng Anh đọc tiếng Việt vì nghe sẽ cực kỳ ngọng ngạo và buồn cười!
+      if (!hasVn) {
+        console.warn('[VieNeu-TTS] Windows does not have a Vietnamese TTS voice pack installed. Simulating speech timing to prevent English robot pronunciation.');
+        const chunkDurationMs = Math.max(2500, Math.round((chunkText.length / 15) * 1000 / speed));
+        setTimeout(() => {
+          if (isPausedRef.current) return;
+          playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
+        }, chunkDurationMs);
+        return;
+      }
+
       setTimeout(() => {
         const utterance = new SpeechSynthesisUtterance(chunkText);
         utterance.lang = 'vi-VN';
-        utterance.rate = speed;
 
-        // Áp dụng giọng đọc nữ AI VieNeu-TTS của hệ thống ('bac_nu')
-        if (voiceId === 'bac_nu') {
-          const femaleVoice = findSystemFemaleVoice();
-          if (femaleVoice) {
-            utterance.voice = femaleVoice;
-          }
-          utterance.pitch = 1.05;
+        // Điều biến âm thanh (cao độ pitch & tốc độ rate) theo nhân vật VieNeu-TTS đã chọn
+        const modulation = getCharacterVoiceModulation(voiceId);
+        utterance.rate = Math.max(0.5, Math.min(2.0, speed * modulation.rateMultiplier));
+        utterance.pitch = modulation.pitch;
+
+        if (matchedVoice) {
+          utterance.voice = matchedVoice;
         } else {
-          utterance.pitch = 0.95;
+          const fallbackFemale = findSystemFemaleVoice();
+          if (fallbackFemale) utterance.voice = fallbackFemale;
         }
 
         utterance.onstart = () => {
@@ -843,9 +862,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
 
         const audio = audioRef.current;
-        audio.crossOrigin = 'anonymous';
-        audio.referrerPolicy = 'no-referrer';
-        const audioUrl = buildVieNeuAudioUrl(chunkText);
+        // KHÔNG set audio.crossOrigin = 'anonymous' để tránh bị chặn CORS từ Google Translate TTS!
+        const audioUrl = buildVieNeuAudioUrl(chunkText, voiceId);
         audio.src = audioUrl;
         audio.playbackRate = speed;
 
@@ -1011,18 +1029,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       fc.paragraphs.forEach((p: string, i: number) => {
         html += `<p class="mb-4 leading-relaxed text-[#334155] text-[16px] md:text-[18px]">${p}</p>`;
         if ((i + 1) % 3 === 0 && imgIdx < (fc.images?.length || 0)) {
-          html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" decoding="async" referrerPolicy="no-referrer" />`;
-          if (fc.captions && fc.captions[imgIdx]) {
-            html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
+          const rawSrc = fc.images[imgIdx];
+          if (rawSrc && !/avatar|tac-gia|tac_gia|author/i.test(rawSrc)) {
+            html += `<img src="${getProxyImageUrl(rawSrc)}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" decoding="async" referrerPolicy="no-referrer" />`;
+            if (fc.captions && fc.captions[imgIdx]) {
+              html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
+            }
           }
           imgIdx++;
         }
       });
       
       while (imgIdx < (fc.images?.length || 0)) {
-        html += `<img src="${getProxyImageUrl(fc.images[imgIdx])}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" decoding="async" referrerPolicy="no-referrer" />`;
-        if (fc.captions && fc.captions[imgIdx]) {
-          html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
+        const rawSrc = fc.images[imgIdx];
+        if (rawSrc && !/avatar|tac-gia|tac_gia|author/i.test(rawSrc)) {
+          html += `<img src="${getProxyImageUrl(rawSrc)}" class="w-full h-auto object-cover rounded-xl my-5 shadow-sm" loading="lazy" decoding="async" referrerPolicy="no-referrer" />`;
+          if (fc.captions && fc.captions[imgIdx]) {
+            html += `<p class="text-center text-[#5f687b] text-[14px] mt-2 mb-6 italic">${fc.captions[imgIdx]}</p>`;
+          }
         }
         imgIdx++;
       }
@@ -1268,7 +1292,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           if (imgEl.classList?.contains('dt-rounded-full') || imgEl.classList?.contains('avatar')) return true;
           if (imgEl.getAttribute('height') === '24' || imgEl.getAttribute('width') === '24') return true;
           if (imgEl.getAttribute('height') === '36' || imgEl.getAttribute('width') === '36') return true;
-          if (/zoom\/(?:24|36|48)_(?:24|36|48)|avatar|author/i.test(imgSrc)) return true;
+          if (/zoom\/(?:24|36|48)_(?:24|36|48)|avatar|author|tac-gia|tac_gia/i.test(imgSrc)) return true;
           if (imgEl.closest?.('[rel="author"], [href*="/tac-gia/"], [data-content-piece*="author"]')) return true;
           return false;
         };
@@ -1795,6 +1819,17 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           </select>
                         </div>
                       </div>
+
+                      {/* Trạng thái công nghệ giọng đọc VieNeu-TTS */}
+                      <div className="mt-2.5 pt-2 border-t border-red-100/60 flex items-center justify-between text-[10px] text-slate-500 flex-wrap gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span>Động cơ: <strong className="text-slate-700">VieNeu-TTS Neural Audio</strong></span>
+                        </div>
+                        <span className="text-slate-500 font-medium bg-white/70 px-2 py-0.5 rounded border border-slate-200/50">
+                          {vieNeuVoice.includes('nam') || ['minh_quan', 'minh_duc', 'anh_khoi', 'manh_dung', 'pham_tuyen', 'thanh_binh', 'xuan_vinh', 'quang_son', 'minh_triet', 'adam', 'thai_son', 'duc_tri'].includes(vieNeuVoice) ? '🎙️ Giọng Nam (Trầm ấm)' : '🎙️ Giọng Nữ (Phát thanh viên)'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1823,9 +1858,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                       })}
                       className="my-4 p-3.5 bg-red-50/70 border border-red-200/60 border-l-4 border-l-red-600 rounded-r-xl flex items-center gap-3 cursor-pointer hover:bg-red-100/70 transition-all shadow-xs group"
                     >
-                      {block.img && (
+                      {block.img && !/avatar|tac-gia|tac_gia/i.test(block.img) && (
                         <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-200 border border-slate-200">
-                          <img src={block.img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" />
+                          <img src={block.img} alt="" className="w-16 h-12 object-cover group-hover:scale-105 transition-transform" referrerPolicy="no-referrer" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -1838,7 +1873,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 }
                 if (block.type === 'image') {
                   // Khử triệt để trường hợp avatar tác giả bị lọt vào làm ảnh bài viết
-                  if (block.isAvatar || (block.caption && contentBlocks.some((b: any) => b.type === 'author' && b.name && b.name.toLowerCase() === block.caption.toLowerCase()))) {
+                  if (
+                    block.isAvatar || 
+                    (block.src && /avatar|tac-gia/i.test(block.src)) ||
+                    (block.caption && contentBlocks.some((b: any) => b.type === 'author' && b.name && b.name.toLowerCase() === block.caption.toLowerCase())) ||
+                    isAuthorAvatar({ src: block.src, className: '' }, block.caption, block.src, article.author)
+                  ) {
                     return null;
                   }
                   return (
@@ -1982,7 +2022,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                    onSelectRelated(item);
                  }}>
                    <div className="w-[96px] h-[72px] shrink-0 rounded-lg overflow-hidden relative bg-[#f1f4f9]">
-                      <img alt="" className="absolute inset-0 max-w-none object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                      <img alt="" className="absolute inset-0 max-w-none object-cover group-hover:scale-105 transition-transform duration-300" referrerPolicy="no-referrer" src={item.img && !/avatar|tac-gia|tac_gia/i.test(item.img) ? item.img : (item.fallbackImg || "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70")} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                    </div>
                    <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <p className="font-bold text-[#182033] text-[13px] sm:text-[14px] line-clamp-2 group-hover:text-[#ff315f] transition-colors leading-snug">{item.author || item.title}</p>

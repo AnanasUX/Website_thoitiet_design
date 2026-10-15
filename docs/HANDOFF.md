@@ -2,7 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `4b97c3b` (`feat(tts): integrate VieNeu-TTS v3 Turbo 48kHz architecture and 23 preset voices`)
+- **Phiên bản**: `1.17.0`
+- **Commit gần nhất**: Đang chuẩn bị commit (`fix(tts): eliminate robotic English voice, match VieNeu characters, and prevent CORS errors`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & Kiến Trúc AI VieNeu-TTS v3 Turbo 48 kHz Studio)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
@@ -18,7 +19,7 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS v3 Turbo AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 331/331 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS v3 Turbo AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 337/337 assertions logic passed (100% PASS).
   + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS v3 Turbo AI và Auto-Dispatch của Antigravity Copilot.
   + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.

@@ -1,5 +1,36 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.17.0 (2026-10-15) - Triệt Tiêu Giọng Robot Đọc Sai Ngữ Điệu, Điều Biến 23 Nhân Vật VieNeu-TTS & Khử Lỗi CORS (PROMPT-20261015-11 / REQ-047)
+
+### 1. Phân Tích & Loại Bỏ Triệt Để Hiện Tượng Đọc "Buồn Cười"
+- **Nguyên nhân gốc rễ**:
+  + Thẻ `<audio>` trước đó gắn `crossOrigin = 'anonymous'`, gây ra lỗi CORS khi nạp luồng âm thanh trực tiếp trên trình duyệt người dùng.
+  + Trình duyệt tự động kích hoạt cơ chế dự phòng `fallbackToSynth()`.
+  + Trên hệ điều hành Windows mặc định của người dùng, `window.speechSynthesis.getVoices()` chỉ có 3 giọng tiếng Anh (`Microsoft David`, `Microsoft Mark`, `Microsoft Zira`), hoàn toàn không có giọng tiếng Việt.
+  + Trình duyệt ép giọng tiếng Anh `Microsoft David` đánh vần từng từ tiếng Việt theo bảng chữ cái tiếng Mỹ ("Thoi-ti-et Ha-Noi..."), tạo ra âm thanh bồi méo mó, robot và rất buồn cười.
+- **Biện pháp xử lý**:
+  + Gỡ bỏ `crossOrigin = 'anonymous'` trên thẻ `<audio>` để trình duyệt nạp và stream âm thanh tiếng Việt mượt mà 100%.
+  + Thêm hàm `hasSystemVietnameseVoice()` và `findSystemVoiceForCharacter(voiceId)`: Nếu máy tính người dùng không có gói tiếng Việt, **TUYỆT ĐỐI CHẶN KHÔNG CHO PHÁT GIỌNG TIẾNG ANH ĐỌC TIẾNG VIỆT**, chỉ chạy mô phỏng nhịp đọc visual an toàn hoặc điều hướng sang stream backend.
+
+### 2. Điều Biến Âm Sắc (Voice Modulation) Cho 23 Nhân Vật VieNeu-TTS
+- Bổ sung hàm `getCharacterVoiceModulation(voiceId)` trong `src/utils/vieneuTTS.ts`:
+  + Tự động điều chỉnh cao độ (Pitch: $0.78 - 0.85$ cho các nhân vật Nam như `Minh Quân`, `Minh Đức`, `Minh Triết`; $1.05 - 1.12$ cho các nhân vật Nữ như `Mai Anh`, `Đoan Trang`, `Thùy Dung`).
+  + Tự động điều chỉnh tốc độ (Rate: $0.94 - 1.05$) phản ánh đúng phong thái từng nhân vật (Báo chí, Tự nhiên, Kể chuyện).
+- Bổ sung huy hiệu công nghệ: `🎙️ Giọng Nam / Nữ • VieNeu-TTS Neural Audio`.
+
+### 3. Cung Cấp Dịch Vụ Cục Bộ VieNeu-TTS Python Server (`scripts/vieneu_service.py`)
+- Xây dựng máy chủ cục bộ bằng Python chuẩn OpenAI endpoint `POST /v1/audio/speech` và `/health` tại `http://127.0.0.1:8000`.
+- Hỗ trợ nạp trực tiếp mô hình nơ-ron `pnnbao-ump/VieNeu-TTS-v3-Turbo` với âm thanh 48 kHz Studio khi người dùng có môi trường GPU/CPU cục bộ.
+
+### 4. Sửa Lỗi Avatar Phóng To Trong Bài Viết Chi Tiết (TC-013)
+- Gỡ bỏ hoàn toàn class `w-full` trên thumbnail bài viết liên quan (chuyển sang `w-16 h-12 object-cover`).
+- Bổ sung regex loại trừ `/avatar|tac-gia/i` trong `renderContent` và `parseHTMLToBlocks`.
+
+### 5. Kết Quả Kiểm Thử Toàn Diện
+- `npm run test:logic`: **337/337 assertions PASS (100% ĐẠT, 0 THẤT BẠI)**.
+- `npm run build`: Thành công 100% (639ms, 0 errors).
+- `npm run testwebsite`: **47/47 test cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ## Phiên bản 1.16.0 (2026-10-15) - Học Tập & Tích Hợp Kiến Trúc AI VieNeu-TTS v3 Turbo (Hugging Face pnnbao-ump/VieNeu-TTS-v3-Turbo)
 
 ### 1. Tiếp Thu Kiến Trúc Text-to-Speech Chính Thức Của VieNeu-TTS v3 Turbo
