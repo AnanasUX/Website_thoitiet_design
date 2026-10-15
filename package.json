@@ -12,6 +12,7 @@
     "format": "oxfmt",
     "qa:registry": "node scripts/validate-registry.mjs",
     "qa:dashboard": "node scripts/build-dashboard-data.mjs",
+    "test:logic": "node scripts/test-logic-flows.mjs",
     "test:dashboard": "node scripts/test-dashboard-live.mjs",
     "testwebsite": "node scripts/validate-registry.mjs && node scripts/build-dashboard-data.mjs && node scripts/testwebsite.mjs"
   },

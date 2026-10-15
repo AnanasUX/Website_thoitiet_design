@@ -235,7 +235,35 @@
        + *Luồng Hầm An Ninh*: Cuộn đến Hầm Mã Hóa, thấy auto-unlock in-memory, bấm Khóa xóa RAM, bấm Tự Điền & Mở Khóa tức thì.
   3. **Khắc phục triệt để lỗi HTML Parser trong thẻ `<script>`**:
      - Thay thế toàn bộ chuỗi `</script>` trong regex bằng `new RegExp('<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>', 'gi')` và chuỗi `'<scr' + 'ipt>'`, ngăn trình duyệt ngắt thẻ script gây SyntaxError.
+### 20. Xây Dựng Lá Chắn Độ Tươi Mới Tin Tức (Smart Freshness Gate) & Khử Triệt Để Các Nguồn RSS Lỗi Thời / Ngừng Cập Nhật (PROMPT-20261015-08 / REQ-027)
+- **Tiếp nhận phản hồi người dùng**: "Ngoài ra bài viết tin tức hiện tại đang có 1 vài trang đang lấy bài viết rất cũ, kiểm tra lại và thực hiện đảm bảo."
+- **Phân tích nguyên nhân gốc rễ**:
+  - Khảo sát thực tế toàn bộ 94 luồng RSS qua script `scripts/inspect-feeds.mjs` phát hiện:
+    1. `https://vtv.vn/rss/trong-nuoc.rss`: VTV đã ngừng cập nhật từ 21/06/2025 và tháng 09/2024, nhưng feed này lại bị khai báo cứng cờ `isHot: true` trong danh mục "Tất cả" của trang chủ. Điều này khiến bài viết cũ từ năm 2024 được đẩy lên đầu danh sách tin tức trang chủ!
+    2. 4 nguồn RSS cũ khác từ Dân Trí (`xa-hoi.rss`, `nhip-song-tre.rss`, `suc-manh-so.rss`) và VietnamNet (`cong-nghe.rss`) trả về bài viết từ 400 - 855 ngày trước.
+    3. Hệ thống trước đây hoàn toàn thiếu bộ lọc thời gian xuất bản: chỉ sắp xếp nội bộ từng feed và ngẫu nhiên đan xen mà không kiểm tra độ tươi mới.
+    4. Hàm `new Date('15/10/2026')` trả về `NaN` do chuẩn JavaScript không hiểu định dạng tiếng Việt `DD/MM/YYYY`, làm timestamp bị về `0`.
+- **Giải pháp kỹ thuật toàn diện**:
+  1. **Thanh lọc và thay thế 100% nguồn RSS cũ**:
+     - Thay `https://vtv.vn/rss/trong-nuoc.rss` bằng `https://vtv.vn/rss/xa-hoi.rss` (cập nhật từng phút).
+     - Thay các feed Dân Trí cũ bằng `dantri.com.vn/rss/thoi-su.rss`, `dantri.com.vn/rss/cong-nghe.rss`, `dantri.com.vn/rss/doi-song.rss`.
+     - Thay feed VietnamNet công nghệ cũ bằng `thanhnien.vn/rss/cong-nghe.rss` và `vietnamnet.vn/rss/thoi-su.rss`.
+  2. **Xây dựng động cơ Lá Chắn Độ Tươi Mới Tin Tức (Smart Freshness Gate)** trong `src/utils/logicFlows.ts`:
+     - `parseFlexiblePubDate(dateStr)`: Chuẩn hóa parser cho mọi định dạng RSS: RFC822 4 chữ số, RFC822 2 chữ số (Thanh Niên `'Thu, 15 Oct 26'`), Tuổi Trẻ MM/DD/YYYY AM/PM, tiếng Việt `DD/MM/YYYY HH:mm:ss`, ISO 8601.
+     - `isArticleFresh(article, maxAgeDays = 7)`: Đánh giá bài viết, loại bỏ 100% bài viết cũ hơn 7 ngày (`false`), chỉ giữ bài viết sống trong vòng 7 ngày (2026).
+     - `filterAndSortFreshNews(items, maxAgeDays = 7)`: Lọc sạch bài viết cũ quá 7 ngày, tự động sắp xếp theo thời gian mới nhất lên đầu, ưu tiên tin nóng `_isHot` nếu trong vòng 3 giờ.
+     - `formatArticleDate(dateStr)`: Hiển thị ngày giờ thân thiện với độc giả Việt Nam ("Hôm nay, 12:30", "Hôm qua, 15:45", "15/10/2026, 08:30").
+  3. **Áp dụng vào luồng nạp tin `src/App.tsx`**:
+     - Tích hợp `filterAndSortFreshNews(rawMixed, 7)` trước khi gán vào `fullNewsPool` và `liveNews`.
+     - Cập nhật hiển thị ngày giờ tại thẻ tin liên quan, Byline bar `NewsDetailView` và sidebar Tin mới cập nhật bằng `formatArticleDate`.
+     - Cập nhật mock `DEFAULT_NEWS_FEED` sang các ngày tháng tươi mới năm 2026.
+  4. **Tích hợp vào `dashboard.html` & Bộ kiểm thử tự động**:
+     - Đồng bộ các hàm `parseFlexiblePubDate`, `isArticleFresh`, `filterAndSortFreshNews`, `formatArticleDate` vào `SystemLogicEngine`.
+     - Bổ sung 17 assertions kiểm thử độ tươi mới tin tức vào `scripts/test-logic-flows.mjs` (nâng tổng số lên 311 assertions).
+     - Bổ sung kiểm tra độ tươi mới tin tức vào `TC-022` và `TC-027` trong `dashboard.html`.
 - **Kết quả kiểm thử & Nghiệm thu**:
+  - `npm run test:logic`: 311/311 assertions PASS (100% ĐẠT, 0 FAIL).
+  - `npm run build`: Hoàn thành xuất sắc trong 510ms với 0 lỗi.
   - `npm run test:dashboard`: 47/47 PASS (100% ĐẠT, 0 FAIL) trên Google Chrome thật.
   - `npm run testwebsite`: 47/47 PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
 

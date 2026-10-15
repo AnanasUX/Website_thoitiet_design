@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `afcac06` (`feat(qa-engine): integrate in-browser business logic runtime and live visual UX automation`)
+- **Commit gần nhất**: `083c17e` (`feat(news-freshness): integrate Smart Freshness Gate and purge obsolete RSS feeds`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & VieNeu-TTS AI Nữ)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
@@ -147,7 +147,21 @@
         * Luồng Dark Mode: Bật Dark Mode (toàn bộ iframe tối lại sang trọng, dừng 750ms), chuyển lại Light Mode.
         * Luồng Cuộn sâu & ScrollToTop: Cuộn sâu > 1500px, click nút `ScrollToTop` cuộn mượt về đỉnh (y=0).
         * Luồng Hầm An Ninh: Cuộn đến Hầm Mã Hóa, thấy auto-unlock in-memory, bấm Khóa xóa RAM, bấm Tự Điền & Mở Khóa tức thì.
-    - **Xác thực tự động**: `npm run test:dashboard` và `npm run testwebsite` đạt chuẩn tuyệt đối **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+18. **[REQ-027 / PROMPT-20261015-08] Xây Dựng Lá Chắn Độ Tươi Mới Tin Tức (Smart Freshness Gate) & Thanh Lọc Toàn Diện Nguồn RSS Lỗi Thời**:
+    - **Phát hiện & Khắc phục nguyên nhân gốc rễ**:
+      + Kiểm tra 94 nguồn RSS phát hiện `vtv.vn/rss/trong-nuoc.rss` dừng cập nhật từ 2024 nhưng bị gán cứng cờ `isHot: true` trong danh mục "Tất cả" của trang chủ.
+      + 4 nguồn khác của Dân Trí và VietnamNet trả về tin từ 400 - 855 ngày trước.
+      + Thay thế 100% bằng các luồng RSS đang hoạt động trực tiếp từng phút (VTV Xã hội, Dân Trí Thời sự / Công nghệ / Đời sống, Thanh Niên Công nghệ, VietnamNet Thời sự).
+    - **Động cơ Lá Chắn Độ Tươi Mới Tin Tức (Smart Freshness Gate)**:
+      + `parseFlexiblePubDate`: Chuẩn hóa thời gian phát hành từ RFC822 4 chữ số, RFC822 2 chữ số (Thanh Niên), Tuổi Trẻ MM/DD/YYYY, tiếng Việt DD/MM/YYYY, ISO 8601.
+      + `isArticleFresh`: Loại bỏ 100% bài viết cũ hơn 7 ngày (`false`), chỉ nạp bài viết mới trong vòng 7 ngày (2026).
+      + `filterAndSortFreshNews`: Sắp xếp giảm dần theo thời gian, ưu tiên tin nóng `_isHot` trong 3 giờ.
+      + `formatArticleDate`: Định dạng ngày giờ trực quan ("Hôm nay, 12:30", "Hôm qua, ...", "DD/MM/YYYY").
+    - **Kiểm thử & Nghiệm thu**:
+      + `npm run test:logic`: 311/311 assertions PASS (100% ĐẠT).
+      + `npm run build`: Thành công 100% trong 510ms.
+      + `npm run test:dashboard`: 47/47 PASS (100% ĐẠT, 0 FAIL) trên Google Chrome thật.
+      + `npm run testwebsite`: 47/47 PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
 
 ---
 

@@ -265,6 +265,144 @@ export function paginateNews<T>(pool: T[], page: number, pageSize = 10): {
   return { items, hasMore, total: pool.length };
 }
 
+/**
+ * Chuẩn hóa và parse ngày giờ phát hành bài báo linh hoạt từ nhiều định dạng RSS:
+ * - RFC822 4 chữ số: "Thu, 15 Oct 2026 12:36:39 +07:00"
+ * - RFC822 2 chữ số (Thanh Niên): "Thu, 15 Oct 26 12:39:31 +0700"
+ * - Tuổi Trẻ định dạng: "10/15/2026 11:00:00 AM"
+ * - Tiếng Việt: "15/10/2026 11:30:00" hoặc "15-10-2026"
+ * - ISO 8601: "2026-10-15T08:00:00Z"
+ * Trả về timestamp mili-giây (0 nếu không parse được).
+ */
+export function parseFlexiblePubDate(dateStr: string | null | undefined): number {
+  if (!dateStr || typeof dateStr !== 'string') return 0;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return 0;
+
+  // 1. Thử trực tiếp Date.parse
+  let ts = new Date(trimmed).getTime();
+  if (!isNaN(ts) && ts > 0) return ts;
+
+  // 2. Xử lý năm 2 chữ số trong RFC822 (ví dụ: 'Thu, 15 Oct 26 12:39:31 +0700')
+  const rfc2DigitYear = trimmed.replace(
+    /\b([A-Za-z]+),\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{2})\b/,
+    (_m, dayName, d, mName, yy) => {
+      const fullYear = parseInt(yy, 10) < 50 ? '20' + yy : '19' + yy;
+      return `${dayName}, ${d} ${mName} ${fullYear}`;
+    }
+  );
+  ts = new Date(rfc2DigitYear).getTime();
+  if (!isNaN(ts) && ts > 0) return ts;
+
+  // 3. Khớp định dạng ngày tháng tiếng Việt: DD/MM/YYYY HH:mm:ss hoặc DD-MM-YYYY
+  const vnMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+  if (vnMatch) {
+    const d = parseInt(vnMatch[1], 10);
+    const m = parseInt(vnMatch[2], 10) - 1;
+    const y = parseInt(vnMatch[3], 10);
+    const hh = parseInt(vnMatch[4] || '0', 10);
+    const mm = parseInt(vnMatch[5] || '0', 10);
+    const ss = parseInt(vnMatch[6] || '0', 10);
+    return new Date(y, m, d, hh, mm, ss).getTime();
+  }
+
+  return 0;
+}
+
+/**
+ * Kiểm tra xem một bài viết có tươi mới (trong vòng maxAgeDays ngày) hay không.
+ * Mặc định: tối đa 7 ngày tính từ thời điểm đối chiếu (refTimeMs).
+ * Nếu bài viết có ngày phát hành quá 7 ngày (hoặc từ năm 2024, 2025) -> Trả về false.
+ */
+export function isArticleFresh(
+  article: { pubDate?: string; [key: string]: any } | null | undefined,
+  maxAgeDays: number = 7,
+  referenceTimeMs: number = Date.now()
+): boolean {
+  if (!article) return false;
+  const ts = parseFlexiblePubDate(article.pubDate);
+  if (ts <= 0) {
+    // Không có ngày xuất bản -> Nếu không rõ ngày, giữ lại để không chặn nhầm tin vừa cào
+    return true;
+  }
+  const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+  // Không chấp nhận bài viết trong tương lai quá 24h (do sai lệch timezone)
+  if (ts > referenceTimeMs + 24 * 60 * 60 * 1000) return false;
+  // Loại bỏ bài viết cũ hơn ngưỡng ngày quy định
+  return (referenceTimeMs - ts) <= maxAgeMs;
+}
+
+/**
+ * Bộ lọc và sắp xếp đảm bảo 100% độ tươi mới của tin tức:
+ * 1. Triệt tiêu hoàn toàn các bài viết cũ hơn maxAgeDays (mặc định 7 ngày).
+ * 2. Sắp xếp thứ tự bài viết mới nhất lên đầu (Newest first).
+ * 3. Nếu hai bài xuất bản sát nhau (trong vòng 3 giờ), ưu tiên bài _isHot lên trước.
+ */
+export function filterAndSortFreshNews<T extends { pubDate?: string; _isHot?: boolean; [key: string]: any }>(
+  items: T[],
+  maxAgeDays: number = 7,
+  referenceTimeMs: number = Date.now()
+): T[] {
+  if (!items || !Array.isArray(items)) return [];
+  
+  // 1. Lọc bỏ các bài cũ hơn ngưỡng ngày quy định
+  const freshItems = items.filter(item => isArticleFresh(item, maxAgeDays, referenceTimeMs));
+
+  // 2. Sắp xếp thời gian giảm dần (Mới nhất lên đầu)
+  return freshItems.sort((a, b) => {
+    const timeA = parseFlexiblePubDate(a.pubDate);
+    const timeB = parseFlexiblePubDate(b.pubDate);
+
+    // Nếu thời gian chênh lệch > 3 giờ, bài mới hơn luôn xếp trước
+    if (Math.abs(timeB - timeA) > 3 * 3600 * 1000) {
+      return timeB - timeA;
+    }
+
+    // Nếu thời gian phát hành sát nhau (trong vòng 3h), ưu tiên bài tin nóng
+    if (a._isHot && !b._isHot) return -1;
+    if (!a._isHot && b._isHot) return 1;
+
+    return timeB - timeA;
+  });
+}
+
+/**
+ * Định dạng ngày giờ bài viết thân thiện với người đọc Việt Nam:
+ * - Hôm nay: "Hôm nay, 12:30"
+ * - Hôm qua: "Hôm qua, 09:15"
+ * - Khác: "15/10/2026, 12:30"
+ */
+export function formatArticleDate(
+  dateStr: string | null | undefined,
+  refTime: number = Date.now()
+): string {
+  if (!dateStr || typeof dateStr !== 'string') return 'Vừa xong';
+  const ts = parseFlexiblePubDate(dateStr);
+  if (ts <= 0) return dateStr.split('T')[0] || dateStr;
+
+  const d = new Date(ts);
+  const now = new Date(refTime);
+
+  const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
+  const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  // Kiểm tra cùng ngày
+  const isToday = d.getDate() === now.getDate() &&
+                  d.getMonth() === now.getMonth() &&
+                  d.getFullYear() === now.getFullYear();
+  if (isToday) return `Hôm nay, ${timeStr}`;
+
+  // Kiểm tra hôm qua
+  const yesterday = new Date(refTime - 24 * 60 * 60 * 1000);
+  const isYesterday = d.getDate() === yesterday.getDate() &&
+                      d.getMonth() === yesterday.getMonth() &&
+                      d.getFullYear() === yesterday.getFullYear();
+  if (isYesterday) return `Hôm qua, ${timeStr}`;
+
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // LUỒNG 4: NEWS FULL-TEXT PARSER & AVATAR GUARD FLOW
 // ─────────────────────────────────────────────────────────────────────────────

@@ -354,16 +354,16 @@
     },
     {
       "id": "REQ-027",
-      "title": "Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống, nạp vô cực & Cập nhật nền",
-      "description": "Tích hợp hơn 38 nguồn RSS báo đài lớn Việt Nam kèm proxy Worker mrkun28, cơ chế tải vô cực (InfiniteScrollTrigger) tự động nạp tiếp 15 bài từ kho pool khi cuộn đến cuối, và tự động làm mới tin sau 2 phút khi người dùng idle > 30s.",
-      "sourcePrompt": "PROMPT-20261014-13: Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống",
+      "title": "Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống, nạp vô cực, Lá chắn độ tươi mới tin tức & Cập nhật nền",
+      "description": "Tích hợp hơn 38 nguồn RSS báo đài lớn Việt Nam, loại bỏ triệt để các nguồn RSS cũ/ngừng cập nhật từ 2024/2025; áp dụng Lá chắn độ tươi mới tin tức (Smart Freshness Gate: parseFlexiblePubDate, isArticleFresh, filterAndSortFreshNews <= 7 ngày, formatArticleDate); cơ chế tải vô cực (InfiniteScrollTrigger) tự động nạp tiếp 15 bài từ kho pool khi cuộn đến cuối, và tự động làm mới tin sau 2 phút khi người dùng idle > 30s.",
+      "sourcePrompt": "PROMPT-20261014-13, PROMPT-20261015-08: Kiểm tra lại và đảm bảo tin tức luôn tươi mới, không lấy bài viết cũ",
       "priority": "P0",
       "category": "news-ingestion",
       "status": "PASS",
       "testIds": ["TC-027"],
-      "evidence": ["testwebsite.mjs:TC-027:PASS"],
+      "evidence": ["testwebsite.mjs:TC-027:PASS", "test-logic-flows.mjs:LUONG-3:PASS"],
       "owner": "Data Lead",
-      "notes": "Hơn 38 nguồn RSS, infinite scroll phân trang 15 bài và cập nhật nền thông minh"
+      "notes": "Hơn 38 nguồn RSS, Smart Freshness Gate <= 7 ngày loại bỏ bài cũ 2024/2025, infinite scroll 15 bài và cập nhật nền"
     },
     {
       "id": "REQ-028",

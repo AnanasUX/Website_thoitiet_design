@@ -263,9 +263,28 @@
     + **Lá chắn HTML Parser trong thẻ `<script>`**:
       - Không sử dụng trực tiếp chuỗi `</script>` trong regex hoặc string literal (ví dụ `new RegExp('<script\\b...<\\/script>', 'gi')` và `'<scr' + 'ipt>'`), tránh việc trình duyệt kết thúc thẻ script sớm gây lỗi `SyntaxError`.
 
+  - *Kiến Trúc Lá Chắn Độ Tươi Mới Tin Tức (Smart Freshness Gate) & Thanh Lọc Nguồn RSS Cũ (PROMPT-20261015-08 / REQ-027)*:
+    + **Xác định nguyên nhân gốc rễ (Root Cause Analysis)**:
+      - Kiểm tra toàn diện 94 luồng RSS phát hiện nguồn `https://vtv.vn/rss/trong-nuoc.rss` đã dừng cập nhật từ 21/06/2025 và tháng 09/2024, nhưng lại được gán cứng cờ `isHot: true` trong danh mục "Tất cả" của trang chủ. Điều này khiến bài viết từ năm 2024 được đưa lên đầu danh sách tin tức.
+      - 4 nguồn RSS cũ khác (Dân Trí `xa-hoi.rss`, `nhip-song-tre.rss`, `suc-manh-so.rss`, và VietnamNet `cong-nghe.rss`) trả về bài viết từ năm 2024 và đầu 2025 (400 - 855 ngày trước).
+      - Hệ thống thiếu hoàn toàn bộ lọc thời gian xuất bản: chỉ sắp xếp nội bộ từng feed và ngẫu nhiên đan xen mà không kiểm tra độ tuổi bài viết.
+      - Hàm `new Date('15/10/2026')` trả về `NaN` do chuẩn JavaScript không hiểu định dạng tiếng Việt `DD/MM/YYYY`, làm timestamp bị về `0`.
+    + **Thanh lọc và thay thế 100% nguồn RSS cũ**:
+      - Thay thế `https://vtv.vn/rss/trong-nuoc.rss` bằng `https://vtv.vn/rss/xa-hoi.rss` (cập nhật từng phút).
+      - Thay thế Dân Trí cũ bằng `https://dantri.com.vn/rss/thoi-su.rss`, `https://dantri.com.vn/rss/cong-nghe.rss`, `https://dantri.com.vn/rss/doi-song.rss`.
+      - Thay thế VietnamNet công nghệ cũ bằng `https://thanhnien.vn/rss/cong-nghe.rss` và `https://vietnamnet.vn/rss/thoi-su.rss`.
+    + **Xây dựng động cơ Lá Chắn Độ Tươi Mới Tin Tức (Smart Freshness Gate)**:
+      - `parseFlexiblePubDate(dateStr)`: Chuẩn hóa parser cho mọi định dạng RSS: RFC822 4 chữ số, RFC822 2 chữ số (Thanh Niên `'Thu, 15 Oct 26'`), Tuổi Trẻ MM/DD/YYYY AM/PM, tiếng Việt `DD/MM/YYYY HH:mm:ss`, ISO 8601.
+      - `isArticleFresh(article, maxAgeDays = 7)`: Đánh giá bài viết, loại bỏ 100% bài viết cũ hơn 7 ngày (`false`), chỉ giữ bài viết sống trong vòng 7 ngày (2026).
+      - `filterAndSortFreshNews(items, maxAgeDays = 7)`: Lọc sạch bài viết cũ quá 7 ngày, tự động sắp xếp theo thời gian mới nhất lên đầu, ưu tiên tin nóng `_isHot` nếu trong vòng 3 giờ.
+      - `formatArticleDate(dateStr)`: Hiển thị ngày giờ thân thiện với độc giả Việt Nam ("Hôm nay, 12:30", "Hôm qua, 15:45", "15/10/2026, 08:30").
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Sử dụng các nguồn RSS chết hoặc đã dừng cập nhật từ các năm trước (như vtv.vn/rss/trong-nuoc.rss ngừng từ 2024 nhưng gắn isHot: true đẩy bài cũ lên đầu trang chủ).
+- **Từ chối**: Nạp và hiển thị các bài viết tin tức có ngày xuất bản cũ hơn 7 ngày trên trang nhất và các chuyên mục tin thời sự.
+- **Từ chối**: Chỉ dựa vào hàm `new Date()` thuần túy của trình duyệt để parse ngày RSS tiếng Việt dạng `DD/MM/YYYY` hoặc năm 2 chữ số của Thanh Niên (gây trả về NaN và thời gian bị reset về 0).
 - **Từ chối**: Chỉ co dãn viewport iframe và in log tĩnh mà không thực thi logic thật sự và không tương tác trực quan từng thành phần UX (vi phạm yêu cầu PROMPT-20261015-07).
 - **Từ chối**: Sử dụng chuỗi `</script>` bên trong mã JavaScript nằm trong thẻ `<script>` HTML (khiến parser HTML của trình duyệt ngắt script bất thường).
 - **Từ chối**: Bắt quản trị viên hệ thống đã xác thực (`mrkun28@gmail.com`) phải gõ lại Master Key hoặc phải bấm nút thủ công mỗi lần mở bảng điều khiển (vi phạm nguyên tắc trải nghiệm người dùng quản trị và yêu cầu PROMPT-20261015-06).

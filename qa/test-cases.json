@@ -380,18 +380,18 @@
     },
     {
       "id": "TC-027",
-      "title": "Thu thập tin tức RSS từ hơn 38 nguồn báo chí, nạp vô cực & Cập nhật nền",
+      "title": "Thu thập tin tức RSS từ hơn 38 nguồn báo chí, Lá chắn độ tươi mới tin tức (Smart Freshness Gate) & Nạp vô cực",
       "requirementIds": ["REQ-027"],
       "type": "automated",
       "priority": "P0",
       "status": "PASS",
       "steps": [
-        "Kiểm tra tải tin từ các kênh RSS báo chí chính thống",
-        "Kiểm tra thành phần InfiniteScrollTrigger nạp tiếp 15 bài khi cuộn xuống",
-        "Xác nhận cơ chế cập nhật tin nền sau 2 phút khi người dùng idle > 30s",
-        "Kiểm tra thanh tin tức chạy chữ LiveNewsTicker và timeline cập nhật"
+        "Kiểm tra tải tin từ các kênh RSS báo chí chính thống đang hoạt động ổn định",
+        "Xác thực Lá chắn độ tươi mới tin tức (Smart Freshness Gate): 100% bài viết sống <= 7 ngày, triệt tiêu bài cũ 2024/2025",
+        "Kiểm tra thành phần InfiniteScrollTrigger nạp tiếp 15 bài tươi mới khi cuộn xuống",
+        "Xác nhận cơ chế cập nhật tin nền sau 2 phút khi người dùng idle > 30s"
       ],
-      "expected": "Tin tức cập nhật phong phú, không bị gián đoạn, cuộn vô cực mượt mà."
+      "expected": "Tin tức cập nhật phong phú, tươi mới 100%, không còn bài viết cũ lỗi thời, cuộn vô cực mượt mà."
     },
     {
       "id": "TC-028",

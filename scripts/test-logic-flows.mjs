@@ -29,6 +29,10 @@ import {
   filterDeduplicatedNews,
   filterNewsByCategory,
   paginateNews,
+  parseFlexiblePubDate,
+  isArticleFresh,
+  filterAndSortFreshNews,
+  formatArticleDate,
   isBoilerplate,
   isAuthorAvatar,
   validateYouTubeId,
@@ -271,7 +275,52 @@ export function runAllLogicFlowTests() {
   assert(p2.items.length === 20 && p2.hasMore === true, "Trang 2 tải luỹ kế 20 tin, hasMore = true");
   const p3 = paginateNews(dummyPool, 3, 10);
   assert(p3.items.length === 25 && p3.hasMore === false, "Trang 3 tải hết 25 tin, hasMore = false");
-  console.log(`    ${colors.green}✓ Luồng Tin Tức: Đạt 11/11 kiểm tra thuật toán khử trùng, danh mục & cuộn vô cực${colors.reset}`);
+
+  // 3.5 parseFlexiblePubDate
+  const tsRfc4 = parseFlexiblePubDate("Thu, 15 Oct 2026 12:36:39 +07:00");
+  const tsRfc2 = parseFlexiblePubDate("Thu, 15 Oct 26 12:39:31 +0700");
+  const tsTuoiTre = parseFlexiblePubDate("10/15/2026 11:00:00 AM");
+  const tsVn = parseFlexiblePubDate("15/10/2026 11:30:00");
+  assert(tsRfc4 > 0, "Parse chuẩn RFC822 4 chữ số");
+  assert(tsRfc2 > 0 && new Date(tsRfc2).getFullYear() === 2026, "Parse chuẩn RFC822 năm 2 chữ số (Thanh Niên '26' -> 2026)");
+  assert(tsTuoiTre > 0 && new Date(tsTuoiTre).getFullYear() === 2026, "Parse chuẩn ngày Tuổi Trẻ (MM/DD/YYYY AM/PM)");
+  assert(tsVn > 0 && new Date(tsVn).getFullYear() === 2026, "Parse chuẩn ngày tiếng Việt (DD/MM/YYYY)");
+  assert(parseFlexiblePubDate("") === 0, "Chuỗi rỗng trả về 0");
+  assert(parseFlexiblePubDate(null) === 0, "Null trả về 0");
+
+  // 3.6 isArticleFresh (Lá chắn độ tươi mới tin tức)
+  const nowFixed = new Date("2026-10-15T12:00:00+07:00").getTime();
+  const articleToday = { title: "Tin hôm nay", pubDate: "Thu, 15 Oct 2026 10:00:00 +07:00" };
+  const article3DaysAgo = { title: "Tin 3 ngày trước", pubDate: "Mon, 12 Oct 2026 10:00:00 +07:00" };
+  const article8DaysAgo = { title: "Tin 8 ngày trước", pubDate: "Wed, 07 Oct 2026 10:00:00 +07:00" };
+  const article2025 = { title: "Tin cũ 2025 (Dan Tri xa-hoi)", pubDate: "Sun, 07 Sep 2025 21:57:53 +0700" };
+  const article2024 = { title: "Tin cũ 2024 (Dan Tri nhip-song-tre)", pubDate: "Wed, 12 Jun 2024 21:53:52 +0700" };
+  assert(isArticleFresh(articleToday, 7, nowFixed) === true, "Bài viết hôm nay là tươi mới (fresh)");
+  assert(isArticleFresh(article3DaysAgo, 7, nowFixed) === true, "Bài viết 3 ngày trước là tươi mới (<= 7 ngày)");
+  assert(isArticleFresh(article8DaysAgo, 7, nowFixed) === false, "Bài viết 8 ngày trước bị coi là cũ (> 7 ngày)");
+  assert(isArticleFresh(article2025, 7, nowFixed) === false, "Bài viết từ năm 2025 bị LOẠI BỎ (false)");
+  assert(isArticleFresh(article2024, 7, nowFixed) === false, "Bài viết từ năm 2024 bị LOẠI BỎ (false)");
+
+  // 3.7 filterAndSortFreshNews
+  const mixedPool = [
+    article2024,
+    article3DaysAgo,
+    article2025,
+    article8DaysAgo,
+    articleToday,
+    { title: "Tin nóng 1 giờ trước", pubDate: "Thu, 15 Oct 2026 11:00:00 +07:00", _isHot: true }
+  ];
+  const freshList = filterAndSortFreshNews(mixedPool, 7, nowFixed);
+  assert(freshList.length === 3, "Lọc bỏ hoàn toàn các bài 2024, 2025 và 8 ngày trước, chỉ giữ lại 3 bài fresh");
+  assert(freshList[0].title === "Tin nóng 1 giờ trước", "Bài mới nhất / tin nóng xếp đầu tiên");
+  assert(freshList[1].title === "Tin hôm nay", "Bài hôm nay xếp thứ hai");
+  assert(freshList[2].title === "Tin 3 ngày trước", "Bài 3 ngày trước xếp thứ ba");
+
+  // 3.8 formatArticleDate
+  assert(formatArticleDate("Thu, 15 Oct 2026 10:30:00 +07:00", nowFixed).includes("Hôm nay, 10:30"), "Format ngày hôm nay");
+  assert(formatArticleDate("Wed, 14 Oct 2026 15:45:00 +07:00", nowFixed).includes("Hôm qua, 15:45"), "Format ngày hôm qua");
+
+  console.log(`    ${colors.green}✓ Luồng Tin Tức: Đạt 28/28 kiểm tra thuật toán khử trùng, độ tươi mới & định dạng ngày giờ${colors.reset}`);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LUỒNG 4: NEWS FULL-TEXT PARSER & AVATAR GUARD FLOW
