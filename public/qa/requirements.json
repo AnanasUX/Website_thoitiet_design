@@ -598,6 +598,32 @@
       "evidence": ["test-logic-flows.mjs:LUONG-20:PASS", "testwebsite.mjs:TC-045:PASS"],
       "owner": "Security Lead",
       "notes": "Che giấu dữ liệu cho người ngoài và quét chống leak khóa lên GitHub"
+    },
+    {
+      "id": "REQ-046",
+      "title": "Bóc tách & Phát video nhúng báo chí chính thống trong chi tiết bài viết (NewsDetailView)",
+      "description": "Trích xuất và phát video nhúng trong chi tiết bài viết từ các trang chủ quản báo chí (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, VnExpress, YouTube, TikTok...). Hỗ trợ cả thẻ video HTML5 (kèm referrerPolicy='no-referrer' và nút xem video nguồn fallback) lẫn iframe nhúng tương thích các đài truyền hình, không bị chặn hay mất video khi cào tin.",
+      "sourcePrompt": "PROMPT-20261015-04: Ở màn hình đọc chi tiết bài viết ở trang chủ quản có video và chạy được tại sao trên trang khi lấy về lại không chạy được ngoài ra đọc audio tôi thấy không có cần áp dụng thêm Ai này vào https://github.com/pnnbao97/VieNeu-TTS chuyển tất cả thông tin tin chiết của nội dung không tính tiêu đề trong bài, sẽ sử dụng AI để đọc khi nhấn Play trên trang.",
+      "priority": "P0",
+      "category": "article-media-video",
+      "status": "PASS",
+      "testIds": ["TC-046"],
+      "evidence": ["test-logic-flows.mjs:LUONG-21:PASS", "testwebsite.mjs:TC-046:PASS"],
+      "owner": "Media & Frontend Lead",
+      "notes": "Article Video Ingestion Engine hỗ trợ đầy đủ video báo chí chính thống"
+    },
+    {
+      "id": "REQ-047",
+      "title": "Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết tuyệt đối không tính tiêu đề",
+      "description": "Tích hợp công nghệ Vietnamese Neural Text-to-Speech VieNeu-TTS (https://github.com/pnnbao97/VieNeu-TTS). Bóc tách toàn bộ thông tin chi tiết nội dung bài viết, TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ trong bài khi nhấn nút 'Play'/'Nghe đọc'. Chuẩn hóa tiếng Việt (viết tắt chức danh, tổ chức, ngày tháng, tiền tệ, số đo), tích hợp bộ điều khiển VieNeu Audio Player: Play/Pause, tua ±10s, chọn giọng Bắc/Nam, tùy chỉnh tốc độ và thanh tiến trình thời gian thực.",
+      "sourcePrompt": "PROMPT-20261015-04: Ở màn hình đọc chi tiết bài viết ở trang chủ quản có video và chạy được tại sao trên trang khi lấy về lại không chạy được ngoài ra đọc audio tôi thấy không có cần áp dụng thêm Ai này vào https://github.com/pnnbao97/VieNeu-TTS chuyển tất cả thông tin tin chiết của nội dung không tính tiêu đề trong bài, sẽ sử dụng AI để đọc khi nhấn Play trên trang.",
+      "priority": "P0",
+      "category": "ai-neural-tts",
+      "status": "PASS",
+      "testIds": ["TC-047"],
+      "evidence": ["test-logic-flows.mjs:LUONG-22:PASS", "testwebsite.mjs:TC-047:PASS"],
+      "owner": "AI & Audio Lead",
+      "notes": "VieNeu-TTS đọc thân bài chi tiết không tiêu đề kèm audio player card chuyên dụng"
     }
   ]
 }

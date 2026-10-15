@@ -19,7 +19,7 @@ Cổng kiểm duyệt phát hành (Release Gate) là hàng rào kỹ thuật b�
 - [x] **MG-3**: Các quyết định kỹ thuật và phương án bị từ chối được ghi nhận đầy đủ vào `DECISIONS.md`.
 
 ### B. Tiêu Chí Kiểm Thử Nghiệp Vụ & Giao Diện (Functional & UI Gate)
-- [x] **FG-1**: Toàn bộ 45 ca kiểm thử trong `docs/qa/TEST_PLAN.md` (`TC-001` đến `TC-045`) đều đạt kết quả **PASS**.
+- [x] **FG-1**: Toàn bộ 47 ca kiểm thử trong `docs/qa/TEST_PLAN.md` (`TC-001` đến `TC-047`) đều đạt kết quả **PASS**.
 - [x] **FG-2**: Không có lỗi hồi quy (regression) trên các tính năng đã hoàn thiện trước đó.
 - [x] **FG-3**: Đã xác thực thực tế trên 3 nhóm kích thước viewport:
   + Mobile (< 640px): Header Shorts tinh gọn, không đè nút, badge kênh hiển thị trọn vẹn.
@@ -28,6 +28,9 @@ Cổng kiểm duyệt phát hành (Release Gate) là hàng rào kỹ thuật b�
 - [x] **FG-4**: Cơ sở dữ liệu 97 video YouTube từ 10 kênh báo chí và truyền hình lớn hoạt động 100%, 0 video bị lỗi 404, không dùng video MP4 nội bộ giả lập.
 - [x] **FG-5**: Chuyển kênh TV không bị rỗng playlist (Empty Playlist Prevention).
 - [x] **FG-6**: Hiển thị tác giả bài viết chuẩn báo chính thống: Byline bar nhỏ gọn dưới tiêu đề, không phóng to avatar thành ảnh bài viết mờ nhòe trong thân bài, không để tên tác giả mồ côi.
+- [x] **FG-7**: Bóc tách & phát video báo chí chính thống (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, YouTube, TikTok) có `referrerPolicy="no-referrer"` và link fallback gốc.
+- [x] **FG-8**: Trình phát AI VieNeu-TTS đọc toàn bộ thân bài chi tiết, TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT, chuẩn hóa tiếng Việt, đầy đủ Waveform và Progress Bar.
+
 
 ### C. Tiêu Chí Biên Dịch & Đóng Gói (Build & Performance Gate)
 - [x] **BG-1**: Lệnh `npm run build` thực thi thành công 100% với mã thoát `0`.

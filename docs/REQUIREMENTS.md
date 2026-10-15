@@ -60,6 +60,8 @@
 | REQ-043 | PROMPT-20261015-03 | Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest) | P0 | Security / Crypto Vault | TC-043 | PASS | test-logic-flows.mjs:LUONG-18 | Mã hóa toàn bộ dữ liệu bí mật và cấu hình 2 repo sang phong bì ENC:v1:aes-256-gcm:..., bảo vệ 100% dữ liệu trên GitHub |
 | REQ-044 | PROMPT-20261015-03 | Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key) | P0 | Security / Admin Gate | TC-044 | PASS | test-logic-flows.mjs:LUONG-19 | Chỉ quản lý mrkun28@gmail.com hoặc Master Key hợp lệ mới giải mã được trong RAM, dọn sạch bộ nhớ khi khóa lại |
 | REQ-045 | PROMPT-20261015-03 | Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub | P0 | Security / Data Masking | TC-045 | PASS | test-logic-flows.mjs:LUONG-20 | Che giấu trường nhạy cảm cho người ngoài, tích hợp bộ quét phát hiện rò rỉ khóa bí mật trần lên mã nguồn git |
+| REQ-046 | PROMPT-20261015-04 | Động cơ bóc tách & phát video bài viết chi tiết từ các cơ quan báo chí chính thống | P0 | Article / Video Player | TC-046 | PASS | test-logic-flows.mjs:LUONG-21 | Bóc tách video đa nguồn (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, YouTube, TikTok), vượt chặn hotlink cross-origin, có link mở video gốc |
+| REQ-047 | PROMPT-20261015-04 | Tích hợp AI VieNeu-TTS đọc bài viết chi tiết không tính tiêu đề khi bấm Play | P0 | AI / VieNeu-TTS Audio | TC-047 | PASS | test-logic-flows.mjs:LUONG-22 | AI VieNeu-TTS trích xuất toàn bộ thân bài, TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ, chuẩn hóa văn bản tiếng Việt, hỗ trợ đổi giọng Bắc/Nam, thanh tiến trình và waveform |
 
 ## Prompt intake log
 
@@ -85,6 +87,8 @@
 | PROMPT-20261015-01 | 2026-10-15 | Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định | REQ-031, REQ-032, REQ-033, REQ-034, REQ-035, REQ-036, REQ-037 | None | Approved |
 | PROMPT-20261015-02 | 2026-10-15 | Bổ sung case test chi tiết kể cả test api của hệ thống và chống tấn công tạo ra lớp bảo vệ tránh việc tấn công từ bên ngoài hệ thống | REQ-038, REQ-039, REQ-040, REQ-041, REQ-042 | None | Approved |
 | PROMPT-20261015-03 | 2026-10-15 | Xây dựng việc mã hóa dữ liệu tránh việc khi người dùng nào đó vào github của quan-ly-tien-phong và Website_thoitiet_design thì đọc được hết dữ liệu của cả hệ thống. Xây dựng lớp bảo vệ nếu người dùng là quản lý của 2 thông tin trên có thể đọc được toàn bộ dữ liệu. | REQ-043, REQ-044, REQ-045 | None | Approved |
+| PROMPT-20261015-04 | 2026-10-15 | Ở màn hình đọc chi tiết bài viết ở trang chủ quản có video và chạy được tại sao trên trang khi lấy về lại không chạy được ngoài ra đọc audio tôi thấy không có cần áp dụng thêm Ai này vào "https://github.com/pnnbao97/VieNeu-TTS" chuyển tất cả thông tin tin chiết của nội dung không tính tiêu đề trong bài, sẽ sử dụng AI để đọc khi nhấn "Play" trên trang. | REQ-046, REQ-047 | None | Approved |
+
 
 
 

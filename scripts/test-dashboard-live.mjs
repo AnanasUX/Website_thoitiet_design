@@ -153,6 +153,16 @@ async function runDashboardTest() {
     const tc045Status = await tc045Row.locator('.badge-status.PASS').isVisible().catch(() => false);
     console.log('TC-045 Status is PASS:', tc045Status);
 
+    // Verify TC-046 (Article Video Engine)
+    const tc046Row = page.locator('#matrixTableBody tr:has-text("TC-046")');
+    const tc046Status = await tc046Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-046 Status is PASS:', tc046Status);
+
+    // Verify TC-047 (VieNeu-TTS AI Audio Engine)
+    const tc047Row = page.locator('#matrixTableBody tr:has-text("TC-047")');
+    const tc047Status = await tc047Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-047 Status is PASS:', tc047Status);
+
     // -------------------------------------------------------------------------
     // PHASE 2: Testing Cryptographic Vault Interactive Panel
     // -------------------------------------------------------------------------
@@ -215,11 +225,11 @@ async function runDashboardTest() {
     const isPassedAgain = await page.locator('#releaseGateBanner.passed').isVisible();
     console.log('10. Release Gate Banner restored to PASSED:', isPassedAgain);
 
-    if (passCount === 45 && failCount === 0 && isInitiallyMasked && isSuccessfullyUnlocked && isSuccessfullyScrubbed && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
-      console.log('🎉 SUCCESS: All 45 tests ran, Cryptographic Vault & Antigravity Copilot Auto-Dispatch verified 100%!');
+    if (passCount === 47 && failCount === 0 && tc046Status && tc047Status && isInitiallyMasked && isSuccessfullyUnlocked && isSuccessfullyScrubbed && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
+      console.log('🎉 SUCCESS: All 47 tests ran, Article Video, VieNeu-TTS AI Audio, Cryptographic Vault & Antigravity Copilot Auto-Dispatch verified 100%!');
       process.exitCode = 0;
     } else {
-      console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);
+      console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, tc046=${tc046Status}, tc047=${tc047Status}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);
       process.exitCode = 1;
     }
   } finally {

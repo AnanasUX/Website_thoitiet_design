@@ -138,3 +138,29 @@
   + Nâng cấp bộ kiểm thử tương tác `scripts/test-dashboard-live.mjs` kiểm tra trọn vẹn luồng mở khóa/khóa hầm và 45 ca PASS.
   + Cập nhật đầy đủ hồ sơ bộ nhớ dự án: `docs/PROJECT.md`, `docs/REQUIREMENTS.md`, `docs/DECISIONS.md`, `docs/qa/TEST_PLAN.md`, `docs/qa/RELEASE_GATE.md`, `docs/HANDOFF.md`.
 
+### 15. Mở Rộng Hệ Thống 47/47 Yêu Cầu & Ca Kiểm Thử Toàn Diện: Động Cơ Video Báo Chí & Động Cơ AI VieNeu-TTS Đọc Bài Viết Không Tính Tiêu Đề (REQ-046 -> REQ-047 / TC-046 -> TC-047)
+- **Tiếp nhận yêu cầu**:
+  1. *Video bài viết chi tiết không phát được*: Khắc phục việc video nhúng trong bài viết chi tiết bị lọc bỏ hoặc không chạy được khi lấy tin về từ các báo đài chính thống (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, VnExpress, YouTube, TikTok).
+  2. *Đọc Audio bằng AI VieNeu-TTS*: Tích hợp AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài viết khi nhấn "Play".
+  3. *Quy tắc nghiệm thu khắt khe*: **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ** trong nội dung đọc bằng AI.
+- **Triển khai kỹ thuật**:
+  - **Động cơ Bóc Tách & Phát Video Báo Chí (`src/utils/articleVideoEngine.ts`)**:
+    + Danh sách trắng domain tin cậy: vtv.vn, thanhnien.vn, tuoitre.vn, dantri.com.vn, tienphong.vn, vnexpress.net, mediacdn.vn, youtube.com, tiktok.com.
+    + Bóc tách đa tầng: JSON-LD VideoObject, thẻ `div[type="VideoStream"]`, `class="cms-video"`, `class="media-video"`, thẻ `<video>` HTML5 và `<iframe>`.
+    + Chuẩn hóa URL HTTPS an toàn và cấu hình `referrerPolicy="no-referrer"` trên thẻ video nhúng để vượt chặn hotlink cross-origin. Bổ sung nút fallback "Mở video gốc".
+  - **Động cơ AI VieNeu-TTS (`src/utils/vieneuTTS.ts`)**:
+    + Hàm `extractContentForVieNeuTTS`: Trích xuất 100% nội dung thân bài, **LOẠI BỎ HOÀN TOÀN TIÊU ĐỀ BÀI VIẾT** (`article.title`), loại bỏ chú thích ảnh, tên tác giả đơn độc và boilerplate.
+    + Hàm `normalizeVietnameseTextVieNeu`: Chuẩn hóa chức danh khoa học (PGS.TS), cơ quan nhà nước (UBND TP.HCM), tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
+    + Chia phân đoạn audio $\le 250$ ký tự để đọc mượt mà không timeout.
+    + Trình phát AI VieNeu-TTS Player Card (`vieneu-tts-player-card`): Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực và tùy chọn giọng đọc Bắc/Nam, tốc độ 0.75x - 1.5x.
+  - **Mở rộng bộ kiểm thử luồng logic (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**:
+    + Bổ sung Luồng 21 (Article Video Engine) và Luồng 22 (VieNeu-TTS AI Engine) với 33 assertions mới.
+    + Chạy thực tế đạt **281/281 assertions PASS (100% ĐẠT, 0 FAIL)**.
+  - **Mở rộng QA Registry & Test Suite**:
+    + Cập nhật `qa/requirements.json` (47 REQs) và `qa/test-cases.json` (47 TCs).
+    + Chạy `scripts/build-dashboard-data.mjs` đồng bộ sang `public/qa` và `public/dashboard.html`.
+    + Nâng cấp `dashboard.html` hiển thị 47 ca kiểm thử và cập nhật `scripts/test-dashboard-live.mjs` đạt **47 PASS, 0 FAIL (100%)**.
+    + Nâng cấp `scripts/testwebsite.mjs` bổ sung Test Suite 9 cho TC-046 & TC-047.
+    + Chạy kiểm thử toàn diện thực tế lệnh `/testwebsite` đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+

@@ -205,9 +205,36 @@
     + Hàm `maskSensitiveRecord` tự động obfuscate toàn bộ các trường nhạy cảm (`token`, `key`, `secret`, `webhook`, `password`, `credential`) thành chuỗi bảo vệ `****** [ENCRYPTED_DATA_LOCKED]` đối với mọi người dùng ngoài, đồng thời giữ nguyên 100% dữ liệu cho quản trị viên đã xác thực.
     + Tích hợp bộ quét `scanContentForSecretLeaks` tự động kiểm tra phát hiện các mẫu khóa trần (OpenWeather, Telegram token, Make Webhook, Private Keys) để đảm bảo 0 khóa bí mật bị commit lên GitHub.
 
+  - *Kiến Trúc Bóc Tách & Phát Video Báo Chí Trong Bài Viết Chi Tiết (`REQ-046` / `TC-046`)*:
+    + **Bản chất sự cố**: Trước đây bộ lọc HTML chỉ cho phép iframe YouTube/TikTok/Facebook, dẫn đến toàn bộ video nhúng từ các cơ quan báo đài chính thống (VTV, Báo Thanh Niên, Báo Tuổi Trẻ, Báo Dân Trí, Báo Tiền Phong) bị hàm sanitize gỡ bỏ triệt để (`ifr.remove()`). Thẻ `div[type="VideoStream"]` của các báo dùng `mediacdn.vn` bị bỏ qua không hiển thị, và thẻ `<video>` bị trình duyệt chặn tải do thiếu chính sách referrer (`referrerPolicy="no-referrer"`).
+    + **Giải pháp Động cơ Video Báo Chí (`src/utils/articleVideoEngine.ts`)**:
+      - Thiết lập danh sách trắng các domain báo chí tin cậy (`TRUSTED_NEWS_VIDEO_DOMAINS`): vtv.vn, thanhnien.vn, tuoitre.vn, dantri.com.vn, tienphong.vn, vnexpress.net, mediacdn.vn, youtube.com, tiktok.com.
+      - Bóc tách đa tầng: Trích xuất video từ JSON-LD VideoObject, thẻ `div[type="VideoStream"]`, `class="cms-video"`, `class="media-video"`, thẻ `<video>` HTML5 và `<iframe>`.
+      - Vượt chặn hotlink: Cấu hình `referrerPolicy="no-referrer"` trên thẻ video nhúng, tự động chuẩn hóa URL (bổ sung HTTPS cho protocol-relative link `//...`).
+      - Cung cấp nút fallback an toàn: Nút "Mở video trên báo gốc" bảo đảm người dùng luôn xem được video ngay cả khi mạng client chặn cross-origin.
+
+  - *Kiến Trúc Động Cơ AI VieNeu-TTS Đọc Chi Tiết Bài Viết (`REQ-047` / `TC-047`)*:
+    + **Bản chất yêu cầu**: Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài báo khi người dùng nhấn "Play".
+    + **QUY TẮC KHẮT KHE - TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ**:
+      - Hàm `extractContentForVieNeuTTS` chỉ bóc tách các đoạn văn bản thân bài (`block.type === 'p'`), loại bỏ 100% tiêu đề bài viết (`article.title`), loại bỏ chú thích ảnh (`block.type === 'image'`), loại bỏ tên tác giả đơn độc và boilerplate.
+    + **Bộ chuẩn hóa văn bản tiếng Việt (`normalizeVietnameseTextVieNeu`)**:
+      - Chức danh khoa học: `PGS.TS` -> `Phó giáo sư Tiến sĩ`, `GS.TS` -> `Giáo sư Tiến sĩ`, `ThS` -> `Thạc sĩ`.
+      - Cơ quan hành chính: `UBND TP.HCM` -> `Ủy ban nhân dân Thành phố Hồ Chí Minh`, `HĐND` -> `Hội đồng nhân dân`, `BCH` -> `Ban chấp hành`.
+      - Tiền tệ & Định dạng số: `200 tỷ VND` -> `200 tỷ đồng`, `$500` -> `500 đô la Mỹ`.
+      - Ngày tháng: `15/10/2026` -> `ngày 15 tháng 10 năm 2026`.
+      - Đơn vị đo lường: `32°C` -> `32 độ C`, `80 km/h` -> `80 ki-lô-mét trên giờ`.
+    + **Giao diện Trình phát AI VieNeu-TTS Card (`vieneu-tts-player-card`)**:
+      - Trang bị cụm điều khiển chuyên nghiệp: Play/Pause, Stop, Tua tiến/lùi ±10 giây.
+      - Hiển thị sóng âm thanh động (Audio Waveform) khi đang đọc.
+      - Thanh tiến trình đọc (Progress bar) thời gian thực theo tỷ lệ ký tự đã đọc.
+      - Tùy chọn giọng đọc Bắc (Hà Nội) / Nam (Sài Gòn) và tốc độ đọc (0.75x, 1.0x, 1.25x, 1.5x).
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Đọc tiêu đề bài viết (`article.title`) khi kích hoạt AI VieNeu-TTS (vi phạm trực tiếp chỉ thị người dùng "chuyển tất cả thông tin tin chiết của nội dung không tính tiêu đề trong bài").
+- **Từ chối**: Xóa bỏ các thẻ `<iframe>` hoặc `div[type="VideoStream"]` từ các trang báo đài chính thống (VTV, Báo Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong).
+- **Từ chối**: Sử dụng thẻ `<video>` mà không có thuộc tính `referrerPolicy="no-referrer"` (dẫn đến bị máy chủ báo chí chặn hotlink cross-origin và không phát được video).
 - **Từ chối**: Lưu trữ API keys, bot tokens, webhook URLs hoặc credentials ở dạng văn bản thuần (plaintext) trong các tệp mã nguồn theo dõi bởi git (`main.py`, `.env.example`, code frontend).
 - **Từ chối**: Sử dụng thuật toán mã hóa lỗi thời hoặc yếu (như DES, RC4, MD5, SHA-1, hoặc mã hóa Base64 thuần túy).
 - **Từ chối**: Ghi dữ liệu đã giải mã của hệ thống xuống file đĩa cục bộ trên máy chủ hoặc commit ra git.
@@ -234,4 +261,5 @@
 - **Từ chối**: Chỉ kiểm thử giao diện bề ngoài hoặc dùng kiểm thử hình thức bằng regex chuỗi mà bỏ qua việc kiểm chứng các luồng logic và thuật toán xử lý dữ liệu nghiệp vụ cốt lõi.
 - **Từ chối**: Chạy kiểm thử giả lập lướt nhanh với các độ trễ setTimeout cứng ngắc không có tính liên kết tương tác với hệ thống đang chạy.
 - **Từ chối**: Tuyên bố kiểm thử thành công nếu chưa chạy qua hệ thống Chrome E2E thực tế trên đầy đủ 3 màn hình Desktop, Tablet, Mobile và chưa kiểm thử toàn bộ 7 luồng logic nghiệp vụ.
+
 

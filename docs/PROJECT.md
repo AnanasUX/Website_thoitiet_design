@@ -68,7 +68,7 @@ Website_thoitiet_design/
 ---
 
 ## 5. CƠ CHẾ BẢO ĐẢM CHẤT LƯỢNG (QA & RELEASE GATE)
-- Lệnh tự động `/testwebsite` (hoặc `npm run testwebsite`) thực thi toàn bộ 45 kịch bản kiểm thử, đối chiếu mã `REQ-xxx` và `TC-xxx`.
+- Lệnh tự động `/testwebsite` (hoặc `npm run testwebsite`) thực thi toàn bộ 47 kịch bản kiểm thử, đối chiếu mã `REQ-xxx` và `TC-xxx`.
 - Cổng kiểm duyệt phát hành (`RELEASE_GATE.md`) ngăn chặn việc phát hành khi chưa đủ bằng chứng hoặc còn lỗi chặn.
 
 ---
@@ -84,4 +84,20 @@ Website_thoitiet_design/
    - Chuẩn mã hóa NIST **AES-256-GCM** kết hợp **PBKDF2-HMAC-SHA256** (100.000 vòng lặp) bảo vệ toàn bộ dữ liệu tại nghỉ trên GitHub của cả 2 kho `AnanasUX/quan-ly-tien-phong` và `AnanasUX/Website_thoitiet_design`.
    - Cổng giải mã In-Memory trong RAM cho tài khoản quản trị (`mrkun28@gmail.com` hoặc có Master Key), không lưu đĩa, tự động khóa sau 15 phút và xóa sạch RAM (Scrub Memory).
    - Mặt nạ dữ liệu nhạy cảm cho người dùng ngoài và bộ quét phát hiện rò rỉ khóa bí mật GitHub (`scanContentForSecretLeaks`).
+
+---
+
+## 7. ĐỘNG CƠ BÓC TÁCH & PHÁT VIDEO BÁO CHÍ (`src/utils/articleVideoEngine.ts`)
+- **Danh sách trắng domain báo chí chính thống**: Hỗ trợ VTV, Báo Thanh Niên, Báo Tuổi Trẻ, Báo Dân Trí, Báo Tiền Phong, VnExpress, MediaCDN, YouTube, TikTok.
+- **Bóc tách video đa tầng**: Bóc tách từ JSON-LD VideoObject, thẻ `div[type="VideoStream"]`, `class="cms-video"`, thẻ `<video>` HTML5 và `<iframe>` nhúng.
+- **Bảo mật và Tương thích phát**: Thẻ video nhúng cấu hình `referrerPolicy="no-referrer"` vượt chặn hotlink cross-origin, URL chuẩn hóa HTTPS và nút fallback "Mở video gốc".
+
+---
+
+## 8. ĐỘNG CƠ AI CHUYỂN ĐỔI VĂN BẢN THÀNH GIỌNG NÓI VIENEU-TTS (`src/utils/vieneuTTS.ts`)
+- **Công nghệ cốt lõi**: Tích hợp kiến trúc Vietnamese Neural Text-to-Speech (VieNeu-TTS - Phạm Nguyễn Ngọc Bảo).
+- **Quy tắc trích xuất khắt khe**: Bóc tách toàn bộ nội dung thân bài, **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT** (`article.title`), loại bỏ chú thích ảnh và boilerplate tác giả.
+- **Chuẩn hóa văn bản tiếng Việt**: Quy đổi chức danh học thuật (PGS.TS), cơ quan nhà nước (UBND TP.HCM), tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
+- **Trình phát AI Player Card**: Tích hợp thanh điều khiển phát/dừng, tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực và tùy chọn giọng đọc Bắc/Nam, tốc độ đọc 0.75x - 1.5x.
+
 

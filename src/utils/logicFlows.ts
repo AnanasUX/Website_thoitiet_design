@@ -830,3 +830,37 @@ export type {
   SystemVaultPayload
 } from './cryptoVault.ts';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 21: BÓC TÁCH & PHÁT VIDEO BÁO CHÍ CHÍNH THỐNG (REQ-046)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  extractArticleVideos,
+  isTrustedNewsVideoDomain,
+  buildSafeVideoEmbedUrl,
+  TRUSTED_NEWS_VIDEO_DOMAINS
+} from './articleVideoEngine.ts';
+
+export type {
+  ExtractedArticleVideo
+} from './articleVideoEngine.ts';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 22: ĐỘNG CƠ AI VIENEU-TTS ĐỌC BÀI BÁO KHÔNG ĐỌC TIÊU ĐỀ (REQ-047)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  extractContentForVieNeuTTS,
+  normalizeVietnameseTextVieNeu,
+  splitVieNeuAudioChunks,
+  VIENEU_VOICES,
+  VIENEU_SPEED_OPTIONS,
+  VieNeuTTSController
+} from './vieneuTTS.ts';
+
+export type {
+  VieNeuVoiceOption,
+  VieNeuPlayerState
+} from './vieneuTTS.ts';
+
+

@@ -673,6 +673,39 @@
         "Xác nhận mã nguồn sạch không chứa khóa bí mật trần được đánh giá an toàn hasLeak = false"
       ],
       "expected": "Dữ liệu nhạy cảm được che giấu tự động cho người ngoài và bảo đảm 0 khóa bí mật bị rò rỉ trên GitHub."
+    },
+    {
+      "id": "TC-046",
+      "title": "Bóc tách & Phát video nhúng báo chí chính thống trong chi tiết bài viết (NewsDetailView)",
+      "requirementIds": ["REQ-046"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm isTrustedNewsVideoDomain xác thực các domain máy chủ video báo chí (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, VnExpress, YouTube, TikTok)",
+        "Kiểm tra hàm buildSafeVideoEmbedUrl chuẩn hóa giao thức https và nhúng video an toàn",
+        "Kiểm tra hàm extractArticleVideos trích xuất video từ JSON-LD VideoObject, thẻ VideoStream, cms-video, thẻ video HTML5 và iframe",
+        "Xác thực thẻ video có thuộc tính controls, playsInline, preload và referrerPolicy='no-referrer'",
+        "Xác thực liên kết dự phòng 'Mở video gốc' cho phép người đọc xem trực tiếp nếu máy chủ CDN báo chặn nhúng"
+      ],
+      "expected": "Toàn bộ video từ trang báo chính thống được bóc tách và hiển thị trình phát mượt mà, không bị lọc mất."
+    },
+    {
+      "id": "TC-047",
+      "title": "Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết tuyệt đối không tính tiêu đề",
+      "requirementIds": ["REQ-047"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm extractContentForVieNeuTTS bóc tách toàn bộ thân bài và TUYỆT ĐỐI BỎ TIÊU ĐỀ bài viết (article.title)",
+        "Xác nhận loại bỏ hoàn toàn tên tác giả mồ côi, chú thích ảnh và boilerplate rác",
+        "Kiểm tra hàm normalizeVietnameseTextVieNeu chuẩn hóa chính xác chức danh (PGS.TS), cơ quan (UBND TP.HCM), tiền tệ (tỷ đồng, đô la Mỹ), ngày tháng (15/10/2026)",
+        "Kiểm tra hàm splitVieNeuAudioChunks phân tách câu và phân đoạn đọc mượt mà không vượt quá 250 ký tự",
+        "Kiểm tra danh mục giọng đọc VIENEU_VOICES (Nữ Bắc Hà Nội, Nam Nam Sài Gòn) và tốc độ đọc VIENEU_SPEED_OPTIONS (0.75x, 1.0x, 1.25x, 1.5x)",
+        "Xác thực sự hiện diện của thanh điều khiển VieNeu-TTS Audio Player Card với nút Play/Pause, Tua ±10s và thanh tiến trình thời gian thực"
+      ],
+      "expected": "Động cơ AI VieNeu-TTS đọc trọn vẹn thân bài chi tiết của bài báo mà không đọc tiêu đề, chất lượng âm thanh tiếng Việt tự nhiên chuẩn xác."
     }
   ]
 }

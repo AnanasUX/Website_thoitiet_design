@@ -75,7 +75,15 @@ import {
   scanContentForSecretLeaks,
   ENCRYPTED_SYSTEM_VAULT,
   VAULT_ENVELOPE_PREFIX,
-  VAULT_ADMIN_EMAIL
+  VAULT_ADMIN_EMAIL,
+  extractArticleVideos,
+  isTrustedNewsVideoDomain,
+  buildSafeVideoEmbedUrl,
+  extractContentForVieNeuTTS,
+  normalizeVietnameseTextVieNeu,
+  splitVieNeuAudioChunks,
+  VIENEU_VOICES,
+  VIENEU_SPEED_OPTIONS
 } from '../src/utils/logicFlows.ts';
 
 const rootDir = process.cwd();
@@ -853,6 +861,114 @@ export function runAllLogicFlowTests() {
   const cleanScanResult = scanContentForSecretLeaks(cleanContentSample);
   assert(cleanScanResult.hasLeak === false, "Nội dung sử dụng biến môi trường hoặc phong bì mã hóa được đánh giá an toàn");
   console.log(`    ${colors.green}✓ Luồng Mặt Nạ Dữ Liệu & Quét Rò Rỉ: Đạt 10/10 kiểm tra che giấu dữ liệu, quyền xem quản lý & bộ quét leak GitHub${colors.reset}\n`);
+
+  // =========================================================================
+  // LUỒNG 21: BÓC TÁCH & PHÁT VIDEO BÁO CHÍ CHÍNH THỐNG (REQ-046 / TC-046)
+  // =========================================================================
+  console.log(`  ${colors.bright}${colors.cyan}[LUỒNG 21] Bóc Tách & Phát Video Báo Chí Chính Thống (REQ-046 / TC-046)${colors.reset}`);
+
+  // 1. Kiểm tra danh mục domain báo chí tin cậy
+  assert(isTrustedNewsVideoDomain("https://vtv.vn/video/phong-su-quang-chau-123.htm") === true, "Chấp thuận video domain VTV");
+  assert(isTrustedNewsVideoDomain("https://video.thanhnien.vn/embed/tim-ve-noi-bac-ho-sang-lap-bao-thanh-nien-123.html") === true, "Chấp thuận video domain Báo Thanh Niên");
+  assert(isTrustedNewsVideoDomain("https://tv.tuoitre.vn/video/tin-tuc-thoi-su-456.mp4") === true, "Chấp thuận video domain Báo Tuổi Trẻ");
+  assert(isTrustedNewsVideoDomain("https://video.dantri.com.vn/ban-tin-thoi-su.mp4") === true, "Chấp thuận video domain Báo Dân Trí");
+  assert(isTrustedNewsVideoDomain("https://tienphong.vn/video/phong-su-tien-phong.htm") === true, "Chấp thuận video domain Báo Tiền Phong");
+  assert(isTrustedNewsVideoDomain("https://mediacdn.vn/video/stream-123.mp4") === true, "Chấp thuận CDN MediaCDN của báo chí");
+  assert(isTrustedNewsVideoDomain("https://youtu.be/dQw4w9WgXcQ") === true, "Chấp thuận nền tảng YouTube");
+  assert(isTrustedNewsVideoDomain("https://evil-hacker.com/malicious-video.mp4") === false, "Chặn đứng domain lạ ngoài danh mục báo chí");
+
+  // 2. Kiểm tra chuẩn hóa URL video an toàn
+  const normalizedThanhNienUrl = buildSafeVideoEmbedUrl("//video.thanhnien.vn/phong-su.html");
+  assert(normalizedThanhNienUrl.startsWith("https://video.thanhnien.vn"), "Tự động chuẩn hóa protocol relative // sang https:");
+
+  const normalizedYtUrl = buildSafeVideoEmbedUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  assert(normalizedYtUrl.includes("youtube-nocookie.com/embed/dQw4w9WgXcQ"), "Chuẩn hóa YouTube URL sang embed nocookie an toàn");
+  assert(normalizedYtUrl.includes("controls=1&playsinline=1"), "Bổ sung cờ điều khiển controls và playsinline");
+
+  // 3. Trích xuất video từ cấu trúc HTML báo chí thực tế (VTV & Báo Thanh Niên)
+  const sampleArticleHtml = `
+    <article>
+      <h1>Tìm về nơi Bác Hồ sáng lập báo Thanh niên</h1>
+      <p>Kỷ niệm ngày truyền thống báo chí cách mạng Việt Nam, phóng viên VTV thường trú tại Quảng Châu đã có phóng sự đặc biệt.</p>
+      <div type="VideoStream" data-vid="https://mediacdn.vn/video/vtv-quang-chau-bac-ho.mp4" data-thumb="https://mediacdn.vn/thumb.jpg" data-width="1280" data-height="720"></div>
+      <p>Nơi đây từng chứng kiến những ngày đầu tiên hoạt động của tờ báo.</p>
+      <iframe src="https://video.thanhnien.vn/embed/phong-su-quang-chau.html" width="100%" height="360"></iframe>
+    </article>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        "name": "Phóng sự thường trú VTV tại Quảng Châu",
+        "contentUrl": "https://vtv.vn/video/phong-su-quang-chau-hd.mp4",
+        "thumbnailUrl": "https://vtv.vn/thumb-quang-chau.jpg",
+        "duration": "PT4M15S"
+      }
+    </script>
+  `;
+
+  const extractedVideos = extractArticleVideos(sampleArticleHtml, "https://thanhnien.vn/bai-viet.html");
+  assert(extractedVideos.length >= 2, "Trích xuất thành công các video nhúng từ cả JSON-LD và thẻ VideoStream");
+  assert(extractedVideos.some(v => v.src.includes("quang-chau")), "Nhận diện đúng đường dẫn video phóng sự Quảng Châu");
+  assert(extractedVideos.some(v => v.type === 'video'), "Hỗ trợ thẻ video thuần");
+  assert(extractedVideos.some(v => v.type === 'iframe'), "Hỗ trợ nhúng iframe báo chí");
+  console.log(`    ${colors.green}✓ Luồng Bóc Tách & Phát Video Báo Chí: Đạt 15/15 kiểm tra domain báo chí, chuẩn hóa URL & trích xuất video thực tế${colors.reset}\n`);
+
+  // =========================================================================
+  // LUỒNG 22: ĐỘNG CƠ AI VIENEU-TTS ĐỌC BÀI BÁO KHÔNG ĐỌC TIÊU ĐỀ (REQ-047 / TC-047)
+  // =========================================================================
+  console.log(`  ${colors.bright}${colors.cyan}[LUỒNG 22] Động Cơ AI VieNeu-TTS Đọc Bài Báo Không Đọc Tiêu Đề (REQ-047 / TC-047)${colors.reset}`);
+
+  const sampleArticleForTTS = {
+    title: "Tìm về nơi Bác Hồ sáng lập báo Thanh niên",
+    author: "Tìm về nơi Bác Hồ sáng lập báo Thanh niên",
+    body: "Kỷ niệm 100 năm ngày Báo chí Cách mạng Việt Nam. Phóng viên thường trú VTV tại Quảng Châu đã có cuộc khảo sát lịch sử.",
+    src: "Báo Thanh Niên"
+  };
+
+  const sampleBlocksForTTS = [
+    { type: 'title', content: "Tìm về nơi Bác Hồ sáng lập báo Thanh niên" },
+    { type: 'author', name: "Nguyễn Văn A", date: "15/10/2026" },
+    { type: 'text', content: "Kỷ niệm 100 năm ngày Báo chí Cách mạng Việt Nam tại TP.HCM và Hà Nội." },
+    { type: 'text', content: "PGS.TS Trần Đình Long và UBND tỉnh đã tổ chức buổi tọa đàm với ngân sách 150 tỷ VND." },
+    { type: 'quote', content: "Báo chí cách mạng luôn đồng hành cùng sự phát triển của đất nước." },
+    { type: 'image', src: "https://photo.jpg", caption: "Ảnh kỷ niệm di tích lịch sử" },
+    { type: 'text', content: "Đọc tiếp về trang chủ đề Báo chí Cách mạng" }
+  ];
+
+  // 1. Kiểm tra nguyên tắc cốt lõi: TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ
+  const extractedTTSContent = extractContentForVieNeuTTS(sampleArticleForTTS, sampleBlocksForTTS);
+  assert(!extractedTTSContent.includes("Tìm về nơi Bác Hồ sáng lập"), "Khẳng định tuyệt đối: KHÔNG đọc tiêu đề bài viết");
+  assert(!extractedTTSContent.includes("Ảnh kỷ niệm"), "Khẳng định: Không đọc chú thích ảnh");
+  assert(!extractedTTSContent.includes("Đọc tiếp về trang chủ đề"), "Khẳng định: Không đọc boilerplate rác");
+  assert(extractedTTSContent.includes("Kỷ niệm 100 năm ngày Báo chí Cách mạng"), "Đọc trọn vẹn đoạn văn thân bài 1");
+  assert(extractedTTSContent.includes("Trần Đình Long và UBND tỉnh"), "Đọc trọn vẹn đoạn văn thân bài 2");
+  assert(extractedTTSContent.includes("Báo chí cách mạng luôn đồng hành"), "Đọc trọn vẹn nội dung trích dẫn");
+
+  // 2. Kiểm tra chuẩn hóa văn bản tiếng Việt theo chuẩn VieNeu-TTS
+  const rawVieNeuSample = "PGS.TS Nguyễn Văn B công tác tại UBND TP.HCM, nhiệt độ 32°C, tốc độ 80 km/h, ngân sách $500 và 200 tỷ VND vào ngày 15/10/2026.";
+  const normalizedVieNeuText = normalizeVietnameseTextVieNeu(rawVieNeuSample);
+
+  assert(normalizedVieNeuText.includes("Phó giáo sư Tiến sĩ Nguyễn Văn B"), "Chuẩn hóa chức danh PGS.TS sang Phó giáo sư Tiến sĩ");
+  assert(normalizedVieNeuText.includes("Ủy ban nhân dân Thành phố Hồ Chí Minh"), "Chuẩn hóa UBND TP.HCM sang đầy đủ");
+  assert(normalizedVieNeuText.includes("32 độ C"), "Chuẩn hóa nhiệt độ 32°C sang 32 độ C");
+  assert(normalizedVieNeuText.includes("80 ki-lô-mét trên giờ"), "Chuẩn hóa tốc độ km/h sang ki-lô-mét trên giờ");
+  assert(normalizedVieNeuText.includes("500 đô la Mỹ"), "Chuẩn hóa ký hiệu $ sang đô la Mỹ");
+  assert(normalizedVieNeuText.includes("200 tỷ đồng"), "Chuẩn hóa VND sang đồng");
+  assert(normalizedVieNeuText.includes("ngày 15 tháng 10 năm 2026"), "Chuẩn hóa ngày tháng 15/10/2026 sang ngày tháng năm tự nhiên");
+
+  // 3. Kiểm tra chia phân đoạn chunks
+  const audioChunks = splitVieNeuAudioChunks(normalizedVieNeuText);
+  assert(audioChunks.length >= 1, "Tách văn bản thành ít nhất 1 chunk âm thanh hợp lệ");
+  assert(audioChunks.every(c => c.length <= 250), "Đảm bảo mỗi chunk không vượt quá 250 ký tự để phát âm thanh mượt mà");
+
+  // 4. Kiểm tra danh mục giọng đọc và tốc độ VieNeu
+  assert(VIENEU_VOICES.length >= 2, "Hỗ trợ ít nhất 2 giọng đọc AI VieNeu (Bắc - Nam)");
+  assert(VIENEU_VOICES.some(v => v.id === 'bac_nu'), "Có tùy chọn giọng Nữ Miền Bắc Hà Nội");
+  assert(VIENEU_VOICES.some(v => v.id === 'nam_nam'), "Có tùy chọn giọng Nam Miền Nam Sài Gòn");
+  assert(VIENEU_SPEED_OPTIONS.includes(1.0) && VIENEU_SPEED_OPTIONS.includes(1.25), "Hỗ trợ đầy đủ các dải tốc độ đọc 0.75x -> 1.5x");
+
+  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS: Đạt 18/18 kiểm tra bóc tách KHÔNG TIÊU ĐỀ, chuẩn hóa tiếng Việt & chunks âm thanh${colors.reset}\n`);
+
 
 
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}`);

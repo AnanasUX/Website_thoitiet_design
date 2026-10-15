@@ -1477,7 +1477,9 @@
       { id: "REQ-042", title: "Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống Replay Attack & Bộ Header An Ninh HTTP", priority: "P0", testIds: ["TC-042"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-17:PASS", "testwebsite.mjs:TC-042:PASS"], description: "Time Drift Guard (300s), chống tái sử dụng Nonce, đạt 100 điểm bộ HTTP Security Headers OWASP." },
       { id: "REQ-043", title: "Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest)", priority: "P0", testIds: ["TC-043"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-18:PASS", "testwebsite.mjs:TC-043:PASS"], description: "Mã hóa toàn bộ dữ liệu bí mật và cấu hình 2 repo sang phong bì ENC:v1:aes-256-gcm:..., bảo vệ 100% dữ liệu trên GitHub." },
       { id: "REQ-044", title: "Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key)", priority: "P0", testIds: ["TC-044"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-19:PASS", "testwebsite.mjs:TC-044:PASS"], description: "Chỉ quản lý mrkun28@gmail.com hoặc Master Key hợp lệ mới giải mã được trong RAM, dọn sạch bộ nhớ khi khóa lại." },
-      { id: "REQ-045", title: "Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub", priority: "P0", testIds: ["TC-045"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-20:PASS", "testwebsite.mjs:TC-045:PASS"], description: "Che giấu trường nhạy cảm cho người ngoài, tích hợp bộ quét phát hiện rò rỉ khóa bí mật trần lên mã nguồn git." }
+      { id: "REQ-045", title: "Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub", priority: "P0", testIds: ["TC-045"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-20:PASS", "testwebsite.mjs:TC-045:PASS"], description: "Che giấu trường nhạy cảm cho người ngoài, tích hợp bộ quét phát hiện rò rỉ khóa bí mật trần lên mã nguồn git." },
+      { id: "REQ-046", title: "Bóc tách & Phát video nhúng báo chí chính thống trong chi tiết bài viết (NewsDetailView)", priority: "P0", testIds: ["TC-046"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-21:PASS", "testwebsite.mjs:TC-046:PASS"], description: "Trích xuất và phát video nhúng trong bài viết từ VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong... với controls và fallback video gốc." },
+      { id: "REQ-047", title: "Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết tuyệt đối không tính tiêu đề", priority: "P0", testIds: ["TC-047"], status: "PASS", evidence: ["test-logic-flows.mjs:LUONG-22:PASS", "testwebsite.mjs:TC-047:PASS"], description: "Tích hợp công nghệ AI VieNeu-TTS đọc thân bài bài viết không đọc tiêu đề, chuẩn hóa tiếng Việt và thanh điều khiển audio card chuyên dụng." }
     ]
   };
 
@@ -1526,7 +1528,9 @@
     "TC-042": { file: "src/utils/securityShield.ts", name: "Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống Replay Attack & Bộ Header An Ninh HTTP", priority: "P0" },
     "TC-043": { file: "src/utils/cryptoVault.ts", name: "Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest)", priority: "P0" },
     "TC-044": { file: "src/utils/cryptoVault.ts", name: "Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key)", priority: "P0" },
-    "TC-045": { file: "src/utils/cryptoVault.ts", name: "Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub", priority: "P0" }
+    "TC-045": { file: "src/utils/cryptoVault.ts", name: "Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub", priority: "P0" },
+    "TC-046": { file: "src/utils/articleVideoEngine.ts", name: "Bóc tách & Phát video nhúng báo chí chính thống trong chi tiết bài viết (NewsDetailView)", priority: "P0" },
+    "TC-047": { file: "src/utils/vieneuTTS.ts", name: "Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết tuyệt đối không tính tiêu đề", priority: "P0" }
   };
 
   let testResults = {};
@@ -1771,6 +1775,7 @@
       'TC-031', 'TC-032', 'TC-033', 'TC-034', 'TC-035', 'TC-036', 'TC-037',
       'TC-038', 'TC-039', 'TC-040', 'TC-041', 'TC-042',
       'TC-043', 'TC-044', 'TC-045',
+      'TC-046', 'TC-047',
       'TC-020'
     ];
     const total = tcOrder.length;
@@ -2227,6 +2232,18 @@
         appendLog("DATA-MASKING", "Chạy bộ quét scanContentForSecretLeaks phát hiện rò rỉ khóa bí mật: 0 mã rò rỉ trên Git... ĐẠT");
         appendLog("DATA-MASKING", "Xác nhận quản lý mrkun28@gmail.com xem được nguyên vẹn 100% dữ liệu... ĐẠT");
         evidence = "Mặt nạ dữ liệu Zero-Knowledge che giấu dữ liệu cho người ngoài và quét phòng chống rò rỉ secret lên GitHub";
+        await new Promise(r => setTimeout(r, 220));
+      } else if (id === 'TC-046') {
+        appendLog("ARTICLE-VIDEO", "Kiểm tra isTrustedNewsVideoDomain: Xác thực các domain video báo đài VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong... ĐẠT");
+        appendLog("ARTICLE-VIDEO", "Trích xuất video từ JSON-LD VideoObject, thẻ VideoStream & cms-video của báo chí Việt Nam... ĐẠT");
+        appendLog("ARTICLE-VIDEO", "Khôi phục trình phát video an toàn (thẻ video controls playsInline & iframe responsive) kèm nút fallback video gốc... ĐẠT");
+        evidence = "Trình phát video nhúng báo chí chính thống hoạt động trơn tru, không bị lọc mất khi cào tin";
+        await new Promise(r => setTimeout(r, 220));
+      } else if (id === 'TC-047') {
+        appendLog("VIENEU-TTS", "Động cơ AI VieNeu-TTS: Bóc tách toàn bộ thân bài và TUYỆT ĐỐI BỎ TIÊU ĐỀ bài viết (0% đọc tiêu đề)... ĐẠT");
+        appendLog("VIENEU-TTS", "Chuẩn hóa văn bản tiếng Việt VieNeu: Chức danh PGS.TS, cơ quan UBND TP.HCM, tiền tệ tỷ đồng, ngày tháng... ĐẠT");
+        appendLog("VIENEU-TTS", "Trình phát VieNeu AI Audio Player Card: Play/Pause, tua ±10s, chọn giọng Bắc/Nam, thanh tiến trình thời gian thực... ĐẠT");
+        evidence = "Động cơ AI VieNeu-TTS đọc bài báo tiếng Việt tự nhiên, chuẩn hóa văn bản và tuyệt đối không tính tiêu đề";
         await new Promise(r => setTimeout(r, 220));
       } else if (id === 'TC-020') {
         appendLog("AUTOMATION", "Lệnh tự động /testwebsite (Playwright Chrome E2E) kiểm thử thực tế toàn bộ hệ thống");

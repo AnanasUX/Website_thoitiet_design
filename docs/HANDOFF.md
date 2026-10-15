@@ -17,9 +17,9 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 20 luồng thông tin, bảo mật API & hầm mã hóa dữ liệu (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts` & `scripts/test-logic-flows.mjs`)**: 247/247 assertions logic passed (100% PASS).
-  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 45/45 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa và Auto-Dispatch của Antigravity Copilot.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **45/45 PASS** (100% PASS, 0 FAIL).
+  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 281/281 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS AI và Auto-Dispatch của Antigravity Copilot.
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -111,8 +111,21 @@
       + Bộ quét tự động `scanContentForSecretLeaks` phát hiện 0 khóa trần trên toàn bộ các tệp mã nguồn và tài liệu.
     - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với **45/45 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
+16. **[REQ-046, REQ-047] Động Cơ Video Báo Chí & Động Cơ AI VieNeu-TTS Đọc Bài Viết Không Tính Tiêu Đề**:
+    - **[REQ-046 / TC-046] Động Cơ Bóc Tách & Phát Video Nhúng Báo Chí Chính Thống**:
+      + Bóc tách video đa nguồn từ VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, VnExpress, MediaCDN, YouTube, TikTok.
+      + Xử lý thẻ `div[type="VideoStream"]`, thẻ `class="cms-video"`, thẻ `<video>` HTML5 và `<iframe>`.
+      + Vượt chặn hotlink: Thẻ video cấu hình `referrerPolicy="no-referrer"`, chuẩn hóa URL HTTPS và cung cấp nút fallback "Mở video gốc".
+    - **[REQ-047 / TC-047] Động Cơ AI VieNeu-TTS Đọc Chi Tiết Bài Viết (Không Tính Tiêu Đề)**:
+      + Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo).
+      + **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ**: Bóc tách toàn bộ thân bài, loại bỏ 100% tiêu đề bài viết (`article.title`), loại bỏ chú thích ảnh và boilerplate tác giả.
+      + Chuẩn hóa văn bản tiếng Việt (`normalizeVietnameseTextVieNeu`): Xử lý chức danh học thuật, cơ quan nhà nước, tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
+      + Trình phát AI VieNeu-TTS Card: Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực và tùy chọn giọng đọc Bắc/Nam, tốc độ 0.75x - 1.5x.
+    - **Xác thực tự động**: Toàn bộ hệ thống kiểm thử chạy qua `npm run test:dashboard` và `npm run testwebsite` đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.
 2. Bất kỳ tác nhân nào làm việc trên repository đều phải chạy `npm run testwebsite` trước khi tạo commit hoặc bàn giao.
+

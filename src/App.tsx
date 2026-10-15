@@ -33,6 +33,14 @@ import {
   getDaysInMonth,
   getFirstDayOfMonth,
   decodeHTMLEntities,
+  extractArticleVideos,
+  isTrustedNewsVideoDomain,
+  buildSafeVideoEmbedUrl,
+  extractContentForVieNeuTTS,
+  normalizeVietnameseTextVieNeu,
+  splitVieNeuAudioChunks,
+  VIENEU_VOICES,
+  VIENEU_SPEED_OPTIONS
 } from "./utils/logicFlows";
 
 export {
@@ -672,8 +680,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [fullContent, setFullContent] = useState<string>('RICH_RENDER');
   const [isLoadingFull, setIsLoadingFull] = useState(false);
   const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
+  // ── Phân hệ AI VieNeu-TTS Audio Player (REQ-047 / TC-047) ──
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSpeechPaused, setIsSpeechPaused] = useState(false);
+  const [vieNeuVoice, setVieNeuVoice] = useState<string>('bac_nu');
+  const [vieNeuSpeed, setVieNeuSpeed] = useState<number>(1.0);
+  const [vieNeuProgress, setVieNeuProgress] = useState<number>(0);
+  const [vieNeuChunks, setVieNeuChunks] = useState<string[]>([]);
+  const [currentChunkIdx, setCurrentChunkIdx] = useState<number>(0);
+
+  const stopAllAudio = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    setIsSpeechPaused(false);
+    setVieNeuProgress(0);
+    setCurrentChunkIdx(0);
+  }, []);
 
   const related = useMemo(() => {
     const pool = Array.isArray(allNews) && allNews.length > 0 ? allNews : DEFAULT_NEWS_FEED;
@@ -689,9 +713,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     document.body.style.overflow = 'hidden';
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-        }
+        stopAllAudio();
         onClose();
       }
     };
@@ -699,11 +721,48 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     return () => { 
       document.body.style.overflow = 'auto'; 
       window.removeEventListener('keydown', handleKeyDown);
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopAllAudio();
     };
-  }, [onClose]);
+  }, [onClose, stopAllAudio]);
+
+  const playVieNeuChunk = useCallback((idx: number, chunksList: string[], speed: number, voiceId: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const synth = window.speechSynthesis;
+
+    if (idx >= chunksList.length) {
+      setIsSpeaking(false);
+      setIsSpeechPaused(false);
+      setVieNeuProgress(100);
+      return;
+    }
+
+    synth.cancel();
+    setCurrentChunkIdx(idx);
+    const chunkText = chunksList[idx];
+    const utterance = new SpeechSynthesisUtterance(chunkText);
+    utterance.lang = 'vi-VN';
+    utterance.rate = speed;
+    utterance.pitch = voiceId === 'bac_nu' ? 1.05 : 0.95;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setIsSpeechPaused(false);
+      const prog = Math.round(((idx + 1) / chunksList.length) * 100);
+      setVieNeuProgress(prog);
+    };
+
+    utterance.onend = () => {
+      playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
+    };
+
+    utterance.onerror = (e) => {
+      if (e.error === 'interrupted' || e.error === 'canceled') return;
+      setIsSpeaking(false);
+      setIsSpeechPaused(false);
+    };
+
+    synth.speak(utterance);
+  }, []);
 
   const handleToggleAudio = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -723,25 +782,44 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     }
 
     synth.cancel();
-    const titleText = article.author || article.title || '';
-    const bodyText = article.body || '';
-    const plainText = `${titleText}. ${bodyText}`.replace(/<[^>]*>/g, '');
-    const utterance = new SpeechSynthesisUtterance(plainText);
-    utterance.lang = 'vi-VN';
-    utterance.rate = 1.0;
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setIsSpeechPaused(false);
-    };
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setIsSpeechPaused(false);
-    };
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setIsSpeechPaused(false);
-    };
-    synth.speak(utterance);
+    // BẢO ĐẢM TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ: Chỉ bóc tách phần thân bài chi tiết
+    const bodyText = extractContentForVieNeuTTS(article, contentBlocks);
+    const cleanToRead = bodyText || (article.body || article.description || '').replace(/<[^>]*>/g, '').trim();
+
+    if (!cleanToRead) {
+      alert('Không tìm thấy nội dung chi tiết bài viết để đọc.');
+      return;
+    }
+
+    const chunks = splitVieNeuAudioChunks(cleanToRead);
+    setVieNeuChunks(chunks);
+    playVieNeuChunk(0, chunks, vieNeuSpeed, vieNeuVoice);
+  };
+
+  const handleSeekBackward = () => {
+    if (vieNeuChunks.length === 0) return;
+    const targetIdx = Math.max(0, currentChunkIdx - 1);
+    playVieNeuChunk(targetIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+  };
+
+  const handleSeekForward = () => {
+    if (vieNeuChunks.length === 0) return;
+    const targetIdx = Math.min(vieNeuChunks.length - 1, currentChunkIdx + 1);
+    playVieNeuChunk(targetIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+  };
+
+  const handleVoiceChange = (vId: string) => {
+    setVieNeuVoice(vId);
+    if (isSpeaking && vieNeuChunks.length > 0) {
+      playVieNeuChunk(currentChunkIdx, vieNeuChunks, vieNeuSpeed, vId);
+    }
+  };
+
+  const handleSpeedChange = (spd: number) => {
+    setVieNeuSpeed(spd);
+    if (isSpeaking && vieNeuChunks.length > 0) {
+      playVieNeuChunk(currentChunkIdx, vieNeuChunks, spd, vieNeuVoice);
+    }
   };
 
   useEffect(() => {
@@ -779,92 +857,21 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     
     // ── Hàm cào bài viết trực tiếp qua Worker Proxy (client-side DOMParser) ──
     const parseHTMLToBlocks = (htmlStr: string, baseUrl: string) => {
-      // 1. Trích xuất VideoObject từ JSON-LD trước khi loại bỏ thẻ script
-      const extractedVideos: any[] = [];
-      const ldJsonMatches = htmlStr.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi) || [];
-      for (const s of ldJsonMatches) {
-        if (s.includes('VideoObject') || s.includes('contentUrl') || s.includes('embedUrl')) {
-          try {
-            let jsonText = s.replace(/<script[^>]*>|<\/script>/gi, '').trim();
-            // Xóa ký tự điều khiển (như xuống dòng trần \n trong chuỗi) gây lỗi JSON.parse ở các trang Tuổi Trẻ / Dân Trí
-            jsonText = jsonText.replace(/[\u0000-\u001F\u007F-\u009F]/g, c => (c === '\n' || c === '\r' ? ' ' : ''));
-            const parsed = JSON.parse(jsonText);
-            const list = Array.isArray(parsed) ? parsed : [parsed];
-            for (const item of list) {
-              const obj = item['@type'] === 'VideoObject' ? item : (item.video || null);
-              if (obj && (obj.contentUrl || obj.embedUrl)) {
-                let vUrl = (obj.contentUrl || obj.embedUrl || '').trim();
-                if (vUrl.startsWith('//')) vUrl = 'https:' + vUrl;
-                const thumb = Array.isArray(obj.thumbnailUrl) ? obj.thumbnailUrl[0] : (obj.thumbnailUrl || '');
-                const duration = obj.duration || '';
-                const isShort = /PT(?:0M|1M|2M)/.test(duration) || /short|reel|tiktok/i.test(vUrl) || /1080-1920|crop.*1920|960-1280|720-1280/i.test(thumb) || /shorts/i.test(baseUrl);
-                if (vUrl && !extractedVideos.some(v => v.src === vUrl)) {
-                  extractedVideos.push({
-                    type: vUrl.includes('embed') || vUrl.includes('iframe') ? 'iframe' : 'video',
-                    src: vUrl,
-                    poster: thumb,
-                    caption: obj.name || obj.description || '',
-                    isShort
-                  });
-                }
-              }
-            }
-          } catch(e) {
-            // Regex fallback nếu JSON.parse vẫn lỗi cú pháp
-            const urlMatch = s.match(/"contentUrl"\s*:\s*"([^"]+)"/i) || s.match(/"embedUrl"\s*:\s*"([^"]+)"/i);
-            if (urlMatch) {
-              let vUrl = urlMatch[1].trim();
-              if (vUrl.startsWith('//')) vUrl = 'https:' + vUrl;
-              if (vUrl && !extractedVideos.some(v => v.src === vUrl)) {
-                extractedVideos.push({
-                  type: 'video',
-                  src: vUrl,
-                  poster: '',
-                  caption: '',
-                  isShort: /shorts/i.test(baseUrl)
-                });
-              }
-            }
-          }
-        }
-      }
-
-      // 2. Trích xuất nhúng TikTok blockquote
-      const tiktokCiteRegex = /<blockquote[^>]+class=["'][^"']*tiktok-embed[^"']*["'][^>]+cite=["']([^"']+)["']/gi;
-      let ttMatch;
-      while ((ttMatch = tiktokCiteRegex.exec(htmlStr)) !== null) {
-        const citeUrl = ttMatch[1];
-        const videoIdMatch = citeUrl.match(/\/video\/(\d+)/);
-        if (videoIdMatch) {
-          const embedUrl = `https://www.tiktok.com/embed/v2/${videoIdMatch[1]}`;
-          if (!extractedVideos.some(v => v.src === embedUrl)) {
-            extractedVideos.push({
-              type: 'iframe',
-              src: embedUrl,
-              isShort: true,
-              caption: 'TikTok Video'
-            });
-          }
-        }
-      }
+      // 1. Trích xuất video toàn diện qua Article Video Engine (REQ-046 / TC-046)
+      const extractedVideos: any[] = extractArticleVideos(htmlStr, baseUrl);
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlStr, 'text/html');
 
-      // Giữ lại các iframe video hợp lệ (YouTube, TikTok, Facebook, Vimeo) và chuẩn hoá chặn quảng cáo
+      // Giữ lại các iframe video hợp lệ từ báo chí chính thống (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong...) và YouTube/TikTok
       doc.querySelectorAll('iframe').forEach(ifr => {
         let src = (ifr.getAttribute('src') || ifr.getAttribute('data-src') || '').trim();
-        const isVideoIframe = /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
+        const isVideoIframe = isTrustedNewsVideoDomain(src) || /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
         if (!isVideoIframe) {
           ifr.remove();
         } else {
-          if (/youtube\.com|youtu\.be/i.test(src)) {
-            const ytMatch = src.match(/(?:embed\/|shorts\/|v=|\/v\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-            if (ytMatch && ytMatch[1]) {
-              src = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1&playsinline=1`;
-              ifr.setAttribute('src', src);
-            }
-          }
+          const safeIfrUrl = buildSafeVideoEmbedUrl(src, baseUrl);
+          ifr.setAttribute('src', safeIfrUrl);
           ifr.setAttribute('data-keep-video', 'true');
         }
       });
@@ -1118,10 +1125,11 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         if (tag === 'iframe') {
           let src = (el.getAttribute('src') || el.getAttribute('data-src') || '').trim();
           if (src) {
-            const isVideoIframe = /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
+            const isVideoIframe = isTrustedNewsVideoDomain(src) || /youtube\.com\/(?:embed|shorts)|youtu\.be|tiktok\.com\/embed|facebook\.com\/plugins\/video|player\.vimeo\.com|dailymotion\.com\/embed/i.test(src);
             if (isVideoIframe) {
-              const isShort = /shorts|tiktok/i.test(src);
-              blocks.push({ type: 'iframe', src, isShort });
+              const safeSrc = buildSafeVideoEmbedUrl(src, baseUrl);
+              const isShort = /shorts|tiktok/i.test(safeSrc);
+              blocks.push({ type: 'iframe', src: safeSrc, isShort });
             }
           }
           return;
@@ -1134,16 +1142,16 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             if (source) src = source.getAttribute('src');
           }
           if (src) {
-             if (src.startsWith('/')) try { src = new URL(src, baseUrl).href; } catch(e){}
+             const safeSrc = buildSafeVideoEmbedUrl(src, baseUrl);
              const poster = el.getAttribute('poster') || '';
-             const isShort = /shorts|tiktok|reels/i.test(src);
-             blocks.push({ type: 'video', src, poster, isShort });
+             const isShort = /shorts|tiktok|reels/i.test(safeSrc);
+             blocks.push({ type: 'video', src: safeSrc, poster, isShort });
           }
           return;
         }
 
-        // Bóc tách container video đặc thù của báo chí (Thanh Niên, Tuổi Trẻ, GenK, Kenh14, Tiền Phong...)
-        const isVideoStream = el.getAttribute('type') === 'VideoStream' || el.hasAttribute('data-vid') || el.classList?.contains('cms-video') || el.classList?.contains('vne_video_player') || el.hasAttribute('data-video-src');
+        // Bóc tách container video đặc thù của báo chí (Thanh Niên, Tuổi Trẻ, GenK, Kenh14, Tiền Phong, VTV...)
+        const isVideoStream = el.getAttribute('type') === 'VideoStream' || el.hasAttribute('data-vid') || el.classList?.contains('cms-video') || el.classList?.contains('vne_video_player') || el.classList?.contains('media-video') || el.classList?.contains('video-content') || el.hasAttribute('data-video-src');
         if (isVideoStream) {
           const dataVid = el.getAttribute('data-vid') || el.getAttribute('data-video-src') || el.getAttribute('data-src') || '';
           const dataThumb = el.getAttribute('data-thumb') || el.getAttribute('poster') || '';
@@ -1408,7 +1416,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
                 if (block.type === 'author') {
                   return (
-                    <div key={idx} className="flex items-center justify-between py-2.5 my-1 border-b border-gray-100 w-full text-slate-600">
+                    <div key={idx} className="w-full">
+                      <div className="flex items-center justify-between py-2.5 my-1 border-b border-gray-100 w-full text-slate-600">
                       <div className="flex items-center gap-2.5 min-w-0">
                         {block.avatar ? (
                           <img
@@ -1471,8 +1480,130 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         )}
                       </div>
                     </div>
-                  );
-                }
+
+                    {/* BẢNG ĐIỀU KHIỂN AI VIENEU-TTS CHUYÊN DỤNG (REQ-047 / TC-047) */}
+                    <div data-testid="vieneu-tts-player-card" className="my-3 p-3.5 bg-gradient-to-r from-red-50/80 via-slate-50 to-blue-50/70 border border-red-100 rounded-2xl shadow-xs">
+                      <div className="flex items-center justify-between gap-2 mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-red-600 text-white flex items-center justify-center text-xs font-bold shadow-2xs">
+                            AI
+                          </div>
+                          <div>
+                            <span className="font-bold text-[13px] text-slate-800 flex items-center gap-1.5">
+                              VieNeu-TTS • AI Đọc Bản Tin
+                              <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">Neural TTS</span>
+                            </span>
+                            <p className="text-[11px] text-slate-500 font-medium">
+                              Chỉ đọc nội dung chi tiết bài viết (Không đọc tiêu đề)
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Sóng âm thanh động khi đang phát */}
+                        {isSpeaking && !isSpeechPaused && (
+                          <div className="flex items-center gap-0.5 h-4 px-2 bg-red-500/10 rounded-full">
+                            <span className="w-1 h-3 bg-red-500 rounded-full animate-bounce"></span>
+                            <span className="w-1 h-4 bg-red-500 rounded-full animate-bounce [animation-delay:0.15s]"></span>
+                            <span className="w-1 h-2.5 bg-red-500 rounded-full animate-bounce [animation-delay:0.3s]"></span>
+                            <span className="w-1 h-3.5 bg-red-500 rounded-full animate-bounce [animation-delay:0.45s]"></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Thanh tiến trình phát trực quan */}
+                      <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-3">
+                        <div
+                          className="bg-red-600 h-full transition-all duration-300 rounded-full"
+                          style={{ width: `${vieNeuProgress}%` }}
+                        />
+                      </div>
+
+                      {/* Hàng điều khiển Play/Pause/Seek/Tốc độ/Giọng đọc */}
+                      <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={handleSeekBackward}
+                            disabled={!isSpeaking}
+                            title="Tua lùi 10 giây"
+                            className="p-1.5 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all disabled:opacity-40 cursor-pointer"
+                          >
+                            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                          </button>
+
+                          <button
+                            data-testid="vieneu-play-btn"
+                            onClick={handleToggleAudio}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all shadow-xs cursor-pointer ${
+                              isSpeaking && !isSpeechPaused
+                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                : (isSpeechPaused ? 'bg-amber-500 text-white' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100')
+                            }`}
+                          >
+                            {isSpeaking && !isSpeechPaused ? (
+                              <>
+                                <svg className="size-3.5 fill-current" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                <span>Tạm dừng</span>
+                              </>
+                            ) : isSpeechPaused ? (
+                              <>
+                                <svg className="size-3.5 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span>Tiếp tục</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="size-3.5 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span>Phát AI</span>
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={handleSeekForward}
+                            disabled={!isSpeaking}
+                            title="Tua tới 10 giây"
+                            className="p-1.5 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all disabled:opacity-40 cursor-pointer"
+                          >
+                            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                          </button>
+
+                          {isSpeaking && (
+                            <button
+                              onClick={stopAllAudio}
+                              title="Dừng đọc"
+                              className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-white rounded-lg transition-all cursor-pointer"
+                            >
+                              <svg className="size-4 fill-current" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Chọn giọng đọc & tốc độ */}
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={vieNeuVoice}
+                            onChange={(e) => handleVoiceChange(e.target.value)}
+                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden"
+                          >
+                            <option value="bac_nu">Nữ Miền Bắc (Hà Nội)</option>
+                            <option value="nam_nam">Nam Miền Nam (Sài Gòn)</option>
+                          </select>
+
+                          <select
+                            value={vieNeuSpeed}
+                            onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden"
+                          >
+                            <option value="0.75">0.75x</option>
+                            <option value="1.0">1.0x (Chuẩn)</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
                 if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                 if (block.type === 'heading') {
                   if (block.tag === 'h2') {
@@ -1538,7 +1669,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                     </figure>
                   );
                 }
-               if (block.type === 'video') {
+                if (block.type === 'video') {
                   if (block.isShort) {
                     return (
                       <div key={idx} className="my-6 flex flex-col items-center justify-center w-full">
@@ -1551,6 +1682,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                             controls
                             playsInline
                             preload="metadata"
+                            referrerPolicy="no-referrer"
                             poster={block.poster}
                             src={block.src}
                             className="w-full h-full object-cover"
@@ -1567,9 +1699,22 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
                           <span>BẢN TIN TRUYỀN HÌNH</span>
                         </div>
-                        <video controls playsInline preload="metadata" poster={block.poster} src={block.src} className="w-full h-full object-contain" />
+                        <video controls playsInline preload="metadata" referrerPolicy="no-referrer" poster={block.poster} src={block.src} className="w-full h-full object-contain" />
                       </div>
-                      {block.caption && <figcaption className="text-center text-[14px] mt-2 italic text-gray-600">{block.caption}</figcaption>}
+                      <div className="mt-2 flex items-center justify-between text-[12px] text-gray-500">
+                        {block.caption ? <figcaption className="italic text-gray-600">{block.caption}</figcaption> : <span></span>}
+                        {block.src && (
+                          <a
+                            href={block.src}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-red-600 hover:text-red-700 font-medium hover:underline shrink-0"
+                          >
+                            <span>Mở video gốc</span>
+                            <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                          </a>
+                        )}
+                      </div>
                     </figure>
                   );
                 }
@@ -1587,6 +1732,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         <div className="relative w-full max-w-[340px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
                           <iframe
                             src={finalSrc}
+                            referrerPolicy="no-referrer"
                             className="w-full h-full border-0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           />
@@ -1602,6 +1748,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                       </div>
                       <iframe
                         src={finalSrc}
+                        referrerPolicy="no-referrer"
                         className="w-full h-full border-0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       />

@@ -334,6 +334,27 @@
 - **Mục tiêu**: Tự động che giấu (mask) toàn bộ các trường nhạy cảm đối với người dùng ngoài, đồng thời tích hợp bộ quét phát hiện rò rỉ khóa bí mật công khai (Secret Leak Prevention Scanner) để bảo đảm 0 private key, 0 bot token, 0 API key trần bị lọt vào kho mã nguồn git.
 - **Tiêu chí nghiệm thu**: Hàm `maskSensitiveRecord` che giấu trường nhạy cảm cho người ngoài và giữ nguyên cho quản lý; bộ quét `scanContentForSecretLeaks` phát hiện chính xác các mẫu khóa trần và xác nhận mã nguồn sạch không chứa rò rỉ.
 
+---
+
+### Nhóm 13: Bóc Tách & Phát Video Báo Chí và Trình Phát AI VieNeu-TTS (TC-046..TC-047)
+
+#### TC-046: Bóc tách & Phát video nhúng báo chí chính thống trong chi tiết bài viết
+- **Mục tiêu**: Khắc phục triệt để lỗi video nhúng trong bài viết chi tiết bị lọc bỏ hoặc không phát được khi lấy tin về từ các cơ quan báo đài chính thống (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, VnExpress, YouTube, TikTok).
+- **Tiêu chí nghiệm thu**: 
+  1. Nhận diện chính xác danh sách trắng domain báo chí (`TRUSTED_NEWS_VIDEO_DOMAINS`).
+  2. Bóc tách video đa tầng từ JSON-LD VideoObject, thẻ `type="VideoStream"`, thẻ `class="cms-video"`, thẻ `<video>` HTML5 và `<iframe>`.
+  3. Tự động chuẩn hóa URL HTTPS và cấu hình `referrerPolicy="no-referrer"` trên thẻ video nhúng để vượt qua cơ chế chặn hotlink cross-origin của các báo.
+  4. Cung cấp nút fallback an toàn "Mở video gốc" để người dùng luôn xem được video.
+
+#### TC-047: Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết không tính tiêu đề
+- **Mục tiêu**: Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài báo khi người dùng nhấn "Play".
+- **Tiêu chí nghiệm thu**:
+  1. **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ**: Bóc tách toàn bộ thân bài, loại bỏ 100% tiêu đề bài viết (`article.title`), loại bỏ chú thích ảnh, boilerplate tác giả.
+  2. Chuẩn hóa tiếng Việt (`normalizeVietnameseTextVieNeu`): Xử lý hoàn hảo chức danh học thuật (PGS.TS), cơ quan nhà nước (UBND TP.HCM), tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
+  3. Chia phân đoạn audio ($\le 250$ ký tự) để phát mượt mà không timeout.
+  4. Giao diện Trình phát AI Card (`vieneu-tts-player-card`): Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Waveform), thanh tiến trình đọc thời gian thực và menu chọn giọng Bắc/Nam, tốc độ 0.75x - 1.5x.
+
+
 
 
 
