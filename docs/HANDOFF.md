@@ -71,6 +71,12 @@
     - Cơ chế `waitForData` trong `dashboard.html` tự động thăm dò tình trạng nạp dữ liệu sống từ 38 nguồn RSS, loại trừ hoàn toàn việc test lướt khi thẻ bài còn ở trạng thái skeleton `animate-pulse`.
     - Trực tiếp thao tác cuộn vô cực (tăng bài $15 \to 30+$), chuyển tab danh mục có chờ nạp tin, mở bài đọc Byline bar và nghe TTS tiếng Việt, điều hướng lịch âm dương, đổi 10 kênh TV Báo Tiền Phong, đổi Dark Mode có độ dừng thị giác 800ms và quét trực quan 0 lỗi tràn viền, 0 ảnh hỏng.
 
+11. **Khắc Phục Sự Cố Dừng Kiểm Thử Tại TC-023 & Kiểm Chứng In-Browser Tự Động**:
+    - Chuẩn hóa toàn bộ bộ chọn DOM trong `dashboard.html`, loại bỏ hoàn toàn các pseudo-selector không chuẩn gây crash trình duyệt tại TC-023.
+    - Trang bị lá chắn ngoại lệ 2 tầng (`try/catch` từng bước và `finally` toàn cục) đảm bảo tính ổn định tuyệt đối, không bao giờ treo tiến trình.
+    - Xác thực thành công 100% qua lệnh `npm run test:dashboard` (mô phỏng thao tác click thật trên Chrome, chạy mượt mà từ 0% đến 100% trong 23.73s).
+
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)

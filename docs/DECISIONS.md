@@ -131,9 +131,19 @@
       - *Phân hệ Lịch Vạn Niên (`TC-026`)*: Mở Calendar modal, kiểm tra ngày âm dương, can chi, click chuyển tháng sau -> tháng trước, đóng modal.
       - *Phân hệ Tương tác thực chiến & Quét lỗi (`TC-024`)*: Thao tác cuộn sâu 2000px, click nút `ScrollToTop` cuộn về đỉnh (y=0), bật Dark Mode dừng 800ms để người dùng quan sát trên live simulator rồi khôi phục giao diện sáng, chuyển qua Tablet (768px, dừng 600ms), Mobile (375px, dừng 600ms), quay lại Desktop (1440px), quét 0 lỗi tràn viền và 0 ảnh hỏng.
 
+  - *Kiến Trúc Lá Chắn Lỗi Trình Duyệt & Chuẩn Hóa DOM Selector Trong QA Dashboard (Browser-Native Selector Safety & Error Shielding)*:
+    + **Khắc phục triệt để lỗi đứng máy tại TC-023**: Trong môi trường trình duyệt client (`dashboard.html`), hàm `doc.querySelector` chuẩn W3C không hỗ trợ các bộ chọn giả định riêng của Playwright như `:has-text("...")`. Việc gọi `button:has-text("Nghe đọc")` đã gây ra ngoại lệ `DOMException: SyntaxError`, làm đứt gãy luồng thực thi của hàm `runAllTests()` khiến tiến trình kiểm thử bị dừng đứng lại ngay tại ca `TC-023`.
+    + **Chuẩn hóa truy vấn DOM thuần túy (Pure DOM API)**: Thay thế toàn bộ các cú pháp không hợp lệ bằng phương thức chuẩn `Array.from(doc.querySelectorAll('button')).find(b => b.textContent && b.textContent.includes(...))` kết hợp `try ... catch` bảo vệ an toàn.
+    + **Lá chắn lỗi 2 tầng (Two-Tier Exception Shielding)**:
+      1. *Tầng từng bước kiểm thử (Step-level Shield)*: Mỗi ca kiểm thử trong vòng lặp `for` được bao bọc trong khối `try ... catch`. Nếu có bất kỳ sự cố DOM cục bộ nào, hệ thống ghi nhận cảnh báo và chuyển mượt mà sang ca tiếp theo mà không bao giờ làm treo toàn bộ hệ thống.
+      2. *Tầng toàn cục (Global Finally Guarantee)*: Toàn bộ hàm `runAllTests()` được bọc trong `try ... catch ... finally`, bảo đảm cờ `isRunning`, biểu tượng nút và tiến trình luôn được giải phóng và cập nhật kết quả 100%.
+    + **Công cụ kiểm chứng tự động in-browser (`npm run test:dashboard`)**: Xây dựng script `scripts/test-dashboard-live.mjs` tự động khởi động máy chủ, mở `dashboard.html` trên Google Chrome thật, bấm nút `[▶️ Chạy Kiểm Thử Toàn Hệ Thống]` và xác thực toàn bộ 30/30 ca kiểm thử hoàn tất thành công 100%.
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Sử dụng cú pháp pseudo-selector không chuẩn của Playwright (như `:has-text(...)`) trong mã JavaScript chạy trực tiếp trên trình duyệt của người dùng (`dashboard.html`).
+- **Từ chối**: Thực thi vòng lặp kiểm thử tự động mà không có khối bảo vệ ngoại lệ `try ... catch` từng ca và khối `finally` toàn cục.
 - **Từ chối**: Sử dụng video ID YouTube chưa được kiểm chứng hoặc chứa video 404 chết (gây lỗi đen màn hình player).
 - **Từ chối**: Áp bộ lọc `selectedSubCategory` cứng vào `playlist` khi chuyển kênh (khiến playlist bị trống 0 video khi người dùng đổi sang các kênh không có chuyên mục trùng khớp).
 - **Từ chối**: Hiển thị nút xoay tỉ lệ `[16:9/9:16]` trên Top Header của màn hình điện thoại thoại di động (< 640px) gây chèn ép, đè lấn badge kênh TV `[CH 01...]`.

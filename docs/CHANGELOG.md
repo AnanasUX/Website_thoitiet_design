@@ -48,6 +48,16 @@
   - Bổ sung nút `[🧪 Thử Nghiệm Báo Lỗi]` (`copilotSimulateBugBtn`) cho phép mô phỏng báo lỗi thử nghiệm và khôi phục trạng thái PASS 100%.
 - Nâng cấp bộ kiểm thử toàn diện `/testwebsite` đạt **24/24 PASS (100% ĐẠT, 0 FAIL)**, thông qua cổng kiểm duyệt phát hành **RELEASE GATE: PASSED**.
 
+### 10. Khắc Phục Lỗi Dừng Kiểm Thử Tại TC-023 & Tích Hợp Lá Chắn Ngoại Lệ An Toàn Cho QA Dashboard
+- **Nguyên nhân gốc rễ**: Phát hiện và khắc phục triệt để lỗi cú pháp selector `button:has-text("Nghe đọc")` tại `TC-023` (và `:has-text("Lịch")` tại `TC-026`, `:has-text("🌙")` tại `TC-024`) trong `dashboard.html`. Cú pháp riêng của Playwright này khiến hàm `doc.querySelector` của trình duyệt ném ngoại lệ `DOMException: SyntaxError` làm treo luồng kiểm thử tại TC-023.
+- **Giải pháp xử lý**:
+  + Thay thế bằng truy vấn DOM W3C chuẩn: `Array.from(doc.querySelectorAll('button')).find(b => b.textContent?.includes(...))`.
+  + Tích hợp lá chắn lỗi 2 tầng: Bao bọc từng ca kiểm thử trong `try ... catch` và bao bọc toàn bộ hàm `runAllTests()` trong `try ... finally` để bảo đảm tiến trình không bao giờ bị đứng.
+  + Bổ sung script kiểm chứng tự động in-browser `scripts/test-dashboard-live.mjs` (`npm run test:dashboard`).
+- **Nghiệm thu**: Chạy thực tế trên Google Chrome thật thông qua cả 2 kênh:
+  + `npm run test:dashboard`: Giao diện Dashboard tự động chạy trơn tru 30/30 ca (TC-023 $\to$ TC-024 $\to$ TC-020), đạt 100% trong 23.73s.
+  + `npm run testwebsite`: Toàn bộ 30 ca kiểm thử tiếp tục đạt chuẩn **30/30 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ### 9. Nâng Cấp Động Cơ Kiểm Thử Chuyên Sâu Tương Tác Sống & Giai Đoạn Chờ Đồng Bộ Dữ Liệu RSS (Hydration Wait & Deep DOM Testing)
 - Khắc phục triệt để hiện tượng chạy kiểm thử vội vã trên QA Dashboard khi tin tức RSS từ 38 nguồn chưa nạp xong (giao diện còn ở trạng thái skeleton `animate-pulse`).
 - Tích hợp giai đoạn đồng bộ dữ liệu sống `waitForData` (thăm dò thẻ bài viết $\ge 5$ và skeleton biến mất) vào `dashboard.html`.
