@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Commit gần nhất**: `103e85a` (`feat(tts): enforce female VieNeu-TTS voice and full article reading on article-tts-btn click`)
+- **Commit gần nhất**: `d556d39` (`test(qa): update release audit screenshots evidence`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & VieNeu-TTS AI Nữ)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
