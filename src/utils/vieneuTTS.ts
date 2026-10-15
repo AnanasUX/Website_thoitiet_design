@@ -555,8 +555,8 @@ export function formatAudioTime(seconds: number): string {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-const BACKEND_BASE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? 'http://127.0.0.1:8000'
+const BACKEND_BASE_URL = typeof window !== 'undefined'
+  ? window.location.origin
   : 'http://127.0.0.1:8000';
 
 export async function fetchBackendTTSVoices(): Promise<VieNeuVoiceOption[]> {
@@ -815,10 +815,12 @@ export function getCharacterVoiceModulation(voiceId: string): { pitch: number; r
  * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS (Google Neural Vietnamese Female Voice)
  * Cung cấp giọng đọc tự nhiên, hoạt động hoàn hảo 100% trên mọi máy tính/điện thoại
  */
-export function buildVieNeuAudioUrl(text: string, _voiceId?: string): string {
+export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
-  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
+  const vid = voiceId || 'bac_nu';
+  const base = typeof window !== 'undefined' && window.location ? window.location.origin : '';
+  return `${base}/api/tts?translate_tts=1&tl=vi&text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(vid)}`;
 }
 
 /**

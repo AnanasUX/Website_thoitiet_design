@@ -51,6 +51,7 @@ import {
   getCharacterVoiceModulation,
   formatAudioTime,
   fetchBackendTTSVoices,
+  requestBackendArticleTTS,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS
 } from "./utils/logicFlows";
@@ -704,6 +705,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
   const [ttsState, setTtsState] = useState<'idle' | 'generating' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
   const [backendVoicesList, setBackendVoicesList] = useState<any[]>(VIENEU_VOICES);
+  const [currentlySpeakingText, setCurrentlySpeakingText] = useState<string>('');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const synthUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -736,6 +738,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     setCurrentChunkIdx(0);
     setAudioCurrentTime(0);
     setAudioDuration(0);
+    setCurrentlySpeakingText('');
   }, []);
 
   const related = useMemo(() => {
@@ -796,6 +799,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
     setCurrentChunkIdx(idx);
     const chunkText = chunksList[idx];
+    setCurrentlySpeakingText(chunkText);
     const prog = Math.round(((idx + 1) / chunksList.length) * 100);
     setVieNeuProgress(prog);
     setIsSpeaking(true);
@@ -1021,7 +1025,23 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
     const chunks = splitVieNeuAudioChunks(cleanToRead);
     setVieNeuChunks(chunks);
+
+    // Bắt đầu phát ngay lập tức từ chunk 0 để người dùng nghe thấy tiếng sau 200ms
     playVieNeuChunk(0, chunks, vieNeuSpeed, activeVoiceId);
+
+    // Đồng thời kích hoạt Backend TTS tạo/lưu cache audio chất lượng cao bất đồng bộ
+    try {
+      const artId = String(article.id || article.link || 'art-news').replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 60);
+      requestBackendArticleTTS(artId, {
+        title: article.title || '',
+        sapo: article.description || article.sapo || '',
+        content: cleanToRead,
+        voice: activeVoiceId,
+        includeTitle: false
+      }).catch(err => {
+        console.warn('[VieNeu-TTS] Backend TTS notice:', err?.message);
+      });
+    } catch (_e) {}
   };
 
   const handleSeekBackward = () => {
@@ -1800,6 +1820,21 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           />
                         </div>
                       </div>
+
+                      {/* Hiển thị rõ ràng đoạn văn bản đang đọc để độc giả theo dõi nội dung */}
+                      {isSpeaking && currentlySpeakingText && (
+                        <div className="mb-2.5 p-2.5 bg-white/90 rounded-xl border border-red-100/80 text-[11px] sm:text-[12px] text-slate-700 leading-relaxed shadow-2xs">
+                          <div className="flex items-start gap-1.5">
+                            <span className="font-bold text-red-600 inline-flex items-center gap-1 shrink-0 mt-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span>
+                              Đang đọc:
+                            </span>
+                            <span className="italic font-medium text-slate-800 line-clamp-2">
+                              "{currentlySpeakingText}"
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Hàng điều khiển Play/Pause/Seek/Tốc độ/Giọng đọc */}
                       <div className="flex items-center justify-between flex-wrap gap-2 text-xs">

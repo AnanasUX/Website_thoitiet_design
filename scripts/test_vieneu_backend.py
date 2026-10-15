@@ -17,6 +17,7 @@ import os
 import asyncio
 import hashlib
 from pathlib import Path
+import json
 
 if sys.platform == "win32":
     try:
@@ -84,6 +85,13 @@ def run_tests():
     bgt = fastapi.BackgroundTasks()
     mock_request = fastapi.Request({"type": "http", "client": ("127.0.0.1", 9999)})
     
+    # Dọn dẹp cache test cũ nếu có
+    test_hash = s.compute_cache_hash("article-test-1", "mai_anh", s.normalize_vietnamese_text("Dự báo thời tiết Hà Nội. Hôm nay thời tiết đẹp, mây nhẹ, nhiệt độ 28 độ C. Gió nhẹ cấp 2, không mưa. Thích hợp cho các hoạt động ngoài trời."))
+    for ext in [".mp3", ".wav", ".json"]:
+        p = s.CACHE_DIR / f"{test_hash}{ext}"
+        if p.exists():
+            p.unlink()
+
     # 3a. Tạo mới
     res_create = asyncio.run(s.create_article_tts("article-test-1", req_body, mock_request, bgt))
     check(res_create.status_code == 202, "Trả về HTTP 202 Accepted cho tác vụ mới")
@@ -94,8 +102,10 @@ def run_tests():
     # 3b. Kiểm tra Cache Hit lần gọi thứ 2
     bgt2 = fastapi.BackgroundTasks()
     res_cache = asyncio.run(s.create_article_tts("article-test-1", req_body, mock_request, bgt2))
-    check(res_cache.get("cached") is True, "Cuộc gọi thứ hai trả về Cache Hit tức thì (cached=True)")
-    check(res_cache.get("duration") > 0, "Thời lượng audio được tính toán chính xác")
+    check(res_cache.status_code == 200, "Trả về HTTP 200 OK cho Cache Hit")
+    res_cache_json = json.loads(res_cache.body.decode('utf-8'))
+    check(res_cache_json.get("cached") is True, "Cuộc gọi thứ hai trả về Cache Hit tức thì (cached=True)")
+    check(res_cache_json.get("duration") > 0, "Thời lượng audio được tính toán chính xác")
     
     # 3c. Kiểm tra từ chối bài viết rỗng
     empty_req = s.ArticleTTSRequest(title="", sapo="", content="")
@@ -124,7 +134,7 @@ def run_tests():
 
     # 5. Kiểm tra Stream Audio & HTTP 206 Range Requests (GET /api/tts/audio/{audioId})
     print("\n>>> [5/7] Kiểm tra Stream Audio & Range Requests (HTTP 206)...")
-    audio_id = res_cache.get("audioId")
+    audio_id = res_cache_json.get("audioId")
     check(audio_id is not None, "Nhận được audioId hợp lệ")
     
     # 5a. Full content request (HTTP 200)

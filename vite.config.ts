@@ -437,36 +437,96 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
 /**
  * VieNeu-TTS Neural Audio Proxy Plugin
  * Cung cấp luồng stream âm thanh MP3 tiếng Việt chuẩn cho mọi trình duyệt
+ * Kết nối song song với Python FastAPI Backend (http://127.0.0.1:8000)
  */
 function ttsProxyPlugin(): Plugin {
   const handler = async (req: any, res: any, next: any) => {
     try {
       const url = new URL(req.url, 'http://localhost');
-      if (url.pathname === '/api/tts') {
-        const text = url.searchParams.get('text') || '';
-        if (!text) {
-          res.statusCode = 400;
-          res.end('Missing text parameter');
-          return;
-        }
-        const gUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
-        const upstream = await fetch(gUrl, {
-          headers: {
-            'Referer': 'https://translate.google.com/',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      const cleanPath = url.pathname.replace(/^\/Website_thoitiet_design/, '');
+
+      if (cleanPath.startsWith('/api/tts')) {
+        // 1. Thử chuyển tiếp tới FastAPI Backend nếu đang chạy trên port 8000
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          const backendUrl = `http://127.0.0.1:8000${cleanPath}${url.search}`;
+          
+          const headers: Record<string, string> = {};
+          if (req.headers.range) headers['range'] = req.headers.range;
+          if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+
+          let body: any = undefined;
+          if (req.method !== 'GET' && req.method !== 'HEAD') {
+            body = await new Promise((resolve) => {
+              const chunks: Buffer[] = [];
+              req.on('data', (c: Buffer) => chunks.push(c));
+              req.on('end', () => resolve(Buffer.concat(chunks)));
+            });
           }
-        });
-        if (!upstream.ok) {
-          res.statusCode = upstream.status;
-          res.end('TTS Upstream Error');
+
+          const backendRes = await fetch(backendUrl, {
+            method: req.method,
+            headers,
+            body,
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (backendRes.ok || backendRes.status === 206 || backendRes.status === 202) {
+            res.statusCode = backendRes.status;
+            backendRes.headers.forEach((val, key) => {
+              res.setHeader(key, val);
+            });
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            const arr = await backendRes.arrayBuffer();
+            res.end(Buffer.from(arr));
+            return;
+          }
+        } catch (_backendErr) {
+          // FastAPI backend chưa khởi động hoặc timeout -> Dùng fallback tại chỗ
+        }
+
+        // 2. Fallback xử lý tại chỗ:
+        // 2a. Danh sách giọng đọc
+        if (cleanPath === '/api/tts/voices') {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.end(JSON.stringify({
+            success: true,
+            model: "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+            sample_rate: 48000,
+            default_voice: "bac_nu",
+            voices: [
+              { id: "bac_nu", name: "Mai Anh (Chuẩn)", gender: "female", accent: "northern", style: "news", is_default: true },
+              { id: "bac_nam", name: "Minh Quân (Chuẩn)", gender: "male", accent: "northern", style: "natural", is_default: false },
+              { id: "trung_nu", name: "Ngọc Trân (Huế)", gender: "female", accent: "central", style: "natural", is_default: false },
+              { id: "nam_nu", name: "Thùy Dung (Sài Gòn)", gender: "female", accent: "southern", style: "news", is_default: false }
+            ]
+          }));
           return;
         }
-        res.setHeader('Content-Type', 'audio/mpeg');
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        const arrayBuffer = await upstream.arrayBuffer();
-        res.end(Buffer.from(arrayBuffer));
-        return;
+
+        // 2b. Stream âm thanh tiếng Việt với Google TTS proxy (Referer bypass)
+        const text = url.searchParams.get('text') || '';
+        if (text) {
+          const gUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+          const upstream = await fetch(gUrl, {
+            headers: {
+              'Referer': 'https://translate.google.com/',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
+          if (upstream.ok) {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'audio/mpeg');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            const arrayBuffer = await upstream.arrayBuffer();
+            res.end(Buffer.from(arrayBuffer));
+            return;
+          }
+        }
       }
     } catch (e: any) {
       console.error('[TTS Proxy Error]:', e);

@@ -318,6 +318,10 @@ def get_supported_voices():
         "voices": PRESET_VOICES
     }
 
+def compute_cache_hash(article_id: str, voice_id: str, text: str) -> str:
+    """Tính toán mã băm SHA-256 duy nhất cho cache audio"""
+    return hashlib.sha256(f"{article_id}:{voice_id}:{text}:v3turbo".encode('utf-8')).hexdigest()
+
 @app.post("/api/tts/articles/{articleId}")
 async def create_article_tts(
     articleId: str,
@@ -364,7 +368,7 @@ async def create_article_tts(
         normalized_text = normalized_text[:MAX_TEXT_LENGTH]
 
     # 4. Tính toán khóa Cache duy nhất
-    content_hash = hashlib.sha256(f"{articleId}:{voice_id}:{normalized_text}:v3turbo".encode('utf-8')).hexdigest()
+    content_hash = compute_cache_hash(articleId, voice_id, normalized_text)
     audio_format = req.format.lower() if req.format and req.format.lower() in ["mp3", "wav"] else "mp3"
     cache_audio_path = CACHE_DIR / f"{content_hash}.{audio_format}"
     cache_meta_path = CACHE_DIR / f"{content_hash}.json"
@@ -377,17 +381,20 @@ async def create_article_tts(
                 meta = json.loads(cache_meta_path.read_text(encoding='utf-8'))
             except Exception:
                 pass
-        return {
-            "success": True,
-            "status": "completed",
-            "cached": True,
-            "articleId": articleId,
-            "voice": voice_id,
-            "audioId": content_hash,
-            "audioUrl": f"/api/tts/audio/{content_hash}.{audio_format}",
-            "duration": meta.get("duration", 0),
-            "sampleRate": SAMPLE_RATE
-        }
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "success": True,
+                "status": "completed",
+                "cached": True,
+                "articleId": articleId,
+                "voice": voice_id,
+                "audioId": content_hash,
+                "audioUrl": f"/api/tts/audio/{content_hash}.{audio_format}",
+                "duration": meta.get("duration", 0),
+                "sampleRate": SAMPLE_RATE
+            }
+        )
 
     # 6. Nếu chưa có, tạo tác vụ Job bất đồng bộ
     job_id = f"job-{uuid.uuid4().hex[:12]}"
