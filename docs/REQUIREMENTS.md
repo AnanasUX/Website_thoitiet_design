@@ -92,6 +92,7 @@
 | PROMPT-20261015-06 | 2026-10-15 | Hệ thống tự fill dữ liệu vào chứ trong khi đó đã sử dụng tài khoản quản trị rồi cần gì phải nhập vào trong hệ thống đó | REQ-044 | None | Approved |
 | PROMPT-20261015-07 | 2026-10-15 | Chức năng "Chạy Kiểm Thử Toàn Hệ Thống" vẫn chỉ điều chỉnh giao diện thôi việc này vẫn chỉ là test Ui bên ngoài còn luồng logic UX mong muốn thì hệ thống chưa xử lý được . | REQ-022, REQ-023, REQ-024 | None | Approved |
 | PROMPT-20261015-08 | 2026-10-15 | Ngoài ra bài viết tin tức hiện tại đang có 1 vài trang đang lấy bài viết rất cũ, kiểm tra lại và thực hiện đảm bảo. | REQ-027, REQ-022 | None | Approved |
+| PROMPT-20261015-09 | 2026-10-15 | Tập trung chỉ xử lý giọng nói `<div data-testid="article-tts-btn" role="button" tabindex="0" title="Tiếp tục đọc" ...>...<span>Tiếp tục</span></div>` hiện tại đã chạy đâu | REQ-047 | None | Approved |
 
 
 

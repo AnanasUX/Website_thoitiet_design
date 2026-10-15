@@ -1,5 +1,28 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.15.0 (2026-10-15) - Khắc Phục Triệt Để Giọng Nói "Tiếp Tục Đọc" AI VieNeu-TTS (PROMPT-20261015-09 / REQ-047)
+
+### Nâng Cấp Động Cơ Âm Thanh & Luồng Tiếp Tục Đọc (Resume / Playback Safety)
+- **Xử lý sự kiện click "Tiếp tục đọc" trên `article-tts-btn`**:
+  + Khắc phục lỗi `handleToggleAudio` nuốt lỗi im lặng khi `audio.play()` reject. Khi người dùng click nút ở trạng thái "Tiếp tục" (`title="Tiếp tục đọc"`, `<span>Tiếp tục</span>`), hệ thống chủ động resume audio; nếu audio element trước đó đã kết thúc (`ended`), hoặc bị lỗi (`error`), hoặc chưa có dữ liệu đệm, hệ thống lập tức gọi trực tiếp `playVieNeuChunk` để phát lại chunk hiện tại bằng giọng nữ AI VieNeu-TTS của hệ thống (`bac_nu`).
+- **Khống chế cứng độ dài chunk âm thanh $\le 120$ ký tự (`splitVieNeuAudioChunks`)**:
+  + Chia tách câu dài theo dấu chấm, chấm phẩy, phẩy, hai chấm và từ ngữ để mọi chunk đều $\le 120$ ký tự, khắc phục triệt để lỗi Google Translate TTS trả về mã HTTP 400 Bad Request khi text quá dài.
+- **Bảo vệ tiêu đề URL stream (`buildVieNeuAudioUrl`)**:
+  + Cắt chuỗi an toàn `clean.slice(0, 140)`, bảo đảm 100% URL query không bao giờ bị quá tải.
+- **Cấu hình thuộc tính Audio chống chặn Referer**:
+  + Bổ sung `audio.crossOrigin = 'anonymous'` và `audio.referrerPolicy = 'no-referrer'` cho toàn bộ phần tử `Audio` trong `src/App.tsx` và `src/utils/vieneuTTS.ts`, loại bỏ nguy cơ máy chủ stream trả về 404 do header Referer.
+- **Lá chắn cờ tạm dừng bất đồng bộ (`isPausedRef`)**:
+  + Ngăn chặn hiện tượng sự kiện `audio.onplay` hoặc `utterance.onstart` của chunk đang tải dở kích hoạt muộn và tự động ghi đè `isSpeechPaused = false` khi người dùng đã chủ động bấm Tạm dừng.
+- **Sửa bộ bóc tách nội dung chi tiết bài viết (`extractContentForVieNeuTTS`)**:
+  + Khắc phục lỗi chỉ đọc đoạn Sapo mở đầu rồi tắt lịm khi `blocks` chi tiết chưa nạp kịp. Thêm cờ `hasValidBlockContent`: nếu blocks không có nội dung chữ thì luôn nạp toàn bộ thân bài từ `article.body` / `article.content`, đảm bảo đọc đầy đủ và trọn vẹn 100% bài báo.
+- **Tự động hóa kiểm thử UX (UX-01.4b)**:
+  + Bổ sung ca kiểm thử UX trong `scripts/test-ux-flows.mjs` xác thực chuỗi tương tác thực tế: Mở bài báo -> Click Nghe đọc ("Đang đọc...") -> Click Tạm dừng ("Tiếp tục") -> Click Tiếp tục ("Đang đọc...").
+- **Kết quả kiểm thử toàn diện**:
+  + `npm run test:logic`: 311/311 assertions PASS (100% ĐẠT).
+  + `npm run build`: 0 lỗi biên dịch.
+  + `npm run testwebsite`: 47/47 PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
+  + `npm run test:dashboard`: 47/47 PASS (100% ĐẠT, 0 FAIL) trên Google Chrome thật.
+
 ## Phiên bản 1.0.0 (2026-10-14) - Bản Phát Hành Tích Hợp Toàn Diện
 
 ### 1. Phân Hệ Video Shorts & Smart TV Player

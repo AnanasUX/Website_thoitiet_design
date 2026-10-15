@@ -279,9 +279,29 @@
       - `filterAndSortFreshNews(items, maxAgeDays = 7)`: Lọc sạch bài viết cũ quá 7 ngày, tự động sắp xếp theo thời gian mới nhất lên đầu, ưu tiên tin nóng `_isHot` nếu trong vòng 3 giờ.
       - `formatArticleDate(dateStr)`: Hiển thị ngày giờ thân thiện với độc giả Việt Nam ("Hôm nay, 12:30", "Hôm qua, 15:45", "15/10/2026, 08:30").
 
+  - *Kiến Trúc Khắc Phục Lỗi Giọng Đọc "Tiếp Tục Đọc" (VieNeu-TTS Resume & Audio Safety - PROMPT-20261015-09 / REQ-047)*:
+    + **Xác định nguyên nhân gốc rễ (Root Cause Analysis)**:
+      - Khi nút `article-tts-btn` ở trạng thái "Tiếp tục" (`title="Tiếp tục đọc"`, `<span>Tiếp tục</span>`), lệnh `handleToggleAudio` cũ chỉ gọi `audioRef.current.play().catch(() => {})`. Nếu phần tử audio trước đó đã kết thúc chunk (`ended`), hoặc bị `audio.error` (HTTP 400 Bad Request / 404), lời gọi `play()` lập tức bị reject và nuốt lỗi âm thầm, khiến người dùng bấm vào nhưng không có âm thanh nào phát ra.
+      - Google Translate TTS trả về HTTP 400 Bad Request nếu văn bản dài vượt quá ~200 ký tự. Các câu dài tiếng Việt không được giới hạn chặt chẽ đã gây lỗi 400 trên luồng stream.
+      - Thiếu thuộc tính `referrerPolicy = 'no-referrer'` và `crossOrigin = 'anonymous'` trên phần tử `Audio` khiến một số môi trường trình duyệt đính kèm Referer gây lỗi 404 Not Found từ máy chủ Google TTS.
+      - Lỗi đồng bộ `isPausedRef`: Khi người dùng click Tạm dừng, sự kiện bất đồng bộ `audio.onplay` từ chunk đang đệm trước đó kích hoạt muộn và tự động ghi đè `isSpeechPaused = false`, vô hiệu hóa lệnh tạm dừng.
+      - Lỗi bóc tách `extractContentForVieNeuTTS`: Khi bài báo chưa tải xong blocks chi tiết (như bài RSS mới click), bước 2 nạp Sapo làm `paragraphs.length = 1`, khiến bước 3 (`if (paragraphs.length === 0)`) bị bỏ qua, dẫn đến thân bài `article.body` bị mất hoàn toàn, chỉ đọc đúng 1 câu mở đầu rồi tắt lịm.
+    + **Giải pháp kiến trúc & Triển khai bền vững**:
+      - *Cơ chế khôi phục âm thanh chủ động (Active Resume Fallback)*: Khi nhấn "Tiếp tục", kiểm tra trạng thái phần tử `Audio`: nếu `currentTime > 0`, chưa kết thúc và không lỗi thì resume; nếu không thể resume hoặc promise reject thì lập tức gọi trực tiếp `playVieNeuChunk(currentChunkIdx, chunks, speed, voiceId)` để phát lại chunk hiện tại bằng giọng nữ hệ thống `bac_nu`.
+      - *Khống chế cứng độ dài chunk $\le 120$ ký tự (`splitVieNeuAudioChunks`)*: Phân tách câu dài theo dấu chấm, chấm phẩy, phẩy, hai chấm và từ ngữ để mọi chunk đều $\le 120$ ký tự, đảm bảo 100% request stream Google TTS trả về HTTP 200 OK.
+      - *Cắt chuỗi an toàn `buildVieNeuAudioUrl`*: `clean.slice(0, 140)` bảo vệ tuyệt đối không bao giờ vượt giới hạn URL query.
+      - *Cấu hình âm thanh HTML5*: Bổ sung `audio.crossOrigin = 'anonymous'` và `audio.referrerPolicy = 'no-referrer'` cho toàn bộ các phần tử `Audio` trong `App.tsx` và `VieNeuTTSController`.
+      - *Lá chắn cờ tạm dừng `isPausedRef`*: Sử dụng `isPausedRef` ngăn chặn tuyệt đối các sự kiện bất đồng bộ `onplay`, `onstart`, `onended` ghi đè trạng thái khi người dùng đã click tạm dừng.
+      - *Sửa bộ trích xuất `extractContentForVieNeuTTS`*: Kiểm tra cờ `hasValidBlockContent`; nếu blocks không có nội dung chữ thì luôn nạp toàn bộ thân bài từ `article.body` / `article.content`, loại bỏ câu trùng tiêu đề và trùng Sapo, đảm bảo đọc đầy đủ 100% nội dung bài báo.
+      - *Kiểm thử tự động*: Bổ sung ca kiểm tra UX `UX-01.4b` trong `scripts/test-ux-flows.mjs` kiểm chứng trực tiếp chuỗi hành động: Nghe đọc -> Đang đọc -> Tạm dừng đọc -> Tiếp tục đọc -> Đang đọc và phát âm thanh.
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Nuốt lỗi âm thầm qua `.catch(() => {})` khi gọi `audio.play()` trong nhánh resume của `handleToggleAudio` mà không có cơ chế phát lại chunk hiện tại (gây ra tình trạng bấm Tiếp tục nhưng hệ thống im lặng).
+- **Từ chối**: Cho phép chunk âm thanh vượt quá 120 ký tự hoặc không cắt chuỗi URL dẫn đến lỗi HTTP 400 Bad Request từ dịch vụ stream âm thanh.
+- **Từ chối**: Để sự kiện bất đồng bộ `audio.onplay` tự ý ghi đè `isSpeechPaused = false` khi người dùng đã chủ động bấm nút Tạm dừng.
+- **Từ chối**: Bỏ qua thân bài `article.body` khi blocks rỗng mà chỉ đọc Sapo (làm mất toàn bộ nội dung chi tiết bài viết của độc giả).
 - **Từ chối**: Sử dụng các nguồn RSS chết hoặc đã dừng cập nhật từ các năm trước (như vtv.vn/rss/trong-nuoc.rss ngừng từ 2024 nhưng gắn isHot: true đẩy bài cũ lên đầu trang chủ).
 - **Từ chối**: Nạp và hiển thị các bài viết tin tức có ngày xuất bản cũ hơn 7 ngày trên trang nhất và các chuyên mục tin thời sự.
 - **Từ chối**: Chỉ dựa vào hàm `new Date()` thuần túy của trình duyệt để parse ngày RSS tiếng Việt dạng `DD/MM/YYYY` hoặc năm 2 chữ số của Thanh Niên (gây trả về NaN và thời gian bị reset về 0).

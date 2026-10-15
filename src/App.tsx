@@ -698,8 +698,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const synthUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const engineRef = useRef<'audio' | 'synth'>('audio');
+  const isPausedRef = useRef<boolean>(false);
 
   const stopAllAudio = useCallback(() => {
+    isPausedRef.current = false;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -801,16 +803,22 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
 
         utterance.onstart = () => {
+          if (isPausedRef.current) {
+            synth.pause();
+            return;
+          }
           setIsSpeaking(true);
           setIsSpeechPaused(false);
         };
 
         utterance.onend = () => {
+          if (isPausedRef.current) return;
           playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
         };
 
         utterance.onerror = (e) => {
           if (e.error === 'interrupted' || e.error === 'canceled') return;
+          if (isPausedRef.current) return;
           setIsSpeaking(false);
           setIsSpeechPaused(false);
         };
@@ -830,31 +838,41 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
 
         const audio = audioRef.current;
+        audio.crossOrigin = 'anonymous';
+        audio.referrerPolicy = 'no-referrer';
         const audioUrl = buildVieNeuAudioUrl(chunkText);
         audio.src = audioUrl;
         audio.playbackRate = speed;
 
         audio.onplay = () => {
+          if (isPausedRef.current) {
+            audio.pause();
+            return;
+          }
           setIsSpeaking(true);
           setIsSpeechPaused(false);
         };
 
         audio.onended = () => {
+          if (isPausedRef.current) return;
           playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
         };
 
-        audio.onerror = () => {
+        audio.onerror = (e) => {
+          console.warn('[VieNeu-TTS] HTML5 Audio error, switching to SpeechSynthesis fallback:', e);
           fallbackToSynth();
         };
 
         const playPromise = audio.play();
         if (playPromise !== undefined) {
-          playPromise.catch(() => {
+          playPromise.catch((err) => {
+            console.warn('[VieNeu-TTS] audio.play() promise rejected, switching to SpeechSynthesis fallback:', err);
             fallbackToSynth();
           });
         }
         return;
-      } catch {
+      } catch (err) {
+        console.warn('[VieNeu-TTS] Audio init error, switching to SpeechSynthesis fallback:', err);
         fallbackToSynth();
         return;
       }
@@ -866,13 +884,45 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const handleToggleAudio = () => {
     if (isSpeaking) {
       if (isSpeechPaused) {
-        if (engineRef.current === 'audio' && audioRef.current && audioRef.current.src) {
-          audioRef.current.play().catch(() => {});
-        } else if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          window.speechSynthesis.resume();
-        }
+        // NGƯỜI DÙNG BẤM "TIẾP TỤC ĐỌC":
+        isPausedRef.current = false;
         setIsSpeechPaused(false);
+        setIsSpeaking(true);
+
+        const activeVoiceId = vieNeuVoice || 'bac_nu';
+        let chunks = vieNeuChunks;
+        if (!chunks || chunks.length === 0) {
+          const bodyText = extractContentForVieNeuTTS(article, contentBlocks);
+          const cleanToRead = bodyText || (article.body || article.description || '').replace(/<[^>]*>/g, '').trim();
+          chunks = splitVieNeuAudioChunks(cleanToRead);
+          setVieNeuChunks(chunks);
+        }
+
+        // 1. Thử resume trực tiếp nếu audio stream đang còn hợp lệ
+        if (engineRef.current === 'audio' && audioRef.current && audioRef.current.src && !audioRef.current.error && !audioRef.current.ended && audioRef.current.currentTime > 0) {
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((err) => {
+              console.warn('[VieNeu-TTS] Audio resume failed, replaying chunk:', err);
+              if (chunks && chunks.length > 0) {
+                const targetIdx = (currentChunkIdx >= 0 && currentChunkIdx < chunks.length) ? currentChunkIdx : 0;
+                playVieNeuChunk(targetIdx, chunks, vieNeuSpeed, activeVoiceId);
+              }
+            });
+          }
+        } else if (engineRef.current === 'synth' && typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking && window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        } else {
+          // 2. Nếu audio element không thể resume hoặc synth bị ngắt:
+          // Trực tiếp phát lại chunk hiện tại để người dùng NGHE THẤY TIẾNG NGAY LẬP TỨC!
+          if (chunks && chunks.length > 0) {
+            const targetIdx = (currentChunkIdx >= 0 && currentChunkIdx < chunks.length) ? currentChunkIdx : 0;
+            playVieNeuChunk(targetIdx, chunks, vieNeuSpeed, activeVoiceId);
+          }
+        }
       } else {
+        // TẠM DỪNG ĐỌC:
+        isPausedRef.current = true;
         if (audioRef.current) {
           audioRef.current.pause();
         }
@@ -884,6 +934,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       return;
     }
 
+    isPausedRef.current = false;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -1567,6 +1618,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                       <div 
                         data-testid="article-tts-btn"
                         onClick={handleToggleAudio}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleToggleAudio();
+                          }
+                        }}
                         role="button"
                         tabIndex={0}
                         title={isSpeaking ? (isSpeechPaused ? "Tiếp tục đọc" : "Tạm dừng đọc") : "Nghe đọc bản tin"}

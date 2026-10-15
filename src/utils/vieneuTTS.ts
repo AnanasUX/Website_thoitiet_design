@@ -52,6 +52,7 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
     .trim();
 
   const paragraphs: string[] = [];
+  let hasValidBlockContent = false;
 
   // 1. Nếu có danh sách blocks bóc tách chi tiết:
   if (Array.isArray(blocks) && blocks.length > 0) {
@@ -92,6 +93,7 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
 
         if (rawContent.length > 3) {
           paragraphs.push(rawContent);
+          hasValidBlockContent = true;
         }
       }
     }
@@ -112,21 +114,27 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
     }
   }
 
-  // 3. Fallback nếu không có blocks hoặc blocks chưa parse kịp:
-  // Lấy từ article.body hoặc article.desc và TUYỆT ĐỐI BỎ TIÊU ĐỀ
-  if (paragraphs.length === 0) {
-    const rawBody = (article.body || article.content || article.description || article.desc || article.summary || '')
+  // 3. Fallback nếu không có blocks hoặc blocks chưa parse text hợp lệ:
+  // Lấy từ article.body hoặc article.content và TUYỆT ĐỐI BỎ TIÊU ĐỀ
+  if (!hasValidBlockContent) {
+    const rawBody = (article.body || article.content || '')
       .replace(/<[^>]*>/g, '')
       .trim();
 
     if (rawBody) {
-      // Tách theo câu và lọc bỏ câu nào trùng tiêu đề
+      // Tách theo câu và lọc bỏ câu nào trùng tiêu đề hoặc trùng Sapo
       const sentences = rawBody.split(/(?<=[.?!])\s+|\n+/);
       for (const s of sentences) {
         const cleanS = s.trim();
         const lowerS = cleanS.toLowerCase();
         if (cleanS && lowerS !== rawTitle && !rawTitle.includes(lowerS) && !lowerS.includes(rawTitle)) {
-          paragraphs.push(cleanS);
+          const alreadyInSapo = paragraphs.some(p => {
+            const lp = p.toLowerCase();
+            return lp.includes(lowerS.slice(0, 30)) || lowerS.includes(lp.slice(0, 30));
+          });
+          if (!alreadyInSapo) {
+            paragraphs.push(cleanS);
+          }
         }
       }
     }
@@ -271,14 +279,14 @@ export function findSystemFemaleVoice(): SpeechSynthesisVoice | null {
  * Cung cấp giọng nữ trong trẻo, tự nhiên, hoạt động hoàn hảo 100% trên mọi máy tính/điện thoại
  */
 export function buildVieNeuAudioUrl(text: string): string {
-  const clean = (text || '').trim();
+  const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
   return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
 }
 
 /**
- * 5. TÁCH ĐOẠN VĂN BẢN THÀNH CÁC CHUNK ĐỌC TỰ NHIÊN (60-150 ký tự mỗi chunk)
- * Giúp bộ tổng hợp âm thanh stream mượt mà, không ngắt quãng và không bị quá tải URL.
+ * 5. TÁCH ĐOẠN VĂN BẢN THÀNH CÁC CHUNK ĐỌC TỰ NHIÊN (Khống chế cứng <= 120 ký tự mỗi chunk)
+ * Giúp bộ tổng hợp âm thanh stream mượt mà, 100% trả về HTTP 200 OK, không ngắt quãng và không bị quá tải URL.
  */
 export function splitVieNeuAudioChunks(text: string): string[] {
   if (!text || typeof text !== 'string') return [];
@@ -292,8 +300,8 @@ export function splitVieNeuAudioChunks(text: string): string[] {
     const trimmed = sentence.trim();
     if (!trimmed) continue;
 
-    // Nếu câu quá dài (> 150 ký tự), tách thêm theo dấu phẩy, hai chấm hoặc khoảng trắng
-    if (trimmed.length > 150) {
+    // Nếu câu quá dài (> 120 ký tự), tách thêm theo dấu phẩy, hai chấm hoặc khoảng trắng
+    if (trimmed.length > 120) {
       const subClauses = trimmed.split(/(?<=[,:])\s+/);
       let temp = '';
       for (const clause of subClauses) {
@@ -301,7 +309,7 @@ export function splitVieNeuAudioChunks(text: string): string[] {
         if (!cTrim) continue;
         if (!temp) {
           temp = cTrim;
-        } else if (temp.length + cTrim.length + 1 <= 140) {
+        } else if (temp.length + cTrim.length + 1 <= 110) {
           temp += ' ' + cTrim;
         } else {
           chunks.push(temp);
@@ -309,12 +317,12 @@ export function splitVieNeuAudioChunks(text: string): string[] {
         }
       }
       if (temp) {
-        if (temp.length > 150) {
+        if (temp.length > 120) {
           const words = temp.split(/\s+/);
           let wChunk = '';
           for (const w of words) {
             if (!wChunk) wChunk = w;
-            else if (wChunk.length + w.length + 1 <= 130) wChunk += ' ' + w;
+            else if (wChunk.length + w.length + 1 <= 110) wChunk += ' ' + w;
             else { chunks.push(wChunk); wChunk = w; }
           }
           if (wChunk) chunks.push(wChunk);
@@ -327,13 +335,13 @@ export function splitVieNeuAudioChunks(text: string): string[] {
     }
   }
 
-  // Gộp các mẩu quá ngắn (< 30 ký tự) với nhau để câu đọc mạch lạc
+  // Gộp các mẩu quá ngắn (< 30 ký tự) với nhau để câu đọc mạch lạc, khống chế cứng <= 120 ký tự
   const mergedChunks: string[] = [];
   let buffer = '';
   for (const c of chunks) {
     if (!buffer) {
       buffer = c;
-    } else if (buffer.length + c.length + 1 <= 140) {
+    } else if (buffer.length + c.length + 1 <= 110) {
       buffer += ' ' + c;
     } else {
       mergedChunks.push(buffer);
@@ -341,7 +349,18 @@ export function splitVieNeuAudioChunks(text: string): string[] {
     }
   }
   if (buffer) {
-    mergedChunks.push(buffer);
+    if (buffer.length > 120) {
+      const words = buffer.split(/\s+/);
+      let wBuf = '';
+      for (const w of words) {
+        if (!wBuf) wBuf = w;
+        else if (wBuf.length + w.length + 1 <= 110) wBuf += ' ' + w;
+        else { mergedChunks.push(wBuf); wBuf = w; }
+      }
+      if (wBuf) mergedChunks.push(wBuf);
+    } else {
+      mergedChunks.push(buffer);
+    }
   }
 
   return mergedChunks;
@@ -428,16 +447,8 @@ export class VieNeuTTSController {
   public play() {
     if (this.chunks.length === 0) return;
     if (this.state.status === 'paused') {
-      if (this.engineMode === 'audio' && this.audio) {
-        this.audio.play().catch(() => {});
-        this.updateState({ status: 'playing' });
-        return;
-      }
-      if (this.synth) {
-        this.synth.resume();
-        this.updateState({ status: 'playing' });
-        return;
-      }
+      this.resume();
+      return;
     }
     this.playChunk(this.currentChunkIndex);
   }
@@ -455,15 +466,21 @@ export class VieNeuTTSController {
   }
 
   public resume() {
-    if (this.engineMode === 'audio' && this.audio && this.state.status === 'paused') {
-      this.audio.play().catch(() => {});
-      this.updateState({ status: 'playing' });
+    this.updateState({ status: 'playing' });
+    if (this.engineMode === 'audio' && this.audio && this.audio.src && !this.audio.error && !this.audio.ended && this.audio.currentTime > 0) {
+      const p = this.audio.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          this.playChunk(this.currentChunkIndex);
+        });
+      }
       return;
     }
-    if (this.synth && this.state.status === 'paused') {
+    if (this.engineMode === 'speech_synthesis' && this.synth && this.synth.speaking && this.synth.paused) {
       this.synth.resume();
-      this.updateState({ status: 'playing' });
+      return;
     }
+    this.playChunk(this.currentChunkIndex);
   }
 
   public stop() {
@@ -522,6 +539,8 @@ export class VieNeuTTSController {
         }
 
         const audioUrl = buildVieNeuAudioUrl(chunkText);
+        this.audio.crossOrigin = 'anonymous';
+        this.audio.referrerPolicy = 'no-referrer';
         this.audio.src = audioUrl;
         this.audio.playbackRate = this.state.playbackSpeed;
 

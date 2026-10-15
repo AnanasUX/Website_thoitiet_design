@@ -78,6 +78,43 @@ export async function runAllUXFlowTests(page) {
       });
       assertUX('UX-01.4: Tương tác nút Nghe đọc kích hoạt phản hồi âm thanh/trạng thái', ttsInteractive, 'Tiếp nhận click, chuyển sang trạng thái đọc âm thanh');
 
+      // 1.4b Kiểm tra tương tác Tạm dừng đọc và Tiếp tục đọc của nút article-tts-btn (REQ-047)
+      await page.waitForTimeout(400);
+      const pauseResumeCheck = await page.evaluate(async () => {
+        const ttsBtn = document.querySelector('[data-testid="article-tts-btn"]');
+        if (!ttsBtn) return { success: false, reason: 'Không tìm thấy nút article-tts-btn' };
+
+        // Chờ nút ở trạng thái đang phát "Đang đọc..."
+        let attempts = 0;
+        while (!ttsBtn.textContent?.includes('Đang đọc') && attempts < 10) {
+          await new Promise(r => setTimeout(r, 100));
+          attempts++;
+        }
+
+        // Bước A: Nhấn Tạm dừng đọc
+        ttsBtn.click();
+        await new Promise(r => setTimeout(r, 300));
+        const titleAfterPause = ttsBtn.getAttribute('title') || '';
+        const textAfterPause = ttsBtn.textContent || '';
+        const isPaused = titleAfterPause.includes('Tiếp tục') || textAfterPause.includes('Tiếp tục');
+
+        // Bước B: Nhấn Tiếp tục đọc (Sửa lỗi dứt điểm theo yêu cầu người dùng)
+        ttsBtn.click();
+        await new Promise(r => setTimeout(r, 300));
+        const titleAfterResume = ttsBtn.getAttribute('title') || '';
+        const textAfterResume = ttsBtn.textContent || '';
+        const isResumed = titleAfterResume.includes('Tạm dừng') || textAfterResume.includes('Đang đọc');
+
+        return {
+          success: isPaused && isResumed,
+          isPaused,
+          isResumed,
+          textAfterPause,
+          textAfterResume
+        };
+      });
+      assertUX('UX-01.4b: Tương tác Tạm dừng & Tiếp tục đọc của nút article-tts-btn', pauseResumeCheck.success, `Trạng thái: Tạm dừng="${pauseResumeCheck.textAfterPause?.trim()}" -> Tiếp tục="${pauseResumeCheck.textAfterResume?.trim()}"`);
+
       // 1.5 Kiểm tra Đóng Modal bằng Phím ESC (Keyboard Escape UX Dismissal)
       await page.keyboard.press('Escape');
       await page.waitForTimeout(400);

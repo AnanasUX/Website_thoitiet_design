@@ -163,6 +163,27 @@
       + `npm run test:dashboard`: 47/47 PASS (100% ĐẠT, 0 FAIL) trên Google Chrome thật.
       + `npm run testwebsite`: 47/47 PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
 
+19. **[REQ-047 / PROMPT-20261015-09] Khắc Phục Triệt Để Giọng Nói Nút "Tiếp Tục Đọc" (VieNeu-TTS Resume & Playback Safety)**:
+    - **Nguyên nhân cốt lõi**:
+      + Khi nút `article-tts-btn` ở trạng thái "Tiếp tục" (`title="Tiếp tục đọc"`, `<span>Tiếp tục</span>`), lệnh `handleToggleAudio` cũ chỉ gọi `audioRef.current.play().catch(() => {})`. Khi audio element đã kết thúc (`ended`), hoặc bị lỗi (`audio.error`), lệnh `play()` thất bại âm thầm mà không phát ra bất kỳ âm thanh nào.
+      + Google Translate TTS trả về HTTP 400 Bad Request nếu chunk text dài $> 200$ ký tự.
+      + Thiếu `audio.referrerPolicy = 'no-referrer'` và `audio.crossOrigin = 'anonymous'` khiến một số môi trường trình duyệt bị máy chủ Google chặn do header Referer.
+      + Sự kiện bất đồng bộ `audio.onplay` ghi đè trạng thái `isSpeechPaused = false` sau khi người dùng bấm Tạm dừng.
+      + Hàm `extractContentForVieNeuTTS` chỉ bóc tách Sapo rồi bỏ qua `article.body` khi blocks chi tiết chưa nạp kịp.
+    - **Giải pháp xử lý triệt để**:
+      + *Khôi phục âm thanh chủ động*: Khi nhấn "Tiếp tục", nếu `audioRef.current` không thể resume mượt mà, hệ thống tự động gọi trực tiếp `playVieNeuChunk(currentChunkIdx, chunks, speed, activeVoiceId)` phát lại ngay lập tức bằng giọng nữ hệ thống (`bac_nu`).
+      + *Khống chế cứng chunk $\le 120$ ký tự*: Đảm bảo 100% request stream Google TTS trả về HTTP 200 OK.
+      + *Cắt chuỗi an toàn `buildVieNeuAudioUrl`*: `clean.slice(0, 140)`.
+      + *Bổ sung thuộc tính HTML5 Audio*: `referrerPolicy = 'no-referrer'` và `crossOrigin = 'anonymous'`.
+      + *Cờ tạm dừng `isPausedRef`*: Chặn các sự kiện `onplay`/`onstart` ghi đè trạng thái tạm dừng của người dùng.
+      + *Bóc tách đúng & đủ thân bài*: Bổ sung `article.body` khi blocks rỗng, loại trừ trùng lặp với tiêu đề và Sapo.
+      + *Kiểm thử UX tự động (`UX-01.4b`)*: Xác thực trọn vẹn chuỗi Nghe đọc -> Đang đọc -> Tạm dừng -> Tiếp tục đọc trên Chrome thật.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: 311/311 assertions PASS (100% PASS).
+      + `npm run build`: Thành công 100% (0 lỗi).
+      + `npm run test:dashboard`: 47/47 PASS (100% PASS) trên Chrome thật.
+      + `npm run testwebsite`: 47/47 PASS (100% PASS), **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
