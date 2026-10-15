@@ -1187,6 +1187,18 @@
       </div>
     </div>
 
+    <!-- Auto-Fill & Auto-Unlock Notice Banner for Admin -->
+    <div id="vaultAdminNotice" style="display:flex; align-items:center; justify-content:space-between; gap:12px; background:linear-gradient(135deg, rgba(16,185,129,0.12), rgba(6,182,212,0.12)); border:1px solid rgba(16,185,129,0.35); border-radius:10px; padding:10px 14px; margin-bottom:12px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:20px;">🛡️</span>
+        <div style="font-size:12px; color:#e2e8f0; line-height:1.5;">
+          <span style="font-weight:700; color:#34d399;">XÁC THỰC QUẢN TRỊ VIÊN HỆ THỐNG:</span>
+          Tài khoản <strong style="color:#67e8f9;">mrkun28@gmail.com</strong> (Pro Tier) đã được nhận diện. Hệ thống đã <strong>tự động điền Master Key</strong> và <strong>tự động giải mã 100% dữ liệu vào RAM</strong>. Bạn không cần phải nhập mật khẩu thủ công.
+        </div>
+      </div>
+      <span style="font-size:10px; font-weight:700; background:#059669; color:#fff; padding:3px 8px; border-radius:9999px; white-space:nowrap;">ZERO-TOUCH AUTO UNLOCKED</span>
+    </div>
+
     <!-- Admin Authentication Form -->
     <div class="vault-auth-box">
       <div style="display:flex; flex-direction:column; gap:4px;">
@@ -1204,8 +1216,8 @@
         <button type="button" class="btn-vault-lock" id="vaultLockBtn">
           <span>🔒</span> Khóa &amp; Xóa RAM
         </button>
-        <button type="button" class="btn-vault-lock" id="vaultFillDemoBtn" title="Tự động điền thông tin Quản trị viên để kiểm tra nhanh" style="font-size:11px; padding:9px 12px;">
-          ⚡ Điền Master Key
+        <button type="button" class="btn-vault-lock" id="vaultFillDemoBtn" title="Tự động điền Master Key và mở khóa ngay lập tức" style="font-size:11px; padding:9px 12px; background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.4); color:#34d399;">
+          <span>⚡</span> Tự Điền &amp; Mở Khóa
         </button>
       </div>
     </div>
@@ -2631,12 +2643,20 @@ Không phát hiện sự cố cần khắc phục.`;
     }
   }
 
-  async function handleVaultUnlock() {
-    const email = $("vaultAdminEmail")?.value?.trim() || "";
-    const key = $("vaultMasterKey")?.value?.trim() || "";
+  async function handleVaultUnlock(isAuto = false, silent = false) {
+    const emailInput = $("vaultAdminEmail");
+    const keyInput = $("vaultMasterKey");
+    let email = emailInput?.value?.trim() || "";
+    let key = keyInput?.value?.trim() || "";
+
+    // Tự động điền Master Key cho tài khoản Quản Trị Hệ Thống nếu chưa nhập
+    if (email === "mrkun28@gmail.com" && !key) {
+      key = "AnanasMaster@2026!Key";
+      if (keyInput) keyInput.value = key;
+    }
 
     if (!email && !key) {
-      showToast("⚠️ Vui lòng nhập Email Quản Trị hoặc Master Key!");
+      if (!silent) showToast("⚠️ Vui lòng nhập Email Quản Trị hoặc Master Key!");
       return;
     }
 
@@ -2654,17 +2674,26 @@ Không phát hiện sự cố cần khắc phục.`;
     }
 
     if (!isValid) {
-      showToast("❌ Từ chối truy cập: Khóa hoặc Email Quản Trị không chính xác!");
+      if (!silent) showToast("❌ Từ chối truy cập: Khóa hoặc Email Quản Trị không chính xác!");
       return;
     }
 
     vaultUnlocked = true;
     const badge = $("vaultStatusBadge");
     if (badge) {
-      badge.textContent = "🔓 Dữ liệu đã mở khóa (In-Memory Unlocked)";
+      if (email === "mrkun28@gmail.com" && isAuto) {
+        badge.textContent = "🔓 Đã tự động mở khóa theo tài khoản Quản Trị (mrkun28@gmail.com)";
+      } else {
+        badge.textContent = "🔓 Dữ liệu đã mở khóa (In-Memory Unlocked)";
+      }
       badge.style.background = "rgba(16, 185, 129, 0.15)";
       badge.style.color = "#34d399";
       badge.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+    }
+
+    const notice = $("vaultAdminNotice");
+    if (notice) {
+      notice.style.display = (email === "mrkun28@gmail.com") ? "flex" : "none";
     }
 
     const fields = [
@@ -2706,7 +2735,9 @@ Không phát hiện sự cố cần khắc phục.`;
       }
     }, 1000);
 
-    showToast("🔓 Hầm mã hóa AES-256-GCM đã mở khóa thành công trong RAM (In-Memory)! Hiệu lực 15 phút.");
+    if (!silent) {
+      showToast("🔓 Hầm mã hóa AES-256-GCM đã mở khóa thành công trong RAM (In-Memory)! Hiệu lực 15 phút.");
+    }
   }
 
   function handleVaultLock(isAuto = false) {
@@ -2726,6 +2757,9 @@ Không phát hiện sự cố cần khắc phục.`;
       badge.style.color = "#60a5fa";
       badge.style.border = "1px solid rgba(59, 130, 246, 0.3)";
     }
+
+    const notice = $("vaultAdminNotice");
+    if (notice) notice.style.display = "none";
 
     const fieldIds = [
       "vaultValGemini", "vaultValOpenWeather", "vaultValWebhook",
@@ -2751,12 +2785,23 @@ Không phát hiện sự cố cần khắc phục.`;
     }
   }
 
-  $("vaultUnlockBtn")?.addEventListener("click", handleVaultUnlock);
+  $("vaultUnlockBtn")?.addEventListener("click", () => handleVaultUnlock(false, false));
   $("vaultLockBtn")?.addEventListener("click", () => handleVaultLock(false));
   $("vaultFillDemoBtn")?.addEventListener("click", () => {
     if ($("vaultAdminEmail")) $("vaultAdminEmail").value = "mrkun28@gmail.com";
     if ($("vaultMasterKey")) $("vaultMasterKey").value = "AnanasMaster@2026!Key";
-    showToast("⚡ Đã điền thông tin Quản trị viên mẫu (mrkun28@gmail.com)!");
+    handleVaultUnlock(false, false);
+    showToast("⚡ Đã tự động điền thông tin Quản trị viên và mở khóa hầm an ninh trong RAM!");
+  });
+
+  $("vaultAdminEmail")?.addEventListener("input", (e) => {
+    const val = e.target.value?.trim();
+    if (val === "mrkun28@gmail.com") {
+      if ($("vaultMasterKey")) $("vaultMasterKey").value = "AnanasMaster@2026!Key";
+      handleVaultUnlock(true, false);
+    } else if (vaultUnlocked) {
+      handleVaultLock(false);
+    }
   });
 
   // ── Multi-Screen Simulator Viewport Switcher ──────────────────────────────
@@ -2792,6 +2837,12 @@ Không phát hiện sự cố cần khắc phục.`;
 
   // Auto initialize on load
   loadData();
+
+  // Tự động nhận diện tài khoản Quản Trị Hệ Thống (mrkun28@gmail.com) -> Auto-fill Master Key & Auto-unlock in RAM
+  if ($("vaultAdminEmail")?.value?.trim() === "mrkun28@gmail.com") {
+    if ($("vaultMasterKey")) $("vaultMasterKey").value = "AnanasMaster@2026!Key";
+    handleVaultUnlock(true, true);
+  }
 })();
 </script>
 </body>

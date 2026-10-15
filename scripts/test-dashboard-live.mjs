@@ -164,37 +164,41 @@ async function runDashboardTest() {
     console.log('TC-047 Status is PASS:', tc047Status);
 
     // -------------------------------------------------------------------------
-    // PHASE 2: Testing Cryptographic Vault Interactive Panel
+    // PHASE 2: Testing Cryptographic Vault Interactive Panel & Auto-Unlock
     // -------------------------------------------------------------------------
-    console.log('\n--- PHASE 2: Testing Cryptographic Vault Interactive Panel ---');
+    console.log('\n--- PHASE 2: Testing Cryptographic Vault Auto-Unlock & Interactive Panel ---');
+    // 1. Kiểm tra tính năng Tự động điền & Tự động mở khóa (Auto-fill & Auto-unlock) cho tài khoản Quản trị viên
     const initialGemini = await page.locator('#vaultValGemini').textContent();
-    console.log('1. Initial masked secret:', initialGemini);
-    const isInitiallyMasked = initialGemini.includes('ENCRYPTED_DATA_LOCKED');
+    const initialPpt = await page.locator('#vaultValDrivePpt').textContent();
+    const initialBadge = await page.locator('#vaultStatusBadge').textContent();
+    const initialKey = await page.locator('#vaultMasterKey').inputValue();
+    console.log('1. Auto-unlocked secret value in RAM (Gemini):', initialGemini);
+    console.log('2. Auto-unlocked status badge:', initialBadge);
+    console.log('3. Auto-filled Master Key length:', initialKey.length);
 
-    // Click demo fill button
-    await page.locator('#vaultFillDemoBtn').click();
-    await page.waitForTimeout(200);
+    const isAutoUnlockedForAdmin = initialGemini.includes('AIzaSy') && initialPpt.includes('ppt-folder') && initialKey === 'AnanasMaster@2026!Key';
 
-    // Click unlock
-    await page.locator('#vaultUnlockBtn').click();
-    await page.waitForTimeout(500);
-
-    const unlockedBadge = await page.locator('#vaultStatusBadge').textContent();
-    const unlockedGemini = await page.locator('#vaultValGemini').textContent();
-    const unlockedPpt = await page.locator('#vaultValDrivePpt').textContent();
-    console.log('2. Unlocked status badge:', unlockedBadge);
-    console.log('3. Unlocked secret value in RAM:', unlockedGemini);
-    const isSuccessfullyUnlocked = unlockedGemini.includes('AIzaSy') && unlockedPpt.includes('ppt-folder');
-
-    // Click lock & scrub RAM
+    // 2. Click lock & scrub RAM
     await page.locator('#vaultLockBtn').click();
     await page.waitForTimeout(300);
 
     const relockedBadge = await page.locator('#vaultStatusBadge').textContent();
     const relockedGemini = await page.locator('#vaultValGemini').textContent();
+    const relockedKey = await page.locator('#vaultMasterKey').inputValue();
     console.log('4. Relocked status badge:', relockedBadge);
     console.log('5. Relocked secret value:', relockedGemini);
-    const isSuccessfullyScrubbed = relockedGemini.includes('ENCRYPTED_DATA_LOCKED');
+    const isSuccessfullyScrubbed = relockedGemini.includes('ENCRYPTED_DATA_LOCKED') && relockedKey === '';
+
+    // 3. Click demo fill & auto-unlock button
+    await page.locator('#vaultFillDemoBtn').click();
+    await page.waitForTimeout(500);
+
+    const reunlockedBadge = await page.locator('#vaultStatusBadge').textContent();
+    const reunlockedGemini = await page.locator('#vaultValGemini').textContent();
+    const reunlockedPpt = await page.locator('#vaultValDrivePpt').textContent();
+    console.log('6. Re-unlocked status badge:', reunlockedBadge);
+    console.log('7. Re-unlocked secret value in RAM:', reunlockedGemini);
+    const isSuccessfullyUnlocked = reunlockedGemini.includes('AIzaSy') && reunlockedPpt.includes('ppt-folder');
 
     // -------------------------------------------------------------------------
     // PHASE 3: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch
@@ -212,10 +216,10 @@ async function runDashboardTest() {
     const isModalOpen = await page.locator('#copilotModal').isVisible();
     const activeTask = await page.evaluate(() => localStorage.getItem('antigravity_active_task'));
 
-    console.log('6. Release Gate Banner turned BLOCKED:', isBlocked);
-    console.log('7. Gate Copilot Button on Banner is visible:', isGateBtnVisible);
-    console.log('8. Copilot Modal opened automatically:', isModalOpen);
-    console.log('9. localStorage.antigravity_active_task auto-dispatched:', Boolean(activeTask));
+    console.log('8. Release Gate Banner turned BLOCKED:', isBlocked);
+    console.log('9. Gate Copilot Button on Banner is visible:', isGateBtnVisible);
+    console.log('10. Copilot Modal opened automatically:', isModalOpen);
+    console.log('11. localStorage.antigravity_active_task auto-dispatched:', Boolean(activeTask));
 
     // PHASE 4: Restoring back to 100% PASS
     console.log('Restoring back to 100% PASS...');
@@ -223,13 +227,13 @@ async function runDashboardTest() {
     await page.waitForTimeout(600);
 
     const isPassedAgain = await page.locator('#releaseGateBanner.passed').isVisible();
-    console.log('10. Release Gate Banner restored to PASSED:', isPassedAgain);
+    console.log('12. Release Gate Banner restored to PASSED:', isPassedAgain);
 
-    if (passCount === 47 && failCount === 0 && tc046Status && tc047Status && isInitiallyMasked && isSuccessfullyUnlocked && isSuccessfullyScrubbed && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
-      console.log('🎉 SUCCESS: All 47 tests ran, Article Video, VieNeu-TTS AI Audio, Cryptographic Vault & Antigravity Copilot Auto-Dispatch verified 100%!');
+    if (passCount === 47 && failCount === 0 && tc046Status && tc047Status && isAutoUnlockedForAdmin && isSuccessfullyUnlocked && isSuccessfullyScrubbed && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
+      console.log('🎉 SUCCESS: All 47 tests ran, Article Video, VieNeu-TTS AI Audio, Cryptographic Vault Auto-Unlock & Antigravity Copilot Auto-Dispatch verified 100%!');
       process.exitCode = 0;
     } else {
-      console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, tc046=${tc046Status}, tc047=${tc047Status}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);
+      console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, tc046=${tc046Status}, tc047=${tc047Status}, isAutoUnlockedForAdmin=${isAutoUnlockedForAdmin}, isSuccessfullyUnlocked=${isSuccessfullyUnlocked}, isSuccessfullyScrubbed=${isSuccessfullyScrubbed}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);
       process.exitCode = 1;
     }
   } finally {

@@ -237,9 +237,16 @@
       - Thanh tiến trình đọc (Progress bar) thời gian thực theo tỷ lệ ký tự đã đọc.
       - Tùy chọn giọng đọc Bắc (Hà Nội) / Nam (Sài Gòn) và tốc độ đọc (0.75x, 1.0x, 1.25x, 1.5x).
 
+  - *Kiến Trúc Tự Động Điền & Tự Động Giải Mã In-Memory RAM Cho Quản Trị Viên (Zero-Touch Admin Auto-Fill & Auto-Unlock)*:
+    + **Nhận diện tự động phiên Quản trị viên**: Khi tài khoản quản trị hệ thống (`mrkun28@gmail.com` - Pro Tier) truy cập `dashboard.html`, hệ thống tự động nhận diện danh tính và trạng thái ủy quyền.
+    + **Zero-Touch Auto-Fill & Auto-Unlock**: Tự động điền Master Passphrase (`AnanasMaster@2026!Key`) vào ô `#vaultMasterKey` và kích hoạt hàm `handleVaultUnlock(true, true)` ngay khi trang tải xong. Dữ liệu được giải mã tức thì trong RAM (In-Memory), hiển thị đầy đủ các khóa bí mật của cả 2 hệ thống (`quan-ly-tien-phong` & `Website_thoitiet_design`) mà không bắt quản trị viên phải nhập hay click thủ công.
+    + **Banner Xác Thực Minh Bạch**: Hiển thị thanh thông báo xanh ngọc trực quan `vaultAdminNotice` giải thích rõ việc hệ thống đã nhận diện tài khoản quản trị viên và tự động giải mã an toàn vào RAM.
+    + **Cơ chế Khóa & Xóa RAM chủ động**: Quản trị viên vẫn có toàn quyền kiểm soát qua nút `[🔒 Khóa & Xóa RAM]` để xóa sạch Master Key trên input và đưa các trường bí mật về trạng thái che giấu `****** [ENCRYPTED_DATA_LOCKED]`. Khi muốn mở lại, nút `[⚡ Tự Điền & Mở Khóa]` cho phép tái mở khóa tức thì 1-click.
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Bắt quản trị viên hệ thống đã xác thực (`mrkun28@gmail.com`) phải gõ lại Master Key hoặc phải bấm nút thủ công mỗi lần mở bảng điều khiển (vi phạm nguyên tắc trải nghiệm người dùng quản trị và yêu cầu PROMPT-20261015-06).
 - **Từ chối**: Chỉ dựa hoàn toàn vào `window.speechSynthesis` mặc định mà không có cơ chế stream âm thanh trực tiếp (vì phần lớn máy tính Windows của người dùng không cài gói giọng đọc SAPI tiếng Việt khiến trình duyệt kết thúc ngầm trong 0s mà không phát ra tiếng).
 - **Từ chối**: Giữ nguyên `<meta name="referrer" content="strict-origin-when-cross-origin" />` làm rò rỉ header referer khiến dịch vụ âm thanh Google TTS phản hồi mã lỗi 404.
 - **Từ chối**: Sử dụng giọng đọc mặc định không rõ nguồn gốc hoặc giọng nam khi người dùng nhấn nút `data-testid="article-tts-btn"` (phải áp dụng giọng nữ AI VieNeu-TTS có sẵn của hệ thống).

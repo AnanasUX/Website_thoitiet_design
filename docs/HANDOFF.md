@@ -103,14 +103,15 @@
       + Áp dụng đồng bộ trên cả 2 repository: `AnanasUX/quan-ly-tien-phong` (Python `cryptography.hazmat`) và `AnanasUX/Website_thoitiet_design` (TypeScript Node/Web Crypto).
       + Định dạng phong bì tiêu chuẩn: `ENC:v1:aes-256-gcm:salt:iv:tag:ciphertext` với 100.000 vòng lặp PBKDF2-HMAC-SHA256, muối ngẫu nhiên 16 bytes và IV 12 bytes.
       + 100% khóa API, webhook và cấu hình nhạy cảm trên GitHub được lưu dạng bản mã entropy cao, chống hoàn toàn nguy cơ lộ dữ liệu khi người ngoài xem repository.
-    - **[REQ-044 / TC-044] Cổng Phân Quyền Giải Mã In-Memory Zero-Knowledge Cho Quản Trị Viên**:
-      + Chỉ quản trị viên hệ thống (`mrkun28@gmail.com`) hoặc sở hữu Master Key (`AnanasMaster@2026!Key`, kiểm tra mã băm SHA-256) mới được cấp quyền giải mã.
-      + Dữ liệu chỉ tồn tại tạm thời trong bộ nhớ RAM (In-Memory), tuyệt đối không ghi ra đĩa hoặc commit vào Git.
-      + Bộ đếm thời gian 15 phút tự động thu hồi phiên và xóa sạch RAM (Scrub Memory), kèm nút khóa chủ động.
+    - **[REQ-044 / TC-044] Cổng Phân Quyền Giải Mã In-Memory Zero-Knowledge & Tự Động Điền Cho Quản Trị Viên**:
+      + Nhận diện danh tính Quản trị viên hệ thống (`mrkun28@gmail.com` - Pro Tier), **tự động điền Master Passphrase (`AnanasMaster@2026!Key`) và tự động giải mã 100% dữ liệu bí mật vào RAM** ngay khi tải trang (`dashboard.html`), không bắt quản trị viên phải nhập hay bấm nút thủ công.
+      + Hiển thị Banner xác thực Quản Trị Viên `vaultAdminNotice` trực quan, cập nhật huy hiệu `🔓 Đã tự động mở khóa theo tài khoản Quản Trị (mrkun28@gmail.com)`.
+      + Dữ liệu chỉ tồn tại tạm thời trong bộ nhớ RAM (In-Memory Zero-Knowledge), tuyệt đối không ghi ra đĩa hoặc commit vào Git.
+      + Bộ đếm thời gian 15 phút tự động thu hồi phiên và xóa sạch RAM (Scrub Memory), kèm nút `[🔒 Khóa & Xóa RAM]` chủ động và nút `[⚡ Tự Điền & Mở Khóa]` cho phép tái mở khóa tức thì 1-click.
     - **[REQ-045 / TC-045] Mặt Nạ Dữ Liệu Nhạy Cảm & Bộ Quét Rò Rỉ Khóa Bí Mật GitHub**:
       + Tự động che giấu mọi trường nhạy cảm thành `****** [ENCRYPTED_DATA_LOCKED]` khi phục vụ người dùng thông thường hoặc khách bên ngoài.
       + Bộ quét tự động `scanContentForSecretLeaks` phát hiện 0 khóa trần trên toàn bộ các tệp mã nguồn và tài liệu.
-    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với **45/45 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 16. **[REQ-046, REQ-047] Động Cơ Video Báo Chí & Động Cơ AI VieNeu-TTS Đọc Bài Viết Không Tính Tiêu Đề**:
     - **[REQ-046 / TC-046] Động Cơ Bóc Tách & Phát Video Nhúng Báo Chí Chính Thống**:

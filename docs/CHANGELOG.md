@@ -192,3 +192,22 @@
   - `npm run test:logic` đạt **294/294 assertions PASS (100% ĐẠT, 0 FAIL)**.
   - `npm run build` hoàn thành trong 481ms với 0 lỗi.
   - Lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+### 18. Nâng Cấp Tự Động Điền & Tự Động Giải Mã In-Memory RAM Cho Quản Trị Viên (REQ-044 / TC-044)
+- **Tiếp nhận phản hồi người dùng**: "Hệ thống tự fill dữ liệu vào chứ trong khi đó đã sử dụng tài khoản quản trị rồi cần gì phải nhập vào trong hệ thống đó".
+- **Phân tích bài toán**:
+  - Khi người dùng đã đăng nhập hoặc hệ thống đã nhận diện tài khoản Quản trị viên (`mrkun28@gmail.com` - Pro Tier), việc để trống trường Master Key và hiển thị dữ liệu che giấu `****** [ENCRYPTED_DATA_LOCKED]` bắt quản trị viên phải bấm nút thủ công làm giảm trải nghiệm người dùng quản trị.
+- **Giải pháp kỹ thuật (Zero-Touch Admin Auto-Fill & Auto-Unlock)**:
+  1. **Tự động điền & Tự động mở khóa (Auto-Fill & Auto-Unlock on Load)**:
+     - Khi `dashboard.html` tải xong, nếu tài khoản là `mrkun28@gmail.com`, hệ thống tự động điền Master Passphrase (`AnanasMaster@2026!Key`) vào ô `#vaultMasterKey`.
+     - Tự động gọi hàm `handleVaultUnlock(true, true)` để giải mã 100% dữ liệu nhạy cảm của 2 hệ thống (`quan-ly-tien-phong` & `Website_thoitiet_design`) vào bộ nhớ RAM (In-Memory).
+     - Cập nhật huy hiệu trạng thái: `🔓 Đã tự động mở khóa theo tài khoản Quản Trị (mrkun28@gmail.com)` với màu xanh ngọc an ninh.
+  2. **Banner Thông Báo Xác Thực Quản Trị Viên (`#vaultAdminNotice`)**:
+     - Hiển thị thanh thông báo nổi bật phía trên form xác thực: "XÁC THỰC QUẢN TRỊ VIÊN HỆ THỐNG: Tài khoản mrkun28@gmail.com (Pro Tier) đã được nhận diện. Hệ thống đã tự động điền Master Key và tự động giải mã 100% dữ liệu vào RAM. Bạn không cần phải nhập mật khẩu thủ công."
+  3. **Cơ chế Khóa & Xóa RAM chủ động & Nút Tự Điền & Mở Khóa Tức Thì**:
+     - Nút `[🔒 Khóa & Xóa RAM]`: Quản trị viên có thể chủ động khóa lại bất cứ lúc nào để kiểm tra tính năng scrub memory (xóa sạch Master Key trên input và che giấu các trường thành `****** [ENCRYPTED_DATA_LOCKED]`).
+     - Nút `[⚡ Tự Điền & Mở Khóa]` (`#vaultFillDemoBtn`): Cho phép 1-click tái điền Master Key và mở khóa lại tức thì trong RAM.
+     - Lắng nghe sự kiện `input` trên `#vaultAdminEmail`: Tự động khóa lại khi đổi sang email khác, và tự động mở khóa lại khi nhập đúng `mrkun28@gmail.com`.
+- **Kết quả kiểm thử & Nghiệm thu**:
+  - `npm run test:dashboard`: Kiểm chứng tự động in-browser trên Google Chrome thật hoàn thành xuất sắc 100% (Auto-unlock khi tải -> Khóa xóa RAM -> Tái mở khóa tức thì).
+  - Lệnh `/testwebsite` (`npm run testwebsite`) đạt chuẩn **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
