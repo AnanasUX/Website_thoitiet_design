@@ -3,7 +3,7 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.17.0`
-- **Commit gần nhất**: Đang chuẩn bị commit (`fix(tts): eliminate robotic English voice, match VieNeu characters, and prevent CORS errors`)
+- **Commit gần nhất**: `f047453` (`fix(tts): eliminate robotic English voice, match VieNeu characters, prevent CORS errors, and fix TC-013`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & Kiến Trúc AI VieNeu-TTS v3 Turbo 48 kHz Studio)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
