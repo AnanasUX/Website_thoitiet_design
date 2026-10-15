@@ -294,5 +294,29 @@
 - **Mục tiêu**: Thẩm định tiêu chuẩn khả năng tiếp cận người dùng theo khuyến nghị WCAG 2.1 AA: nhãn `aria-label`/`title` cho mọi nút biểu tượng, viền chỉ thị tiêu điểm `focus-visible` khi dùng phím `Tab`, và thuộc tính `role="dialog"` trên toàn bộ các modal.
 - **Tiêu chí nghiệm thu**: 100% nút icon có nhãn tiếp cận, điều hướng bàn phím mượt mà và tỷ lệ tương phản màu sắc đạt chuẩn $\ge 4.5:1$.
 
+---
+
+### Nhóm 11: Kiểm Thử An Ninh Hệ Thống, Bảo Vệ API & Chống Tấn Công Từ Bên Ngoài (TC-038..TC-042)
+
+#### TC-038: Lớp phòng thủ chống tấn công SSRF & Danh sách trắng URL an toàn cho API
+- **Mục tiêu**: Ngăn chặn triệt để các cuộc tấn công Server-Side Request Forgery (SSRF) qua các API fetcher và proxy bằng cách chặn dải IP nội bộ, loopback, cloud metadata và áp dụng whitelist domain.
+- **Tiêu chí nghiệm thu**: Chặn 100% các địa chỉ `127.0.0.1`, `localhost`, `10.x.x.x`, `192.168.x.x`, `169.254.169.254`, giao thức nguy hiểm `file://`, `gopher://`, và chỉ cho phép domain thuộc whitelist chính thống.
+
+#### TC-039: Bộ kiểm soát tốc độ API (Rate Limiting) & Chống tấn công từ chối dịch vụ DoS / DDoS
+- **Mục tiêu**: Bảo vệ các endpoint API không bị quá tải hoặc bị tê liệt bởi các đợt tấn công từ chối dịch vụ (DoS/DDoS) hoặc spam request liên tục.
+- **Tiêu chí nghiệm thu**: Thuật toán Sliding Window Rate Limiter đếm chính xác số request, kích hoạt chặn ngay lập tức khi phát hiện Burst Attack (vượt 10 req/s), trả về mã HTTP `429 Too Many Requests` và header `Retry-After`.
+
+#### TC-040: Lá chắn phòng thủ tiêm mã độc sâu (Deep Injection: SQLi, OS Command, Path Traversal, Prototype)
+- **Mục tiêu**: Bảo vệ hệ thống khỏi các vector tiêm mã độc nguy hiểm từ bên ngoài thông qua các ô tìm kiếm, query params và request payload.
+- **Tiêu chí nghiệm thu**: Bắt trọn 100% các mẫu SQL Injection (`OR 1=1`, `UNION SELECT`), OS Command Injection (`; rm`, `| cat`, `$(whoami)`), Path Traversal (`../../`, `%2e%2e`), và Prototype Pollution (`__proto__`, `constructor.prototype`), đồng thời bảo toàn văn bản tìm kiếm tiếng Việt bình thường (0 false positives).
+
+#### TC-041: Kiểm soát kích thước Payload, Chống JSON Bomb & Xác thực Schema API
+- **Mục tiêu**: Chống lại các cuộc tấn công gây cạn kiệt bộ nhớ hoặc treo CPU bằng cách gửi payload khổng lồ hoặc JSON Bomb lồng nhau sâu hàng chục tầng, đồng thời kiểm tra Schema phản hồi của API để chống giả mạo dữ liệu.
+- **Tiêu chí nghiệm thu**: Giới hạn byte size an toàn, chặn ngay JSON có độ sâu lồng nhau $> 10$ tầng, và xác thực hợp lệ các schema cốt lõi (thời tiết, thị trường, tin tức).
+
+#### TC-042: Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống tấn công phát lại Anti-Replay & Bộ Header An Ninh HTTP
+- **Mục tiêu**: Ngăn chặn kẻ tấn công nghe lén và gửi lại gói tin hợp lệ (Replay Attack), kiểm tra tính toàn vẹn yêu cầu và đánh giá sự hiện diện của bộ HTTP Security Headers tiêu chuẩn OWASP.
+- **Tiêu chí nghiệm thu**: Bắt trọn request mang Nonce trùng lặp hoặc timestamp lệch quá $\pm 300$ giây, và xác nhận bộ 5 header an ninh (`Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `HSTS`, `Referrer-Policy`) đạt điểm tối đa (100 điểm, passed=true).
+
 
 

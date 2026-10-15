@@ -172,6 +172,29 @@
     + Điều hướng bàn phím qua phím `Tab` và `Shift+Tab` có viền chỉ thị tiêu điểm (`focus-visible: outline`), các modal mang thuộc tính ngữ nghĩa `role="dialog"` và `aria-modal="true"`.
     + Tỷ lệ tương phản màu sắc chữ và nền đạt chuẩn WCAG AA ($\ge 4.5:1$).
 
+  - *Kiến Trúc Lớp Phòng Thủ Chống SSRF & Whitelist URL An Toàn (`REQ-038` / `TC-038`)*:
+    + Hàm `validateSafeFetchUrl` phân tích cú pháp RFC 3986, chặn đứng 100% các dải IP nội bộ/loopback (`127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) và cloud metadata link-local (`169.254.169.254`).
+    + Chặn đứng các giao thức nguy hiểm (`file:`, `gopher:`, `ftp:`, `ldap:`), chỉ cho phép `https:` và `http:`.
+    + Danh sách trắng (Whitelist Domain Pattern) nghiêm ngặt gồm các cơ quan báo chí chính thống và API thời tiết tin cậy.
+
+  - *Kiến Trúc Bộ Kiểm Soát Tốc Độ (Rate Limiting) & Chống DoS / DDoS (`REQ-039` / `TC-039`)*:
+    + Triển khai thuật toán Sliding Window Rate Limiter đếm chính xác số lượt request trong cửa sổ thời gian (mặc định 60 requests/phút).
+    + Cơ chế Burst Limit (tối đa 10 requests/giây) ngăn chặn các cuộc tấn công flood tức thì.
+    + Khi vượt ngưỡng, hệ thống lập tức từ chối và trả về mã trạng thái chuẩn HTTP 429 Too Many Requests kèm thời gian chờ `Retry-After`.
+
+  - *Kiến Trúc Lá Chắn Phòng Vệ Tiêm Mã Độc Sâu (Deep Injection Defense - `REQ-040` / `TC-040`)*:
+    + Hàm `detectMaliciousPayload` đệ quy kiểm tra payload chuỗi, mảng và đối tượng lồng nhau.
+    + Nhận diện các vector SQL Injection (`UNION SELECT`, `' OR '1'='1`, `DROP TABLE`, `SLEEP()`), OS Command Injection (`; rm`, `| cat`, `$(whoami)`), Directory Path Traversal (`../../`, `%2e%2e`), và Prototype Pollution (`__proto__`, `constructor.prototype`).
+    + Thuật toán `sanitizeSearchQuery` giữ trọn vẹn dấu tiếng Việt nhưng vô hiệu hóa các ký tự điều khiển nguy hiểm.
+
+  - *Kiến Trúc Kiểm Soát Kích Thước Payload, Chống JSON Bomb & Schema API (`REQ-041` / `TC-041`)*:
+    + Hàm `validatePayloadSizeAndDepth` kiểm tra kích thước byte UTF-8 và độ sâu lồng nhau của JSON (tối đa 10 tầng depth) mà không gây tràn bộ nhớ heap.
+    + Hàm `validateApiResponseSchema` kiểm tra chặt chẽ các trường bắt buộc và kiểu dữ liệu của API thời tiết, thị trường và tin tức, phòng chống API Response Tampering.
+
+  - *Kiến Trúc Kiểm Tra Tính Toàn Vẹn Yêu Cầu, Chống Replay Attack & HTTP Security Headers (`REQ-042` / `TC-042`)*:
+    + Hàm `verifyRequestIntegrity` kết hợp Time Drift Guard (ngưỡng $\pm 300$ giây) và bộ nhớ đệm Nonce ngẫu nhiên dùng một lần, triệt tiêu hoàn toàn nguy cơ kẻ tấn công gửi lại gói tin chụp lén (Replay Attack).
+    + Hàm `evaluateSecurityHeaders` đánh giá và chấm điểm tính đầy đủ của bộ 5 HTTP Security Headers tiêu chuẩn OWASP (CSP, nosniff, SAMEORIGIN, HSTS, Referrer-Policy).
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH

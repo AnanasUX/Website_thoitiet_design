@@ -102,7 +102,22 @@
   7. **REQ-037 / TC-037**: Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm bàn phím (Tab, Enter, Space, Escape, aria-*).
 - Mở rộng logic core `src/utils/logicFlows.ts` từ 7 lên 12 luồng logic hoàn chỉnh.
 - Bộ test logic `scripts/test-logic-flows.mjs` đạt **173/173 assertions PASS (100% ĐẠT, 0 FAIL)**.
-- Nâng cấp `dashboard.html` đồng bộ đầy đủ 37 test cases, thanh tiến trình hiển thị chính xác `37/37 Ca Đạt Chuẩn (100%)`.
-- Kiểm thử trực tiếp in-browser bằng Google Chrome thật qua `npm run test:dashboard`: **37/37 PASS (100%)** trong 25.01s.
-- Toàn bộ 37 ca kiểm thử trong `npm run testwebsite` đạt **37/37 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
+### 13. Mở Rộng Hệ Thống 42/42 Yêu Cầu & Ca Kiểm Thử Toàn Diện: Lá Chắn An Ninh Mạng & Bảo Vệ API (REQ-038 -> REQ-042 / TC-038 -> TC-042)
+- **Tiếp nhận yêu cầu**: Bổ sung kiểm thử chuyên sâu API của hệ thống và xây dựng lớp bảo vệ đa tầng chống tấn công từ bên ngoài hệ thống.
+- **Xây dựng module Lá chắn an ninh mạng chuyên sâu (`src/utils/securityShield.ts`)**:
+  1. **REQ-038 / TC-038**: Lớp phòng thủ chống tấn công SSRF & Danh sách trắng URL an toàn cho API (`validateSafeFetchUrl`). Chặn 100% loopback (`127.0.0.1`, `localhost`), dải IP nội bộ RFC 1918 (`10.x`, `172.16-31.x`, `192.168.x`), Cloud Instance Metadata (`169.254.169.254`), giao thức nguy hiểm (`file:`, `gopher:`, `ftp:`), và chỉ cho phép domain nằm trong whitelist tin cậy.
+  2. **REQ-039 / TC-039**: Bộ kiểm soát tốc độ API (Rate Limiting) & Chống DoS / DDoS (`checkRateLimit`). Ứng dụng thuật toán Sliding Window đếm số yêu cầu theo IP/Client ID, giới hạn 10 req/giây (cửa sổ 1.000ms), trả về mã HTTP 429 Too Many Requests kèm Retry-After và tự động giải phóng khi hết khoảng chờ.
+  3. **REQ-040 / TC-040**: Lá chắn phòng thủ tiêm mã độc sâu (`detectMaliciousPayload`, `sanitizeSearchQuery`). Phát hiện và ngăn chặn triệt để SQL Injection (`OR 1=1`, `UNION SELECT`), OS Command Injection (`; rm`, `| cat`, `$(whoami)`), Path Traversal (`../../`, `%2e%2e`), Prototype Pollution (`__proto__`, `constructor.prototype`), đồng thời làm sạch truy vấn tìm kiếm tiếng Việt an toàn.
+  4. **REQ-041 / TC-041**: Kiểm soát kích thước Payload, Chống JSON Bomb & Xác thực Schema API (`validatePayloadSizeAndDepth`, `validateApiResponseSchema`). Giới hạn kích thước payload (tối đa 512KB), chặn JSON Depth Bomb (>10 tầng lồng nhau), và xác thực nghiêm ngặt cấu trúc dữ liệu phản hồi của Weather API, Market API, News RSS.
+  5. **REQ-042 / TC-042**: Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống Replay Attack (`verifyRequestIntegrity`) & Đánh giá HTTP Security Headers OWASP (`evaluateSecurityHeaders`). Xác thực Time Drift tối đa 300 giây, kiểm soát Nonce dùng một lần chống tấn công phát lại, và đánh giá bộ 5 HTTP Security Headers (CSP, HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy) đạt 100/100 điểm.
+- **Mở rộng bộ kiểm thử luồng nghiệp vụ (`scripts/test-logic-flows.mjs`)**: Bổ sung Luồng 13 đến 17, nâng tổng số assertions từ 173 lên **212/212 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- **Đồng bộ toàn bộ hồ sơ dự án**:
+  + `qa/requirements.json` và `qa/test-cases.json`: Bổ sung đầy đủ 42 REQ và 42 TC.
+  + `docs/REQUIREMENTS.md`: Bổ sung REQ-038..REQ-042 và PROMPT-20261015-02.
+  + `docs/qa/TEST_PLAN.md`: Bổ sung Nhóm 11 (TC-038..TC-042).
+  + `docs/qa/RELEASE_GATE.md`: Nâng tiêu chuẩn điều kiện cổng FG-1 lên 42 ca kiểm thử PASS.
+  + `docs/DECISIONS.md`: Ghi nhận quyết định kiến trúc cho 5 phân hệ an ninh mới.
+  + `dashboard.html`: Cập nhật BASELINE_DATA, TEST_DEFINITIONS, tcOrder (42 ca), thanh tiến trình 42/42 và live stream log.
+  + `scripts/testwebsite.mjs`: Bổ sung Test Suite 7 (TC-038..TC-042) và báo cáo 42/42 CASES.
+  + `scripts/test-dashboard-live.mjs`: Cập nhật kiểm tra 42 ca kiểm thử PASS và tự động điều phối lỗi Copilot.

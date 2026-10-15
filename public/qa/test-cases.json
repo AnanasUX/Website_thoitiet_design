@@ -543,6 +543,89 @@
         "Xác nhận tỷ lệ tương phản màu sắc đáp ứng tiêu chuẩn WCAG 2.1 AA"
       ],
       "expected": "Ứng dụng thân thiện với mọi đối tượng người dùng và tuân thủ chuẩn tiếp cận quốc tế."
+    },
+    {
+      "id": "TC-038",
+      "title": "Lớp phòng thủ chống tấn công SSRF & Danh sách trắng URL an toàn cho API",
+      "requirementIds": ["REQ-038"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm validateSafeFetchUrl chấp thuận các nguồn tin tức chính thống (VnExpress, Tiền Phong, Tuổi Trẻ...)",
+        "Chặn đứng các yêu cầu nhắm vào dải IP nội bộ và loopback (127.0.0.1, localhost, 10.x, 192.168.x)",
+        "Chặn đứng yêu cầu nhắm vào AWS/GCP cloud metadata IP (169.254.169.254)",
+        "Chặn đứng các giao thức nguy hiểm (file://, gopher://, ldap://, ftp://)",
+        "Từ chối domain lạ ngoài danh mục nguồn tin cậy của hệ thống"
+      ],
+      "expected": "100% các vector tấn công SSRF và URL độc hại bị chặn đứng; chỉ các nguồn tin cậy được phép truy cập."
+    },
+    {
+      "id": "TC-039",
+      "title": "Bộ kiểm soát tốc độ API (Rate Limiting) & Chống tấn công từ chối dịch vụ DoS / DDoS",
+      "requirementIds": ["REQ-039"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm checkRateLimit với thuật toán cửa sổ trượt (Sliding Window)",
+        "Xác nhận các request thông thường trong ngưỡng cho phép được chấp thuận (HTTP 200)",
+        "Mô phỏng đợt tấn công dồn dập (Burst Attack) vượt quá ngưỡng cho phép trong 1 giây",
+        "Xác nhận hệ thống trả về mã trạng thái HTTP 429 Too Many Requests kèm Retry-After hợp lệ",
+        "Kiểm tra tính cô lập giữa các Client IP khác nhau (không chặn nhầm client hợp lệ)"
+      ],
+      "expected": "Cơ chế Rate Limiting phản ứng tức thì với hành vi spam/DDoS, trả về mã 429 và bảo vệ hệ thống không bị quá tải."
+    },
+    {
+      "id": "TC-040",
+      "title": "Lá chắn phòng thủ tiêm mã độc sâu (Deep Injection: SQLi, OS Command, Path Traversal, Prototype)",
+      "requirementIds": ["REQ-040"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm detectMaliciousPayload nhận diện các mẫu SQL Injection (OR 1=1, UNION SELECT, DROP TABLE)",
+        "Nhận diện các vector tiêm lệnh hệ điều hành OS Command Injection (; rm -rf, | cat /etc/passwd, $(whoami))",
+        "Nhận diện vector duyệt thư mục trái phép Path Traversal (../../../../etc/shadow, %2e%2e)",
+        "Nhận diện và chặn đứng nỗ lực làm ô nhiễm Prototype Pollution (__proto__, constructor.prototype)",
+        "Xác nhận văn bản tìm kiếm tiếng Việt bình thường không bị nhận diện nhầm (0 false positives)",
+        "Kiểm tra hàm sanitizeSearchQuery làm sạch chuỗi an toàn"
+      ],
+      "expected": "Toàn bộ các vector tiêm mã độc sâu bị phát hiện và ngăn chặn 100%, bảo đảm an toàn dữ liệu đầu vào."
+    },
+    {
+      "id": "TC-041",
+      "title": "Kiểm soát kích thước Payload, Chống JSON Bomb & Xác thực Schema API",
+      "requirementIds": ["REQ-041"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm validatePayloadSizeAndDepth chấp thuận payload dung lượng tiêu chuẩn",
+        "Chặn đứng payload có kích thước khổng lồ vượt quá giới hạn an toàn",
+        "Nhận diện và chặn đứng cấu trúc JSON Depth Bomb lồng nhau quá sâu (> 10 tầng)",
+        "Xác thực Schema dữ liệu thời tiết (yêu cầu temp: number, humidity: number, condition: string)",
+        "Xác thực Schema dữ liệu thị trường (yêu cầu goldPrices, currencyRates)",
+        "Xác thực Schema dữ liệu tin tức (yêu cầu mảng items có title, link)",
+        "Bắt trọn lỗi khi dữ liệu phản hồi bị giả mạo hoặc sai kiểu trường"
+      ],
+      "expected": "Kiểm soát chặt chẽ kích thước dữ liệu, loại bỏ nguy cơ sập bộ nhớ do JSON Bomb và đảm bảo tính toàn vẹn Schema API."
+    },
+    {
+      "id": "TC-042",
+      "title": "Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống tấn công phát lại Anti-Replay & Bộ Header An Ninh HTTP",
+      "requirementIds": ["REQ-042"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm verifyRequestIntegrity chấp thuận yêu cầu có timestamp mới và nonce hợp lệ",
+        "Mô phỏng tấn công phát lại (Replay Attack) bằng cách gửi lại cùng mã Nonce -> Bắt trọn và từ chối",
+        "Mô phỏng yêu cầu mang timestamp cũ lệch quá 5 phút -> Chặn đứng do vi phạm Time Drift Guard",
+        "Đánh giá bộ HTTP Security Headers chuẩn OWASP qua hàm evaluateSecurityHeaders",
+        "Xác nhận đủ 5 header bảo vệ (CSP, nosniff, SAMEORIGIN, HSTS, Referrer-Policy) đạt 100 điểm passed=true"
+      ],
+      "expected": "Hệ thống phòng chống triệt để tấn công phát lại, xác thực tính toàn vẹn và thực thi bộ header an ninh quốc tế."
     }
   ]
 }

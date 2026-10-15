@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, Logic Luồng, Cử Chỉ Thực Chiến & Antigravity Copilot Pro) (`REQ-024` / `TC-024`)**:
+- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, Logic Luồng, Cử Chỉ Thực Chiến, Bảo Mật API & Antigravity Copilot Pro)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
     2. *Click bài viết chi tiết*: Mở modal bài viết, cuộn nội dung, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan, thoát modal qua phím `Escape`.
@@ -17,9 +17,9 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 12 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 173/173 assertions logic passed.
-  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 37/37 PASS (100% ĐẠT, 0 FAIL) trong 25.01s.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **37/37 PASS** (100% PASS, 0 FAIL).
+  + ✅ **Kiểm thử logic chuyên sâu 17 luồng thông tin & lá chắn an ninh mạng (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts` & `scripts/test-logic-flows.mjs`)**: 212/212 assertions logic passed.
+  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 42/42 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng Auto-Dispatch và khôi phục của Antigravity Copilot.
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **42/42 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -90,7 +90,13 @@
     - **[REQ-035 / TC-035] Chế Độ Ngoại Tuyến PWA & Chống Chịu Mạng Kém (Network Resilience)**: Tự động chuyển đổi sang dữ liệu đệm ngoại tuyến (Offline Fallback Cache) khi rớt mạng, không bao giờ xuất hiện màn hình trắng hoặc crash ứng dụng.
     - **[REQ-036 / TC-036] Kiểm Thử Chịu Tải & Chống Rò Rỉ Bộ Nhớ (Stress & Memory Guard)**: Kiểm soát 1000 phần tử liên tục, giải phóng tài nguyên DOM, duy trì kích thước bộ nhớ ổn định (`memoryLeakDetected = false`).
     - **[REQ-037 / TC-037] Khả Năng Tiếp Cận Chuẩn WCAG 2.1 AA & Phím Tắt Tiêu Điểm Bàn Phím**: Thẩm định độ tương phản màu sắc $\ge 4.5:1$, đầy đủ thuộc tính trợ năng `aria-label`, điều hướng bàn phím hoàn chỉnh (`Tab`, `Enter`, `Space`, `Escape`).
-    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với **37/37 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+14. **[REQ-038 -> REQ-042] Lá Chắn An Ninh Mạng Chuyên Sâu, Bảo Vệ Toàn Diện API & Chống Tấn Công Ngoài Hệ Thống**:
+    - **[REQ-038 / TC-038] Lớp Phòng Thủ Chống Tấn Công SSRF & Danh Sách Trắng URL Cho API**: Chặn đứng 100% loopback (`127.0.0.1`, `localhost`), dải IP nội bộ RFC 1918 (`10.x`, `172.16-31.x`, `192.168.x`), Cloud Metadata AWS/GCP (`169.254.169.254`), giao thức nguy hiểm (`file:`, `gopher:`, `ftp:`). Chỉ cho phép domain API/RSS có trong whitelist được phép fetch.
+    - **[REQ-039 / TC-039] Bộ Kiểm Soát Tốc Độ API (Rate Limiting) & Chống DoS / DDoS**: Sliding Window 10 req/s, chặn burst flood, phản hồi mã HTTP 429 Too Many Requests kèm Retry-After và tự động reset.
+    - **[REQ-040 / TC-040] Lá Chắn Phòng Thủ Tiêm Mã Độc Sâu (Deep Injection Defense)**: Phát hiện và triệt tiêu toàn bộ vector tấn công: SQL Injection (`OR 1=1`, `UNION SELECT`), OS Command Injection (`; rm`, `| cat`, `$(whoami)`), Path Traversal (`../../`, `%2e%2e`), Prototype Pollution (`__proto__`, `constructor.prototype`), làm sạch tìm kiếm an toàn.
+    - **[REQ-041 / TC-041] Kiểm Soát Kích Thước Payload, Chống JSON Bomb & Xác Thực Schema API**: Giới hạn payload size $\le 512\text{KB}$, phát hiện JSON Bomb đệ quy sâu $> 10$ tầng, xác thực schema chuẩn hóa cho Weather API, Market API, RSS News.
+    - **[REQ-042 / TC-042] Kiểm Tra Tính Toàn Vẹn Yêu Cầu, Chống Replay Attack & Đánh Giá HTTP Security Headers**: Time drift guard tối đa 300s, kiểm tra Nonce chống replay attack, kiểm tra 5 HTTP Security Headers (CSP, HSTS, X-Content-Type, X-Frame, Referrer) đạt 100/100 điểm.
+    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với **42/42 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---
 

@@ -52,6 +52,11 @@
 | REQ-035 | PROMPT-20261015-01 | Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA (Network Resilience) | P0 | Resilience / Offline | TC-035 | PASS | test-logic-flows.mjs:LUONG-12 | Tự động phát hiện online/offline, đọc dữ liệu đệm cache không trắng trang, tự phục hồi khi có mạng |
 | REQ-036 | PROMPT-20261015-01 | Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực (Stress & Memory Guard) | P0 | Performance / Stress | TC-036 | PASS | testwebsite.mjs:TC-036 | Mô phỏng cuộn dồn dập >100 thẻ bài DOM, rapid clicks chuyển kênh/danh mục 0 crash |
 | REQ-037 | PROMPT-20261015-01 | Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm | P1 | Accessibility / A11y | TC-037 | PASS | testwebsite.mjs:TC-037 | 100% nút icon có aria-label/title, focus-visible viền tiêu điểm, role=dialog trên các modal |
+| REQ-038 | PROMPT-20261015-02 | Lớp phòng thủ chống tấn công SSRF & Whitelist URL an toàn cho API | P0 | Security / SSRF Shield | TC-038 | PASS | test-logic-flows.mjs:LUONG-13 | Chặn dải IP nội bộ, loopback 127.0.0.1, cloud metadata 169.254.169.254, giao thức lạ |
+| REQ-039 | PROMPT-20261015-02 | Bộ kiểm soát tốc độ API (Rate Limiting) & Chống DoS / DDoS | P0 | Security / Rate Limiting | TC-039 | PASS | test-logic-flows.mjs:LUONG-14 | Thuật toán cửa sổ trượt, giới hạn dồn dập (Burst limit 10 req/s), status 429 Too Many Requests |
+| REQ-040 | PROMPT-20261015-02 | Lá chắn phòng thủ tiêm mã độc sâu (Deep Injection: SQLi, OS Command, Path, Prototype) | P0 | Security / Deep Injection | TC-040 | PASS | test-logic-flows.mjs:LUONG-15 | Bắt trọn SQL Injection (OR 1=1, UNION), OS command (; rm, | cat), Path traversal, Prototype pollution |
+| REQ-041 | PROMPT-20261015-02 | Kiểm soát kích thước Payload, Chống JSON Bomb & Xác thực Schema API | P0 | Security / Schema Guard | TC-041 | PASS | test-logic-flows.mjs:LUONG-16 | Giới hạn dung lượng byte, chặn JSON Depth Bomb >10 tầng, xác thực schema thời tiết/thị trường/tin tức |
+| REQ-042 | PROMPT-20261015-02 | Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống Replay Attack & Bộ Header An Ninh HTTP | P0 | Security / Anti-Replay | TC-042 | PASS | test-logic-flows.mjs:LUONG-17 | Time Drift Guard (300s), chống tái sử dụng Nonce, đạt 100 điểm bộ HTTP Security Headers OWASP |
 
 ## Prompt intake log
 
@@ -75,6 +80,7 @@
 | PROMPT-20261014-12 | 2026-10-14 | Tất cả chức năng trên website chứ vuốt lên vuốt xuống, click và chi tiết, lỗi giao diện xem trên giao diện chứ chưa thấy test kiểm thử gì là toàn hệ thống chi tiết chức năng cả. | REQ-024 | None | Approved |
 | PROMPT-20261014-13 | 2026-10-14 | Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống | REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030 | None | Approved |
 | PROMPT-20261015-01 | 2026-10-15 | Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định | REQ-031, REQ-032, REQ-033, REQ-034, REQ-035, REQ-036, REQ-037 | None | Approved |
+| PROMPT-20261015-02 | 2026-10-15 | Bổ sung case test chi tiết kể cả test api của hệ thống và chống tấn công tạo ra lớp bảo vệ tránh việc tấn công từ bên ngoài hệ thống | REQ-038, REQ-039, REQ-040, REQ-041, REQ-042 | None | Approved |
 
 
 

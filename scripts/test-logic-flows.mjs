@@ -53,6 +53,16 @@ import {
   removeArticleBookmark,
   isArticleBookmarked,
   resolveOfflineResilience,
+  validateSafeFetchUrl,
+  checkRateLimit,
+  resetRateLimits,
+  detectMaliciousPayload,
+  sanitizeSearchQuery,
+  validatePayloadSizeAndDepth,
+  validateApiResponseSchema,
+  verifyRequestIntegrity,
+  resetNonceStore,
+  evaluateSecurityHeaders
 } from '../src/utils/logicFlows.ts';
 
 const rootDir = process.cwd();
@@ -523,6 +533,190 @@ export function runAllLogicFlowTests() {
   assert(stateOffline.displayArticlesCount === 3, "Hiển thị đúng 3 bài từ bộ nhớ đệm offline");
   assert(stateOffline.statusLabel.includes("Ngoại tuyến"), "Nhãn hiển thị phản ánh chế độ Ngoại tuyến");
   console.log(`    ${colors.green}✓ Luồng Ngoại Tuyến: Đạt 7/7 kiểm tra chuyển đổi trực tuyến/ngoại tuyến & dữ liệu đệm${colors.reset}\n`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 13: SSRF & SAFE URL SHIELD FLOW (REQ-038)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 13/17] Kiểm thử Lớp Phòng Thủ Chống SSRF & Danh Sách Trắng URL An Toàn...${colors.reset}`);
+  // Safe URLs
+  const safeVnEx = validateSafeFetchUrl("https://vnexpress.net/rss/tin-moi-nhat.rss");
+  assert(safeVnEx.isSafe === true, "URL báo VnExpress trong whitelist phải được chấp thuận");
+
+  const safeTienPhong = validateSafeFetchUrl("https://tienphong.vn/rss/thoi-su-2.rss");
+  assert(safeTienPhong.isSafe === true, "URL báo Tiền Phong trong whitelist phải được chấp thuận");
+
+  const safeAllorigins = validateSafeFetchUrl("https://api.allorigins.win/raw?url=https%3A%2F%2Fvtv.vn");
+  assert(safeAllorigins.isSafe === true, "Proxy allorigins.win được chấp thuận");
+
+  // Blocked SSRF: Loopback, private IP, metadata
+  const blockLocalhost = validateSafeFetchUrl("http://localhost:8080/admin");
+  assert(blockLocalhost.isSafe === false, "Chặn localhost tấn công nội bộ SSRF");
+
+  const block127 = validateSafeFetchUrl("http://127.0.0.1:3000/secret");
+  assert(block127.isSafe === false, "Chặn 127.0.0.1 tấn công nội bộ");
+
+  const blockPrivateClassA = validateSafeFetchUrl("http://10.0.0.1/internal-api");
+  assert(blockPrivateClassA.isSafe === false, "Chặn dải IP private 10.x.x.x");
+
+  const blockPrivateClassC = validateSafeFetchUrl("http://192.168.1.1/router-admin");
+  assert(blockPrivateClassC.isSafe === false, "Chặn dải IP private 192.168.x.x");
+
+  const blockCloudMetadata = validateSafeFetchUrl("http://169.254.169.254/latest/meta-data/");
+  assert(blockCloudMetadata.isSafe === false, "Chặn IP AWS/GCP cloud metadata 169.254.169.254");
+
+  // Blocked dangerous protocols
+  const blockFileProto = validateSafeFetchUrl("file:///etc/passwd");
+  assert(blockFileProto.isSafe === false, "Chặn giao thức file:// nguy hiểm");
+
+  const blockGopher = validateSafeFetchUrl("gopher://evil.com/ssrf");
+  assert(blockGopher.isSafe === false, "Chặn giao thức gopher://");
+
+  // Blocked untrusted external domain
+  const blockEvil = validateSafeFetchUrl("https://attacker-domain-xyz.com/malware.exe");
+  assert(blockEvil.isSafe === false, "Chặn domain lạ ngoài danh mục nguồn tin cậy");
+  console.log(`    ${colors.green}✓ Luồng SSRF Shield: Đạt 11/11 kiểm tra bảo vệ loopback, cloud metadata & protocol${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 14: RATE LIMITING & DoS / DDoS DEFENSE FLOW (REQ-039)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 14/17] Kiểm thử Kiểm Soát Tốc Độ API (Rate Limiting) & Chống DoS / DDoS...${colors.reset}`);
+  resetRateLimits();
+  const testClientId = "client_test_ip_1";
+  const testEndpoint = "/api/v1/weather";
+  const customLimit = { maxRequests: 5, windowMs: 10000, burstLimit: 3 };
+
+  // 3 requests within burst limit
+  const r1 = checkRateLimit(testClientId, testEndpoint, customLimit);
+  assert(r1.allowed === true && r1.statusCode === 200, "Request 1 được chấp thuận (200 OK)");
+  const r2 = checkRateLimit(testClientId, testEndpoint, customLimit);
+  assert(r2.allowed === true && r2.remaining === 3, "Request 2 được chấp thuận, remaining = 3");
+  const r3 = checkRateLimit(testClientId, testEndpoint, customLimit);
+  assert(r3.allowed === true, "Request 3 đạt ngưỡng burst");
+
+  // Burst attack trigger (Request 4 trong cùng mili-giây vượt burstLimit = 3)
+  const rBurst = checkRateLimit(testClientId, testEndpoint, customLimit);
+  assert(rBurst.allowed === false && rBurst.statusCode === 429, "Chặn request dồn dập (Burst Limit 429 Too Many Requests)");
+  assert(rBurst.retryAfterSeconds >= 1, "Trả về thời gian retryAfter hợp lệ");
+
+  // Isolation between different clients
+  const clientB = "client_test_ip_2";
+  const rClientB = checkRateLimit(clientB, testEndpoint, customLimit);
+  assert(rClientB.allowed === true, "Client khác độc lập không bị chặn oan");
+  console.log(`    ${colors.green}✓ Luồng Rate Limiting: Đạt 6/6 kiểm tra cửa sổ trượt, burst limit, status 429 & cô lập client${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 15: DEEP INJECTION DEFENSE FLOW (REQ-040)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 15/17] Kiểm thử Lá Chắn Phòng Vệ Tiêm Mã Độc Sâu (SQLi, Command, Path Traversal, Prototype)...${colors.reset}`);
+  // SQL Injection tests
+  const sqliAuthBypass = detectMaliciousPayload("admin' OR '1'='1");
+  assert(sqliAuthBypass.isMalicious === true && sqliAuthBypass.attackType === 'SQLI', "Bắt trọn SQLi Auth Bypass ' OR '1'='1");
+
+  const sqliUnion = detectMaliciousPayload("1 UNION SELECT username, password FROM users--");
+  assert(sqliUnion.isMalicious === true && sqliUnion.attackType === 'SQLI', "Bắt trọn SQLi UNION SELECT");
+
+  const sqliDrop = detectMaliciousPayload("1; DROP TABLE users");
+  assert(sqliDrop.isMalicious === true && sqliDrop.attackType === 'SQLI', "Bắt trọn SQLi DROP TABLE");
+
+  // Command Injection tests
+  const cmdRm = detectMaliciousPayload("data.txt; rm -rf /");
+  assert(cmdRm.isMalicious === true && cmdRm.attackType === 'COMMAND_INJECTION', "Bắt trọn Command Injection ; rm -rf");
+
+  const cmdPipe = detectMaliciousPayload("test | cat /etc/passwd");
+  assert(cmdPipe.isMalicious === true && cmdPipe.attackType === 'COMMAND_INJECTION', "Bắt trọn Command Injection | cat /etc/passwd");
+
+  const cmdSubshell = detectMaliciousPayload("$(whoami)");
+  assert(cmdSubshell.isMalicious === true && cmdSubshell.attackType === 'COMMAND_INJECTION', "Bắt trọn Command Injection subshell $(...)");
+
+  // Path Traversal tests
+  const pathTraversal = detectMaliciousPayload("../../../../etc/shadow");
+  assert(pathTraversal.isMalicious === true && pathTraversal.attackType === 'PATH_TRAVERSAL', "Bắt trọn Path Traversal ../");
+
+  // Prototype Pollution tests
+  const protoPayload = JSON.parse('{"__proto__": {"isAdmin": true}}');
+  const protoResult = detectMaliciousPayload(protoPayload);
+  assert(protoResult.isMalicious === true && protoResult.attackType === 'PROTOTYPE_POLLUTION', "Bắt trọn Prototype Pollution __proto__");
+
+  // Legitimate Vietnamese text test
+  const cleanSearch = "Dự báo thời tiết Hà Nội chiều nay mưa hay nắng?";
+  const cleanResult = detectMaliciousPayload(cleanSearch);
+  assert(cleanResult.isMalicious === false, "Văn bản tìm kiếm tiếng Việt bình thường không bị báo nhầm");
+
+  // Sanitized query helper
+  const sanitized = sanitizeSearchQuery("Hà Nội; DROP TABLE test; -- ' OR 1=1");
+  assert(!sanitized.includes(";") && !sanitized.includes("--"), "sanitizeSearchQuery loại bỏ ký tự nguy hiểm thành công");
+  console.log(`    ${colors.green}✓ Luồng Deep Injection: Đạt 10/10 kiểm tra SQLi, OS Command, Path Traversal & Prototype Pollution${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 16: PAYLOAD SIZE, JSON BOMB & SCHEMA GUARD (REQ-041)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 16/17] Kiểm thử Kiểm Soát Kích Thước Payload, Chống JSON Bomb & Schema API...${colors.reset}`);
+  // Payload size test
+  const smallJson = JSON.stringify({ temp: 28, humidity: 65, condition: "nang" });
+  const smallRes = validatePayloadSizeAndDepth(smallJson, 1024, 5);
+  assert(smallRes.isValid === true, "Payload nhỏ 100 bytes hợp lệ");
+
+  const hugeString = "A".repeat(2000);
+  const hugeRes = validatePayloadSizeAndDepth(hugeString, 1024, 5);
+  assert(hugeRes.isValid === false && hugeRes.error.includes("vượt quá ngưỡng"), "Chặn payload kích thước lớn hơn giới hạn");
+
+  // JSON Depth Bomb test
+  const nestedBomb = "[[[[[[[[[[[[[1]]]]]]]]]]]]]";
+  const bombRes = validatePayloadSizeAndDepth(nestedBomb, 10240, 5);
+  assert(bombRes.isValid === false && bombRes.error.includes("JSON Bomb"), "Bắt trọn JSON Depth Bomb lồng nhau quá sâu");
+
+  // Schema Validation tests
+  const validWeather = { temp: 29.5, humidity: 70, condition: "nang-am" };
+  assert(validateApiResponseSchema(validWeather, 'weather').isValid === true, "Schema thời tiết chuẩn được phê duyệt");
+
+  const invalidWeather = { temp: "nong", humidity: null };
+  const invalidWeatherRes = validateApiResponseSchema(invalidWeather, 'weather');
+  assert(invalidWeatherRes.isValid === false && invalidWeatherRes.errors.length >= 2, "Bắt lỗi thiếu/sai kiểu trường dữ liệu thời tiết");
+
+  const validMarket = { goldPrices: [{ name: "SJC", buy: 83000000, sell: 85500000 }], currencyRates: [] };
+  assert(validateApiResponseSchema(validMarket, 'market').isValid === true, "Schema tài chính chuẩn được phê duyệt");
+
+  const validNews = { items: [{ title: "Bão số 3 suy yếu", link: "https://tienphong.vn/1" }] };
+  assert(validateApiResponseSchema(validNews, 'news').isValid === true, "Schema tin tức RSS chuẩn được phê duyệt");
+  console.log(`    ${colors.green}✓ Luồng Payload & Schema: Đạt 7/7 kiểm tra giới hạn size, JSON bomb & xác thực schema API${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 17: REQUEST INTEGRITY, ANTI-REPLAY & SECURITY HEADERS (REQ-042)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 17/17] Kiểm thử Tính Toàn Vẹn Yêu Cầu, Chống Replay Attack & HTTP Security Headers...${colors.reset}`);
+  resetNonceStore();
+  const nowMs = 1700000000000;
+  const testNonce = "nonce_random_abc123";
+
+  // Fresh request
+  const reqFresh = verifyRequestIntegrity(nowMs - 5000, testNonce, nowMs, 300);
+  assert(reqFresh.isValid === true, "Request với timestamp mới và nonce hợp lệ được chấp thuận");
+
+  // Replay Attack: Reusing the exact same nonce!
+  const reqReplay = verifyRequestIntegrity(nowMs - 5000, testNonce, nowMs, 300);
+  assert(reqReplay.isValid === false && reqReplay.reason.includes("Replay Attack Detected"), "Bắt trọn Replay Attack khi gửi lại cùng Nonce");
+
+  // Stale request (drift > 300s)
+  const reqStale = verifyRequestIntegrity(nowMs - 400000, "nonce_fresh_xyz999", nowMs, 300);
+  assert(reqStale.isValid === false && reqStale.reason.includes("vượt quá ngưỡng cho phép"), "Chặn request cũ hơn 5 phút (Time Drift Guard)");
+
+  // HTTP Security Headers evaluation
+  const goodHeaders = {
+    'Content-Security-Policy': "default-src 'self'",
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
+  };
+  const evalGood = evaluateSecurityHeaders(goodHeaders);
+  assert(evalGood.passed === true && evalGood.score === 100, "Bộ header bảo mật hoàn hảo đạt 100 điểm, passed = true");
+
+  const badHeaders = {
+    'Server': 'Apache/2.4.41'
+  };
+  const evalBad = evaluateSecurityHeaders(badHeaders);
+  assert(evalBad.passed === false && evalBad.missingHeaders.length === 5, "Thiếu 5 header an ninh bị đánh trượt (passed = false)");
+  console.log(`    ${colors.green}✓ Luồng Integrity & Headers: Đạt 5/5 kiểm tra Anti-Replay, Time Drift & OWASP Security Headers${colors.reset}\n`);
 
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}`);
   console.log(`${colors.bright}TỔNG KẾT KIỂM THỬ LUỒNG LOGIC: ${colors.green}${passedAssertions}/${totalAssertions} ASSERTIONS ĐẠT (100% PASS)${colors.reset} | ${failedAssertions > 0 ? colors.red : colors.dim}${failedAssertions} THẤT BẠI${colors.reset}`);

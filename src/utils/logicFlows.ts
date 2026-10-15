@@ -777,3 +777,31 @@ export function resolveOfflineResilience(
     isUsingOfflineCache: true,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 13 - 17: SECURITY SHIELD & API CYBER DEFENSE (REQ-038 -> REQ-042)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  validateSafeFetchUrl,
+  checkRateLimit,
+  resetRateLimits,
+  detectMaliciousPayload,
+  sanitizeSearchQuery,
+  validatePayloadSizeAndDepth,
+  validateApiResponseSchema,
+  verifyRequestIntegrity,
+  resetNonceStore,
+  evaluateSecurityHeaders
+} from './securityShield.ts';
+
+export type {
+  SafeUrlResult,
+  RateLimitConfig,
+  RateLimitResult,
+  MaliciousDetectionResult,
+  PayloadValidationResult,
+  SchemaValidationResult,
+  RequestIntegrityResult,
+  SecurityHeadersEvaluation
+} from './securityShield.ts';

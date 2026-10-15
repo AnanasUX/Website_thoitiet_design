@@ -123,6 +123,21 @@ async function runDashboardTest() {
     const tc036Status = await tc036Row.locator('.badge-status.PASS').isVisible().catch(() => false);
     console.log('TC-036 Status is PASS:', tc036Status);
 
+    // Verify TC-038 (Anti-SSRF Defense)
+    const tc038Row = page.locator('#matrixTableBody tr:has-text("TC-038")');
+    const tc038Status = await tc038Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-038 Status is PASS:', tc038Status);
+
+    // Verify TC-040 (Deep Injection Defense)
+    const tc040Row = page.locator('#matrixTableBody tr:has-text("TC-040")');
+    const tc040Status = await tc040Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-040 Status is PASS:', tc040Status);
+
+    // Verify TC-042 (Request Integrity & Headers)
+    const tc042Row = page.locator('#matrixTableBody tr:has-text("TC-042")');
+    const tc042Status = await tc042Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-042 Status is PASS:', tc042Status);
+
     // -------------------------------------------------------------------------
     // PHASE 2: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch
     // -------------------------------------------------------------------------
@@ -152,8 +167,8 @@ async function runDashboardTest() {
     const isPassedAgain = await page.locator('#releaseGateBanner.passed').isVisible();
     console.log('5. Release Gate Banner restored to PASSED:', isPassedAgain);
 
-    if (passCount === 37 && failCount === 0 && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
-      console.log('🎉 SUCCESS: All 37 tests ran and Antigravity Copilot Auto-Dispatch verified 100%!');
+    if (passCount === 42 && failCount === 0 && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
+      console.log('🎉 SUCCESS: All 42 tests ran and Antigravity Copilot Auto-Dispatch verified 100%!');
       process.exitCode = 0;
     } else {
       console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);
