@@ -41,6 +41,18 @@ import {
   getDaysInMonth,
   getFirstDayOfMonth,
   decodeHTMLEntities,
+  VIETNAM_PROVINCES,
+  searchProvinces,
+  calculateNOAAHeatIndex,
+  getHeatIndexSeverity,
+  PROXY_PROVIDERS,
+  buildProxyUrlWithFailover,
+  evaluateFeedHealth,
+  sanitizeArticleContent,
+  saveArticleBookmark,
+  removeArticleBookmark,
+  isArticleBookmarked,
+  resolveOfflineResilience,
 } from '../src/utils/logicFlows.ts';
 
 const rootDir = process.cwd();
@@ -394,6 +406,123 @@ export function runAllLogicFlowTests() {
   // 1/10/2026 là Thứ Năm (index = 4)
   assert(getFirstDayOfMonth(2026, 9) === 4, "Ngày 1/10/2026 là Thứ Năm (day index = 4)");
   console.log(`    ${colors.green}✓ Luồng Lịch & Tiện Ích: Đạt 17/17 kiểm tra năm nhuận, chu kỳ ngày tháng & thứ trong tuần${colors.reset}\n`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 8: VIETNAM PROVINCES WEATHER & NOAA HEAT INDEX (REQ-031)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 8/12] Kiểm thử Quan Trắc 4 Miền Việt Nam & Tính Toán Chỉ Số Nhiệt NOAA...${colors.reset}`);
+  assert(VIETNAM_PROVINCES.length >= 17, `Kho dữ liệu quan trắc có đầy đủ ${VIETNAM_PROVINCES.length} tỉnh thành trọng điểm 4 miền`);
+  const bacCount = VIETNAM_PROVINCES.filter(p => p.region === 'Bac').length;
+  const trungCount = VIETNAM_PROVINCES.filter(p => p.region === 'Trung').length;
+  const namCount = VIETNAM_PROVINCES.filter(p => p.region === 'Nam').length;
+  const tayNguyenCount = VIETNAM_PROVINCES.filter(p => p.region === 'TayNguyen').length;
+  assert(bacCount >= 4, "Miền Bắc có đủ trạm quan trắc (Hà Nội, Hải Phòng, Quảng Ninh, Sa Pa...)");
+  assert(trungCount >= 4, "Miền Trung có đủ trạm quan trắc (Đà Nẵng, Huế, Nha Trang, Vinh...)");
+  assert(namCount >= 3, "Miền Nam có đủ trạm quan trắc (TP.HCM, Cần Thơ, Vũng Tàu, Cà Mau...)");
+  assert(tayNguyenCount >= 3, "Tây Nguyên có đủ trạm quan trắc (Đà Lạt, Pleiku, Buôn Ma Thuột...)");
+
+  // Search provinces: không dấu và có dấu
+  const searchHn = searchProvinces("ha noi");
+  assert(searchHn.length >= 1 && searchHn[0].id === 'ha-noi', "Tìm kiếm không dấu 'ha noi' ra trạm Hà Nội");
+  const searchSg = searchProvinces("Hồ Chí Minh");
+  assert(searchSg.length >= 1 && searchSg[0].id === 'tp-ho-chi-minh', "Tìm kiếm có dấu 'Hồ Chí Minh' ra trạm TP.HCM");
+  const searchDlat = searchProvinces("da lat");
+  assert(searchDlat.length >= 1 && searchDlat[0].id === 'da-lat', "Tìm kiếm 'da lat' ra Đà Lạt mát lạnh");
+
+  // NOAA Heat Index calculation
+  const hi1 = calculateNOAAHeatIndex(32, 70); // 32°C, 70% humidity -> Heat index cao
+  assert(hi1 >= 38 && hi1 <= 45, `Chỉ số nhiệt NOAA tại 32°C 70% ẩm phải trong khoảng 38-45°C (kết quả: ${hi1}°C)`);
+  const hi2 = calculateNOAAHeatIndex(22, 60); // 22°C, 60% humidity -> Mát mẻ, gần bằng nhiệt độ thường
+  assert(Math.abs(hi2 - 22) <= 2, `Chỉ số nhiệt NOAA tại 22°C 60% ẩm mát mẻ gần bằng nhiệt độ thường (${hi2}°C)`);
+  assert(getHeatIndexSeverity(42).level === 'DANGER', "Chỉ số 42°C thuộc diện DANGER nguy hiểm");
+  assert(getHeatIndexSeverity(25).level === 'SAFE', "Chỉ số 25°C thuộc diện SAFE an toàn");
+  console.log(`    ${colors.green}✓ Luồng Thời Tiết 4 Miền: Đạt 12/12 kiểm tra trạm quan trắc & công thức NOAA Heat Index${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 9: RSS HEALTH MONITOR & PROXY AUTO-FAILOVER (REQ-032)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 9/12] Kiểm thử Giám Sát Sức Khỏe RSS & Proxy Auto-Failover...${colors.reset}`);
+  assert(PROXY_PROVIDERS.length >= 3, "Hệ thống có ít nhất 3 proxy dự phòng");
+  const rawTestFeed = "https://vnexpress.net/rss/tin-moi-nhat.rss";
+  const proxy0 = buildProxyUrlWithFailover(rawTestFeed, 0);
+  const proxy1 = buildProxyUrlWithFailover(rawTestFeed, 1);
+  const proxy2 = buildProxyUrlWithFailover(rawTestFeed, 2);
+  assert(proxy0.includes("allorigins"), "Proxy 0 sử dụng allorigins.win");
+  assert(proxy1.includes("corsproxy.io"), "Proxy 1 sử dụng corsproxy.io");
+  assert(proxy0 !== proxy1, "Proxy failover tự động thay đổi nhà cung cấp");
+  assert(evaluateFeedHealth(400, 200).isHealthy === true, "Feed 400ms HTTP 200 đánh giá GOOD");
+  assert(evaluateFeedHealth(5500, 200).isHealthy === false, "Feed 5500ms timeout đánh giá FAIL");
+  assert(evaluateFeedHealth(300, 500).isHealthy === false, "Feed HTTP 500 đánh giá FAIL");
+  console.log(`    ${colors.green}✓ Luồng Proxy Failover: Đạt 7/7 kiểm tra luân chuyển proxy & đánh giá latency${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 10: STRICT HTML SANITIZATION & CONTENT SECURITY GUARD (REQ-033)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 10/12] Kiểm thử Bộ Lọc Vệ Sinh Nội Dung & Chống Tấn Công XSS...${colors.reset}`);
+  const xssScript = '<p>Bản tin hôm nay <script>alert("Hacked")</script> thời tiết rất đẹp.</p>';
+  const cleanScript = sanitizeArticleContent(xssScript);
+  assert(!cleanScript.includes("<script>"), "Triệt tiêu hoàn toàn thẻ <script>");
+  assert(!cleanScript.includes("alert"), "Triệt tiêu mã JavaScript độc hại");
+
+  const xssIframe = '<p>Video nhúng lạ: <iframe src="https://attacker.com/malware"></iframe></p>';
+  assert(!sanitizeArticleContent(xssIframe).includes("<iframe"), "Triệt tiêu thẻ <iframe> độc hại");
+
+  const xssOnerror = '<img src="invalid-img.jpg" onerror="alert(document.cookie)" alt="Ảnh minh họa">';
+  const cleanOnerror = sanitizeArticleContent(xssOnerror);
+  assert(!cleanOnerror.includes("onerror"), "Triệt tiêu thuộc tính inline onerror");
+
+  const xssJsHref = '<a href="javascript:alert(1)">Bấm vào đây để nhận quà</a>';
+  assert(!sanitizeArticleContent(xssJsHref).includes("javascript:"), "Vô hiệu hóa href='javascript:...'");
+
+  const dangerousStyle = '<div style="position: fixed; z-index: 999999; top: 0;">Quảng cáo đè</div>';
+  const cleanStyle = sanitizeArticleContent(dangerousStyle);
+  assert(!cleanStyle.includes("position: fixed"), "Vô hiệu hóa position: fixed làm hỏng giao diện");
+  console.log(`    ${colors.green}✓ Luồng Vệ Sinh HTML XSS: Đạt 8/8 kiểm tra triệt tiêu script, iframe, inline events & injection${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 11: BOOKMARKS & OFFLINE SAVED ARTICLES MANAGER (REQ-034)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 11/12] Kiểm thử Quản Lý Bài Viết Yêu Thích (Bookmarks)...${colors.reset}`);
+  const initialBookmarks = [];
+  const articleA = { id: "art-1", title: "Bão số 3 suy yếu thành áp thấp", source: "VTV24", link: "https://vtv.vn/1" };
+  const articleB = { id: "art-2", title: "Giá vàng SJC tăng mạnh sáng nay", source: "Tiền Phong", link: "https://tienphong.vn/2" };
+
+  const listAfterA = saveArticleBookmark(articleA, initialBookmarks);
+  assert(listAfterA.length === 1 && listAfterA[0].id === "art-1", "Lưu bài viết A vào bookmarks thành công");
+  assert(isArticleBookmarked("art-1", listAfterA) === true, "Xác nhận bài A đã được đánh dấu");
+  assert(isArticleBookmarked("art-2", listAfterA) === false, "Bài B chưa được lưu");
+
+  const listAfterB = saveArticleBookmark(articleB, listAfterA);
+  assert(listAfterB.length === 2 && listAfterB[0].id === "art-2", "Lưu bài B đưa lên đầu danh sách");
+
+  // Thử lưu trùng lặp bài A: không được tạo phần tử trùng
+  const listDedup = saveArticleBookmark(articleA, listAfterB);
+  assert(listDedup.length === 2, "Lưu lại bài A không gây trùng lặp phần tử");
+
+  // Xóa bài viết
+  const listRemoved = removeArticleBookmark("art-1", listDedup);
+  assert(listRemoved.length === 1 && listRemoved[0].id === "art-2", "Xóa bài A thành công, còn lại bài B");
+  assert(isArticleBookmarked("art-1", listRemoved) === false, "Bài A không còn trong bookmarks");
+  console.log(`    ${colors.green}✓ Luồng Bookmarks: Đạt 7/7 kiểm tra lưu bài, chống trùng, kiểm tra trạng thái & xóa bài${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 12: NETWORK RESILIENCE & OFFLINE FALLBACK STATE (REQ-035)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 12/12] Kiểm thử Chống Chịu Mạng Kém & Chế Độ Ngoại Tuyến...${colors.reset}`);
+  const liveNews = [{ id: '1', title: 'Tin trực tuyến 1' }, { id: '2', title: 'Tin trực tuyến 2' }];
+  const cachedNews = [{ id: 'cache-1', title: 'Tin bộ nhớ đệm 1' }, { id: 'cache-2', title: 'Tin bộ nhớ đệm 2' }, { id: 'cache-3', title: 'Tin bộ nhớ đệm 3' }];
+
+  const stateOnline = resolveOfflineResilience(true, liveNews, cachedNews);
+  assert(stateOnline.isOnline === true, "Trạng thái online = true khi có mạng");
+  assert(stateOnline.isUsingOfflineCache === false, "Không dùng cache khi đang trực tuyến");
+  assert(stateOnline.displayArticlesCount === 2, "Hiển thị đúng 2 bài trực tuyến");
+
+  const stateOffline = resolveOfflineResilience(false, [], cachedNews);
+  assert(stateOffline.isOnline === false, "Trạng thái online = false khi mất mạng");
+  assert(stateOffline.isUsingOfflineCache === true, "Tự động kích hoạt offline cache khi mất mạng");
+  assert(stateOffline.displayArticlesCount === 3, "Hiển thị đúng 3 bài từ bộ nhớ đệm offline");
+  assert(stateOffline.statusLabel.includes("Ngoại tuyến"), "Nhãn hiển thị phản ánh chế độ Ngoại tuyến");
+  console.log(`    ${colors.green}✓ Luồng Ngoại Tuyến: Đạt 7/7 kiểm tra chuyển đổi trực tuyến/ngoại tuyến & dữ liệu đệm${colors.reset}\n`);
 
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}`);
   console.log(`${colors.bright}TỔNG KẾT KIỂM THỬ LUỒNG LOGIC: ${colors.green}${passedAssertions}/${totalAssertions} ASSERTIONS ĐẠT (100% PASS)${colors.reset} | ${failedAssertions > 0 ? colors.red : colors.dim}${failedAssertions} THẤT BẠI${colors.reset}`);

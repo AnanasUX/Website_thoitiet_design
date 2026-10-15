@@ -528,3 +528,252 @@ export function decodeHTMLEntities(text: string | null | undefined): string {
     .replace(/&nbsp;/g, ' ')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 8: VIETNAM PROVINCES WEATHER & NOAA HEAT INDEX FLOW (REQ-031)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ProvinceWeatherStation {
+  id: string;
+  name: string;
+  region: 'Bac' | 'Trung' | 'Nam' | 'TayNguyen';
+  temp: number;
+  condition: ConditionKey;
+  humidity: number;
+  windSpeed: number;
+  windDeg: number;
+  pm25: number;
+  uvIndex: number;
+}
+
+export const VIETNAM_PROVINCES: ProvinceWeatherStation[] = [
+  // Miền Bắc
+  { id: 'ha-noi', name: 'Hà Nội', region: 'Bac', temp: 28, condition: 'nang', humidity: 65, windSpeed: 14, windDeg: 45, pm25: 38.5, uvIndex: 6.5 },
+  { id: 'hai-phong', name: 'Hải Phòng', region: 'Bac', temp: 27, condition: 'nang', humidity: 70, windSpeed: 22, windDeg: 90, pm25: 22.0, uvIndex: 6.0 },
+  { id: 'quang-ninh', name: 'Quảng Ninh', region: 'Bac', temp: 26, condition: 'am-u', humidity: 75, windSpeed: 18, windDeg: 60, pm25: 18.2, uvIndex: 5.2 },
+  { id: 'lao-cai', name: 'Lào Cai (Sa Pa)', region: 'Bac', temp: 19, condition: 'am-u', humidity: 88, windSpeed: 8, windDeg: 0, pm25: 8.5, uvIndex: 4.0 },
+  { id: 'lang-son', name: 'Lạng Sơn', region: 'Bac', temp: 23, condition: 'binh-thuong', humidity: 68, windSpeed: 12, windDeg: 30, pm25: 15.0, uvIndex: 5.5 },
+  // Miền Trung
+  { id: 'da-nang', name: 'Đà Nẵng', region: 'Trung', temp: 30, condition: 'nang', humidity: 60, windSpeed: 16, windDeg: 120, pm25: 14.5, uvIndex: 8.2 },
+  { id: 'hue', name: 'Thừa Thiên Huế', region: 'Trung', temp: 29, condition: 'binh-thuong', humidity: 72, windSpeed: 10, windDeg: 110, pm25: 16.0, uvIndex: 7.8 },
+  { id: 'nha-trang', name: 'Nha Trang (Khánh Hòa)', region: 'Trung', temp: 31, condition: 'nang', humidity: 62, windSpeed: 18, windDeg: 135, pm25: 11.2, uvIndex: 9.0 },
+  { id: 'vinh', name: 'Vinh (Nghệ An)', region: 'Trung', temp: 28, condition: 'am-u', humidity: 78, windSpeed: 15, windDeg: 80, pm25: 26.0, uvIndex: 6.0 },
+  { id: 'quy-nhon', name: 'Quy Nhơn (Bình Định)', region: 'Trung', temp: 30, condition: 'nang', humidity: 64, windSpeed: 17, windDeg: 140, pm25: 12.8, uvIndex: 8.5 },
+  // Tây Nguyên
+  { id: 'da-lat', name: 'Đà Lạt (Lâm Đồng)', region: 'TayNguyen', temp: 21, condition: 'binh-thuong', humidity: 82, windSpeed: 11, windDeg: 200, pm25: 7.2, uvIndex: 6.8 },
+  { id: 'pleiku', name: 'Pleiku (Gia Lai)', region: 'TayNguyen', temp: 25, condition: 'nang', humidity: 58, windSpeed: 16, windDeg: 220, pm25: 10.5, uvIndex: 7.5 },
+  { id: 'buon-ma-thuot', name: 'Buôn Ma Thuột (Đắk Lắk)', region: 'TayNguyen', temp: 27, condition: 'nang', humidity: 55, windSpeed: 14, windDeg: 210, pm25: 13.0, uvIndex: 8.0 },
+  // Miền Nam
+  { id: 'tp-ho-chi-minh', name: 'TP. Hồ Chí Minh', region: 'Nam', temp: 33, condition: 'nang-gat', humidity: 72, windSpeed: 15, windDeg: 180, pm25: 42.0, uvIndex: 10.5 },
+  { id: 'can-tho', name: 'Cần Thơ', region: 'Nam', temp: 32, condition: 'nang', humidity: 75, windSpeed: 12, windDeg: 190, pm25: 19.5, uvIndex: 9.8 },
+  { id: 'vung-tau', name: 'Bà Rịa - Vũng Tàu', region: 'Nam', temp: 30, condition: 'nang', humidity: 68, windSpeed: 24, windDeg: 160, pm25: 15.0, uvIndex: 9.2 },
+  { id: 'ca-mau', name: 'Cà Mau', region: 'Nam', temp: 31, condition: 'mua-nho', humidity: 85, windSpeed: 19, windDeg: 200, pm25: 11.0, uvIndex: 7.0 },
+];
+
+/**
+ * Tìm kiếm tỉnh thành hỗ trợ có dấu và không dấu.
+ */
+export function searchProvinces(query: string, list: ProvinceWeatherStation[] = VIETNAM_PROVINCES): ProvinceWeatherStation[] {
+  if (!query || !query.trim()) return list;
+  const q = removeVietnameseTones(query.trim().toLowerCase());
+  return list.filter(p => {
+    const nameNorm = removeVietnameseTones(p.name.toLowerCase());
+    const idNorm = p.id.toLowerCase();
+    return nameNorm.includes(q) || idNorm.includes(q);
+  });
+}
+
+function removeVietnameseTones(str: string): string {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd');
+}
+
+/**
+ * Tính chỉ số nhiệt độ cảm nhận (Heat Index) theo công thức chuẩn NOAA của Hoa Kỳ.
+ * Nhận vào: tempC (độ Celsius), humidity (độ ẩm tương đối %).
+ * Trả về: Heat Index (°C) làm tròn 1 chữ số thập phân.
+ */
+export function calculateNOAAHeatIndex(tempC: number, humidity: number): number {
+  if (tempC < 20 || isNaN(tempC) || isNaN(humidity)) return tempC;
+  const tF = tempC * 1.8 + 32;
+  const rh = Math.max(0, Math.min(100, humidity));
+
+  let hiF = 0.5 * (tF + 61.0 + (tF - 68.0) * 1.2 + rh * 0.094);
+
+  if (hiF >= 80) {
+    hiF =
+      -42.379 +
+      2.04901523 * tF +
+      10.14333127 * rh -
+      0.22475541 * tF * rh -
+      0.00683783 * tF * tF -
+      0.05481717 * rh * rh +
+      0.00122874 * tF * tF * rh +
+      0.00085282 * tF * rh * rh -
+      0.00000199 * tF * tF * rh * rh;
+
+    // Hiệu chỉnh nếu độ ẩm thấp
+    if (rh < 13 && tF >= 80 && tF <= 112) {
+      const adj = ((13 - rh) / 4) * Math.sqrt((17 - Math.abs(tF - 95)) / 17);
+      hiF -= adj;
+    }
+    // Hiệu chỉnh nếu độ ẩm cao
+    else if (rh > 85 && tF >= 80 && tF <= 87) {
+      const adj = ((rh - 85) / 10) * ((87 - tF) / 5);
+      hiF += adj;
+    }
+  }
+
+  const hiC = (hiF - 32) / 1.8;
+  return Math.round(hiC * 10) / 10;
+}
+
+export function getHeatIndexSeverity(heatIndexC: number): { level: string; label: string; color: string } {
+  if (heatIndexC < 27) return { level: 'SAFE', label: 'An toàn', color: '#10b981' };
+  if (heatIndexC < 32) return { level: 'CAUTION', label: 'Chú ý: Cần bổ sung nước', color: '#f59e0b' };
+  if (heatIndexC < 41) return { level: 'EXTREME_CAUTION', label: 'Đặc biệt chú ý: Dễ kiệt sức vì nóng', color: '#ea580c' };
+  if (heatIndexC < 54) return { level: 'DANGER', label: 'Nguy hiểm: Nguy cơ sốc nhiệt cao', color: '#ef4444' };
+  return { level: 'EXTREME_DANGER', label: 'Cực kỳ nguy hiểm: Đột quỵ nhiệt', color: '#7f1d1d' };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 9: RSS HEALTH MONITOR & PROXY AUTO-FAILOVER (REQ-032)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const PROXY_PROVIDERS = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://thingproxy.freeboard.io/fetch/'
+];
+
+export function buildProxyUrlWithFailover(rawUrl: string, failoverIndex = 0): string {
+  if (!rawUrl) return '';
+  const idx = Math.abs(failoverIndex) % PROXY_PROVIDERS.length;
+  const prefix = PROXY_PROVIDERS[idx];
+  return `${prefix}${encodeURIComponent(rawUrl)}`;
+}
+
+export interface FeedHealthStatus {
+  url: string;
+  isAlive: boolean;
+  latencyMs: number;
+  statusCode: number;
+  failoverAttempts: number;
+}
+
+export function evaluateFeedHealth(latencyMs: number, statusCode: number): { isHealthy: boolean; rating: 'GOOD' | 'SLOW' | 'FAIL' } {
+  if (statusCode !== 200) return { isHealthy: false, rating: 'FAIL' };
+  if (latencyMs <= 1500) return { isHealthy: true, rating: 'GOOD' };
+  if (latencyMs <= 4500) return { isHealthy: true, rating: 'SLOW' };
+  return { isHealthy: false, rating: 'FAIL' };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 10: STRICT HTML SANITIZATION & CONTENT SECURITY GUARD (REQ-033)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Vệ sinh sạch sẽ HTML bài báo cào từ Internet, loại bỏ triệt để mã độc XSS, iframe, scripts.
+ */
+export function sanitizeArticleContent(rawHtml: string): string {
+  if (!rawHtml) return '';
+  let sanitized = rawHtml;
+
+  // 1. Loại bỏ các thẻ nguy hiểm hoàn toàn
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+  sanitized = sanitized.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+  sanitized = sanitized.replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '');
+  sanitized = sanitized.replace(/<embed\b[^>]*>/gi, '');
+  sanitized = sanitized.replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, '');
+  sanitized = sanitized.replace(/<input\b[^>]*>/gi, '');
+  sanitized = sanitized.replace(/<button\b[^<]*(?:(?!<\/button>)<[^<]*)*<\/button>/gi, '');
+
+  // 2. Loại bỏ các thuộc tính thực thi JavaScript nguy hại
+  sanitized = sanitized.replace(/\son\w+\s*=\s*(['"]).*?\1/gi, '');
+  sanitized = sanitized.replace(/\son\w+\s*=\s*[^>\s]+/gi, '');
+  sanitized = sanitized.replace(/href\s*=\s*(['"])\s*javascript:.*?\1/gi, 'href="#"');
+  sanitized = sanitized.replace(/src\s*=\s*(['"])\s*javascript:.*?\1/gi, 'src=""');
+
+  // 3. Vô hiệu hóa position: fixed hoặc z-index cao trong inline styles
+  sanitized = sanitized.replace(/position\s*:\s*fixed/gi, 'position: relative');
+  sanitized = sanitized.replace(/z-index\s*:\s*\d+/gi, 'z-index: 1');
+
+  return sanitized.trim();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 11: BOOKMARKS & OFFLINE SAVED ARTICLES MANAGER (REQ-034)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface BookmarkedArticle {
+  id: string;
+  title: string;
+  link: string;
+  source: string;
+  savedAt: number;
+  imageUrl?: string;
+}
+
+export function saveArticleBookmark(article: any, existingList: BookmarkedArticle[] = []): BookmarkedArticle[] {
+  if (!article || !article.title) return existingList;
+  const id = article.id || article.link || article.title;
+  const filtered = existingList.filter(item => item.id !== id);
+  const newItem: BookmarkedArticle = {
+    id,
+    title: article.title,
+    link: article.link || '#',
+    source: article.source || 'Tin tức',
+    savedAt: Date.now(),
+    imageUrl: article.imageUrl || article.image,
+  };
+  return [newItem, ...filtered];
+}
+
+export function removeArticleBookmark(articleId: string, existingList: BookmarkedArticle[] = []): BookmarkedArticle[] {
+  if (!articleId) return existingList;
+  return existingList.filter(item => item.id !== articleId);
+}
+
+export function isArticleBookmarked(articleId: string, existingList: BookmarkedArticle[] = []): boolean {
+  if (!articleId || !existingList) return false;
+  return existingList.some(item => item.id === articleId);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 12: NETWORK RESILIENCE & OFFLINE FALLBACK STATE (REQ-035)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface NetworkResilienceState {
+  isOnline: boolean;
+  statusLabel: string;
+  displayArticlesCount: number;
+  isUsingOfflineCache: boolean;
+}
+
+export function resolveOfflineResilience(
+  isOnline: boolean,
+  liveArticles: any[],
+  cachedArticles: any[]
+): NetworkResilienceState {
+  if (isOnline && liveArticles && liveArticles.length > 0) {
+    return {
+      isOnline: true,
+      statusLabel: 'Trực tuyến • Tin tức thời gian thực',
+      displayArticlesCount: liveArticles.length,
+      isUsingOfflineCache: false,
+    };
+  }
+  // Mất mạng nhưng có dữ liệu đệm cache
+  const count = (cachedArticles && cachedArticles.length > 0) ? cachedArticles.length : liveArticles.length;
+  return {
+    isOnline: isOnline,
+    statusLabel: 'Chế độ Ngoại tuyến • Đọc dữ liệu đã lưu trữ',
+    displayArticlesCount: count,
+    isUsingOfflineCache: true,
+  };
+}

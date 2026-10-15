@@ -17,8 +17,9 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 7 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 134/134 assertions logic passed.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **30/30 PASS** (100% PASS, 0 FAIL).
+  + ✅ **Kiểm thử logic chuyên sâu 12 luồng thông tin (`src/utils/logicFlows.ts` & `scripts/test-logic-flows.mjs`)**: 173/173 assertions logic passed.
+  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 37/37 PASS (100% ĐẠT, 0 FAIL) trong 25.01s.
+  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **37/37 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
@@ -81,8 +82,15 @@
     - Chuyển phân hệ Phân Tích & Hướng Dẫn Antigravity (`#triagePanel`) lên ngay dưới Release Gate Banner, không bị che khuất bởi Simulator 520px.
     - Tự động hóa hoàn toàn luồng điều phối Copilot (`isAuto = true`): Lưu thông tin vào `localStorage.antigravity_active_task` gắn quyền Pro Tier của `mrkun28@gmail.com`, đồng thời tự động chép chỉ thị kỹ thuật vào Clipboard để người dùng dán ngay vào Antigravity.
     - Nút `copilotSimulateBugBtn` (`[🧪 Thử Nghiệm Báo Lỗi]`) tự động chuyển thành `[🛡️ Khôi Phục Lại PASS 100% (Đã Xử Lý Xong)]` màu xanh lá cây khi đang có lỗi, cho phép 1-click khôi phục lại trạng thái hoàn hảo 100% PASS.
-    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với 30/30 PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
-
+13. **[REQ-031 -> REQ-037] Mở Rộng Hệ Thống 37/37 Ca Kiểm Thử Toàn Diện, Cào Dữ Liệu Sâu & Bảo Vệ Chống Chịu Tải**:
+    - **[REQ-031 / TC-031] Mạng Lưới Quan Trắc Thời Tiết 63 Tỉnh Thành & Công Thức Chỉ Số Nhiệt NOAA Rothfusz**: 17 trạm đại diện 4 miền khí hậu, tra cứu không dấu NFD, áp dụng phương trình hồi quy đa thức 9 hệ số Rothfusz kèm hệ số bù ẩm cao/thấp.
+    - **[REQ-032 / TC-032] Cào Tin Tức Đa Kênh 50+ RSS & Proxy Auto-Failover**: Giám sát sức khỏe feed (đo latency ms, mã phản hồi), cơ chế luân chuyển tự động qua 4 proxy (`allorigins`, `corsproxy`, `codetabs`, `thingproxy`) khi gặp lỗi mạng/chặn CORS.
+    - **[REQ-033 / TC-033] Bộ Lọc Vệ Sinh Bóc Tách Bài Viết & Chống Tấn Công XSS**: Triệt tiêu 100% các thẻ nguy hiểm (`<script>`, `<iframe>`, `<form>`, `<input>`), thuộc tính thực thi mã (`onerror`, `onload`, `onclick`), URI độc hại (`javascript:`) và CSS đè giao diện (`position: fixed`).
+    - **[REQ-034 / TC-034] Quản Lý Bài Viết Yêu Thích (Bookmarks) & Đọc Ngoại Tuyến**: Lưu trữ bài viết bền vững trong `localStorage.saved_articles`, hỗ trợ đánh dấu/hủy đánh dấu tức thì và đọc offline.
+    - **[REQ-035 / TC-035] Chế Độ Ngoại Tuyến PWA & Chống Chịu Mạng Kém (Network Resilience)**: Tự động chuyển đổi sang dữ liệu đệm ngoại tuyến (Offline Fallback Cache) khi rớt mạng, không bao giờ xuất hiện màn hình trắng hoặc crash ứng dụng.
+    - **[REQ-036 / TC-036] Kiểm Thử Chịu Tải & Chống Rò Rỉ Bộ Nhớ (Stress & Memory Guard)**: Kiểm soát 1000 phần tử liên tục, giải phóng tài nguyên DOM, duy trì kích thước bộ nhớ ổn định (`memoryLeakDetected = false`).
+    - **[REQ-037 / TC-037] Khả Năng Tiếp Cận Chuẩn WCAG 2.1 AA & Phím Tắt Tiêu Điểm Bàn Phím**: Thẩm định độ tương phản màu sắc $\ge 4.5:1$, đầy đủ thuộc tính trợ năng `aria-label`, điều hướng bàn phím hoàn chỉnh (`Tab`, `Enter`, `Space`, `Escape`).
+    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với **37/37 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---
 

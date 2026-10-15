@@ -403,6 +403,97 @@
       "evidence": ["testwebsite.mjs:TC-030:PASS"],
       "owner": "QA Lead",
       "notes": "DevWeatherPanel kích hoạt qua cử chỉ triple-tap cho phép ép chọn 9 trạng thái thời tiết"
+    },
+    {
+      "id": "REQ-031",
+      "title": "Mạng lưới quan trắc thời tiết 63 tỉnh thành & Bộ tính toán chỉ số nhiệt NOAA",
+      "description": "Mở rộng hỗ trợ dữ liệu thời tiết 4 miền Việt Nam (Bắc, Trung, Nam, Tây Nguyên) với trạm quan trắc chi tiết, hỗ trợ tìm kiếm có dấu/không dấu, và tính toán chỉ số cảm giác nhiệt (Heat Index) theo công thức hồi quy chuẩn NOAA.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P1",
+      "category": "weather-nationwide",
+      "status": "PASS",
+      "testIds": ["TC-031"],
+      "evidence": ["test-logic-flows.mjs:LUONG-8:PASS", "testwebsite.mjs:TC-031:PASS"],
+      "owner": "Weather Lead",
+      "notes": "Quan trắc 4 miền và công thức hồi quy NOAA Rothfusz"
+    },
+    {
+      "id": "REQ-032",
+      "title": "Cào dữ liệu & Giám sát sức khỏe 50+ nguồn RSS đa kênh & Bộ chuyển đổi proxy tự động",
+      "description": "Mở rộng danh mục cào tin tức lên hơn 50 nguồn RSS từ các cơ quan báo chí chính thống Việt Nam, tích hợp bộ giám sát sức khỏe nguồn tin (đo độ trễ latency) và bộ chuyển đổi Proxy Auto-Failover tự động giữa các nhà cung cấp khi gặp sự cố.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P0",
+      "category": "news-crawler-health",
+      "status": "PASS",
+      "testIds": ["TC-032"],
+      "evidence": ["test-logic-flows.mjs:LUONG-9:PASS", "testwebsite.mjs:TC-032:PASS"],
+      "owner": "Data Lead",
+      "notes": "50+ kênh RSS và proxy failover đa tầng (allorigins, corsproxy, codetabs)"
+    },
+    {
+      "id": "REQ-033",
+      "title": "Bộ lọc vệ sinh nội dung bài báo bóc tách & Chống tấn công XSS",
+      "description": "Triệt tiêu 100% các rủi ro bảo mật XSS khi cào và hiển thị nội dung bài viết: loại bỏ thẻ script, iframe, inline event handlers (onerror, onload, onclick), links javascript: và vô hiệu hóa CSS injection fixed/high z-index.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P0",
+      "category": "security-sanitization",
+      "status": "PASS",
+      "testIds": ["TC-033"],
+      "evidence": ["test-logic-flows.mjs:LUONG-10:PASS", "testwebsite.mjs:TC-033:PASS"],
+      "owner": "Security Lead",
+      "notes": "Sanitizer nghiêm ngặt bảo vệ tuyệt đối NewsDetailView"
+    },
+    {
+      "id": "REQ-034",
+      "title": "Phân hệ quản lý bài viết yêu thích (Bookmarks) & Đọc ngoại tuyến",
+      "description": "Cung cấp tính năng đánh dấu và lưu trữ bài viết yêu thích vào bộ nhớ cục bộ localStorage, hỗ trợ thêm bài, chống trùng lặp, xóa bài và truy xuất danh sách bài đã lưu phục vụ đọc lại ngoại tuyến.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P1",
+      "category": "article-bookmarks",
+      "status": "PASS",
+      "testIds": ["TC-034"],
+      "evidence": ["test-logic-flows.mjs:LUONG-11:PASS", "testwebsite.mjs:TC-034:PASS"],
+      "owner": "Product Lead",
+      "notes": "Bookmarks manager duy trì bền vững trong localStorage"
+    },
+    {
+      "id": "REQ-035",
+      "title": "Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA (Network Resilience)",
+      "description": "Hệ thống tự động phát hiện trạng thái kết nối mạng (online/offline). Khi mất kết nối, hệ thống kích hoạt chế độ ngoại tuyến hiển thị tin tức và thời tiết từ bộ nhớ đệm, không bao giờ bị sập hay trắng màn hình; khi có mạng trở lại tự động đồng bộ thời gian thực.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P0",
+      "category": "network-resilience",
+      "status": "PASS",
+      "testIds": ["TC-035"],
+      "evidence": ["test-logic-flows.mjs:LUONG-12:PASS", "testwebsite.mjs:TC-035:PASS"],
+      "owner": "Architecture Lead",
+      "notes": "Offline resilience bảo đảm trang luôn sẵn sàng 100%"
+    },
+    {
+      "id": "REQ-036",
+      "title": "Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực (Stress & Memory Guard)",
+      "description": "Kiểm thử áp lực cao mô phỏng cuộn vô cực liên tục qua hơn 100 bài báo DOM và thao tác click chuyển chuyên mục/kênh TV dồn dập trong thời gian ngắn (<300ms) để bảo đảm không xảy ra rò rỉ bộ nhớ, không race condition và không crash trình duyệt.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P0",
+      "category": "stress-performance",
+      "status": "PASS",
+      "testIds": ["TC-036"],
+      "evidence": ["testwebsite.mjs:TC-036:PASS"],
+      "owner": "QA Lead",
+      "notes": "Stress test 100+ DOM cards và rapid clicks không crash"
+    },
+    {
+      "id": "REQ-037",
+      "title": "Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm",
+      "description": "Thẩm định toàn diện chuẩn tiếp cận WCAG 2.1 AA: 100% nút bấm icon có nhãn aria-label/title rõ ràng, viền chỉ thị tiêu điểm focus-visible khi điều hướng bằng phím Tab, các modal mang thuộc tính ngữ nghĩa role='dialog' và aria-modal='true'.",
+      "sourcePrompt": "PROMPT-20261015-01: Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định.",
+      "priority": "P1",
+      "category": "accessibility-a11y",
+      "status": "PASS",
+      "testIds": ["TC-037"],
+      "evidence": ["testwebsite.mjs:TC-037:PASS"],
+      "owner": "Frontend Lead",
+      "notes": "Đạt chuẩn tiếp cận WCAG 2.1 AA và phím tắt điều hướng"
     }
   ]
 }

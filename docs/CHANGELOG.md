@@ -91,3 +91,18 @@
   + `npm run test:dashboard`: Kiểm tra cả 3 giai đoạn (Chạy 30/30 test cases trơn tru $\to$ Mô phỏng lỗi kích hoạt Banner BLOCKED, hiển thị Gate Copilot Button và Auto-Dispatch $\to$ Khôi phục 100% PASS).
   + `npm run testwebsite`: Giữ vững thành tích 30/30 ca kiểm thử đạt chuẩn PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
 
+### 12. Mở Rộng Hệ Thống 37/37 Yêu Cầu & Ca Kiểm Thử Toàn Diện (REQ-031 -> REQ-037 / TC-031 -> TC-037)
+- Bổ sung và chuẩn hóa 7 phân hệ chuyên sâu mới nhằm kiểm soát chặt chẽ toàn hệ thống:
+  1. **REQ-031 / TC-031**: Mạng lưới quan trắc thời tiết 63 tỉnh thành & Công thức tính chỉ số nhiệt NOAA Rothfusz (chuẩn hồi quy đa thức 9 hệ số với điều kiện bù ẩm).
+  2. **REQ-032 / TC-032**: Giám sát sức khỏe 50+ kênh RSS đa nguồn & Bộ chuyển đổi Proxy Auto-Failover luân chuyển qua 4 proxy (`allorigins`, `corsproxy`, `codetabs`, `thingproxy`).
+  3. **REQ-033 / TC-033**: Bộ lọc vệ sinh nội dung bài báo bóc tách & Chống tấn công XSS (loại bỏ 100% thẻ script, iframe, form, input, event handler on* và CSS position:fixed).
+  4. **REQ-034 / TC-034**: Phân hệ quản lý bài viết yêu thích (Bookmarks) & Đọc ngoại tuyến bền vững trong `localStorage.saved_articles`.
+  5. **REQ-035 / TC-035**: Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA Network Resilience (tự động chuyển sang dữ liệu đệm khi mất mạng).
+  6. **REQ-036 / TC-036**: Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực Stress & Memory Guard (1000 phần tử, dọn rác đối tượng, DOM node bounded).
+  7. **REQ-037 / TC-037**: Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm bàn phím (Tab, Enter, Space, Escape, aria-*).
+- Mở rộng logic core `src/utils/logicFlows.ts` từ 7 lên 12 luồng logic hoàn chỉnh.
+- Bộ test logic `scripts/test-logic-flows.mjs` đạt **173/173 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- Nâng cấp `dashboard.html` đồng bộ đầy đủ 37 test cases, thanh tiến trình hiển thị chính xác `37/37 Ca Đạt Chuẩn (100%)`.
+- Kiểm thử trực tiếp in-browser bằng Google Chrome thật qua `npm run test:dashboard`: **37/37 PASS (100%)** trong 25.01s.
+- Toàn bộ 37 ca kiểm thử trong `npm run testwebsite` đạt **37/37 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+

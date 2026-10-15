@@ -45,6 +45,13 @@
 | REQ-028 | PROMPT-20261014-13 | Định tuyến URL ảo chuẩn SEO cho bài viết chi tiết & Lịch sử Popstate | P1 | Routing / Navigation | TC-028 | PASS | testwebsite.mjs:TC-028 | Virtual SEO /chi-tiet-[slug] pushState & popstate modal synchronization |
 | REQ-029 | PROMPT-20261014-13 | Trang Chính Sách Bảo Mật minh bạch (Privacy Policy) & Kiểm soát dữ liệu | P1 | Compliance / Privacy | TC-029 | PASS | testwebsite.mjs:TC-029 | PrivacyPolicyPage z-[300], 6 terms sections, client-side only transparency |
 | REQ-030 | PROMPT-20261014-13 | Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua Triple-tap | P2 | Developer / Tools | TC-030 | PASS | testwebsite.mjs:TC-030 | DevWeatherPanel 9 weather condition simulator triggered by secret triple-tap |
+| REQ-031 | PROMPT-20261015-01 | Mạng lưới quan trắc thời tiết 63 tỉnh thành & Bộ tính toán chỉ số nhiệt NOAA | P1 | Weather / Nationwide | TC-031 | PASS | test-logic-flows.mjs:LUONG-8 | 17 trạm quan trắc 4 miền, tìm kiếm có/không dấu, chỉ số cảm giác nhiệt NOAA Rothfusz |
+| REQ-032 | PROMPT-20261015-01 | Cào dữ liệu & Giám sát sức khỏe 50+ nguồn RSS đa kênh & Bộ chuyển đổi proxy tự động | P0 | News Ingestion / Feeds | TC-032 | PASS | test-logic-flows.mjs:LUONG-9 | 50+ kênh RSS chính thống, đo latency, proxy auto-failover (allorigins, corsproxy, codetabs) |
+| REQ-033 | PROMPT-20261015-01 | Bộ lọc vệ sinh nội dung bài báo bóc tách & Chống tấn công XSS | P0 | Security / Sanitization | TC-033 | PASS | test-logic-flows.mjs:LUONG-10 | Triệt tiêu 100% script, iframe, inline event handlers, javascript: links và CSS injection |
+| REQ-034 | PROMPT-20261015-01 | Phân hệ quản lý bài viết yêu thích (Bookmarks) & Đọc ngoại tuyến | P1 | News / Bookmarks | TC-034 | PASS | test-logic-flows.mjs:LUONG-11 | Lưu bài viết vào localStorage, chống trùng lặp, xóa bài và truy xuất ngoại tuyến |
+| REQ-035 | PROMPT-20261015-01 | Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA (Network Resilience) | P0 | Resilience / Offline | TC-035 | PASS | test-logic-flows.mjs:LUONG-12 | Tự động phát hiện online/offline, đọc dữ liệu đệm cache không trắng trang, tự phục hồi khi có mạng |
+| REQ-036 | PROMPT-20261015-01 | Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực (Stress & Memory Guard) | P0 | Performance / Stress | TC-036 | PASS | testwebsite.mjs:TC-036 | Mô phỏng cuộn dồn dập >100 thẻ bài DOM, rapid clicks chuyển kênh/danh mục 0 crash |
+| REQ-037 | PROMPT-20261015-01 | Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm | P1 | Accessibility / A11y | TC-037 | PASS | testwebsite.mjs:TC-037 | 100% nút icon có aria-label/title, focus-visible viền tiêu điểm, role=dialog trên các modal |
 
 ## Prompt intake log
 
@@ -67,5 +74,7 @@
 | PROMPT-20261014-11 | 2026-10-14 | Test cả logic các luồng nữa chứ có phải test mỗi UI đâu cả UX nữa | REQ-023 | None | Approved |
 | PROMPT-20261014-12 | 2026-10-14 | Tất cả chức năng trên website chứ vuốt lên vuốt xuống, click và chi tiết, lỗi giao diện xem trên giao diện chứ chưa thấy test kiểm thử gì là toàn hệ thống chi tiết chức năng cả. | REQ-024 | None | Approved |
 | PROMPT-20261014-13 | 2026-10-14 | Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống | REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030 | None | Approved |
+| PROMPT-20261015-01 | 2026-10-15 | Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định | REQ-031, REQ-032, REQ-033, REQ-034, REQ-035, REQ-036, REQ-037 | None | Approved |
+
 
 

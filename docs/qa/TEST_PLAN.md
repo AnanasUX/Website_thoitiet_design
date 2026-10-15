@@ -25,6 +25,22 @@
 | **TC-019** | Tính vẹn toàn bộ nhớ dự án (Tất cả tài liệu chuẩn tồn tại và đồng nhất) | REQ-019 | P0 (Bắt buộc) | Registry Validator | ✅ PASS |
 | **TC-020** | Bộ chạy kiểm thử tự động `/testwebsite` xuất báo cáo có bằng chứng | REQ-020 | P0 (Bắt buộc) | CLI Test Runner Script | ✅ PASS |
 | **TC-021** | Phân quyền QA Dashboard (mrkun28@gmail.com) & Hiển thị Header/Widget cố định | REQ-021 | P0 (Bắt buộc) | Automated Role & Placement Assertion | ✅ PASS |
+| **TC-022** | Kiểm thử chuyên sâu 7 luồng logic và xử lý thông tin nghiệp vụ toàn hệ thống | REQ-022 | P0 (Bắt buộc) | Automated Logic Assertions (`test-logic-flows.mjs`) | ✅ PASS |
+| **TC-023** | Kiểm thử toàn diện trải nghiệm người dùng (UX) và các luồng tương tác thực tế | REQ-023 | P0 (Bắt buộc) | Chrome Playwright UX Flows (`test-ux-flows.mjs`) | ✅ PASS |
+| **TC-024** | Kiểm thử tương tác thực chiến đa màn hình & Bộ quét lỗi giao diện trực quan | REQ-024 | P0 (Bắt buộc) | Playwright Full-System Scanner | ✅ PASS |
+| **TC-025** | Quản lý xác thực Google OAuth 2.0, phiên đăng nhập & Trình đơn hồ sơ người dùng | REQ-025 | P0 (Bắt buộc) | Automated Session & Menu Check | ✅ PASS |
+| **TC-026** | Phân hệ Lịch Vạn Niên Âm - Dương, điều hướng tháng & Tích hợp Google Calendar | REQ-026 | P1 (Cao) | Automated Leap Year & Navigation | ✅ PASS |
+| **TC-027** | Thu thập tin tức RSS từ hơn 38 nguồn báo chí, nạp vô cực & Cập nhật nền | REQ-027 | P0 (Bắt buộc) | Automated RSS Ingestion & Infinite Scroll | ✅ PASS |
+| **TC-028** | Định tuyến URL ảo chuẩn SEO cho bài viết chi tiết & Lịch sử Popstate | REQ-028 | P1 (Cao) | Automated PushState/Popstate Assertion | ✅ PASS |
+| **TC-029** | Trang Chính Sách Bảo Mật minh bạch (Privacy Policy) & Kiểm soát dữ liệu | REQ-029 | P1 (Cao) | Automated Modal z-[300] & Terms Check | ✅ PASS |
+| **TC-030** | Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua Triple-tap | REQ-030 | P2 (Trung bình) | Automated Triple-tap Gesture & State Check | ✅ PASS |
+| **TC-031** | Mạng lưới quan trắc thời tiết 63 tỉnh thành & Bộ tính toán chỉ số nhiệt NOAA | REQ-031 | P1 (Cao) | Automated 4-Region Weather & NOAA Formula | ✅ PASS |
+| **TC-032** | Cào dữ liệu & Giám sát sức khỏe 50+ nguồn RSS đa kênh & Bộ chuyển đổi proxy tự động | REQ-032 | P0 (Bắt buộc) | Automated Latency Evaluation & Proxy Failover | ✅ PASS |
+| **TC-033** | Bộ lọc vệ sinh nội dung bài báo bóc tách & Chống tấn công XSS | REQ-033 | P0 (Bắt buộc) | Automated HTML Security Sanitization Tests | ✅ PASS |
+| **TC-034** | Phân hệ quản lý bài viết yêu thích (Bookmarks) & Đọc ngoại tuyến | REQ-034 | P1 (Cao) | Automated LocalStorage Bookmarks Lifecycle | ✅ PASS |
+| **TC-035** | Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA (Network Resilience) | REQ-035 | P0 (Bắt buộc) | Automated Offline Simulation & Fallback Cache | ✅ PASS |
+| **TC-036** | Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực (Stress & Memory Guard) | REQ-036 | P0 (Bắt buộc) | Automated High-Stress Scrolling & Rapid Click | ✅ PASS |
+| **TC-037** | Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm | REQ-037 | P1 (Cao) | Automated Aria-Labels, Focus-Visible & WCAG | ✅ PASS |
 
 ---
 
@@ -245,6 +261,38 @@
 #### TC-030: Bảng điều khiển thời tiết nhà phát triển (Dev Weather Control Panel) qua cử chỉ Triple-tap
 - **Mục tiêu**: Thẩm định cử chỉ gõ 3 lần liên tiếp (Triple-tap) vào logo Anx. để mở bảng điều khiển `DevWeatherPanel` bí mật, ép chọn nhanh 9 hình thái thời tiết phục vụ kiểm thử giao diện trực quan.
 - **Tiêu chí nghiệm thu**: Cử chỉ triple-tap nhạy bén, bảng điều khiển mở ra cho phép chọn 9 trạng thái thời tiết, đổi màu gradient và lời khuyên tức thời.
+
+---
+
+### Nhóm 10: Kiểm Thử Chuyên Sâu, Thu Thập Dữ Liệu & Chịu Tải Toàn Hệ Thống (TC-031..037)
+
+#### TC-031: Mạng lưới quan trắc thời tiết 63 tỉnh thành & Bộ tính toán chỉ số nhiệt NOAA
+- **Mục tiêu**: Thẩm định cơ sở dữ liệu quan trắc trải dài 4 miền (Bắc, Trung, Nam, Tây Nguyên), thuật toán tìm kiếm không dấu/có dấu và công thức tính toán chỉ số cảm giác nhiệt (Heat Index) theo chuẩn NOAA của Hoa Kỳ.
+- **Tiêu chí nghiệm thu**: Hỗ trợ đầy đủ trạm quan trắc trọng điểm, tính toán Heat Index chính xác tuyệt đối theo phương trình đa thức Rothfusz, phân cấp mức độ nguy hiểm (An toàn, Chú ý, Nguy hiểm).
+
+#### TC-032: Cào dữ liệu & Giám sát sức khỏe 50+ nguồn RSS đa kênh & Bộ chuyển đổi proxy tự động
+- **Mục tiêu**: Thẩm định khả năng cào dữ liệu từ 50+ kênh RSS báo chí chính thống, đo đạc độ trễ mạng (latency ms) và cơ chế Proxy Auto-Failover tự động chuyển đổi nhà cung cấp (allorigins, corsproxy, codetabs) khi một proxy gặp sự cố.
+- **Tiêu chí nghiệm thu**: Đo latency chính xác, phát hiện và phân loại GOOD/SLOW/FAIL, tự động chuyển proxy khi lỗi mà không gián đoạn luồng nạp tin tức.
+
+#### TC-033: Bộ lọc vệ sinh nội dung bài báo bóc tách & Chống tấn công XSS
+- **Mục tiêu**: Thẩm định bộ lọc bảo mật `sanitizeArticleContent` bảo vệ tuyệt đối view đọc bài báo khỏi mọi nguy cơ tiêm mã độc Cross-Site Scripting (XSS).
+- **Tiêu chí nghiệm thu**: Triệt tiêu 100% thẻ `<script>`, `<iframe>` lạ, thuộc tính inline event handlers (`onerror`, `onload`, `onclick`), links `javascript:`, và các style độc hại (`position: fixed`, `z-index: 99999`).
+
+#### TC-034: Phân hệ quản lý bài viết yêu thích (Bookmarks) & Đọc ngoại tuyến
+- **Mục tiêu**: Thẩm định quy trình lưu trữ bài viết yêu thích vào `localStorage`, thuật toán chống trùng lặp dữ liệu, kiểm tra trạng thái đánh dấu và xóa bài viết khỏi danh sách.
+- **Tiêu chí nghiệm thu**: Thêm bài viết mới đưa lên đầu danh sách, lưu trùng không nhân bản phần tử, xóa bài cập nhật trạng thái UI tức thời.
+
+#### TC-035: Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA (Network Resilience)
+- **Mục tiêu**: Thẩm định khả năng hoạt động liên tục khi xảy ra sự cố ngắt kết nối Internet (Offline Mode) thông qua lắng nghe sự kiện `online`/`offline` và cơ chế nạp dữ liệu đệm cache dự phòng.
+- **Tiêu chí nghiệm thu**: Khi mất mạng, hiển thị thông báo ngoại tuyến thanh lịch, tải dữ liệu từ cache mà không trắng trang; khi có mạng trở lại, tự động nạp mới thời gian thực trong 1.5 giây.
+
+#### TC-036: Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực (Stress & Memory Guard)
+- **Mục tiêu**: Thẩm định độ ổn định của DOM và hiệu năng bộ nhớ khi cuộn vô cực liên tục qua hơn 100 bài báo DOM, kèm theo thử nghiệm click dồn dập chuyển đổi 9 danh mục và 10 kênh Smart TV (< 300ms/lần click).
+- **Tiêu chí nghiệm thu**: 0 lỗi rò rỉ bộ nhớ (memory leaks), không bị race condition, 0 unhandled promise rejections, hiệu năng duy trì 60fps mượt mà.
+
+#### TC-037: Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm
+- **Mục tiêu**: Thẩm định tiêu chuẩn khả năng tiếp cận người dùng theo khuyến nghị WCAG 2.1 AA: nhãn `aria-label`/`title` cho mọi nút biểu tượng, viền chỉ thị tiêu điểm `focus-visible` khi dùng phím `Tab`, và thuộc tính `role="dialog"` trên toàn bộ các modal.
+- **Tiêu chí nghiệm thu**: 100% nút icon có nhãn tiếp cận, điều hướng bàn phím mượt mà và tỷ lệ tương phản màu sắc đạt chuẩn $\ge 4.5:1$.
 
 
 

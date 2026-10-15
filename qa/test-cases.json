@@ -438,6 +438,111 @@
         "Đóng panel kiểm thử"
       ],
       "expected": "Menu nhà phát triển phản hồi nhạy với cử chỉ bí mật, hỗ trợ kiểm thử tức thì 9 hình thái thời tiết."
+    },
+    {
+      "id": "TC-031",
+      "title": "Mạng lưới quan trắc thời tiết 63 tỉnh thành & Bộ tính toán chỉ số nhiệt NOAA",
+      "requirementIds": ["REQ-031"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra danh mục trạm quan trắc 4 miền (Bắc, Trung, Nam, Tây Nguyên)",
+        "Thử nghiệm tìm kiếm tỉnh thành không dấu và có dấu (Hà Nội, TP.HCM, Sa Pa, Đà Lạt)",
+        "Kiểm tra công thức tính toán chỉ số cảm giác nhiệt (Heat Index) theo chuẩn NOAA",
+        "Xác nhận phân cấp mức độ nguy hiểm nhiệt độ chính xác"
+      ],
+      "expected": "Dữ liệu thời tiết toàn quốc chính xác, tìm kiếm linh hoạt và chỉ số nhiệt NOAA chuẩn xác."
+    },
+    {
+      "id": "TC-032",
+      "title": "Cào dữ liệu & Giám sát sức khỏe 50+ nguồn RSS đa kênh & Bộ chuyển đổi proxy tự động",
+      "requirementIds": ["REQ-032"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra danh sách 50+ kênh RSS từ các cơ quan báo chí chính thống",
+        "Đo đạc độ trễ mạng latency và phân loại sức khỏe GOOD/SLOW/FAIL",
+        "Kiểm tra cơ chế Proxy Auto-Failover tự động đổi nhà cung cấp khi gặp sự cố HTTP",
+        "Xác nhận dữ liệu nạp liên tục không bị gián đoạn"
+      ],
+      "expected": "Bộ giám sát sức khỏe và cơ chế chuyển đổi proxy hoạt động mượt mà, đảm bảo luồng tin thông suốt."
+    },
+    {
+      "id": "TC-033",
+      "title": "Bộ lọc vệ sinh nội dung bài báo bóc tách & Chống tấn công XSS",
+      "requirementIds": ["REQ-033"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra bộ lọc sanitizeArticleContent với 8 kịch bản tấn công XSS độc hại",
+        "Triệt tiêu thẻ script và mã thực thi JavaScript",
+        "Triệt tiêu thẻ iframe không an toàn và các thuộc tính inline event handlers (onerror, onload, onclick)",
+        "Vô hiệu hóa liên kết javascript: và các inline style position:fixed làm hỏng giao diện"
+      ],
+      "expected": "Nội dung bài viết được vệ sinh 100% sạch sẽ, bảo vệ an toàn tuyệt đối cho người dùng."
+    },
+    {
+      "id": "TC-034",
+      "title": "Phân hệ quản lý bài viết yêu thích (Bookmarks) & Đọc ngoại tuyến",
+      "requirementIds": ["REQ-034"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm lưu bài viết saveArticleBookmark vào localStorage",
+        "Kiểm tra thuật toán chống lưu trùng lặp bài viết",
+        "Xác nhận hàm kiểm tra trạng thái isArticleBookmarked",
+        "Xóa bài viết khỏi danh sách và kiểm tra cập nhật tức thì"
+      ],
+      "expected": "Chức năng lưu bài viết hoạt động bền vững, bảo toàn dữ liệu yêu thích của người dùng."
+    },
+    {
+      "id": "TC-035",
+      "title": "Khả năng chống chịu mạng kém & Chế độ ngoại tuyến PWA (Network Resilience)",
+      "requirementIds": ["REQ-035"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Mô phỏng ngắt kết nối mạng (Offline Mode simulation)",
+        "Kiểm tra ứng dụng kích hoạt chế độ ngoại tuyến và đọc dữ liệu từ cache",
+        "Xác nhận giao diện không bị trắng màn hình và hiển thị nhãn trạng thái ngoại tuyến",
+        "Khôi phục mạng và xác nhận dữ liệu tự động đồng bộ lại thời gian thực"
+      ],
+      "expected": "Hệ thống chống chịu sự cố mạng hoàn hảo, trải nghiệm ngoại tuyến liền mạch."
+    },
+    {
+      "id": "TC-036",
+      "title": "Kiểm thử chịu tải & Chống rò rỉ bộ nhớ khi cuộn vô cực (Stress & Memory Guard)",
+      "requirementIds": ["REQ-036"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Mô phỏng thao tác cuộn trang dồn dập qua hơn 100 thẻ bài báo DOM",
+        "Đo đạc số lượng DOM nodes và đảm bảo không bị rò rỉ bộ nhớ (memory leakage)",
+        "Thực hiện rapid click liên tục chuyển đổi chuyên mục và kênh Smart TV (< 300ms)",
+        "Xác nhận 0 uncaught exceptions, không race condition và không giật lag giao diện"
+      ],
+      "expected": "Hệ thống vượt qua bài kiểm tra chịu tải khắc nghiệt với hiệu năng 60fps mượt mà."
+    },
+    {
+      "id": "TC-037",
+      "title": "Kiểm thử khả năng tiếp cận toàn diện chuẩn WCAG 2.1 AA & Phím tắt tiêu điểm",
+      "requirementIds": ["REQ-037"],
+      "type": "automated",
+      "priority": "P1",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra 100% các nút bấm icon có nhãn aria-label hoặc title",
+        "Kiểm tra điều hướng bàn phím Tab / Shift+Tab có viền chỉ thị tiêu điểm focus-visible",
+        "Kiểm tra các modal mang thuộc tính ngữ nghĩa role='dialog' và aria-modal='true'",
+        "Xác nhận tỷ lệ tương phản màu sắc đáp ứng tiêu chuẩn WCAG 2.1 AA"
+      ],
+      "expected": "Ứng dụng thân thiện với mọi đối tượng người dùng và tuân thủ chuẩn tiếp cận quốc tế."
     }
   ]
 }

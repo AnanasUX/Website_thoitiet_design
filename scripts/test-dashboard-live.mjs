@@ -113,6 +113,16 @@ async function runDashboardTest() {
     const tc020Status = await tc020Row.locator('.badge-status.PASS').isVisible().catch(() => false);
     console.log('TC-020 Status is PASS:', tc020Status);
 
+    // Verify TC-031 (Nationwide Weather)
+    const tc031Row = page.locator('#matrixTableBody tr:has-text("TC-031")');
+    const tc031Status = await tc031Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-031 Status is PASS:', tc031Status);
+
+    // Verify TC-036 (Stress & Memory Guard)
+    const tc036Row = page.locator('#matrixTableBody tr:has-text("TC-036")');
+    const tc036Status = await tc036Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-036 Status is PASS:', tc036Status);
+
     // -------------------------------------------------------------------------
     // PHASE 2: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch
     // -------------------------------------------------------------------------
@@ -142,8 +152,8 @@ async function runDashboardTest() {
     const isPassedAgain = await page.locator('#releaseGateBanner.passed').isVisible();
     console.log('5. Release Gate Banner restored to PASSED:', isPassedAgain);
 
-    if (passCount === 30 && failCount === 0 && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
-      console.log('🎉 SUCCESS: All 30 tests ran and Antigravity Copilot Auto-Dispatch verified 100%!');
+    if (passCount === 37 && failCount === 0 && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
+      console.log('🎉 SUCCESS: All 37 tests ran and Antigravity Copilot Auto-Dispatch verified 100%!');
       process.exitCode = 0;
     } else {
       console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);

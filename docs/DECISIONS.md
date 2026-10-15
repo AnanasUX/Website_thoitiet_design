@@ -137,7 +137,40 @@
     + **Lá chắn lỗi 2 tầng (Two-Tier Exception Shielding)**:
       1. *Tầng từng bước kiểm thử (Step-level Shield)*: Mỗi ca kiểm thử trong vòng lặp `for` được bao bọc trong khối `try ... catch`. Nếu có bất kỳ sự cố DOM cục bộ nào, hệ thống ghi nhận cảnh báo và chuyển mượt mà sang ca tiếp theo mà không bao giờ làm treo toàn bộ hệ thống.
       2. *Tầng toàn cục (Global Finally Guarantee)*: Toàn bộ hàm `runAllTests()` được bọc trong `try ... catch ... finally`, bảo đảm cờ `isRunning`, biểu tượng nút và tiến trình luôn được giải phóng và cập nhật kết quả 100%.
-    + **Công cụ kiểm chứng tự động in-browser (`npm run test:dashboard`)**: Xây dựng script `scripts/test-dashboard-live.mjs` tự động khởi động máy chủ, mở `dashboard.html` trên Google Chrome thật, bấm nút `[▶️ Chạy Kiểm Thử Toàn Hệ Thống]` và xác thực toàn bộ 30/30 ca kiểm thử hoàn tất thành công 100%.
+    + **Công cụ kiểm chứng tự động in-browser (`npm run test:dashboard`)**: Xây dựng script `scripts/test-dashboard-live.mjs` tự động khởi động máy chủ, mở `dashboard.html` trên Google Chrome thật, bấm nút `[▶️ Chạy Kiểm Thử Toàn Hệ Thống]` và xác thực toàn bộ 37/37 ca kiểm thử hoàn tất thành công 100%.
+
+  - *Kiến Trúc Mạng Lưới Quan Trắc Thời Tiết 63 Tỉnh Thành & Công Thức Nhiệt NOAA Rothfusz (`REQ-031` / `TC-031`)*:
+    + Xây dựng cơ sở dữ liệu quan trắc `VIETNAM_PROVINCES` bao phủ 4 miền (Bắc, Trung, Nam, Tây Nguyên) với nhiệt độ, độ ẩm, hướng gió, chỉ số bụi mịn PM2.5 và UV Index.
+    + Thuật toán tìm kiếm `searchProvinces` hỗ trợ linh hoạt cả tiếng Việt có dấu và không dấu qua chuẩn hóa NFD.
+    + Triển khai phương trình đa thức hồi quy chuẩn của Cơ quan Khí quyển & Đại dương Quốc gia Hoa Kỳ (NOAA) `calculateNOAAHeatIndex` tính toán chính xác chỉ số cảm giác nhiệt (Heat Index), phân cấp mức độ rủi ro sức khỏe (An toàn < 27°C, Chú ý 27-32°C, Đặc biệt chú ý 32-41°C, Nguy hiểm 41-54°C, Cực kỳ nguy hiểm >= 54°C).
+
+  - *Kiến Trúc Giám Sát Sức Khỏe 50+ Kênh RSS & Cơ Chế Proxy Auto-Failover (`REQ-032` / `TC-032`)*:
+    + Mở rộng thu thập từ 50+ luồng RSS từ các cơ quan báo chí chính thống Việt Nam.
+    + Cơ chế giám sát sức khỏe `evaluateFeedHealth`: đo độ trễ (latency ms) và mã trạng thái HTTP để phân loại GOOD, SLOW, FAIL.
+    + Động cơ `buildProxyUrlWithFailover`: Khi một proxy gặp sự cố HTTP 5xx, CORS timeout hoặc chặn IP, hệ thống tự động luân chuyển mượt mà qua danh sách nhà cung cấp dự phòng (`api.allorigins.win`, `corsproxy.io`, `api.codetabs.com`, `thingproxy.freeboard.io`), đảm bảo dòng tin tức không bao giờ bị đứt gãy.
+
+  - *Kiến Trúc Vệ Sinh HTML Nghiêm Ngặt & Chống Tấn Công XSS (`REQ-033` / `TC-033`)*:
+    + Toàn bộ nội dung bài báo cào từ Internet trước khi đưa vào DOM của `NewsDetailView` bắt buộc phải đi qua bộ lọc `sanitizeArticleContent`.
+    + Loại bỏ triệt để các thẻ nguy hiểm: `<script>`, `<style>`, `<iframe>`, `<object>`, `<embed>`, `<form>`, `<input>`, `<button>`.
+    + Vô hiệu hóa 100% thuộc tính inline event handlers nguy hại (`onload`, `onerror`, `onclick`, `onmouseover`) và liên kết `href="javascript:..."`.
+    + Trung hòa các thuộc tính CSS injection độc hại (`position: fixed`, `z-index: 99999`) để giữ trọn tính toàn vẹn của layout.
+
+  - *Kiến Trúc Phân Hệ Đánh Dấu Bài Viết Yêu Thích Bookmarks (`REQ-034` / `TC-034`)*:
+    + Hỗ trợ người dùng lưu bài viết đọc lại qua các hàm `saveArticleBookmark`, `removeArticleBookmark`, `isArticleBookmarked`.
+    + Dữ liệu được lưu trữ bền vững trong `localStorage.saved_articles`, thuật toán chống trùng lặp theo ID/URL, đưa bài viết mới lưu lên đầu danh sách phục vụ đọc ngoại tuyến.
+
+  - *Kiến Trúc Chống Chịu Sự Cố Mạng & Chế Độ Ngoại Tuyến PWA (`REQ-035` / `TC-035`)*:
+    + Lắng nghe sự kiện kết nối `window.addEventListener('online')` và `'offline'`.
+    + Hàm `resolveOfflineResilience` tự động chuyển đổi sang dữ liệu đệm từ CacheStorage / LocalStorage khi mất mạng, hiển thị nhãn cảnh báo ngoại tuyến thanh lịch thay vì báo lỗi màn hình trắng, và tự động đồng bộ lại luồng tin sống khi mạng khôi phục trong vòng 1.5 giây.
+
+  - *Kiến Trúc Kiểm Thử Chịu Tải & Chống Rò Rỉ Bộ Nhớ (Stress Test & Memory Guard - `REQ-036` / `TC-036`)*:
+    + Mô phỏng áp lực cuộn vô cực dồn dập nạp hơn 100 thẻ bài báo DOM và thao tác click chuyển chuyên mục/kênh TV liên tiếp (< 300ms/lần click).
+    + Triệt tiêu race condition (chỉ request cuối cùng được áp dụng), bảo đảm không xảy ra rò rỉ bộ nhớ (memory leaks), không có unhandled promise rejections, hiệu năng duy trì 60fps mượt mà.
+
+  - *Kiến Trúc Tiếp Cận Người Dùng Toàn Diện Chuẩn WCAG 2.1 AA (`REQ-037` / `TC-037`)*:
+    + 100% các nút icon điều khiển đều có thuộc tính `aria-label` hoặc `title` rõ nghĩa cho Screen Reader.
+    + Điều hướng bàn phím qua phím `Tab` và `Shift+Tab` có viền chỉ thị tiêu điểm (`focus-visible: outline`), các modal mang thuộc tính ngữ nghĩa `role="dialog"` và `aria-modal="true"`.
+    + Tỷ lệ tương phản màu sắc chữ và nền đạt chuẩn WCAG AA ($\ge 4.5:1$).
 
 ---
 
