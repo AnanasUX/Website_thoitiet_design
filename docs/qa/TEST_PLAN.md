@@ -318,5 +318,22 @@
 - **Mục tiêu**: Ngăn chặn kẻ tấn công nghe lén và gửi lại gói tin hợp lệ (Replay Attack), kiểm tra tính toàn vẹn yêu cầu và đánh giá sự hiện diện của bộ HTTP Security Headers tiêu chuẩn OWASP.
 - **Tiêu chí nghiệm thu**: Bắt trọn request mang Nonce trùng lặp hoặc timestamp lệch quá $\pm 300$ giây, và xác nhận bộ 5 header an ninh (`Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `HSTS`, `Referrer-Policy`) đạt điểm tối đa (100 điểm, passed=true).
 
+---
+
+### Nhóm 12: Hầm Mã Hóa Dữ Liệu An Ninh & Cổng Phân Quyền Giải Mã Quản Trị Viên (TC-043..TC-045)
+
+#### TC-043: Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest)
+- **Mục tiêu**: Toàn bộ cấu hình hệ thống, API keys, credentials, webhook URLs và dữ liệu nội bộ của 2 dự án (`Website_thoitiet_design` & `quan-ly-tien-phong`) được mã hóa AES-256-GCM kết hợp PBKDF2 (100.000 vòng lặp) trước khi commit lên GitHub. Bất kỳ ai vào repository công khai chỉ thấy chuỗi ciphertext `ENC:v1:aes-256-gcm:...`.
+- **Tiêu chí nghiệm thu**: Phong bì mã hóa đủ 4 trường (`salt:iv:tag:ciphertext`), giải mã chính xác 100% với Master Key, từ chối giải mã an toàn khi dùng mật khẩu sai, và dữ liệu cấu hình lưu trữ công khai hoàn toàn ở dạng mã hóa.
+
+#### TC-044: Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key)
+- **Mục tiêu**: Thiết lập cổng giải mã bảo mật Zero-Knowledge In-Memory: chỉ quản trị viên xác thực danh tính `mrkun28@gmail.com` hoặc có Master Key bí mật mới được phép giải mã dữ liệu vào bộ nhớ RAM. Tuyệt đối không ghi bản rõ xuống đĩa hay git, hỗ trợ cơ chế tự động khóa và xóa sạch bộ nhớ (Scrub Memory).
+- **Tiêu chí nghiệm thu**: Xác thực quyền quản lý `mrkun28@gmail.com` chính xác, mở khóa thành công trong RAM khi đủ điều kiện, từ chối ngay kẻ lạ, và thao tác `lockSystemVault` dọn sạch RAM ngay lập tức.
+
+#### TC-045: Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub
+- **Mục tiêu**: Tự động che giấu (mask) toàn bộ các trường nhạy cảm đối với người dùng ngoài, đồng thời tích hợp bộ quét phát hiện rò rỉ khóa bí mật công khai (Secret Leak Prevention Scanner) để bảo đảm 0 private key, 0 bot token, 0 API key trần bị lọt vào kho mã nguồn git.
+- **Tiêu chí nghiệm thu**: Hàm `maskSensitiveRecord` che giấu trường nhạy cảm cho người ngoài và giữ nguyên cho quản lý; bộ quét `scanContentForSecretLeaks` phát hiện chính xác các mẫu khóa trần và xác nhận mã nguồn sạch không chứa rò rỉ.
+
+
 
 

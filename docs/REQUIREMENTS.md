@@ -57,6 +57,9 @@
 | REQ-040 | PROMPT-20261015-02 | Lá chắn phòng thủ tiêm mã độc sâu (Deep Injection: SQLi, OS Command, Path, Prototype) | P0 | Security / Deep Injection | TC-040 | PASS | test-logic-flows.mjs:LUONG-15 | Bắt trọn SQL Injection (OR 1=1, UNION), OS command (; rm, | cat), Path traversal, Prototype pollution |
 | REQ-041 | PROMPT-20261015-02 | Kiểm soát kích thước Payload, Chống JSON Bomb & Xác thực Schema API | P0 | Security / Schema Guard | TC-041 | PASS | test-logic-flows.mjs:LUONG-16 | Giới hạn dung lượng byte, chặn JSON Depth Bomb >10 tầng, xác thực schema thời tiết/thị trường/tin tức |
 | REQ-042 | PROMPT-20261015-02 | Cơ chế kiểm tra tính toàn vẹn yêu cầu, Chống Replay Attack & Bộ Header An Ninh HTTP | P0 | Security / Anti-Replay | TC-042 | PASS | test-logic-flows.mjs:LUONG-17 | Time Drift Guard (300s), chống tái sử dụng Nonce, đạt 100 điểm bộ HTTP Security Headers OWASP |
+| REQ-043 | PROMPT-20261015-03 | Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest) | P0 | Security / Crypto Vault | TC-043 | PASS | test-logic-flows.mjs:LUONG-18 | Mã hóa toàn bộ dữ liệu bí mật và cấu hình 2 repo sang phong bì ENC:v1:aes-256-gcm:..., bảo vệ 100% dữ liệu trên GitHub |
+| REQ-044 | PROMPT-20261015-03 | Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key) | P0 | Security / Admin Gate | TC-044 | PASS | test-logic-flows.mjs:LUONG-19 | Chỉ quản lý mrkun28@gmail.com hoặc Master Key hợp lệ mới giải mã được trong RAM, dọn sạch bộ nhớ khi khóa lại |
+| REQ-045 | PROMPT-20261015-03 | Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub | P0 | Security / Data Masking | TC-045 | PASS | test-logic-flows.mjs:LUONG-20 | Che giấu trường nhạy cảm cho người ngoài, tích hợp bộ quét phát hiện rò rỉ khóa bí mật trần lên mã nguồn git |
 
 ## Prompt intake log
 
@@ -81,6 +84,8 @@
 | PROMPT-20261014-13 | 2026-10-14 | Liệt kê tất cả chức năng cũng như luồng của hệ thống hiện tại sau đó bổ sung các case và yêu cầu vào hệ thống dashboard.html để khi fix xong có thể test máy tổng thể hệ thống | REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030 | None | Approved |
 | PROMPT-20261015-01 | 2026-10-15 | Bổ sung thêm case chi tiết và test nhiều chức năng khác nữa, có thể đi cào thêm dữ liệu hoặc case test cao hơn để hệ thống được đảm bảo việc kiểm soát chặt chẽ hệ thống đảm bảo việc chạy ổn định | REQ-031, REQ-032, REQ-033, REQ-034, REQ-035, REQ-036, REQ-037 | None | Approved |
 | PROMPT-20261015-02 | 2026-10-15 | Bổ sung case test chi tiết kể cả test api của hệ thống và chống tấn công tạo ra lớp bảo vệ tránh việc tấn công từ bên ngoài hệ thống | REQ-038, REQ-039, REQ-040, REQ-041, REQ-042 | None | Approved |
+| PROMPT-20261015-03 | 2026-10-15 | Xây dựng việc mã hóa dữ liệu tránh việc khi người dùng nào đó vào github của quan-ly-tien-phong và Website_thoitiet_design thì đọc được hết dữ liệu của cả hệ thống. Xây dựng lớp bảo vệ nếu người dùng là quản lý của 2 thông tin trên có thể đọc được toàn bộ dữ liệu. | REQ-043, REQ-044, REQ-045 | None | Approved |
+
 
 
 

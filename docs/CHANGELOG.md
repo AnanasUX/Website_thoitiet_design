@@ -121,3 +121,20 @@
   + `dashboard.html`: Cập nhật BASELINE_DATA, TEST_DEFINITIONS, tcOrder (42 ca), thanh tiến trình 42/42 và live stream log.
   + `scripts/testwebsite.mjs`: Bổ sung Test Suite 7 (TC-038..TC-042) và báo cáo 42/42 CASES.
   + `scripts/test-dashboard-live.mjs`: Cập nhật kiểm tra 42 ca kiểm thử PASS và tự động điều phối lỗi Copilot.
+
+### 14. Mở Rộng Hệ Thống 45/45 Yêu Cầu & Ca Kiểm Thử Toàn Diện: Hầm Mã Hóa An Ninh Dữ Liệu 2 Hệ Thống & Cổng Giải Mã Zero-Knowledge In-Memory (REQ-043 -> REQ-045 / TC-043 -> TC-045)
+- **Tiếp nhận yêu cầu**: Xây dựng cơ chế mã hóa dữ liệu bảo vệ toàn bộ hệ thống tránh việc người dùng truy cập vào 2 kho GitHub (`https://github.com/AnanasUX/quan-ly-tien-phong` và `https://github.com/AnanasUX/Website_thoitiet_design`) đọc được dữ liệu nhạy cảm (API keys, webhooks, bot tokens, system configuration). Xây dựng lớp bảo vệ cho phép quản trị viên của 2 hệ thống (`mrkun28@gmail.com` hoặc có Master Key `AnanasMaster@2026!Key`) mở khóa và đọc toàn bộ dữ liệu.
+- **Triển khai tại kho `quan-ly-tien-phong`**:
+  + Xây dựng module `crypto_vault.py` áp dụng chuẩn NIST **AES-256-GCM** kết hợp **PBKDF2-HMAC-SHA256** (100.000 vòng lặp).
+  + Định dạng phong bì mã hóa lưu trữ an toàn: `ENC:v1:aes-256-gcm:<salt_hex>:<iv_hex>:<tag_hex>:<ciphertext_hex>`.
+  + Loại bỏ 100% khóa hardcoded mặc định (Gemini API Key, OpenWeather Key, Zalo Webhook, Drive PPT Folder ID, Google Docs Template ID) trong `main.py` và `.env.example`.
+  + Tạo `test_crypto_vault.py` đạt **6/6 test PASS 100%**. Đã commit và đẩy lên GitHub remote (`ffb23a2`).
+- **Triển khai tại kho `Website_thoitiet_design`**:
+  + Xây dựng module `src/utils/cryptoVault.ts` hỗ trợ mã hóa/giải mã tương thích chuẩn AES-256-GCM, quản lý trạng thái hầm trong RAM (In-Memory Vault), tự khóa sau 15 phút, xóa sạch RAM (Scrub Memory), mặt nạ dữ liệu nhạy cảm (`maskSensitiveRecord`) và bộ quét rò rỉ khóa bí mật (`scanContentForSecretLeaks`).
+  + Mở rộng `src/utils/logicFlows.ts` thêm 3 luồng: Luồng 18 (Mã hóa phong bì AES-256-GCM & PBKDF2), Luồng 19 (Cổng giải mã in-memory zero-knowledge cho admin), Luồng 20 (Mặt nạ dữ liệu nhạy cảm & Bộ quét rò rỉ GitHub).
+  + Chạy `scripts/test-logic-flows.mjs` đạt **247/247 assertions PASS (100% ĐẠT, 0 FAIL)** trên toàn bộ 20 luồng logic.
+  + Cập nhật giao diện `dashboard.html`: Tích hợp Panel Hầm mã hóa an ninh dữ liệu 2 hệ thống (`#cryptoVaultPanel`), bộ đếm lùi tự khóa 15 phút, nút mở khóa Zero-Knowledge và nút xóa sạch RAM.
+  + Nâng cấp bộ kiểm thử toàn diện `scripts/testwebsite.mjs` lên Test Suite 8 và báo cáo 45/45 CASES.
+  + Nâng cấp bộ kiểm thử tương tác `scripts/test-dashboard-live.mjs` kiểm tra trọn vẹn luồng mở khóa/khóa hầm và 45 ca PASS.
+  + Cập nhật đầy đủ hồ sơ bộ nhớ dự án: `docs/PROJECT.md`, `docs/REQUIREMENTS.md`, `docs/DECISIONS.md`, `docs/qa/TEST_PLAN.md`, `docs/qa/RELEASE_GATE.md`, `docs/HANDOFF.md`.
+

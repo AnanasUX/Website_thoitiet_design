@@ -68,5 +68,20 @@ Website_thoitiet_design/
 ---
 
 ## 5. CƠ CHẾ BẢO ĐẢM CHẤT LƯỢNG (QA & RELEASE GATE)
-- Lệnh tự động `/testwebsite` (hoặc `npm run testwebsite`) thực thi toàn bộ kịch bản kiểm thử, đối chiếu mã `REQ-xxx` và `TC-xxx`.
+- Lệnh tự động `/testwebsite` (hoặc `npm run testwebsite`) thực thi toàn bộ 45 kịch bản kiểm thử, đối chiếu mã `REQ-xxx` và `TC-xxx`.
 - Cổng kiểm duyệt phát hành (`RELEASE_GATE.md`) ngăn chặn việc phát hành khi chưa đủ bằng chứng hoặc còn lỗi chặn.
+
+---
+
+## 6. PHÂN HỆ AN NINH MẠNG & HẦM MÃ HÓA DỮ LIỆU (SECURITY & CRYPTO VAULT)
+1. **Lá Chắn Bảo Mật API Đa Tầng (`src/utils/securityShield.ts`)**:
+   - Phòng thủ SSRF (chặn loopback, private IP, metadata cloud).
+   - Kiểm soát tốc độ API Sliding Window (Rate Limiter 10 req/s, chống DoS/DDoS).
+   - Phòng thủ tiêm mã độc sâu (SQLi, Command Injection, Path Traversal, Prototype Pollution).
+   - Giới hạn kích thước Payload ($\le 512\text{KB}$), chặn JSON Bomb và kiểm tra Schema API.
+   - Kiểm tra tính toàn vẹn yêu cầu, chống Replay Attack (Nonce + Time drift $\le 300\text{s}$) và thẩm định HTTP Security Headers.
+2. **Hầm Mã Hóa Dữ Liệu 2 Hệ Thống & Cổng Giải Mã Zero-Knowledge In-Memory (`src/utils/cryptoVault.ts`)**:
+   - Chuẩn mã hóa NIST **AES-256-GCM** kết hợp **PBKDF2-HMAC-SHA256** (100.000 vòng lặp) bảo vệ toàn bộ dữ liệu tại nghỉ trên GitHub của cả 2 kho `AnanasUX/quan-ly-tien-phong` và `AnanasUX/Website_thoitiet_design`.
+   - Cổng giải mã In-Memory trong RAM cho tài khoản quản trị (`mrkun28@gmail.com` hoặc có Master Key), không lưu đĩa, tự động khóa sau 15 phút và xóa sạch RAM (Scrub Memory).
+   - Mặt nạ dữ liệu nhạy cảm cho người dùng ngoài và bộ quét phát hiện rò rỉ khóa bí mật GitHub (`scanContentForSecretLeaks`).
+

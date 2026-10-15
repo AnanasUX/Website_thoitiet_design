@@ -626,6 +626,53 @@
         "Xác nhận đủ 5 header bảo vệ (CSP, nosniff, SAMEORIGIN, HSTS, Referrer-Policy) đạt 100 điểm passed=true"
       ],
       "expected": "Hệ thống phòng chống triệt để tấn công phát lại, xác thực tính toàn vẹn và thực thi bộ header an ninh quốc tế."
+    },
+    {
+      "id": "TC-043",
+      "title": "Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest)",
+      "requirementIds": ["REQ-043"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm encryptVaultData mã hóa chuỗi cấu hình nhạy cảm sang định dạng phong bì ENC:v1:aes-256-gcm:salt:iv:tag:ciphertext",
+        "Xác nhận phong bì chứa đủ 4 thành phần với salt (16 bytes), IV (12 bytes), tag (16 bytes)",
+        "Kiểm tra hàm decryptVaultData giải mã chính xác 100% dữ liệu gốc khi cung cấp đúng Master Key",
+        "Thử nghiệm giải mã với mật khẩu sai -> Bắt ngoại lệ và từ chối giải mã an toàn",
+        "Xác thực phong bì mã hóa hệ thống ENCRYPTED_SYSTEM_VAULT lưu trữ hợp lệ trên GitHub"
+      ],
+      "expected": "Dữ liệu cấu hình và bí mật hệ thống được mã hóa AES-256-GCM an toàn, bất kỳ ai vào GitHub chỉ thấy ciphertext."
+    },
+    {
+      "id": "TC-044",
+      "title": "Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key)",
+      "requirementIds": ["REQ-044"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm isAuthorizedManager xác thực đúng quản trị viên mrkun28@gmail.com và anaa2700, từ chối người dùng lạ",
+        "Kiểm tra hàm verifyMasterKey xác thực hàm băm SHA-256 của Master Key",
+        "Thực hiện mở khóa unlockSystemVault với danh tính mrkun28@gmail.com -> Thành công, tải dữ liệu vào RAM",
+        "Thực hiện mở khóa với tài khoản trái phép -> Bị từ chối truy cập ngay lập tức",
+        "Kiểm tra hàm lockSystemVault xóa sạch bộ nhớ (Scrub Memory) đưa hầm về trạng thái khóa an toàn"
+      ],
+      "expected": "Chỉ duy nhất quản trị viên của 2 dự án giải mã được dữ liệu trong RAM, đảm bảo an toàn tuyệt đối."
+    },
+    {
+      "id": "TC-045",
+      "title": "Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub",
+      "requirementIds": ["REQ-045"],
+      "type": "automated",
+      "priority": "P0",
+      "status": "PASS",
+      "steps": [
+        "Kiểm tra hàm maskSensitiveRecord che giấu toàn bộ các trường nhạy cảm đối với người dùng ngoài (isManager = false)",
+        "Xác nhận quản trị viên (isManager = true) đọc được nguyên vẹn 100% các trường dữ liệu",
+        "Chạy bộ quét scanContentForSecretLeaks phát hiện chính xác các mẫu khóa trần (OpenWeather, Telegram token, Make Webhook)",
+        "Xác nhận mã nguồn sạch không chứa khóa bí mật trần được đánh giá an toàn hasLeak = false"
+      ],
+      "expected": "Dữ liệu nhạy cảm được che giấu tự động cho người ngoài và bảo đảm 0 khóa bí mật bị rò rỉ trên GitHub."
     }
   ]
 }

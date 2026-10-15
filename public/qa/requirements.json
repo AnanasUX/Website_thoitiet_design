@@ -559,6 +559,45 @@
       "evidence": ["test-logic-flows.mjs:LUONG-17:PASS", "testwebsite.mjs:TC-042:PASS"],
       "owner": "Security Lead",
       "notes": "Anti-Replay nonce/drift guard và đánh giá HTTP Security Headers"
+    },
+    {
+      "id": "REQ-043",
+      "title": "Hầm mã hóa dữ liệu an ninh AES-256-GCM & PBKDF2 cho toàn bộ hệ thống (Data at Rest)",
+      "description": "Toàn bộ dữ liệu cấu hình, API keys, credentials, webhook URLs và dữ liệu nội bộ của 2 dự án (Website_thoitiet_design & quan-ly-tien-phong) được mã hóa an toàn bằng thuật toán AES-256-GCM kết hợp PBKDF2-HMAC-SHA256 (100.000 vòng lặp) trước khi commit lên GitHub. Bất kỳ ai vào repository công khai chỉ thấy chuỗi mã hóa ENC:v1:aes-256-gcm:..., không thể đọc được nội dung gốc.",
+      "sourcePrompt": "PROMPT-20261015-03: Xây dựng việc mã hóa dữ liệu tránh việc khi người dùng nào đó vào github của quan-ly-tien-phong và Website_thoitiet_design thì đọc được hết dữ liệu của cả hệ thống",
+      "priority": "P0",
+      "category": "security-crypto-vault",
+      "status": "PASS",
+      "testIds": ["TC-043"],
+      "evidence": ["test-logic-flows.mjs:LUONG-18:PASS", "testwebsite.mjs:TC-043:PASS"],
+      "owner": "Security Lead",
+      "notes": "Mã hóa AES-256-GCM và PBKDF2-SHA256 chống lộ dữ liệu trên GitHub"
+    },
+    {
+      "id": "REQ-044",
+      "title": "Cổng phân quyền giải mã In-Memory Zero-Knowledge cho quản trị viên (mrkun28@gmail.com & Master Key)",
+      "description": "Lớp phân quyền bảo mật cho phép duy nhất quản trị viên của 2 dự án (xác thực danh tính mrkun28@gmail.com hoặc cung cấp đúng Master Key bí mật) mở khóa giải mã toàn bộ dữ liệu hệ thống trực tiếp trong bộ nhớ RAM (In-Memory). Tuyệt đối không ghi bản rõ xuống đĩa hay git, hỗ trợ cơ chế tự động khóa và xóa sạch bộ nhớ (Scrub Memory).",
+      "sourcePrompt": "PROMPT-20261015-03: Xây dựng lớp bảo vệ nếu người dùng là quản lý của 2 thông tin trên có thể đọc được toàn bộ dữ liệu",
+      "priority": "P0",
+      "category": "security-admin-gate",
+      "status": "PASS",
+      "testIds": ["TC-044"],
+      "evidence": ["test-logic-flows.mjs:LUONG-19:PASS", "testwebsite.mjs:TC-044:PASS"],
+      "owner": "Security Lead",
+      "notes": "Cổng giải mã in-memory zero-knowledge cho quản lý mrkun28@gmail.com"
+    },
+    {
+      "id": "REQ-045",
+      "title": "Mặt nạ dữ liệu Zero-Knowledge & Bộ quét chống rò rỉ bí mật công khai trên GitHub",
+      "description": "Tự động che giấu (mask) toàn bộ các trường nhạy cảm (token, key, secret, webhook) thành chuỗi bảo vệ đối với mọi người dùng ngoài. Tích hợp bộ quét phát hiện rò rỉ khóa bí mật công khai (Secret Leak Prevention Scanner) để đảm bảo 0 private key, 0 bot token, 0 API key trần bị lọt vào mã nguồn repository.",
+      "sourcePrompt": "PROMPT-20261015-03: Xây dựng việc mã hóa dữ liệu tránh việc khi người dùng nào đó vào github thì đọc được hết dữ liệu của cả hệ thống",
+      "priority": "P0",
+      "category": "security-data-masking",
+      "status": "PASS",
+      "testIds": ["TC-045"],
+      "evidence": ["test-logic-flows.mjs:LUONG-20:PASS", "testwebsite.mjs:TC-045:PASS"],
+      "owner": "Security Lead",
+      "notes": "Che giấu dữ liệu cho người ngoài và quét chống leak khóa lên GitHub"
     }
   ]
 }

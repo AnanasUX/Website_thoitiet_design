@@ -805,3 +805,28 @@ export type {
   RequestIntegrityResult,
   SecurityHeadersEvaluation
 } from './securityShield.ts';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LUỒNG 18 - 20: CRYPTOGRAPHIC VAULT & ADMIN DATA PROTECTION (REQ-043 -> REQ-045)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export {
+  encryptVaultData,
+  decryptVaultData,
+  isAuthorizedManager,
+  verifyMasterKey,
+  unlockSystemVault,
+  lockSystemVault,
+  isVaultUnlocked,
+  getUnlockedVaultData,
+  maskSensitiveRecord,
+  scanContentForSecretLeaks,
+  ENCRYPTED_SYSTEM_VAULT,
+  ENVELOPE_PREFIX as VAULT_ENVELOPE_PREFIX,
+  AUTHORIZED_ADMIN_EMAIL as VAULT_ADMIN_EMAIL
+} from './cryptoVault.ts';
+
+export type {
+  SystemVaultPayload
+} from './cryptoVault.ts';
+

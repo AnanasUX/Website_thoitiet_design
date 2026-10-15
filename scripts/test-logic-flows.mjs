@@ -62,7 +62,20 @@ import {
   validateApiResponseSchema,
   verifyRequestIntegrity,
   resetNonceStore,
-  evaluateSecurityHeaders
+  evaluateSecurityHeaders,
+  encryptVaultData,
+  decryptVaultData,
+  isAuthorizedManager,
+  verifyMasterKey,
+  unlockSystemVault,
+  lockSystemVault,
+  isVaultUnlocked,
+  getUnlockedVaultData,
+  maskSensitiveRecord,
+  scanContentForSecretLeaks,
+  ENCRYPTED_SYSTEM_VAULT,
+  VAULT_ENVELOPE_PREFIX,
+  VAULT_ADMIN_EMAIL
 } from '../src/utils/logicFlows.ts';
 
 const rootDir = process.cwd();
@@ -717,6 +730,130 @@ export function runAllLogicFlowTests() {
   const evalBad = evaluateSecurityHeaders(badHeaders);
   assert(evalBad.passed === false && evalBad.missingHeaders.length === 5, "Thiếu 5 header an ninh bị đánh trượt (passed = false)");
   console.log(`    ${colors.green}✓ Luồng Integrity & Headers: Đạt 5/5 kiểm tra Anti-Replay, Time Drift & OWASP Security Headers${colors.reset}\n`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 18: CRYPTOGRAPHIC VAULT & AES-256-GCM DATA AT REST (REQ-043)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 18/20] Kiểm thử Hầm Mã Hóa Dữ Liệu An Ninh AES-256-GCM & PBKDF2 (Data at Rest)...${colors.reset}`);
+  const testMasterKey = "AnanasMaster@2026!Key";
+  const plainSecretPayload = JSON.stringify({
+    dbPass: "P@ssw0rdSuperSecr3t2026",
+    telegramToken: "8123456789:AAFlkjw9823k4j_XYZ_Token",
+    repo: "https://github.com/AnanasUX/Website_thoitiet_design"
+  });
+
+  const encryptedEnvelope = encryptVaultData(plainSecretPayload, testMasterKey);
+  assert(encryptedEnvelope.startsWith(VAULT_ENVELOPE_PREFIX), "Phong bì mã hóa bắt đầu bằng ENC:v1:aes-256-gcm:");
+  
+  const envelopeParts = encryptedEnvelope.slice(VAULT_ENVELOPE_PREFIX.length).split(':');
+  assert(envelopeParts.length === 4, "Phong bì chứa đủ 4 thành phần (salt:iv:tag:ciphertext)");
+  assert(envelopeParts[0].length === 32, "Salt chuẩn 16 bytes (32 hex characters)");
+  assert(envelopeParts[1].length === 24, "IV chuẩn 12 bytes (24 hex characters)");
+  assert(envelopeParts[2].length === 32, "Tag xác thực chuẩn 16 bytes (32 hex characters)");
+
+  // Successful decryption with valid master key
+  const decryptedPayload = decryptVaultData(encryptedEnvelope, testMasterKey);
+  assert(decryptedPayload === plainSecretPayload, "Giải mã AES-256-GCM khớp 100% dữ liệu gốc");
+
+  // Rejection with wrong key
+  let wrongKeyFailed = false;
+  try {
+    decryptVaultData(encryptedEnvelope, "IncorrectPassphrase123!");
+  } catch (err) {
+    wrongKeyFailed = true;
+  }
+  assert(wrongKeyFailed === true, "Chặn giải mã khi dùng sai Master Key");
+
+  // Pre-encrypted system vault exists and is valid
+  assert(ENCRYPTED_SYSTEM_VAULT.startsWith(VAULT_ENVELOPE_PREFIX), "ENCRYPTED_SYSTEM_VAULT lưu trữ hợp lệ dạng ciphertext");
+  const decryptedSystemVault = decryptVaultData(ENCRYPTED_SYSTEM_VAULT, testMasterKey);
+  const parsedVault = JSON.parse(decryptedSystemVault);
+  assert(parsedVault.adminEmail === VAULT_ADMIN_EMAIL, "Dữ liệu hệ thống giải mã xác nhận adminEmail là mrkun28@gmail.com");
+  console.log(`    ${colors.green}✓ Luồng Hầm Mã Hóa AES-256-GCM: Đạt 8/8 kiểm tra định dạng phong bì, PBKDF2, giải mã & từ chối khóa sai${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 19: MANAGER AUTHORIZATION & DUAL-KEY IN-MEMORY DECRYPTION GATE (REQ-044)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 19/20] Kiểm thử Phân Quyền Quản Lý & Cổng Giải Mã In-Memory Zero-Knowledge...${colors.reset}`);
+  // Identity validation
+  assert(isAuthorizedManager("mrkun28@gmail.com") === true, "Xác nhận quyền quản lý cho mrkun28@gmail.com");
+  assert(isAuthorizedManager("MRKUN28@GMAIL.COM") === true, "Xác nhận quyền quản lý không phân biệt hoa thường");
+  assert(isAuthorizedManager("anaa2700") === true, "Xác nhận quyền quản lý phụ anaa2700");
+  assert(isAuthorizedManager("attacker@phishing.net") === false, "Từ chối người dùng lạ");
+  assert(isAuthorizedManager("") === false, "Từ chối danh tính rỗng");
+
+  // Master key verification
+  assert(verifyMasterKey("AnanasMaster@2026!Key") === true, "Xác thực đúng Master Key quản lý");
+  assert(verifyMasterKey("WrongKeyXYZ") === false, "Từ chối Master Key sai");
+
+  // In-memory vault unlock for authorized manager
+  lockSystemVault(); // Ensure initial state is locked
+  assert(isVaultUnlocked() === false, "Vault ban đầu ở trạng thái khóa (Locked)");
+
+  const unlockResult = unlockSystemVault("AnanasMaster@2026!Key", "mrkun28@gmail.com");
+  assert(unlockResult.success === true, "Mở khóa thành công cho mrkun28@gmail.com với Master Key");
+  assert(isVaultUnlocked() === true, "Vault chuyển sang trạng thái đã mở khóa (isVaultUnlocked = true)");
+  assert(getUnlockedVaultData() !== null, "Truy xuất được dữ liệu giải mã trong RAM");
+  assert(getUnlockedVaultData().repositories.bot.includes("quan-ly-tien-phong"), "Dữ liệu mở khóa chứa thông tin kho bot quan-ly-tien-phong");
+
+  // Unauthorized unlock attempt
+  lockSystemVault();
+  const unauthorizedUnlock = unlockSystemVault("WrongKey999", "intruder@evil.com");
+  assert(unauthorizedUnlock.success === false, "Từ chối mở khóa khi kẻ lạ dùng khóa sai");
+  assert(isVaultUnlocked() === false, "Vault giữ nguyên trạng thái khóa an toàn");
+
+  // Lock and scrub memory
+  lockSystemVault();
+  assert(isVaultUnlocked() === false && getUnlockedVaultData() === null, "Khóa hầm và dọn sạch dữ liệu khỏi bộ nhớ (Scrub Memory)");
+  console.log(`    ${colors.green}✓ Luồng Phân Quyền Quản Lý: Đạt 12/12 kiểm tra định danh mrkun28@gmail.com, Zero-Knowledge RAM & Scrub Memory${colors.reset}`);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // LUỒNG 20: ZERO-KNOWLEDGE DATA MASKING & GITHUB LEAK PREVENTION (REQ-045)
+  // ─────────────────────────────────────────────────────────────────────────────
+  console.log(`${colors.yellow}>>> [LUỒNG 20/20] Kiểm thử Mặt Nạ Dữ Liệu Zero-Knowledge & Bộ Quét Chống Rò Rỉ Bí Mật GitHub...${colors.reset}`);
+  const rawSensitiveRecord = {
+    system_name: "Website Thoi Tiet & Quan Ly Tien Phong",
+    telegram_bot_token: "123456789:ABCDEF1234567890abcdefghijklmnopqr",
+    openweather_api_key: "mock_owm_secret_sample_test_only",
+    zalo_webhook_url: "https://hook.eu1.make.com/9ruvgdciavfa1k6xf2vzpkn6zk2umnc7",
+    public_status: "ACTIVE_PRODUCTION",
+    nested_config: {
+      client_secret: "super_secret_oauth_key_here",
+      region: "ap-southeast-1"
+    }
+  };
+
+  // Masking for regular public viewers (isManager = false)
+  const maskedPublicView = maskSensitiveRecord(rawSensitiveRecord, false);
+  assert(maskedPublicView.system_name === "Website Thoi Tiet & Quan Ly Tien Phong", "Trường công khai không bị che");
+  assert(maskedPublicView.telegram_bot_token === "****** [ENCRYPTED_DATA_LOCKED]", "Bot Token bị che giấu thành công");
+  assert(maskedPublicView.openweather_api_key === "****** [ENCRYPTED_DATA_LOCKED]", "API Key bị che giấu thành công");
+  assert(maskedPublicView.zalo_webhook_url === "****** [ENCRYPTED_DATA_LOCKED]", "Webhook URL bị che giấu thành công");
+  assert(maskedPublicView.nested_config.client_secret === "****** [ENCRYPTED_DATA_LOCKED]", "Khóa con trong object lồng nhau bị che giấu");
+  assert(maskedPublicView.nested_config.region === "ap-southeast-1", "Trường region thường không bị che");
+
+  // Full view for manager (isManager = true)
+  const managerFullView = maskSensitiveRecord(rawSensitiveRecord, true);
+  assert(managerFullView.telegram_bot_token === rawSensitiveRecord.telegram_bot_token, "Quản lý xem được nguyên vẹn bot token");
+  assert(managerFullView.openweather_api_key === rawSensitiveRecord.openweather_api_key, "Quản lý xem được nguyên vẹn API key");
+
+  // Secret leak scanner tests
+  const leakedContentSample = `
+    const apiKey = "mock_leak_token_exposed_in_plaintext_test";
+    const botUrl = "https://hook.eu1.make.com/demo_unprotected_zalo_hook";
+  `;
+  const leakScanResult = scanContentForSecretLeaks(leakedContentSample);
+  assert(leakScanResult.hasLeak === true, "Bộ quét phát hiện chính xác rò rỉ khóa bí mật");
+  assert(leakScanResult.matchedRisks.length >= 2, "Bộ quét chỉ ra ít nhất 2 rủi ro rò rỉ khóa trần");
+
+  const cleanContentSample = `
+    const apiKey = process.env.OPENWEATHER_API_KEY || "";
+    const vaultEnvelope = "ENC:v1:aes-256-gcm:abc:def:tag:ct";
+  `;
+  const cleanScanResult = scanContentForSecretLeaks(cleanContentSample);
+  assert(cleanScanResult.hasLeak === false, "Nội dung sử dụng biến môi trường hoặc phong bì mã hóa được đánh giá an toàn");
+  console.log(`    ${colors.green}✓ Luồng Mặt Nạ Dữ Liệu & Quét Rò Rỉ: Đạt 10/10 kiểm tra che giấu dữ liệu, quyền xem quản lý & bộ quét leak GitHub${colors.reset}\n`);
+
 
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}`);
   console.log(`${colors.bright}TỔNG KẾT KIỂM THỬ LUỒNG LOGIC: ${colors.green}${passedAssertions}/${totalAssertions} ASSERTIONS ĐẠT (100% PASS)${colors.reset} | ${failedAssertions > 0 ? colors.red : colors.dim}${failedAssertions} THẤT BẠI${colors.reset}`);

@@ -138,10 +138,58 @@ async function runDashboardTest() {
     const tc042Status = await tc042Row.locator('.badge-status.PASS').isVisible().catch(() => false);
     console.log('TC-042 Status is PASS:', tc042Status);
 
+    // Verify TC-043 (AES-256-GCM Envelope Encryption)
+    const tc043Row = page.locator('#matrixTableBody tr:has-text("TC-043")');
+    const tc043Status = await tc043Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-043 Status is PASS:', tc043Status);
+
+    // Verify TC-044 (Zero-Knowledge In-Memory Decryption Gate)
+    const tc044Row = page.locator('#matrixTableBody tr:has-text("TC-044")');
+    const tc044Status = await tc044Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-044 Status is PASS:', tc044Status);
+
+    // Verify TC-045 (Data Masking & Secret Leak Scanner)
+    const tc045Row = page.locator('#matrixTableBody tr:has-text("TC-045")');
+    const tc045Status = await tc045Row.locator('.badge-status.PASS').isVisible().catch(() => false);
+    console.log('TC-045 Status is PASS:', tc045Status);
+
     // -------------------------------------------------------------------------
-    // PHASE 2: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch
+    // PHASE 2: Testing Cryptographic Vault Interactive Panel
     // -------------------------------------------------------------------------
-    console.log('\n--- PHASE 2: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch ---');
+    console.log('\n--- PHASE 2: Testing Cryptographic Vault Interactive Panel ---');
+    const initialGemini = await page.locator('#vaultValGemini').textContent();
+    console.log('1. Initial masked secret:', initialGemini);
+    const isInitiallyMasked = initialGemini.includes('ENCRYPTED_DATA_LOCKED');
+
+    // Click demo fill button
+    await page.locator('#vaultFillDemoBtn').click();
+    await page.waitForTimeout(200);
+
+    // Click unlock
+    await page.locator('#vaultUnlockBtn').click();
+    await page.waitForTimeout(500);
+
+    const unlockedBadge = await page.locator('#vaultStatusBadge').textContent();
+    const unlockedGemini = await page.locator('#vaultValGemini').textContent();
+    const unlockedPpt = await page.locator('#vaultValDrivePpt').textContent();
+    console.log('2. Unlocked status badge:', unlockedBadge);
+    console.log('3. Unlocked secret value in RAM:', unlockedGemini);
+    const isSuccessfullyUnlocked = unlockedGemini.includes('AIzaSy') && unlockedPpt.includes('ppt-folder');
+
+    // Click lock & scrub RAM
+    await page.locator('#vaultLockBtn').click();
+    await page.waitForTimeout(300);
+
+    const relockedBadge = await page.locator('#vaultStatusBadge').textContent();
+    const relockedGemini = await page.locator('#vaultValGemini').textContent();
+    console.log('4. Relocked status badge:', relockedBadge);
+    console.log('5. Relocked secret value:', relockedGemini);
+    const isSuccessfullyScrubbed = relockedGemini.includes('ENCRYPTED_DATA_LOCKED');
+
+    // -------------------------------------------------------------------------
+    // PHASE 3: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch
+    // -------------------------------------------------------------------------
+    console.log('\n--- PHASE 3: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch ---');
     // Open Copilot Modal from Toolbar
     await page.locator('#copilotBtn').click();
     await page.waitForTimeout(400);
@@ -154,21 +202,21 @@ async function runDashboardTest() {
     const isModalOpen = await page.locator('#copilotModal').isVisible();
     const activeTask = await page.evaluate(() => localStorage.getItem('antigravity_active_task'));
 
-    console.log('1. Release Gate Banner turned BLOCKED:', isBlocked);
-    console.log('2. Gate Copilot Button on Banner is visible:', isGateBtnVisible);
-    console.log('3. Copilot Modal opened automatically:', isModalOpen);
-    console.log('4. localStorage.antigravity_active_task auto-dispatched:', Boolean(activeTask));
+    console.log('6. Release Gate Banner turned BLOCKED:', isBlocked);
+    console.log('7. Gate Copilot Button on Banner is visible:', isGateBtnVisible);
+    console.log('8. Copilot Modal opened automatically:', isModalOpen);
+    console.log('9. localStorage.antigravity_active_task auto-dispatched:', Boolean(activeTask));
 
-    // PHASE 3: Restoring back to 100% PASS
+    // PHASE 4: Restoring back to 100% PASS
     console.log('Restoring back to 100% PASS...');
     await page.locator('#copilotSimulateBugBtn').click();
     await page.waitForTimeout(600);
 
     const isPassedAgain = await page.locator('#releaseGateBanner.passed').isVisible();
-    console.log('5. Release Gate Banner restored to PASSED:', isPassedAgain);
+    console.log('10. Release Gate Banner restored to PASSED:', isPassedAgain);
 
-    if (passCount === 42 && failCount === 0 && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
-      console.log('🎉 SUCCESS: All 42 tests ran and Antigravity Copilot Auto-Dispatch verified 100%!');
+    if (passCount === 45 && failCount === 0 && isInitiallyMasked && isSuccessfullyUnlocked && isSuccessfullyScrubbed && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
+      console.log('🎉 SUCCESS: All 45 tests ran, Cryptographic Vault & Antigravity Copilot Auto-Dispatch verified 100%!');
       process.exitCode = 0;
     } else {
       console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);

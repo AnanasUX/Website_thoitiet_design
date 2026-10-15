@@ -191,13 +191,27 @@
     + Hàm `validatePayloadSizeAndDepth` kiểm tra kích thước byte UTF-8 và độ sâu lồng nhau của JSON (tối đa 10 tầng depth) mà không gây tràn bộ nhớ heap.
     + Hàm `validateApiResponseSchema` kiểm tra chặt chẽ các trường bắt buộc và kiểu dữ liệu của API thời tiết, thị trường và tin tức, phòng chống API Response Tampering.
 
-  - *Kiến Trúc Kiểm Tra Tính Toàn Vẹn Yêu Cầu, Chống Replay Attack & HTTP Security Headers (`REQ-042` / `TC-042`)*:
-    + Hàm `verifyRequestIntegrity` kết hợp Time Drift Guard (ngưỡng $\pm 300$ giây) và bộ nhớ đệm Nonce ngẫu nhiên dùng một lần, triệt tiêu hoàn toàn nguy cơ kẻ tấn công gửi lại gói tin chụp lén (Replay Attack).
-    + Hàm `evaluateSecurityHeaders` đánh giá và chấm điểm tính đầy đủ của bộ 5 HTTP Security Headers tiêu chuẩn OWASP (CSP, nosniff, SAMEORIGIN, HSTS, Referrer-Policy).
+  - *Kiến Trúc Hầm Mã Hóa Dữ Liệu An Ninh 2 Hệ Thống (Cryptographic Vault - `REQ-043` / `TC-043`)*:
+    + Toàn bộ dữ liệu cấu hình, secret keys, webhook endpoints, bot tokens và operational metadata của cả 2 dự án (`Website_thoitiet_design` & `quan-ly-tien-phong`) được mã hóa AES-256-GCM kết hợp PBKDF2-HMAC-SHA256 (100.000 vòng lặp, salt 16 bytes, IV 12 bytes, auth tag 16 bytes).
+    + Định dạng phong bì chuẩn hóa đồng nhất: `ENC:v1:aes-256-gcm:<salt_hex>:<iv_hex>:<tag_hex>:<ciphertext_hex>`, tương thích 100% giữa Python (`cryptography.hazmat.primitives.ciphers.aead.AESGCM`), Node.js (`node:crypto`) và Browser Web Crypto API (`window.crypto.subtle`).
+    + Bất kỳ ai vào GitHub công khai chỉ nhìn thấy chuỗi ciphertext đã mã hóa, ngăn chặn hoàn toàn nguy cơ rò rỉ dữ liệu hệ thống.
+
+  - *Kiến Trúc Cổng Phân Quyền Giải Mã In-Memory Zero-Knowledge Cho Quản Trị Viên (`REQ-044` / `TC-044`)*:
+    + Cơ chế giải mã Zero-Knowledge: Chỉ quản trị viên xác thực danh tính `mrkun28@gmail.com` (hoặc cung cấp Master Passphrase `AnanasMaster@2026!Key`) mới được cấp quyền mở khóa giải mã dữ liệu vào bộ nhớ RAM (In-Memory).
+    + Dữ liệu giải mã tuyệt đối KHÔNG bao giờ được ghi xuống đĩa hoặc commit vào git.
+    + Tích hợp bộ đếm tự động khóa sau 15 phút không hoạt động và nút `[🔒 Khóa Lại (Scrub Memory)]` giải phóng và xóa sạch bộ nhớ đệm ngay tức khắc.
+
+  - *Kiến Trúc Mặt Nạ Dữ Liệu Zero-Knowledge & Bộ Quét Rò Rỉ Bí Mật GitHub (`REQ-045` / `TC-045`)*:
+    + Hàm `maskSensitiveRecord` tự động obfuscate toàn bộ các trường nhạy cảm (`token`, `key`, `secret`, `webhook`, `password`, `credential`) thành chuỗi bảo vệ `****** [ENCRYPTED_DATA_LOCKED]` đối với mọi người dùng ngoài, đồng thời giữ nguyên 100% dữ liệu cho quản trị viên đã xác thực.
+    + Tích hợp bộ quét `scanContentForSecretLeaks` tự động kiểm tra phát hiện các mẫu khóa trần (OpenWeather, Telegram token, Make Webhook, Private Keys) để đảm bảo 0 khóa bí mật bị commit lên GitHub.
 
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Lưu trữ API keys, bot tokens, webhook URLs hoặc credentials ở dạng văn bản thuần (plaintext) trong các tệp mã nguồn theo dõi bởi git (`main.py`, `.env.example`, code frontend).
+- **Từ chối**: Sử dụng thuật toán mã hóa lỗi thời hoặc yếu (như DES, RC4, MD5, SHA-1, hoặc mã hóa Base64 thuần túy).
+- **Từ chối**: Ghi dữ liệu đã giải mã của hệ thống xuống file đĩa cục bộ trên máy chủ hoặc commit ra git.
+- **Từ chối**: Cho phép người dùng vãng lai hoặc không phải quản lý đọc được cấu hình nhạy cảm của hệ thống.
 - **Từ chối**: Sử dụng cú pháp pseudo-selector không chuẩn của Playwright (như `:has-text(...)`) trong mã JavaScript chạy trực tiếp trên trình duyệt của người dùng (`dashboard.html`).
 - **Từ chối**: Thực thi vòng lặp kiểm thử tự động mà không có khối bảo vệ ngoại lệ `try ... catch` từng ca và khối `finally` toàn cục.
 - **Từ chối**: Sử dụng video ID YouTube chưa được kiểm chứng hoặc chứa video 404 chết (gây lỗi đen màn hình player).

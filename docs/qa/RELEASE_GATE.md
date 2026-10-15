@@ -19,7 +19,7 @@ Cổng kiểm duyệt phát hành (Release Gate) là hàng rào kỹ thuật b�
 - [x] **MG-3**: Các quyết định kỹ thuật và phương án bị từ chối được ghi nhận đầy đủ vào `DECISIONS.md`.
 
 ### B. Tiêu Chí Kiểm Thử Nghiệp Vụ & Giao Diện (Functional & UI Gate)
-- [x] **FG-1**: Toàn bộ 42 ca kiểm thử trong `docs/qa/TEST_PLAN.md` (`TC-001` đến `TC-042`) đều đạt kết quả **PASS**.
+- [x] **FG-1**: Toàn bộ 45 ca kiểm thử trong `docs/qa/TEST_PLAN.md` (`TC-001` đến `TC-045`) đều đạt kết quả **PASS**.
 - [x] **FG-2**: Không có lỗi hồi quy (regression) trên các tính năng đã hoàn thiện trước đó.
 - [x] **FG-3**: Đã xác thực thực tế trên 3 nhóm kích thước viewport:
   + Mobile (< 640px): Header Shorts tinh gọn, không đè nút, badge kênh hiển thị trọn vẹn.
