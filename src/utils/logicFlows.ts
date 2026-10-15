@@ -853,6 +853,7 @@ export {
   extractContentForVieNeuTTS,
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
+  buildVieNeuAudioUrl,
   findSystemFemaleVoice,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS,

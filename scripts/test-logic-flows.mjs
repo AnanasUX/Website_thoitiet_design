@@ -82,6 +82,7 @@ import {
   extractContentForVieNeuTTS,
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
+  buildVieNeuAudioUrl,
   findSystemFemaleVoice,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS
@@ -1005,8 +1006,18 @@ export function runAllLogicFlowTests() {
   const mockFemaleVoice = findSystemFemaleVoice();
   assert(mockFemaleVoice !== null && mockFemaleVoice.name === 'Google Tiếng Việt', "Nhận diện chính xác giọng nữ tiếng Việt Google Tiếng Việt");
   delete global.window;
+  // 8. Kiểm tra URL stream âm thanh Neural VieNeu-TTS (buildVieNeuAudioUrl)
+  const audioStreamUrl = buildVieNeuAudioUrl("Bản tin thời tiết hôm nay");
+  assert(audioStreamUrl.includes("translate_tts") && audioStreamUrl.includes("tl=vi"), "Tạo URL stream Google Neural TTS tiếng Việt chuẩn");
+  assert(buildVieNeuAudioUrl("") === "", "buildVieNeuAudioUrl xử lý an toàn chuỗi rỗng");
 
-  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS: Đạt 27/27 kiểm tra bóc tách KHÔNG TIÊU ĐỀ, đọc đúng đủ Sapo, chuẩn hóa tiếng Việt & giọng nữ hệ thống${colors.reset}\n`);
+  // 9. Kiểm tra tách câu dài thành các chunk an toàn (< 160 ký tự) cho luồng Audio
+  const longSentence = "Thủ tướng Chính phủ vừa ký quyết định phê duyệt kế hoạch triển khai thi hành Luật Trật tự an toàn giao thông đường bộ trên quy mô toàn quốc, nhằm nâng cao ý thức chấp hành và giảm thiểu tai nạn giao thông.";
+  const safeChunks = splitVieNeuAudioChunks(longSentence);
+  assert(safeChunks.length >= 2, "Tách câu dài thành ít nhất 2 chunks để stream âm thanh mượt mà");
+  assert(safeChunks.every(c => c.length <= 160), "Mọi chunk đều nhỏ hơn hoặc bằng 160 ký tự, tránh quá tải audio buffer");
+
+  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS: Đạt 31/31 kiểm tra bóc tách KHÔNG TIÊU ĐỀ, đọc đúng đủ Sapo, chuẩn hóa tiếng Việt, giọng nữ hệ thống & stream âm thanh Neural${colors.reset}\n`);
 
 
 

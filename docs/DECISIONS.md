@@ -228,6 +228,9 @@
       - Ngành nghề, giao thông & kinh tế: `CSGT` -> `Cảnh sát giao thông`, `PCCC` -> `Phòng cháy chữa cháy`, `QL1A` -> `Quốc lộ 1`, `KCN` -> `Khu công nghiệp`, `EVN` -> `Tập đoàn Điện lực Việt Nam`.
       - Tiền tệ & Định dạng số: `200 tỷ VND` -> `200 tỷ đồng`, `$500` -> `500 đô la Mỹ`.
       - Ngày tháng & Đơn vị: `15/10/2026` -> `ngày 15 tháng 10 năm 2026`, `32°C` -> `32 độ C`, `80 km/h` -> `80 ki-lô-mét trên giờ`.
+    + **Kiến Trúc Động Cơ Âm Thanh Kép (Dual-Engine Audio Architecture)**:
+      - *Động cơ chính (Neural Audio Stream)*: Tích hợp trực tiếp luồng stream âm thanh chất lượng cao Google Neural TTS tiếng Việt Nữ chuẩn (`buildVieNeuAudioUrl`) phát qua HTML5 `<audio>`, giải quyết triệt để lỗi người dùng trên máy tính không có sẵn giọng đọc SAPI tiếng Việt của Windows khiến trình duyệt chạy giả lập mà không phát ra âm thanh. Cấu hình `<meta name="referrer" content="no-referrer" />` và plugin `/api/tts` trong Vite chống lỗi 404 referer block.
+      - *Động cơ dự phòng (Web Speech API)*: Tự động chuyển đổi mượt mà khi ngoại tuyến hoặc bị chặn; khắc phục triệt để lỗi Chromium Garbage Collection giải phóng utterance giữa chừng và va chạm cancel-before-speak bằng độ trễ an toàn 150ms.
     + **Giao diện Trình phát AI VieNeu-TTS Card (`vieneu-tts-player-card`) & Nút Byline (`article-tts-btn`)**:
       - Trang bị cụm điều khiển chuyên nghiệp: Play/Pause, Stop, Tua tiến/lùi ±10 giây.
       - Hiển thị sóng âm thanh động (Audio Waveform) khi đang đọc.
@@ -237,6 +240,8 @@
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Chỉ dựa hoàn toàn vào `window.speechSynthesis` mặc định mà không có cơ chế stream âm thanh trực tiếp (vì phần lớn máy tính Windows của người dùng không cài gói giọng đọc SAPI tiếng Việt khiến trình duyệt kết thúc ngầm trong 0s mà không phát ra tiếng).
+- **Từ chối**: Giữ nguyên `<meta name="referrer" content="strict-origin-when-cross-origin" />` làm rò rỉ header referer khiến dịch vụ âm thanh Google TTS phản hồi mã lỗi 404.
 - **Từ chối**: Sử dụng giọng đọc mặc định không rõ nguồn gốc hoặc giọng nam khi người dùng nhấn nút `data-testid="article-tts-btn"` (phải áp dụng giọng nữ AI VieNeu-TTS có sẵn của hệ thống).
 - **Từ chối**: Bỏ sót đoạn tóm tắt mở đầu Sapo của bài viết khiến bản tin bị cụt hoặc thiếu thông tin mở đầu quan trọng.
 - **Từ chối**: Đọc tiêu đề bài viết (`article.title`) khi kích hoạt AI VieNeu-TTS (vi phạm trực tiếp chỉ thị người dùng "chuyển tất cả thông tin tin chiết của nội dung không tính tiêu đề trong bài").

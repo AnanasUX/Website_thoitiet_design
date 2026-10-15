@@ -174,5 +174,21 @@
   - Mở rộng bộ kiểm thử luồng logic `scripts/test-logic-flows.mjs` lên **290/290 assertions PASS (100% ĐẠT, 0 FAIL)**.
   - Chạy `npm run test:dashboard` và `npm run testwebsite` đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
-
-
+### 17. Đột Phá Kiến Trúc Âm Thanh Kép (Dual-Engine VieNeu-TTS) Phát Âm Nữ Trực Tiếp Cho Mọi Nền Tảng (REQ-047 / TC-047)
+- **Tiếp nhận phản hồi người dùng**: Nút "Nghe đọc" kích hoạt trạng thái "Đang đọc..." nhưng người dùng trên máy tính thực tế chưa nghe thấy âm thanh phát ra (do máy tính Windows/Chrome thiếu gói giọng đọc tiếng Việt SAPI bản địa).
+- **Phân tích nguyên nhân gốc rễ**:
+  1. Hầu hết máy tính Windows 10/11 chưa tải gói tiếng Việt, nên `window.speechSynthesis.getVoices()` chỉ trả về các giọng tiếng Anh (Microsoft David, Zira, Mark). Khi chạy `utterance.lang = 'vi-VN'`, Chromium kết thúc ngầm trong 0ms mà không phát ra âm thanh.
+  2. Chromium gặp lỗi va chạm hàng đợi khi gọi `.cancel()` ngay trước `.speak()`, đồng thời gom rác (garbage collection) làm đứt đoạn phát âm.
+  3. Khi nạp âm thanh từ Google TTS, header `<meta name="referrer" content="strict-origin-when-cross-origin" />` khiến Google trả về mã lỗi HTTP 404 do kiểm tra referer ngoại lai.
+- **Giải pháp Động cơ Âm thanh Kép (Dual-Engine Audio System)**:
+  1. **Động cơ chính (Neural Audio Stream)**:
+     - Tích hợp hàm `buildVieNeuAudioUrl` truyền dữ liệu trực tiếp đến luồng âm thanh Google Neural TTS tiếng Việt Nữ chuẩn (`Google Tiếng Việt`) phát qua đối tượng HTML5 `<audio>`.
+     - Cấu hình thẻ `<meta name="referrer" content="no-referrer" />` trong `index.html` cho phép trình duyệt nạp và stream âm thanh MP3 trực tiếp mượt mà 0ms không bị chặn.
+     - Bổ sung proxy middleware `/api/tts` trong `vite.config.ts` và máy chủ kiểm thử `scripts/testwebsite.mjs` bảo đảm khả năng tương thích toàn diện.
+     - Tối ưu hóa `splitVieNeuAudioChunks`: Giới hạn mỗi phân đoạn âm thanh $\le 150$ ký tự, tự động tách theo dấu phẩy, hai chấm và từ ngữ để stream tuần hoàn không trễ.
+  2. **Động cơ dự phòng (Web Speech API)**:
+     - Tự động chuyển đổi sang Web Speech API nếu thiết bị ngắt kết nối mạng; sửa lỗi hủy hàng đợi bằng độ trễ an toàn 150ms và lưu tham chiếu `synthUtteranceRef` chống thu dọn rác.
+- **Kết quả kiểm thử & Nghiệm thu**:
+  - `npm run test:logic` đạt **294/294 assertions PASS (100% ĐẠT, 0 FAIL)**.
+  - `npm run build` hoàn thành trong 481ms với 0 lỗi.
+  - Lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.

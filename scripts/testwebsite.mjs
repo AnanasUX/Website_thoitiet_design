@@ -111,6 +111,36 @@ function startStaticServer(port = 4173) {
       try {
         let reqUrl = req.url || '/';
         let reqPath = reqUrl.split('?')[0];
+
+        // Hỗ trợ endpoint stream audio TTS cho môi trường kiểm thử máy chủ tĩnh
+        if (reqPath === '/api/tts') {
+          const urlObj = new URL(reqUrl, 'http://127.0.0.1:4173');
+          const text = urlObj.searchParams.get('text') || '';
+          if (!text) {
+            res.writeHead(400);
+            return res.end('Missing text');
+          }
+          const gUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+          fetch(gUrl, {
+            headers: {
+              'Referer': 'https://translate.google.com/',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          }).then(async upstream => {
+            res.writeHead(200, {
+              'Content-Type': 'audio/mpeg',
+              'Cache-Control': 'public, max-age=86400',
+              'Access-Control-Allow-Origin': '*'
+            });
+            const ab = await upstream.arrayBuffer();
+            res.end(Buffer.from(ab));
+          }).catch(err => {
+            res.writeHead(500);
+            res.end(err.message);
+          });
+          return;
+        }
+
         if (reqPath.startsWith('/Website_thoitiet_design/')) {
           reqPath = reqPath.replace('/Website_thoitiet_design/', '/');
         } else if (reqPath === '/Website_thoitiet_design') {

@@ -18,7 +18,7 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 290/290 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 294/294 assertions logic passed (100% PASS).
   + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS AI và Auto-Dispatch của Antigravity Copilot.
   + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
@@ -119,7 +119,10 @@
       + Vượt chặn hotlink: Thẻ video cấu hình `referrerPolicy="no-referrer"`, chuẩn hóa URL HTTPS và cung cấp nút fallback "Mở video gốc".
     - **[REQ-047 / TC-047] Động Cơ AI VieNeu-TTS Đọc Chi Tiết Bài Viết (Giọng Nữ Hệ Thống, Không Tính Tiêu Đề)**:
       + Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo).
-      + **Áp dụng giọng đọc nữ khi nhấn `article-tts-btn`**: Kích hoạt giọng nữ chuẩn AI VieNeu-TTS (`bac_nu` / Google Tiếng Việt / Hoài My) với pitch tự nhiên `1.05`, hiển thị nút "Đang đọc..." kèm animation ping/pulse.
+      + **Động cơ âm thanh kép (Dual-Engine Audio)**:
+        * *Động cơ chính (Neural Audio Stream)*: Trực tiếp stream âm thanh chất lượng cao Google Neural TTS tiếng Việt Nữ chuẩn (`buildVieNeuAudioUrl`) phát qua HTML5 `<audio>`, khắc phục triệt để lỗi máy tính người dùng không có sẵn gói ngôn ngữ tiếng Việt SAPI trên Windows/Chrome. Kết hợp cấu hình `<meta name="referrer" content="no-referrer" />` và proxy middleware `/api/tts` trong Vite chống lỗi 404 referer block.
+        * *Động cơ dự phòng (Web Speech API)*: Tự động chuyển đổi mượt mà khi mất mạng; sửa toàn bộ lỗi Chromium Garbage Collection đóng băng âm thanh và va chạm xóa hàng đợi cancel-before-speak bằng độ trễ 150ms.
+      + **Áp dụng giọng đọc nữ khi nhấn `article-tts-btn`**: Kích hoạt giọng nữ chuẩn AI VieNeu-TTS (`bac_nu` / Google Tiếng Việt / Hoài My) với pitch tự nhiên `1.05`, hiển thị nút "Đang đọc..." kèm animation ping/pulse và sóng âm thanh waveform.
       + **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ**: Bóc tách toàn bộ thân bài + đoạn mở đầu Sapo, loại bỏ 100% tiêu đề chính bài viết (`article.title`), loại bỏ chú thích ảnh và boilerplate tác giả.
       + Chuẩn hóa văn bản tiếng Việt (`normalizeVietnameseTextVieNeu`): Xử lý chức danh học thuật, cơ quan nhà nước, tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
       + Trình phát AI VieNeu-TTS Card: Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực và tùy chọn giọng đọc Bắc/Nam, tốc độ 0.75x - 1.5x.

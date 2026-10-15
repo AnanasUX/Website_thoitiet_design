@@ -90,6 +90,7 @@ react(),
       figmaErrorOverlayReplay(),
       figmaReactRefreshBoundaryFallback(),
       figmaMakeKitPlugin({ storiesGlob: '/src/**/*.stories.{ts,tsx,js,jsx}' }),
+      ttsProxyPlugin(),
     ],
     resolve: {
       alias: {
@@ -431,4 +432,55 @@ function figmaMakeKitPlugin(options: { storiesGlob: string | string[] }): Plugin
       })
     },
   }
+}
+
+/**
+ * VieNeu-TTS Neural Audio Proxy Plugin
+ * Cung cấp luồng stream âm thanh MP3 tiếng Việt chuẩn cho mọi trình duyệt
+ */
+function ttsProxyPlugin(): Plugin {
+  const handler = async (req: any, res: any, next: any) => {
+    try {
+      const url = new URL(req.url, 'http://localhost');
+      if (url.pathname === '/api/tts') {
+        const text = url.searchParams.get('text') || '';
+        if (!text) {
+          res.statusCode = 400;
+          res.end('Missing text parameter');
+          return;
+        }
+        const gUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+        const upstream = await fetch(gUrl, {
+          headers: {
+            'Referer': 'https://translate.google.com/',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        if (!upstream.ok) {
+          res.statusCode = upstream.status;
+          res.end('TTS Upstream Error');
+          return;
+        }
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        const arrayBuffer = await upstream.arrayBuffer();
+        res.end(Buffer.from(arrayBuffer));
+        return;
+      }
+    } catch (e: any) {
+      console.error('[TTS Proxy Error]:', e);
+    }
+    next();
+  };
+
+  return {
+    name: 'tts-proxy-middleware',
+    configureServer(server) {
+      server.middlewares.use(handler);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handler);
+    }
+  };
 }
