@@ -113,11 +113,40 @@ async function runDashboardTest() {
     const tc020Status = await tc020Row.locator('.badge-status.PASS').isVisible().catch(() => false);
     console.log('TC-020 Status is PASS:', tc020Status);
 
-    if (passCount === 30 && failCount === 0) {
-      console.log('🎉 SUCCESS: All 30 tests ran and PASSED without stopping or errors!');
+    // -------------------------------------------------------------------------
+    // PHASE 2: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch
+    // -------------------------------------------------------------------------
+    console.log('\n--- PHASE 2: Testing Antigravity Copilot Bug Simulation & Auto-Dispatch ---');
+    // Open Copilot Modal from Toolbar
+    await page.locator('#copilotBtn').click();
+    await page.waitForTimeout(400);
+
+    await page.locator('#copilotSimulateBugBtn').click();
+    await page.waitForTimeout(600);
+
+    const isBlocked = await page.locator('#releaseGateBanner.blocked').isVisible();
+    const isGateBtnVisible = await page.locator('#gateCopilotBtn').isVisible();
+    const isModalOpen = await page.locator('#copilotModal').isVisible();
+    const activeTask = await page.evaluate(() => localStorage.getItem('antigravity_active_task'));
+
+    console.log('1. Release Gate Banner turned BLOCKED:', isBlocked);
+    console.log('2. Gate Copilot Button on Banner is visible:', isGateBtnVisible);
+    console.log('3. Copilot Modal opened automatically:', isModalOpen);
+    console.log('4. localStorage.antigravity_active_task auto-dispatched:', Boolean(activeTask));
+
+    // PHASE 3: Restoring back to 100% PASS
+    console.log('Restoring back to 100% PASS...');
+    await page.locator('#copilotSimulateBugBtn').click();
+    await page.waitForTimeout(600);
+
+    const isPassedAgain = await page.locator('#releaseGateBanner.passed').isVisible();
+    console.log('5. Release Gate Banner restored to PASSED:', isPassedAgain);
+
+    if (passCount === 30 && failCount === 0 && isBlocked && isGateBtnVisible && isModalOpen && Boolean(activeTask) && isPassedAgain) {
+      console.log('🎉 SUCCESS: All 30 tests ran and Antigravity Copilot Auto-Dispatch verified 100%!');
       process.exitCode = 0;
     } else {
-      console.error(`❌ FAILURE: pass=${passCount}, fail=${failCount}`);
+      console.error(`❌ FAILURE in verification: pass=${passCount}, fail=${failCount}, isBlocked=${isBlocked}, isGateBtnVisible=${isGateBtnVisible}, activeTask=${Boolean(activeTask)}`);
       process.exitCode = 1;
     }
   } finally {

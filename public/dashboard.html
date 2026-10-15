@@ -844,8 +844,8 @@
       <button id="reloadBtn" title="Tải lại dữ liệu JSON gốc">
         <span>🔄</span> Làm Mới Dữ Liệu
       </button>
-      <button class="btn-antigravity" id="copilotBtn" title="Xem lệnh xử lý cho Antigravity AI">
-        <span>🤖</span> Antigravity Copilot
+      <button class="btn-antigravity" id="copilotBtn" title="Antigravity Copilot Pro (mrkun28@gmail.com)">
+        <span>🤖</span> Antigravity Copilot <span class="badge-pro" style="margin-left:4px; font-size:10px;">PRO</span>
       </button>
       <button id="exportReportBtn" title="Sao chép toàn bộ báo cáo QA Markdown">
         <span>📋</span> Xuất Báo Cáo
@@ -905,11 +905,30 @@
         Tất cả 30/30 ca kiểm thử kỹ thuật đều đạt chuẩn tuyệt đối 100%. Không có lỗi P0/P1 chặn phát hành.
       </div>
     </div>
-    <button class="btn-small" style="background:white; border-color:currentColor;" id="copyAuditProofBtn">
-      📋 Sao Chép Bằng Chứng
-    </button>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn-small btn-antigravity" id="gateCopilotBtn" style="display:none; background:#2563eb; color:white; border:none; padding:8px 16px; font-weight:700; border-radius:8px; cursor:pointer; box-shadow:0 4px 12px rgba(37,99,235,0.4); align-items:center; gap:6px;">
+        <span>🤖</span> Báo Bug Cho Antigravity &amp; Tự Động Sửa
+      </button>
+      <button class="btn-small" style="background:white; border-color:currentColor;" id="copyAuditProofBtn">
+        📋 Sao Chép Bằng Chứng
+      </button>
+    </div>
   </div>
 
+
+  <!-- Bug Triage & Antigravity Copilot Section -->
+  <section class="triage-panel" id="triagePanel">
+    <h2>
+      <span>🤖</span>
+      <span>Phân Tích Sự Cố &amp; Phương Án Xử Lý Antigravity</span>
+    </h2>
+    <div id="bugContent">
+      <div class="empty-bugs">
+        <strong style="font-size:15px;">🛡️ Toàn bộ 30/30 ca kiểm thử đều ĐẠT CHUẨN (PASS 100%)</strong>
+        <p>Hệ thống không phát hiện bất kỳ sự cố hay lỗi giao diện nào. Tất cả 7 luồng logic nghiệp vụ, 7 kịch bản UX thực tế, cử chỉ thực chiến cuộn/click &amp; quét lỗi trực quan 3 màn hình, Google Auth, Lịch Vạn Niên, Tin tức RSS vô cực, SEO routing popstate, Chính sách bảo mật, Dev Weather Panel, Video Shorts Đa Kênh, Smart TV EPG, Byline Bar, Phân Quyền Quản Trị và Định Tuyến GitHub Pages đều chạy hoàn hảo!</p>
+      </div>
+    </div>
+  </section>
 
   <!-- Live Multi-Screen Simulator & Connected System Preview -->
   <section class="sim-card" id="simulatorSection">
@@ -959,19 +978,7 @@
     </div>
   </section>
 
-  <!-- Bug Triage & Antigravity Copilot Section -->
-  <section class="triage-panel" id="triagePanel">
-    <h2>
-      <span>🤖</span>
-      <span>Phân Tích Sự Cố &amp; Phương Án Xử Lý Antigravity</span>
-    </h2>
-    <div id="bugContent">
-      <div class="empty-bugs">
-        <strong style="font-size:15px;">🛡️ Toàn bộ 30/30 ca kiểm thử đều ĐẠT CHUẨN (PASS 100%)</strong>
-        <p>Hệ thống không phát hiện bất kỳ sự cố hay lỗi giao diện nào. Tất cả 7 luồng logic nghiệp vụ, 7 kịch bản UX thực tế, cử chỉ thực chiến cuộn/click &amp; quét lỗi trực quan 3 màn hình, Google Auth, Lịch Vạn Niên, Tin tức RSS vô cực, SEO routing popstate, Chính sách bảo mật, Dev Weather Panel, Video Shorts Đa Kênh, Smart TV EPG, Byline Bar, Phân Quyền Quản Trị và Định Tuyến GitHub Pages đều chạy hoàn hảo!</p>
-      </div>
-    </div>
-  </section>
+
 
   <!-- Detailed Test Matrix -->
   <section class="matrix-panel">
@@ -1197,6 +1204,11 @@
       $("releaseGateBanner").className = "release-gate-banner passed";
       $("gateTitle").innerHTML = `<span>✅</span><span>CỔNG KIỂM DUYỆT PHÁT HÀNH: ĐÃ THÔNG QUA (RELEASE GATE: PASSED)</span>`;
       $("gateDesc").textContent = `Tất cả ${total}/${total} ca kiểm thử kỹ thuật đều đạt chuẩn tuyệt đối 100%. Không có lỗi P0/P1 chặn phát hành.`;
+      if ($("gateCopilotBtn")) $("gateCopilotBtn").style.display = "none";
+      if ($("copilotSimulateBugBtn")) {
+        $("copilotSimulateBugBtn").innerHTML = `<span>🧪</span> Thử Nghiệm Báo Lỗi`;
+        $("copilotSimulateBugBtn").style.background = "";
+      }
       
       $("bugContent").innerHTML = `
         <div class="empty-bugs">
@@ -1209,7 +1221,15 @@
       $("problemSubtitle").textContent = `${problems} sự cố cần khắc phục`;
       $("releaseGateBanner").className = "release-gate-banner blocked";
       $("gateTitle").innerHTML = `<span>❌</span><span>CỔNG KIỂM DUYỆT PHÁT HÀNH: BỊ CHẶN (RELEASE GATE: BLOCKED)</span>`;
-      $("gateDesc").textContent = `Phát hiện ${problems} ca kiểm thử thất bại. Cần khắc phục sự cố theo hướng dẫn Antigravity bên dưới.`;
+      $("gateDesc").innerHTML = `Phát hiện <strong>${problems} ca kiểm thử thất bại</strong>. Antigravity Copilot (mrkun28@gmail.com - Pro Tier) đã sẵn sàng khắc phục tự động.`;
+      if ($("gateCopilotBtn")) {
+        $("gateCopilotBtn").style.display = "inline-flex";
+        $("gateCopilotBtn").innerHTML = `<span>🤖</span> Khởi Chạy Antigravity Copilot Sửa ${problems} Lỗi`;
+      }
+      if ($("copilotSimulateBugBtn")) {
+        $("copilotSimulateBugBtn").innerHTML = `<span>🛡️</span> Khôi Phục Lại PASS 100% (Đã Xử Lý Xong)`;
+        $("copilotSimulateBugBtn").style.background = "#059669";
+      }
 
       // Render Bug Cards with 1-click Antigravity prompt copy
       const failedItems = items.filter(i => i.status === "FAIL" || i.status === "BLOCKED");
@@ -1328,6 +1348,18 @@
     btn.classList.add("running");
     icon.textContent = "⏳";
     text.textContent = "Đang Kiểm Thử Thực Tế...";
+
+    // Watchdog timer (40s safety timeout to prevent any permanent hang)
+    const watchdogTimer = setTimeout(() => {
+      if (isRunning) {
+        console.warn("Watchdog timeout triggered: restoring test runner state");
+        isRunning = false;
+        btn.classList.remove("running");
+        icon.textContent = "▶️";
+        text.textContent = "Chạy Kiểm Thử Toàn Hệ Thống";
+        renderDashboard();
+      }
+    }, 40000);
     $("systemStatusText").textContent = "Đang kết nối hệ thống và chạy kiểm thử 7 luồng logic...";
 
     function appendLog(tag, msg) {
@@ -1960,8 +1992,10 @@ Không phát hiện sự cố cần khắc phục.`;
     }
 
     modal.style.display = "flex";
-    if (isAuto) {
-      showToast(`⚠️ Tự động báo bug: Antigravity Copilot đã mở với ${problems.length} sự cố!`);
+    if (isAuto && problems.length > 0) {
+      // Auto dispatch directly into Antigravity Copilot for mrkun28@gmail.com
+      dispatchToAntigravity();
+      showToast(`🚀 Tự động báo bug: Antigravity Copilot Pro đã tiếp nhận ${problems.length} sự cố và tạo lệnh xử lý tự động!`);
     }
   }
 
@@ -2064,6 +2098,7 @@ Không phát hiện sự cố cần khắc phục.`;
     showToast("Đã làm mới dữ liệu kiểm thử từ repository!");
   });
   $("copilotBtn").addEventListener("click", () => openCopilotModal(false));
+  $("gateCopilotBtn")?.addEventListener("click", () => openCopilotModal(true));
   $("closeCopilotModalBtn")?.addEventListener("click", closeCopilotModal);
   $("copilotCloseBtn")?.addEventListener("click", closeCopilotModal);
   $("copilotDispatchBtn")?.addEventListener("click", dispatchToAntigravity);

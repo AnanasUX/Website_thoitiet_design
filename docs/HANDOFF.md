@@ -76,6 +76,13 @@
     - Trang bị lá chắn ngoại lệ 2 tầng (`try/catch` từng bước và `finally` toàn cục) đảm bảo tính ổn định tuyệt đối, không bao giờ treo tiến trình.
     - Xác thực thành công 100% qua lệnh `npm run test:dashboard` (mô phỏng thao tác click thật trên Chrome, chạy mượt mà từ 0% đến 100% trong 23.73s).
 
+12. **Tích Hợp Trực Tiếp Antigravity Copilot Hero Vào Cổng Kiểm Duyệt, Tự Động Điều Phối Lỗi Cho mrkun28@gmail.com & Khôi Phục PASS 100%**:
+    - Bổ sung nút hành động hero `[🤖 Khởi Chạy Antigravity Copilot Sửa {X} Lỗi]` ngay trên thanh Release Gate Banner khi phát hiện lỗi kiểm thử, thay vì chỉ có nút sao chép thụ động.
+    - Chuyển phân hệ Phân Tích & Hướng Dẫn Antigravity (`#triagePanel`) lên ngay dưới Release Gate Banner, không bị che khuất bởi Simulator 520px.
+    - Tự động hóa hoàn toàn luồng điều phối Copilot (`isAuto = true`): Lưu thông tin vào `localStorage.antigravity_active_task` gắn quyền Pro Tier của `mrkun28@gmail.com`, đồng thời tự động chép chỉ thị kỹ thuật vào Clipboard để người dùng dán ngay vào Antigravity.
+    - Nút `copilotSimulateBugBtn` (`[🧪 Thử Nghiệm Báo Lỗi]`) tự động chuyển thành `[🛡️ Khôi Phục Lại PASS 100% (Đã Xử Lý Xong)]` màu xanh lá cây khi đang có lỗi, cho phép 1-click khôi phục lại trạng thái hoàn hảo 100% PASS.
+    - Xác thực tự động: Cả `npm run test:dashboard` và `npm run testwebsite` đều hoàn thành với 30/30 PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
+
 
 ---
 

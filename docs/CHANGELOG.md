@@ -57,6 +57,16 @@
 - **Nghiệm thu**: Chạy thực tế trên Google Chrome thật thông qua cả 2 kênh:
   + `npm run test:dashboard`: Giao diện Dashboard tự động chạy trơn tru 30/30 ca (TC-023 $\to$ TC-024 $\to$ TC-020), đạt 100% trong 23.73s.
   + `npm run testwebsite`: Toàn bộ 30 ca kiểm thử tiếp tục đạt chuẩn **30/30 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+### 8. Mở Rộng Hệ Thống 30/30 Yêu Cầu & Ca Kiểm Thử Toàn Diện (REQ-025 -> REQ-030)
+- Tích hợp và chuẩn hóa 6 phân hệ nâng cao vào ma trận yêu cầu và kiểm thử tự động:
+  1. **REQ-025 / TC-025**: Quản lý xác thực Google OAuth 2.0, phiên đăng nhập bền vững (`user_auth`) và UserAvatarMenu.
+  2. **REQ-026 / TC-026**: Lịch Vạn Niên Âm - Dương, điều hướng tháng trước/sau và nút tích hợp Google Calendar.
+  3. **REQ-027 / TC-027**: Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống qua proxy, 10 chuyên mục và cuộn nạp vô cực.
+  4. **REQ-028 / TC-028**: Định tuyến URL ảo chuẩn SEO `/Website_thoitiet_design/chi-tiet-[slug]` và đồng bộ popstate khôi phục trang chủ.
+  5. **REQ-029 / TC-029**: Trang Chính Sách Bảo Mật minh bạch (`PrivacyPolicyPage`) overlay z-[300] chuẩn Google OAuth Client.
+  6. **REQ-030 / TC-030**: Bảng điều khiển thời tiết nhà phát triển (`DevWeatherPanel`) kích hoạt qua triple-tap logo Anx.
+- Đồng bộ dữ liệu kiểm thử trực tiếp trên `dashboard.html` (Live Execution Console, Fallback Data, Test Definitions, Runner Execution Loop) hỗ trợ kiểm tra thời gian thực 30 ca.
+- Thực thi toàn diện lệnh kiểm duyệt `/testwebsite` (`npm run testwebsite`) đạt **30/30 PASS (100% ĐẠT, 0 FAIL)**, xác thực thành công **RELEASE GATE: PASSED**.
 
 ### 9. Nâng Cấp Động Cơ Kiểm Thử Chuyên Sâu Tương Tác Sống & Giai Đoạn Chờ Đồng Bộ Dữ Liệu RSS (Hydration Wait & Deep DOM Testing)
 - Khắc phục triệt để hiện tượng chạy kiểm thử vội vã trên QA Dashboard khi tin tức RSS từ 38 nguồn chưa nạp xong (giao diện còn ở trạng thái skeleton `animate-pulse`).
@@ -72,14 +82,12 @@
 - Nâng cấp `scripts/testwebsite.mjs` chờ selector tin tức sống trước khi click mở bài báo chi tiết và đo đạc cuộn vô cực thực tế (95 bài -> 100 bài).
 - Xác thực toàn bộ 30 ca kiểm thử: **30/30 PASS (100% ĐẠT, 0 FAIL)** trên Google Chrome thực tế và QA Dashboard.
 
-### 8. Mở Rộng Hệ Thống 30/30 Yêu Cầu & Ca Kiểm Thử Toàn Diện (REQ-025 -> REQ-030)
-- Tích hợp và chuẩn hóa 6 phân hệ nâng cao vào ma trận yêu cầu và kiểm thử tự động:
-  1. **REQ-025 / TC-025**: Quản lý xác thực Google OAuth 2.0, phiên đăng nhập bền vững (`user_auth`) và UserAvatarMenu.
-  2. **REQ-026 / TC-026**: Lịch Vạn Niên Âm - Dương, điều hướng tháng trước/sau và nút tích hợp Google Calendar.
-  3. **REQ-027 / TC-027**: Thu thập tin tức RSS từ hơn 38 nguồn báo chí chính thống qua proxy, 10 chuyên mục và cuộn nạp vô cực.
-  4. **REQ-028 / TC-028**: Định tuyến URL ảo chuẩn SEO `/Website_thoitiet_design/chi-tiet-[slug]` và đồng bộ popstate khôi phục trang chủ.
-  5. **REQ-029 / TC-029**: Trang Chính Sách Bảo Mật minh bạch (`PrivacyPolicyPage`) overlay z-[300] chuẩn Google OAuth Client.
-  6. **REQ-030 / TC-030**: Bảng điều khiển thời tiết nhà phát triển (`DevWeatherPanel`) kích hoạt qua triple-tap logo Anx.
-- Đồng bộ dữ liệu kiểm thử trực tiếp trên `dashboard.html` (Live Execution Console, Fallback Data, Test Definitions, Runner Execution Loop) hỗ trợ kiểm tra thời gian thực 30 ca.
-- Thực thi toàn diện lệnh kiểm duyệt `/testwebsite` (`npm run testwebsite`) đạt **30/30 PASS (100% ĐẠT, 0 FAIL)**, xác thực thành công **RELEASE GATE: PASSED**.
+### 11. Tích Hợp Trực Tiếp Antigravity Copilot Hero Vào Cổng Kiểm Duyệt, Tự Động Điều Phối Lỗi Cho mrkun28@gmail.com & Khôi Phục PASS 100%
+- **Bổ sung Nút Hero Hành Động Trên Cổng Kiểm Duyệt**: Khi phát hiện lỗi kiểm thử (`problems > 0`), thanh thông báo Release Gate Banner màu đỏ lập tức hiển thị nút nổi bật `[🤖 Khởi Chạy Antigravity Copilot Sửa {X} Lỗi]` màu tím gradient nhấp nháy, giúp người dùng kích hoạt xử lý lỗi tức thì chỉ với 1 click ngay trên banner thay vì chỉ có nút sao chép thụ động.
+- **Tái bố trí Vùng Phân Tích & Hướng Dẫn Antigravity**: Chuyển khu vực `#triagePanel` (`🤖 Phân Tích Sự Cố & Phương Án Xử Lý Antigravity`) lên vị trí ngay bên dưới Release Gate Banner và bên trên Simulator, giúp người dùng nhìn thấy ngay giải pháp kỹ thuật mà không cần phải cuộn chuột xuống đáy trang.
+- **Tự động hóa luồng điều phối Antigravity Copilot (`Auto-Dispatch`)**: Khi kích hoạt Copilot trong trạng thái có lỗi (`isAuto = true`), hệ thống tự động gọi hàm `dispatchToAntigravity()`, lưu tác vụ vào `localStorage.antigravity_active_task` gắn quyền Pro Tier của `mrkun28@gmail.com`, đồng thời tự động chép chỉ thị kỹ thuật vào Clipboard để người dùng dán ngay vào Antigravity.
+- **Nút Chuyển Đổi Trạng Thái Mô Phỏng Linh Hoạt**: Cải tiến nút `copilotSimulateBugBtn` (`[🧪 Thử Nghiệm Báo Lỗi]`). Khi hệ thống đang có lỗi, nút sẽ tự động chuyển thành `[🛡️ Khôi Phục Lại PASS 100% (Đã Xử Lý Xong)]` màu xanh lá cây, cho phép người dùng khôi phục lại trạng thái hoàn hảo 100% PASS một cách minh bạch và trực quan.
+- **Xác thực tự động toàn diện qua 2 kịch bản**:
+  + `npm run test:dashboard`: Kiểm tra cả 3 giai đoạn (Chạy 30/30 test cases trơn tru $\to$ Mô phỏng lỗi kích hoạt Banner BLOCKED, hiển thị Gate Copilot Button và Auto-Dispatch $\to$ Khôi phục 100% PASS).
+  + `npm run testwebsite`: Giữ vững thành tích 30/30 ca kiểm thử đạt chuẩn PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
 
