@@ -214,16 +214,21 @@
       - Cung cấp nút fallback an toàn: Nút "Mở video trên báo gốc" bảo đảm người dùng luôn xem được video ngay cả khi mạng client chặn cross-origin.
 
   - *Kiến Trúc Động Cơ AI VieNeu-TTS Đọc Chi Tiết Bài Viết (`REQ-047` / `TC-047`)*:
-    + **Bản chất yêu cầu**: Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài báo khi người dùng nhấn "Play".
+    + **Bản chất yêu cầu**: Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài báo khi người dùng nhấn nút `[Nghe đọc]` / `data-testid="article-tts-btn"`.
     + **QUY TẮC KHẮT KHE - TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ**:
-      - Hàm `extractContentForVieNeuTTS` chỉ bóc tách các đoạn văn bản thân bài (`block.type === 'p'`), loại bỏ 100% tiêu đề bài viết (`article.title`), loại bỏ chú thích ảnh (`block.type === 'image'`), loại bỏ tên tác giả đơn độc và boilerplate.
+      - Hàm `extractContentForVieNeuTTS` chỉ bóc tách các đoạn văn bản thân bài, tiêu đề phụ và đoạn mở đầu Sapo, loại bỏ 100% tiêu đề chính (`article.title`), loại bỏ chú thích ảnh (`block.type === 'image'`), loại bỏ tên tác giả đơn độc và boilerplate rác.
+    + **Áp dụng giọng đọc nữ AI VieNeu-TTS của hệ thống**:
+      - Khi người dùng nhấn nút `data-testid="article-tts-btn"`, hệ thống tự động kích hoạt giọng đọc nữ chuẩn AI VieNeu-TTS (`bac_nu` - Nữ Miền Bắc Hà Nội).
+      - Hàm `findSystemFemaleVoice` tự động quét và gán giọng nữ tiếng Việt tự nhiên nhất từ hệ thống (Google Tiếng Việt trên Chrome/Android, Microsoft Hoài My trên Edge/Windows, Apple Linh/Mai trên Safari/macOS), kết hợp cao độ nữ tính tự nhiên (`pitch = 1.05`).
+    + **Đọc Đúng & Đủ Toàn Bộ Thông Tin Chi Tiết**:
+      - Tự động bổ sung đoạn Sapo tóm tắt mở đầu (`article.description` / `article.sapo`) vào đầu luồng đọc nếu chưa có trong danh sách blocks, bảo đảm người dùng nghe trọn vẹn ngữ cảnh bài báo mà không bị thiếu đoạn mở đầu.
     + **Bộ chuẩn hóa văn bản tiếng Việt (`normalizeVietnameseTextVieNeu`)**:
       - Chức danh khoa học: `PGS.TS` -> `Phó giáo sư Tiến sĩ`, `GS.TS` -> `Giáo sư Tiến sĩ`, `ThS` -> `Thạc sĩ`.
-      - Cơ quan hành chính: `UBND TP.HCM` -> `Ủy ban nhân dân Thành phố Hồ Chí Minh`, `HĐND` -> `Hội đồng nhân dân`, `BCH` -> `Ban chấp hành`.
+      - Cơ quan hành chính: `UBND TP.HCM` -> `Ủy ban nhân dân Thành phố Hồ Chí Minh`, `HĐND` -> `Hội đồng nhân dân`, `BCH` -> `Ban chấp hành`, `Bộ TN&MT` -> `Bộ Tài nguyên và Môi trường`, `Bộ TT&TT` -> `Bộ Thông tin và Truyền thông`, `Bộ NN&PTNT` -> `Bộ Nông nghiệp và Phát triển nông thôn`.
+      - Ngành nghề, giao thông & kinh tế: `CSGT` -> `Cảnh sát giao thông`, `PCCC` -> `Phòng cháy chữa cháy`, `QL1A` -> `Quốc lộ 1`, `KCN` -> `Khu công nghiệp`, `EVN` -> `Tập đoàn Điện lực Việt Nam`.
       - Tiền tệ & Định dạng số: `200 tỷ VND` -> `200 tỷ đồng`, `$500` -> `500 đô la Mỹ`.
-      - Ngày tháng: `15/10/2026` -> `ngày 15 tháng 10 năm 2026`.
-      - Đơn vị đo lường: `32°C` -> `32 độ C`, `80 km/h` -> `80 ki-lô-mét trên giờ`.
-    + **Giao diện Trình phát AI VieNeu-TTS Card (`vieneu-tts-player-card`)**:
+      - Ngày tháng & Đơn vị: `15/10/2026` -> `ngày 15 tháng 10 năm 2026`, `32°C` -> `32 độ C`, `80 km/h` -> `80 ki-lô-mét trên giờ`.
+    + **Giao diện Trình phát AI VieNeu-TTS Card (`vieneu-tts-player-card`) & Nút Byline (`article-tts-btn`)**:
       - Trang bị cụm điều khiển chuyên nghiệp: Play/Pause, Stop, Tua tiến/lùi ±10 giây.
       - Hiển thị sóng âm thanh động (Audio Waveform) khi đang đọc.
       - Thanh tiến trình đọc (Progress bar) thời gian thực theo tỷ lệ ký tự đã đọc.
@@ -232,6 +237,8 @@
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Sử dụng giọng đọc mặc định không rõ nguồn gốc hoặc giọng nam khi người dùng nhấn nút `data-testid="article-tts-btn"` (phải áp dụng giọng nữ AI VieNeu-TTS có sẵn của hệ thống).
+- **Từ chối**: Bỏ sót đoạn tóm tắt mở đầu Sapo của bài viết khiến bản tin bị cụt hoặc thiếu thông tin mở đầu quan trọng.
 - **Từ chối**: Đọc tiêu đề bài viết (`article.title`) khi kích hoạt AI VieNeu-TTS (vi phạm trực tiếp chỉ thị người dùng "chuyển tất cả thông tin tin chiết của nội dung không tính tiêu đề trong bài").
 - **Từ chối**: Xóa bỏ các thẻ `<iframe>` hoặc `div[type="VideoStream"]` từ các trang báo đài chính thống (VTV, Báo Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong).
 - **Từ chối**: Sử dụng thẻ `<video>` mà không có thuộc tính `referrerPolicy="no-referrer"` (dẫn đến bị máy chủ báo chí chặn hotlink cross-origin và không phát được video).

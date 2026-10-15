@@ -82,6 +82,7 @@ import {
   extractContentForVieNeuTTS,
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
+  findSystemFemaleVoice,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS
 } from '../src/utils/logicFlows.ts';
@@ -967,7 +968,45 @@ export function runAllLogicFlowTests() {
   assert(VIENEU_VOICES.some(v => v.id === 'nam_nam'), "Có tùy chọn giọng Nam Miền Nam Sài Gòn");
   assert(VIENEU_SPEED_OPTIONS.includes(1.0) && VIENEU_SPEED_OPTIONS.includes(1.25), "Hỗ trợ đầy đủ các dải tốc độ đọc 0.75x -> 1.5x");
 
-  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS: Đạt 18/18 kiểm tra bóc tách KHÔNG TIÊU ĐỀ, chuẩn hóa tiếng Việt & chunks âm thanh${colors.reset}\n`);
+  // 5. Kiểm tra bóc tách ĐỌC ĐÚNG VÀ ĐỦ: Bổ sung Sapo mở đầu khi chưa có trong blocks
+  const articleWithSapo = {
+    title: "Tiêu đề bài báo thời sự sáng nay",
+    description: "Đoạn văn mở đầu Sapo tóm tắt toàn bộ bối cảnh thời sự trong nước và quốc tế.",
+    body: "Nội dung thân bài tiếp theo sau đoạn mở đầu."
+  };
+  const extractedWithSapo = extractContentForVieNeuTTS(articleWithSapo, [
+    { type: 'text', content: 'Nội dung thân bài tiếp theo sau đoạn mở đầu.' }
+  ]);
+  assert(extractedWithSapo.includes("Đoạn văn mở đầu Sapo tóm tắt"), "Bổ sung Sapo vào đầu để đọc đúng và đủ nội dung bài viết");
+  assert(!extractedWithSapo.includes("Tiêu đề bài báo thời sự sáng nay"), "Khẳng định tuyệt đối KHÔNG đọc tiêu đề bài viết");
+
+  // 6. Kiểm tra chuẩn hóa bổ sung các từ viết tắt báo chí & kinh tế
+  const extraAbbrSample = "CSGT và PCCC phối hợp kiểm tra tại KCN theo chỉ đạo của Bộ TN&MT và EVN.";
+  const extraNormText = normalizeVietnameseTextVieNeu(extraAbbrSample);
+  assert(extraNormText.includes("Cảnh sát giao thông"), "Chuẩn hóa CSGT sang Cảnh sát giao thông");
+  assert(extraNormText.includes("Phòng cháy chữa cháy"), "Chuẩn hóa PCCC sang Phòng cháy chữa cháy");
+  assert(extraNormText.includes("Khu công nghiệp"), "Chuẩn hóa KCN sang Khu công nghiệp");
+  assert(extraNormText.includes("Bộ Tài nguyên và Môi trường"), "Chuẩn hóa Bộ TN&MT sang Bộ Tài nguyên và Môi trường");
+  assert(extraNormText.includes("Tập đoàn Điện lực Việt Nam"), "Chuẩn hóa EVN sang Tập đoàn Điện lực Việt Nam");
+
+  // 7. Kiểm tra hàm tìm giọng nữ AI VieNeu-TTS của hệ thống (findSystemFemaleVoice)
+  const nullVoiceInNode = findSystemFemaleVoice();
+  assert(nullVoiceInNode === null, "findSystemFemaleVoice trả về null an toàn khi không có môi trường trình duyệt");
+
+  global.window = {
+    speechSynthesis: {
+      getVoices: () => [
+        { name: 'Microsoft David Desktop', lang: 'en-US' },
+        { name: 'Google Tiếng Việt', lang: 'vi-VN' },
+        { name: 'Microsoft An Online', lang: 'vi-VN' }
+      ]
+    }
+  };
+  const mockFemaleVoice = findSystemFemaleVoice();
+  assert(mockFemaleVoice !== null && mockFemaleVoice.name === 'Google Tiếng Việt', "Nhận diện chính xác giọng nữ tiếng Việt Google Tiếng Việt");
+  delete global.window;
+
+  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS: Đạt 27/27 kiểm tra bóc tách KHÔNG TIÊU ĐỀ, đọc đúng đủ Sapo, chuẩn hóa tiếng Việt & giọng nữ hệ thống${colors.reset}\n`);
 
 
 

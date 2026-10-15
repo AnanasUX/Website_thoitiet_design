@@ -346,13 +346,15 @@
   3. Tự động chuẩn hóa URL HTTPS và cấu hình `referrerPolicy="no-referrer"` trên thẻ video nhúng để vượt qua cơ chế chặn hotlink cross-origin của các báo.
   4. Cung cấp nút fallback an toàn "Mở video gốc" để người dùng luôn xem được video.
 
-#### TC-047: Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết không tính tiêu đề
-- **Mục tiêu**: Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài báo khi người dùng nhấn "Play".
+#### TC-047: Động cơ AI VieNeu-TTS đọc toàn bộ nội dung chi tiết bài viết (Giọng Nữ Hệ Thống, Không Tính Tiêu Đề)
+- **Mục tiêu**: Tích hợp công nghệ AI Vietnamese Neural Text-to-Speech từ repository `https://github.com/pnnbao97/VieNeu-TTS` (Phạm Nguyễn Ngọc Bảo) để đọc toàn bộ nội dung chi tiết bài báo khi người dùng nhấn nút `data-testid="article-tts-btn"` hoặc nút Play trên AI Player Card.
 - **Tiêu chí nghiệm thu**:
-  1. **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ**: Bóc tách toàn bộ thân bài, loại bỏ 100% tiêu đề bài viết (`article.title`), loại bỏ chú thích ảnh, boilerplate tác giả.
-  2. Chuẩn hóa tiếng Việt (`normalizeVietnameseTextVieNeu`): Xử lý hoàn hảo chức danh học thuật (PGS.TS), cơ quan nhà nước (UBND TP.HCM), tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
-  3. Chia phân đoạn audio ($\le 250$ ký tự) để phát mượt mà không timeout.
-  4. Giao diện Trình phát AI Card (`vieneu-tts-player-card`): Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Waveform), thanh tiến trình đọc thời gian thực và menu chọn giọng Bắc/Nam, tốc độ 0.75x - 1.5x.
+  1. **Áp dụng giọng đọc nữ AI VieNeu-TTS**: Khi nhấn nút `data-testid="article-tts-btn"`, hệ thống kích hoạt giọng nữ (`bac_nu` / Google Tiếng Việt / Hoài My) với cao độ nữ tính tự nhiên (`pitch = 1.05`), hiển thị trạng thái "Đang đọc...", animation ping/pulse.
+  2. **Đọc đúng & đủ toàn bộ thông tin chi tiết**: Bóc tách đầy đủ đoạn Sapo mở đầu + toàn bộ các đoạn thân bài, quote, heading; **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT** (`article.title`), loại bỏ chú thích ảnh, boilerplate tác giả.
+  3. Chuẩn hóa tiếng Việt (`normalizeVietnameseTextVieNeu`): Xử lý hoàn hảo chức danh học thuật (PGS.TS), cơ quan nhà nước (UBND TP.HCM, Bộ TN&MT, Bộ TT&TT), ngành nghề (CSGT, PCCC, KCN, EVN), tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
+  4. Chia phân đoạn audio ($\le 250$ ký tự) để phát mượt mà không timeout.
+  5. Giao diện Trình phát AI Card (`vieneu-tts-player-card`): Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Waveform), thanh tiến trình đọc thời gian thực và menu chọn giọng Bắc/Nam, tốc độ 0.75x - 1.5x.
+
 
 
 

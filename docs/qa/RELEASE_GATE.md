@@ -28,8 +28,8 @@ Cổng kiểm duyệt phát hành (Release Gate) là hàng rào kỹ thuật b�
 - [x] **FG-4**: Cơ sở dữ liệu 97 video YouTube từ 10 kênh báo chí và truyền hình lớn hoạt động 100%, 0 video bị lỗi 404, không dùng video MP4 nội bộ giả lập.
 - [x] **FG-5**: Chuyển kênh TV không bị rỗng playlist (Empty Playlist Prevention).
 - [x] **FG-6**: Hiển thị tác giả bài viết chuẩn báo chính thống: Byline bar nhỏ gọn dưới tiêu đề, không phóng to avatar thành ảnh bài viết mờ nhòe trong thân bài, không để tên tác giả mồ côi.
-- [x] **FG-7**: Bóc tách & phát video báo chí chính thống (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, YouTube, TikTok) có `referrerPolicy="no-referrer"` và link fallback gốc.
-- [x] **FG-8**: Trình phát AI VieNeu-TTS đọc toàn bộ thân bài chi tiết, TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT, chuẩn hóa tiếng Việt, đầy đủ Waveform và Progress Bar.
+- [x] **FG-8**: Trình phát AI VieNeu-TTS đọc đúng và đủ toàn bộ thân bài + Sapo, áp dụng giọng nữ hệ thống (`bac_nu` / Google Tiếng Việt / Hoài My) khi bấm nút `article-tts-btn`, TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT, chuẩn hóa tiếng Việt, đầy đủ Waveform và Progress Bar.
+
 
 
 ### C. Tiêu Chí Biên Dịch & Đóng Gói (Build & Performance Gate)

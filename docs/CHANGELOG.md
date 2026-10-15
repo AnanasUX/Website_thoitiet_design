@@ -163,4 +163,16 @@
     + Nâng cấp `scripts/testwebsite.mjs` bổ sung Test Suite 9 cho TC-046 & TC-047.
     + Chạy kiểm thử toàn diện thực tế lệnh `/testwebsite` đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
+### 16. Nâng Cấp Kích Hoạt Giọng Đọc Nữ AI VieNeu-TTS & Đọc Đúng Đủ Nội Dung Bài Viết (REQ-047 / TC-047)
+- **Tiếp nhận yêu cầu**: Khi người dùng nhấn nút Byline `data-testid="article-tts-btn"` (trạng thái "Đang đọc..."), hệ thống tự động áp dụng giọng đọc nữ AI VieNeu-TTS có sẵn của hệ thống (`bac_nu` / Google Tiếng Việt / Hoài My), đảm bảo đọc đúng và đủ toàn bộ thông tin chi tiết bài viết (bao gồm Sapo mở đầu và toàn bộ thân bài, tuyệt đối không tính tiêu đề).
+- **Triển khai kỹ thuật**:
+  - Xây dựng hàm `findSystemFemaleVoice`: Tự động tìm kiếm và gán giọng nữ tiếng Việt chuẩn nhất trong trình duyệt (`Google Tiếng Việt` trên Chrome/Android, `Microsoft Hoài My` trên Edge/Windows, `Linh/Mai` trên Safari/macOS).
+  - Tinh chỉnh cao độ nữ tính tự nhiên (`pitch = 1.05`) cho giọng đọc `bac_nu`.
+  - Nâng cấp `extractContentForVieNeuTTS`: Tự động bổ sung đoạn Sapo mở đầu (`article.description` / `article.sapo`) nếu chưa có trong danh sách blocks, bảo đảm bản tin được đọc trọn vẹn đầy đủ ngữ cảnh; bảo vệ nghiêm ngặt quy tắc loại bỏ 100% tiêu đề chính của bài báo.
+  - Bổ sung bộ từ điển chuẩn hóa văn bản tiếng Việt cho các từ viết tắt báo chí & kinh tế: `Bộ TN&MT`, `Bộ TT&TT`, `Bộ NN&PTNT`, `CSGT`, `PCCC`, `QL1A`, `KCN`, `EVN`, làm sạch bullet points và dấu ngoặc kép.
+  - Tiền tải danh sách `voiceschanged` trong `NewsDetailView` để giọng đọc nữ luôn sẵn sàng khi người dùng click.
+  - Mở rộng bộ kiểm thử luồng logic `scripts/test-logic-flows.mjs` lên **290/290 assertions PASS (100% ĐẠT, 0 FAIL)**.
+  - Chạy `npm run test:dashboard` và `npm run testwebsite` đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+
 

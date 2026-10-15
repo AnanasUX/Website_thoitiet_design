@@ -39,6 +39,7 @@ import {
   extractContentForVieNeuTTS,
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
+  findSystemFemaleVoice,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS
 } from "./utils/logicFlows";
@@ -725,6 +726,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
   }, [onClose, stopAllAudio]);
 
+  // Tiền tải danh sách giọng đọc tiếng Việt của trình duyệt (SpeechSynthesis)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      const onVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+      return () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+      };
+    }
+  }, []);
+
   const playVieNeuChunk = useCallback((idx: number, chunksList: string[], speed: number, voiceId: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     const synth = window.speechSynthesis;
@@ -742,7 +757,17 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     const utterance = new SpeechSynthesisUtterance(chunkText);
     utterance.lang = 'vi-VN';
     utterance.rate = speed;
-    utterance.pitch = voiceId === 'bac_nu' ? 1.05 : 0.95;
+
+    // Áp dụng giọng đọc nữ AI VieNeu-TTS của hệ thống ('bac_nu')
+    if (voiceId === 'bac_nu') {
+      const femaleVoice = findSystemFemaleVoice();
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
+      utterance.pitch = 1.05;
+    } else {
+      utterance.pitch = 0.95;
+    }
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -782,7 +807,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     }
 
     synth.cancel();
-    // BẢO ĐẢM TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ: Chỉ bóc tách phần thân bài chi tiết
+
+    // 1. Áp dụng giọng đọc nữ AI VieNeu-TTS ('bac_nu' - Nữ Miền Bắc VieNeu Voice)
+    const activeVoiceId = 'bac_nu';
+    setVieNeuVoice(activeVoiceId);
+
+    // 2. BẢO ĐẢM ĐỌC ĐÚNG VÀ ĐỦ CÁC THÔNG TIN CHI TIẾT (TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ)
     const bodyText = extractContentForVieNeuTTS(article, contentBlocks);
     const cleanToRead = bodyText || (article.body || article.description || '').replace(/<[^>]*>/g, '').trim();
 
@@ -793,7 +823,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
     const chunks = splitVieNeuAudioChunks(cleanToRead);
     setVieNeuChunks(chunks);
-    playVieNeuChunk(0, chunks, vieNeuSpeed, vieNeuVoice);
+    playVieNeuChunk(0, chunks, vieNeuSpeed, activeVoiceId);
   };
 
   const handleSeekBackward = () => {

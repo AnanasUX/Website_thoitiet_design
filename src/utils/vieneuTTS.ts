@@ -39,40 +39,53 @@ export const VIENEU_VOICES: VieNeuVoiceOption[] = [
 export const VIENEU_SPEED_OPTIONS = [0.75, 1.0, 1.25, 1.5];
 
 /**
- * 1. BÓC TÁCH NỘI DUNG CHI TIẾT BÀI BÁO - TUYỆT ĐỐI KHÔNG LẤY TIÊU ĐỀ
- * Chỉ lấy nội dung thân bài (các đoạn văn text, quote, heading).
- * Bỏ hoàn toàn: Tiêu đề bài viết (title), tên tác giả mồ côi, chú thích ảnh, boilerplate.
+ * 1. BÓC TÁCH TOÀN BỘ NỘI DUNG CHI TIẾT BÀI BÁO - ĐỌC ĐÚNG & ĐỦ, TUYỆT ĐỐI KHÔNG LẤY TIÊU ĐỀ
+ * Lấy toàn bộ: Đoạn mở đầu (Sapo / tóm tắt), các đoạn thân bài (text), trích dẫn (quote), tiêu đề phụ (heading).
+ * Bỏ hoàn toàn: Tiêu đề bài viết chính (article.title), tên tác giả mồ côi, chú thích ảnh, boilerplate rác.
  */
 export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): string {
   if (!article) return '';
 
   const rawTitle = (article.title || article.author || '').trim().toLowerCase();
+  const rawSapo = (article.description || article.desc || article.summary || article.sapo || '')
+    .replace(/<[^>]*>/g, '')
+    .trim();
+
   const paragraphs: string[] = [];
 
-  // Nếu có danh sách blocks bóc tách chi tiết:
+  // 1. Nếu có danh sách blocks bóc tách chi tiết:
   if (Array.isArray(blocks) && blocks.length > 0) {
     for (const b of blocks) {
-      // TUYỆT ĐỐI BỎ QUA TIÊU ĐỀ VÀ THÔNG TIN TÁC GIẢ/ẢNH/VIDEO
-      if (b.type === 'title' || b.type === 'author' || b.type === 'image' || b.type === 'video' || b.type === 'iframe') {
+      // TUYỆT ĐỐI BỎ QUA TIÊU ĐỀ VÀ THÔNG TIN TÁC GIẢ/ẢNH/VIDEO/LIÊN QUAN
+      if (
+        b.type === 'title' || 
+        b.type === 'author' || 
+        b.type === 'image' || 
+        b.type === 'video' || 
+        b.type === 'iframe' || 
+        b.type === 'related-link'
+      ) {
         continue;
       }
-      if (b.type === 'text' || b.type === 'quote' || b.type === 'heading') {
+
+      if (b.type === 'text' || b.type === 'quote' || b.type === 'heading' || b.type === 'sapo') {
         const rawContent = (b.content || '').replace(/<[^>]*>/g, '').trim();
         const lower = rawContent.toLowerCase();
 
-        // Không lấy nếu trùng lặp với tiêu đề bài viết
-        if (rawTitle && (lower === rawTitle || (rawTitle.length > 15 && lower.includes(rawTitle)))) {
+        // TUYỆT ĐỐI KHÔNG LẤY NẾU TRÙNG TIÊU ĐỀ BÀI VIẾT
+        if (rawTitle && (lower === rawTitle || (rawTitle.length > 15 && lower.includes(rawTitle)) || (lower.length > 15 && rawTitle.includes(lower)))) {
           continue;
         }
 
-        // Bỏ các câu boilerplate rác
+        // Bỏ các câu boilerplate rác của báo chí
         if (
           lower === 'đọc tiếp' ||
           lower.startsWith('theo ') ||
           lower.startsWith('nguồn:') ||
           lower.startsWith('từ khóa:') ||
           lower.includes('về trang chủ đề') ||
-          lower.includes('bài viết liên quan')
+          lower.includes('bài viết liên quan') ||
+          lower.includes('xem thêm:')
         ) {
           continue;
         }
@@ -84,27 +97,42 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
     }
   }
 
-  // Fallback nếu không có blocks hoặc blocks chưa parse kịp:
+  // 2. Bổ sung đoạn Sapo mở đầu nếu trong blocks chưa có (đảm bảo đọc đủ thông tin bài báo)
+  if (rawSapo && rawSapo.length > 10) {
+    const lowerSapo = rawSapo.toLowerCase();
+    const isTitle = rawTitle && (lowerSapo === rawTitle || lowerSapo.includes(rawTitle) || rawTitle.includes(lowerSapo));
+    if (!isTitle) {
+      const alreadyIncluded = paragraphs.some(p => {
+        const lp = p.toLowerCase();
+        return lp.includes(lowerSapo.slice(0, 30)) || lowerSapo.includes(lp.slice(0, 30));
+      });
+      if (!alreadyIncluded) {
+        paragraphs.unshift(rawSapo);
+      }
+    }
+  }
+
+  // 3. Fallback nếu không có blocks hoặc blocks chưa parse kịp:
   // Lấy từ article.body hoặc article.desc và TUYỆT ĐỐI BỎ TIÊU ĐỀ
   if (paragraphs.length === 0) {
-    const rawBody = (article.body || article.description || article.desc || article.summary || '')
+    const rawBody = (article.body || article.content || article.description || article.desc || article.summary || '')
       .replace(/<[^>]*>/g, '')
       .trim();
 
     if (rawBody) {
       // Tách theo câu và lọc bỏ câu nào trùng tiêu đề
-      const sentences = rawBody.split(/(?<=[.?!])\s+/);
+      const sentences = rawBody.split(/(?<=[.?!])\s+|\n+/);
       for (const s of sentences) {
         const cleanS = s.trim();
         const lowerS = cleanS.toLowerCase();
-        if (cleanS && lowerS !== rawTitle && !rawTitle.includes(lowerS)) {
+        if (cleanS && lowerS !== rawTitle && !rawTitle.includes(lowerS) && !lowerS.includes(rawTitle)) {
           paragraphs.push(cleanS);
         }
       }
     }
   }
 
-  // Nối các đoạn thành văn bản thân bài tinh khiết
+  // Nối các đoạn thành văn bản thân bài hoàn chỉnh
   return paragraphs.join('\n\n').trim();
 }
 
@@ -124,7 +152,7 @@ export function normalizeVietnameseTextVieNeu(rawText: string): string {
   text = text.replace(/\b(\d{1,2})h(\d{1,2})\b/gi, '$1 giờ $2 phút');
   text = text.replace(/\b(\d{1,2})h\b/gi, '$1 giờ');
 
-  // 3. Chuẩn hóa chức danh và cơ quan nhà nước
+  // 3. Chuẩn hóa chức danh và cơ quan nhà nước, tổ chức kinh tế
   const ABBREVIATIONS: Record<string, string> = {
     'PGS.TS': 'Phó giáo sư Tiến sĩ',
     'GS.TS': 'Giáo sư Tiến sĩ',
@@ -149,6 +177,26 @@ export function normalizeVietnameseTextVieNeu(rawText: string): string {
     'Bộ GD-ĐT': 'Bộ Giáo dục và Đào tạo',
     'Bộ GD&ĐT': 'Bộ Giáo dục và Đào tạo',
     'Bộ GTVT': 'Bộ Giao thông Vận tải',
+    'Bộ TN-MT': 'Bộ Tài nguyên và Môi trường',
+    'Bộ TN&MT': 'Bộ Tài nguyên và Môi trường',
+    'Bộ TT-TT': 'Bộ Thông tin và Truyền thông',
+    'Bộ TT&TT': 'Bộ Thông tin và Truyền thông',
+    'Bộ KH-CN': 'Bộ Khoa học và Công nghệ',
+    'Bộ KH&CN': 'Bộ Khoa học và Công nghệ',
+    'Bộ NN-PTNT': 'Bộ Nông nghiệp và Phát triển nông thôn',
+    'Bộ NN&PTNT': 'Bộ Nông nghiệp và Phát triển nông thôn',
+    'CSGT': 'Cảnh sát giao thông',
+    'PCCC': 'Phòng cháy chữa cháy',
+    'QL1A': 'Quốc lộ 1',
+    'QL1': 'Quốc lộ 1',
+    'KCN': 'Khu công nghiệp',
+    'KKT': 'Khu kinh tế',
+    'TNHH': 'Trách nhiệm hữu hạn',
+    'CP': 'Cổ phần',
+    'FDI': 'Đầu tư trực tiếp nước ngoài',
+    'GDP': 'Tổng sản phẩm nội địa',
+    'EVN': 'Tập đoàn Điện lực Việt Nam',
+    'VN-Index': 'Việt Nam Index',
     'VN': 'Việt Nam',
     'COVID-19': 'Cô-vít 19',
     'Covid-19': 'Cô-vít 19'
@@ -174,14 +222,52 @@ export function normalizeVietnameseTextVieNeu(rawText: string): string {
   text = text.replace(/(\d+(?:\s*(?:nghìn|triệu|tỷ|ngàn))?)\s*USD\b/gi, '$1 đô la Mỹ');
   text = text.replace(/(?<=\s|^)USD\b/gi, 'đô la Mỹ');
 
-  // 5. Chuẩn hóa khoảng trắng và dấu câu
+  // 5. Làm sạch ký hiệu gạch đầu dòng bullet points để giọng đọc ngắt câu tự nhiên
+  text = text.replace(/^[•▪\-\*]\s+/gm, '');
+  text = text.replace(/["“”«»]/g, '');
+
+  // 6. Chuẩn hóa khoảng trắng và dấu câu
   text = text.replace(/\s+/g, ' ').trim();
 
   return text;
 }
 
 /**
- * 3. TÁCH ĐOẠN VĂN BẢN THÀNH CÁC CHUNK ĐỌC TỰ NHIÊN (150-250 ký tự mỗi chunk)
+ * 3. TÌM KIẾM GIỌNG ĐỌC NỮ TIẾNG VIỆT CỦA HỆ THỐNG (AI VieNeu-TTS Female Voice)
+ * Tự động quét và chọn giọng đọc nữ tiếng Việt chuẩn nhất trong trình duyệt:
+ * - Google Tiếng Việt (chuẩn giọng nữ tự nhiên trên Chrome/Android)
+ * - Microsoft Hoài My (giọng nữ tự nhiên chuẩn trên Edge/Windows)
+ * - Apple Linh / Mai (giọng nữ trên macOS/iOS)
+ */
+export function findSystemFemaleVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  const synth = window.speechSynthesis;
+  const voices = synth.getVoices();
+  if (!voices || voices.length === 0) return null;
+
+  // 1. Ưu tiên giọng nữ tiếng Việt rõ ràng theo tên
+  const femaleVn = voices.find(v => 
+    (v.lang === 'vi-VN' || v.lang.startsWith('vi')) &&
+    (/hoaimy|hoài my|linh|mai|nu|female|woman|girl/i.test(v.name) || /female/i.test((v as any).gender || ''))
+  );
+  if (femaleVn) return femaleVn;
+
+  // 2. Google Tiếng Việt (mặc định giọng nữ rất mượt trên Google Chrome)
+  const googleVn = voices.find(v => 
+    (v.lang === 'vi-VN' || v.lang.startsWith('vi')) && 
+    /google/i.test(v.name)
+  );
+  if (googleVn) return googleVn;
+
+  // 3. Bất kỳ giọng tiếng Việt nào trong hệ thống
+  const anyVn = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi'));
+  if (anyVn) return anyVn;
+
+  return null;
+}
+
+/**
+ * 4. TÁCH ĐOẠN VĂN BẢN THÀNH CÁC CHUNK ĐỌC TỰ NHIÊN (150-250 ký tự mỗi chunk)
  * Giúp bộ tổng hợp âm thanh không bị ngắt câu bất thình lình hoặc quá tải bộ đệm trình duyệt.
  */
 export function splitVieNeuAudioChunks(text: string): string[] {
@@ -358,8 +444,12 @@ export class VieNeuTTSController {
     utterance.lang = 'vi-VN';
     utterance.rate = this.state.playbackSpeed;
     
-    // Tùy biến cao độ và giọng đọc mô phỏng VieNeu-TTS
+    // Tùy biến cao độ và giọng đọc nữ mô phỏng AI VieNeu-TTS
     if (this.state.selectedVoice === 'bac_nu') {
+      const femaleVoice = findSystemFemaleVoice();
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
       utterance.pitch = 1.05;
     } else {
       utterance.pitch = 0.95;
