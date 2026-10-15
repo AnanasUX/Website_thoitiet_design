@@ -1,5 +1,38 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.18.0 (2026-10-15) - Triển Khai Hoàn Hảo Kiến Trúc Khuyến Nghị VieNeu-TTS v3 Turbo (PROMPT-20261015-12 / REQ-047)
+
+### 1. Triển Khai Backend TTS Độc Lập Chuẩn FastAPI & Uvicorn (`scripts/vieneu_service.py`)
+- **Bộ API theo kiến trúc khuyến nghị**:
+  + `GET /api/tts/voices`: Trả về danh sách 23 giọng đọc VieNeu-TTS v3 Turbo bao phủ 3 miền (Bắc - Trung - Nam), tần số lấy mẫu chuẩn Studio 48 kHz.
+  + `POST /api/tts/articles/{articleId}`: Tạo hoặc lấy audio cho bài viết chi tiết; bảo vệ chống Path Traversal trên `articleId`, lọc whitelist giọng đọc, trích xuất và chuẩn hóa văn bản tiếng Việt an toàn, hỗ trợ chia đoạn câu an toàn.
+  + `GET /api/tts/jobs/{jobId}`: Trả về trạng thái tiến trình tạo audio bất đồng bộ (`queued`, `processing`, `completed`, `failed`), tiến trình %, và URL audio.
+  + `GET /api/tts/audio/{audioId}`: Stream file audio với đầy đủ hỗ trợ **HTTP 206 Partial Content (Range requests)**, cho phép trình duyệt tua mượt mà tức thì tới bất kỳ mốc thời gian nào.
+  + `POST /v1/audio/speech`: Endpoint tương thích ngược OpenAI-compatible audio speech format.
+  + `GET /health`: Healthcheck máy chủ, trạng thái model, số lượng file cache, số tác vụ đang chạy.
+- **Bảo mật & Hiệu năng**:
+  + Bộ đệm cache theo SHA-256 hash của `(articleId, voice, content, model_version)`.
+  + Tự động dọn dẹp cache sau 7 ngày (TTL cleanup) chống đầy ổ đĩa.
+  + Rate limiting bằng thuật toán Sliding Window bảo vệ chống DoS / DDoS.
+  + Chống tấn công SSRF: không nhận URL tùy ý từ client.
+
+### 2. Nâng Cấp Trình Phát Audio Bài Báo Chi Tiết Trên Frontend (`NewsDetailView`)
+- Nút "Nghe bài viết" / "Nghe đọc" kích hoạt phát thanh viên AI.
+- Đầy đủ nút Play / Pause / Nút Dừng hẳn (Stop) và khả năng tiếp tục phát (Resume) tại mốc dừng.
+- Nút tua trước (+10s) và tua sau (-10s).
+- **Thanh trượt tiến trình (Seek bar)** tương tác trực tiếp với audio element qua `input[type="range"]`.
+- **Hiển thị thời lượng audio thật**: `{formatAudioTime(currentTime)} / {formatAudioTime(duration)}`, đọc chính xác từ `audio.currentTime` và `audio.duration`, tuyệt đối không bịa số liệu.
+- **Điều chỉnh tốc độ phát (`playbackRate`)**: 0.75x, 1.0x, 1.25x, 1.5x, 2.0x trực tiếp trên Audio player mà không yêu cầu backend tạo lại audio.
+- Danh sách 23 preset voices 3 miền đồng bộ động từ backend (`fetchBackendTTSVoices`).
+- Trạng thái rõ ràng: Sẵn sàng (`idle`), Đang tạo (`generating`), Đang phát (`playing`), Tạm dừng (`paused`), Hoàn tất (`ended`), Lỗi (`error`).
+- Hỗ trợ phím tắt bàn phím: `Space` (Play/Pause), `ArrowLeft` / `ArrowRight` (tua 10s), `Escape` (thoát và dừng audio).
+
+### 3. Bộ Kiểm Thử Tự Động Toàn Diện
+- `scripts/test_vieneu_backend.py`: **34/34 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `scripts/test-logic-flows.mjs`: **346/346 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run build`: Thành công 100% (1.74s, 0 lỗi).
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ## Phiên bản 1.17.0 (2026-10-15) - Triệt Tiêu Giọng Robot Đọc Sai Ngữ Điệu, Điều Biến 23 Nhân Vật VieNeu-TTS & Khử Lỗi CORS (PROMPT-20261015-11 / REQ-047)
 
 ### 1. Phân Tích & Loại Bỏ Triệt Để Hiện Tượng Đọc "Buồn Cười"

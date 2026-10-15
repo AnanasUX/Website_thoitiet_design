@@ -41,6 +41,7 @@ import {
   isTrustedNewsVideoDomain,
   buildSafeVideoEmbedUrl,
   extractContentForVieNeuTTS,
+  extractArticleContentDetailed,
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
   buildVieNeuAudioUrl,
@@ -48,6 +49,8 @@ import {
   findSystemVoiceForCharacter,
   hasSystemVietnameseVoice,
   getCharacterVoiceModulation,
+  formatAudioTime,
+  fetchBackendTTSVoices,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS
 } from "./utils/logicFlows";
@@ -697,11 +700,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [vieNeuProgress, setVieNeuProgress] = useState<number>(0);
   const [vieNeuChunks, setVieNeuChunks] = useState<string[]>([]);
   const [currentChunkIdx, setCurrentChunkIdx] = useState<number>(0);
+  const [audioDuration, setAudioDuration] = useState<number>(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
+  const [ttsState, setTtsState] = useState<'idle' | 'generating' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
+  const [backendVoicesList, setBackendVoicesList] = useState<any[]>(VIENEU_VOICES);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const synthUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const engineRef = useRef<'audio' | 'synth'>('audio');
   const isPausedRef = useRef<boolean>(false);
+
+  // Nạp danh sách giọng đọc từ backend TTS nếu có
+  useEffect(() => {
+    fetchBackendTTSVoices().then(voices => {
+      if (voices && Array.isArray(voices) && voices.length > 0) {
+        setBackendVoicesList(voices);
+      }
+    }).catch(() => {});
+  }, []);
 
   const stopAllAudio = useCallback(() => {
     isPausedRef.current = false;
@@ -715,8 +731,11 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     }
     setIsSpeaking(false);
     setIsSpeechPaused(false);
+    setTtsState('idle');
     setVieNeuProgress(0);
     setCurrentChunkIdx(0);
+    setAudioCurrentTime(0);
+    setAudioDuration(0);
   }, []);
 
   const related = useMemo(() => {
@@ -867,6 +886,22 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         audio.src = audioUrl;
         audio.playbackRate = speed;
 
+        audio.ontimeupdate = () => {
+          if (!isPausedRef.current) {
+            setAudioCurrentTime(audio.currentTime);
+            if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+              setAudioDuration(audio.duration);
+              setVieNeuProgress(Math.round((audio.currentTime / audio.duration) * 100));
+            }
+          }
+        };
+
+        audio.onloadedmetadata = () => {
+          if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+            setAudioDuration(audio.duration);
+          }
+        };
+
         audio.onplay = () => {
           if (isPausedRef.current) {
             audio.pause();
@@ -874,10 +909,14 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           }
           setIsSpeaking(true);
           setIsSpeechPaused(false);
+          setTtsState('playing');
         };
 
         audio.onended = () => {
           if (isPausedRef.current) return;
+          if (idx + 1 >= chunksList.length) {
+            setTtsState('ended');
+          }
           playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
         };
 
@@ -986,15 +1025,43 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   };
 
   const handleSeekBackward = () => {
+    if (audioRef.current && audioRef.current.duration > 0) {
+      const target = Math.max(0, audioRef.current.currentTime - 10);
+      audioRef.current.currentTime = target;
+      setAudioCurrentTime(target);
+      if (audioDuration > 0) setVieNeuProgress(Math.round((target / audioDuration) * 100));
+      return;
+    }
     if (vieNeuChunks.length === 0) return;
     const targetIdx = Math.max(0, currentChunkIdx - 1);
     playVieNeuChunk(targetIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
   };
 
   const handleSeekForward = () => {
+    if (audioRef.current && audioRef.current.duration > 0) {
+      const target = Math.min(audioRef.current.duration, audioRef.current.currentTime + 10);
+      audioRef.current.currentTime = target;
+      setAudioCurrentTime(target);
+      if (audioDuration > 0) setVieNeuProgress(Math.round((target / audioDuration) * 100));
+      return;
+    }
     if (vieNeuChunks.length === 0) return;
     const targetIdx = Math.min(vieNeuChunks.length - 1, currentChunkIdx + 1);
     playVieNeuChunk(targetIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+  };
+
+  const handleSeekChange = (newVal: number) => {
+    if (audioRef.current && audioDuration > 0) {
+      audioRef.current.currentTime = newVal;
+      setAudioCurrentTime(newVal);
+      setVieNeuProgress(Math.round((newVal / audioDuration) * 100));
+    } else if (vieNeuChunks.length > 0) {
+      const chunkIdx = Math.min(
+        vieNeuChunks.length - 1,
+        Math.floor((newVal / 100) * vieNeuChunks.length)
+      );
+      playVieNeuChunk(chunkIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+    }
   };
 
   const handleVoiceChange = (vId: string) => {
@@ -1008,9 +1075,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     setVieNeuSpeed(spd);
     if (audioRef.current) {
       audioRef.current.playbackRate = spd;
-    }
-    if (isSpeaking && vieNeuChunks.length > 0) {
-      playVieNeuChunk(currentChunkIdx, vieNeuChunks, spd, vieNeuVoice);
     }
   };
 
@@ -1715,12 +1779,26 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         )}
                       </div>
 
-                      {/* Thanh tiến trình phát trực quan */}
-                      <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-3">
-                        <div
-                          className="bg-red-600 h-full transition-all duration-300 rounded-full"
-                          style={{ width: `${vieNeuProgress}%` }}
-                        />
+                      {/* Thanh tiến trình phát trực quan & tua thời gian thực */}
+                      <div className="w-full flex flex-col gap-1 mb-3">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 font-semibold px-0.5">
+                          <span>{formatAudioTime(audioCurrentTime)}</span>
+                          <span className="text-[10px] text-slate-400 font-sans font-medium">
+                            {isSpeaking ? (isSpeechPaused ? 'Tạm dừng' : 'Đang phát') : (vieNeuProgress >= 100 ? 'Hoàn tất' : 'Sẵn sàng')}
+                          </span>
+                          <span>{audioDuration > 0 ? formatAudioTime(audioDuration) : (isSpeaking ? '...' : '00:00')}</span>
+                        </div>
+                        <div className="relative w-full flex items-center">
+                          <input
+                            type="range"
+                            min={0}
+                            max={audioDuration > 0 ? Math.floor(audioDuration) : 100}
+                            value={audioDuration > 0 ? Math.floor(audioCurrentTime) : vieNeuProgress}
+                            onChange={(e) => handleSeekChange(Number(e.target.value))}
+                            className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-red-600 focus:outline-hidden"
+                            aria-label="Thanh tua tiến trình đọc bài viết"
+                          />
+                        </div>
                       </div>
 
                       {/* Hàng điều khiển Play/Pause/Seek/Tốc độ/Giọng đọc */}
@@ -1730,6 +1808,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                             onClick={handleSeekBackward}
                             disabled={!isSpeaking}
                             title="Tua lùi 10 giây"
+                            aria-label="Tua lùi 10 giây"
                             className="p-1.5 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all disabled:opacity-40 cursor-pointer"
                           >
                             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
@@ -1738,6 +1817,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           <button
                             data-testid="vieneu-play-btn"
                             onClick={handleToggleAudio}
+                            aria-label={isSpeaking ? (isSpeechPaused ? "Tiếp tục đọc" : "Tạm dừng đọc") : "Phát âm thanh AI"}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all shadow-xs cursor-pointer ${
                               isSpeaking && !isSpeechPaused
                                 ? 'bg-red-600 text-white hover:bg-red-700'
@@ -1766,6 +1846,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                             onClick={handleSeekForward}
                             disabled={!isSpeaking}
                             title="Tua tới 10 giây"
+                            aria-label="Tua tới 10 giây"
                             className="p-1.5 text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all disabled:opacity-40 cursor-pointer"
                           >
                             <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
@@ -1775,6 +1856,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                             <button
                               onClick={stopAllAudio}
                               title="Dừng đọc"
+                              aria-label="Dừng đọc"
                               className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-white rounded-lg transition-all cursor-pointer"
                             >
                               <svg className="size-4 fill-current" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/></svg>
@@ -1787,35 +1869,37 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           <select
                             value={vieNeuVoice}
                             onChange={(e) => handleVoiceChange(e.target.value)}
+                            aria-label="Chọn giọng đọc AI 3 miền"
                             className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden max-w-[190px] truncate"
                           >
                             <optgroup label="Miền Bắc (Hà Nội)">
-                              <option value="bac_nu">Nữ Bắc - Mai Anh (Báo chí)</option>
-                              <option value="doan_trang">Nữ Bắc - Đoan Trang (Tự nhiên)</option>
-                              <option value="minh_quan">Nam Bắc - Minh Quân (Chuẩn AI)</option>
-                              <option value="minh_duc">Nam Bắc - Minh Đức (Báo chí)</option>
+                              {backendVoicesList.filter(v => v.region === 'north').map(v => (
+                                <option key={v.id} value={v.id}>{v.name}</option>
+                              ))}
                             </optgroup>
                             <optgroup label="Miền Trung (Huế / Đà Nẵng)">
-                              <option value="ngoc_tran">Nữ Trung - Ngọc Trân (Huế Tự nhiên)</option>
-                              <option value="quang_son">Nam Trung - Quang Sơn (Tự nhiên)</option>
+                              {backendVoicesList.filter(v => v.region === 'central').map(v => (
+                                <option key={v.id} value={v.id}>{v.name}</option>
+                              ))}
                             </optgroup>
                             <optgroup label="Miền Nam (Sài Gòn)">
-                              <option value="nam_nam">Nam Nam - Minh Triết (Báo chí)</option>
-                              <option value="thuy_dung">Nữ Nam - Thùy Dung (Báo chí)</option>
-                              <option value="kim_thanh">Nữ Nam - Kim Thanh (Kể chuyện)</option>
-                              <option value="adam">Nam Nam - Adam (Tự nhiên)</option>
+                              {backendVoicesList.filter(v => v.region === 'south').map(v => (
+                                <option key={v.id} value={v.id}>{v.name}</option>
+                              ))}
                             </optgroup>
                           </select>
 
                           <select
                             value={vieNeuSpeed}
                             onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                            aria-label="Điều chỉnh tốc độ phát"
                             className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden"
                           >
                             <option value="0.75">0.75x</option>
                             <option value="1.0">1.0x (Chuẩn)</option>
                             <option value="1.25">1.25x</option>
                             <option value="1.5">1.5x</option>
+                            <option value="2.0">2.0x</option>
                           </select>
                         </div>
                       </div>

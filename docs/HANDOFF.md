@@ -2,9 +2,9 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.17.0`
-- **Commit gần nhất**: `f047453` (`fix(tts): eliminate robotic English voice, match VieNeu characters, prevent CORS errors, and fix TC-013`)
-- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí & Kiến Trúc AI VieNeu-TTS v3 Turbo 48 kHz Studio)**:
+- **Phiên bản**: `1.18.0`
+- **Commit gần nhất**: `PENDING_COMMIT` (`feat(tts): implement recommended independent VieNeu-TTS v3 Turbo FastAPI backend and full-featured frontend audio player`)
+- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí, VieNeu-TTS v3 Turbo 48 kHz Studio & FastAPI Independent Backend)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
     2. *Click bài viết chi tiết*: Mở modal bài viết, cuộn nội dung, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan, thoát modal qua phím `Escape`.
@@ -204,6 +204,35 @@
       + `npm run build`: Thành công 100% (0 lỗi).
       + `npm run test:dashboard`: 47/47 PASS (100% PASS) trên Chrome thật.
       + `npm run testwebsite`: 47/47 PASS (100% PASS), **RELEASE GATE: PASSED**.
+
+21. **[REQ-047 / PROMPT-20261015-12] Triển Khai Kiến Trúc Khuyến Nghị VieNeu-TTS v3 Turbo Độc Lập (FastAPI 48 kHz Backend & Full-Featured Audio Player Frontend)**:
+    - **Backend Độc Lập (`scripts/vieneu_service.py`)**:
+      + Máy chủ FastAPI + Uvicorn độc lập phục vụ chuyên biệt chuyển văn bản thành giọng nói tiếng Việt bằng model `pnnbao-ump/VieNeu-TTS-v3-Turbo` (48 kHz Studio).
+      + Triển khai toàn diện 5 API endpoints:
+        * `GET /api/tts/voices`: Trả về danh sách 23 giọng preset 3 miền với metadata (accent, style, gender, default).
+        * `POST /api/tts/articles/{articleId}`: Bóc tách bài viết, rate limit, kiểm tra an toàn (Path Traversal, SSRF), tạo hoặc lấy audio từ cache.
+        * `GET /api/tts/jobs/{jobId}`: Truy vấn tiến trình tạo audio bất đồng bộ (`queued`, `processing`, `completed`, `failed`).
+        * `GET /api/tts/audio/{audioId}`: Stream file audio hỗ trợ HTTP 206 Partial Content (Range requests) cho phép trình duyệt tua nhảy cóc mượt mà.
+        * `POST /v1/audio/speech`: Endpoint tương thích chuẩn OpenAI Audio Speech API.
+        * `GET /health`: Kiểm tra sức khỏe hệ thống, trạng thái model engine và số lượng audio trong cache.
+      + Quản lý tài nguyên an toàn: Model engine Singleton tái sử dụng vĩnh viễn (không nạp lại mỗi request), bộ nhớ cache SHA-256 theo hash `(articleId, voice, content, model_version)` lưu tại `public/audio_cache/`, TTL 7 ngày tự động dọn dẹp.
+      + Phòng thủ mạng: Sliding Window Rate Limiting (30 req/phút/IP), chống Path Traversal trên `articleId` & `audioId`, CORS cho phép domain trang báo.
+    - **Frontend Trình Phát Bài Báo Chi Tiết (`src/App.tsx`, `src/utils/vieneuTTS.ts`)**:
+      + Nút "Nghe bài viết" / "Nghe đọc" kích hoạt luồng phát.
+      + Nút Play/Pause và Stop dừng hẳn, tiếp tục phát tại vị trí tạm dừng.
+      + Nút tua trước -10s và tua sau +10s.
+      + Thanh trượt tiến trình (Seek bar) điều khiển thời gian thực.
+      + Hiển thị thời lượng audio thật (`duration`) và thời gian đã phát (`currentTime`) từ audio element (không bịa số liệu).
+      + Điều chỉnh tốc độ phát trực tiếp qua `playbackRate` (0.75x, 1.0x, 1.25x, 1.5x, 2.0x) trên luồng âm thanh đang phát (không re-generate audio).
+      + Bộ chọn giọng đọc 23 preset voices 3 miền lấy trực tiếp từ API backend.
+      + Trạng thái trực quan: Đang tạo giọng (spinning), Đang đọc (waveform), Tạm dừng, Hoàn tất, Lỗi.
+      + Chuẩn trợ năng WCAG: Đầy đủ nhãn `aria-label`, phím tắt bàn phím (`Space` Play/Pause, `ArrowLeft` -10s, `ArrowRight` +10s, `Escape` đóng modal dừng phát).
+      + Hàm trích xuất nội dung `extractArticleContentDetailed`: Bóc tách tiêu đề, Sapo, các đoạn thân bài, loại bỏ 100% menu, footer, quảng cáo, boilerplate, avatar tác giả.
+    - **Kiểm Thử Toàn Diện & Nghiệm Thu Bền Vững**:
+      + `scripts/test_vieneu_backend.py`: 34/34 assertions backend PASS (100% ĐẠT, 0 FAIL).
+      + `scripts/test-logic-flows.mjs`: 346/346 assertions logic PASS (100% ĐẠT, 0 FAIL).
+      + `npm run build`: Thành công 100% không lỗi.
+      + `npm run testwebsite`: 47/47 Test Cases PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
 
 ---
 

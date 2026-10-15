@@ -26,3 +26,9 @@ release-apk/
 android/.gradle/
 android/build/
 android/app/build/
+
+# Python & Audio Cache
+__pycache__/
+*.py[cod]
+public/audio_cache/*
+!public/audio_cache/.gitkeep

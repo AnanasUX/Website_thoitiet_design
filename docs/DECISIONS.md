@@ -314,8 +314,14 @@
       - *Giải pháp 3 lớp bảo vệ*:
         1. Gỡ bỏ `crossOrigin = 'anonymous'` trên thẻ `<audio>` để trình duyệt stream trực tiếp âm thanh tiếng Việt mượt mà qua audio element, không bị lỗi CORS chặn.
         2. Bổ sung `hasSystemVietnameseVoice()` và `findSystemVoiceForCharacter(voiceId)`: Nếu máy tính người dùng hoàn toàn không cài gói ngôn ngữ tiếng Việt (chỉ có giọng US/UK), **TUYỆT ĐỐI CHẶN KHÔNG CHO PHÁT GIỌNG TIẾNG ANH ĐỌC TIẾNG VIỆT**, chỉ chạy bộ đếm nhịp visual an toàn hoặc chuyển tiếp sang stream backend.
-        3. Bổ sung `getCharacterVoiceModulation(voiceId)`: Tự động điều biến cao độ âm thanh (Pitch: $0.78 - 0.85$ cho giọng Nam trầm ấm, $1.05 - 1.12$ cho giọng Nữ trong trẻo) và tốc độ phát thanh theo từng nhân vật trong 23 preset voices.
-        4. Cung cấp dịch vụ backend Python `scripts/vieneu_service.py` chuẩn OpenAI `POST /v1/audio/speech` để nạp trực tiếp mô hình nơ-ron VieNeu-TTS v3 Turbo 48 kHz khi người dùng muốn chạy AI thật cục bộ.
+    + **Kiến Trúc Tích Hợp Khuyến Nghị: FastAPI Backend Độc Lập & Trình Phát Frontend Hoàn Thiện**:
+      - *Frontend*: Trình phát âm thanh `NewsDetailView` trên trang chi tiết trang bị đầy đủ: Play/Pause/Stop, tua trước (-10s), tua sau (+10s), thanh trượt tiến trình (Seek bar) tương tác thực tế, thời lượng audio thật (`duration`) và thời gian đã phát (`currentTime`) từ audio element (không bịa số liệu), điều chỉnh tốc độ phát (`0.75x` đến `2.0x`) trực tiếp qua `audio.playbackRate` mà không yêu cầu model tạo lại audio, hiển thị đầy đủ 23 preset voices 3 miền lấy động từ backend, hỗ trợ phím tắt (`Space`, `ArrowLeft`, `ArrowRight`, `Escape`) và nhãn trợ năng WCAG.
+      - *Backend độc lập*: Dịch vụ FastAPI `scripts/vieneu_service.py` chạy trên cổng 8000:
+        1. `GET /api/tts/voices`: Trả về danh sách giọng được hỗ trợ.
+        2. `POST /api/tts/articles/{articleId}`: Nhận tiêu đề, sapo, nội dung bài viết, bóc tách và phân đoạn an toàn, rate limit (Sliding Window), chống SSRF, cache kết quả theo SHA-256 hash của `(articleId, voice, content, model_version)`.
+        3. `GET /api/tts/jobs/{jobId}`: Truy vấn tiến trình tạo audio bất đồng bộ.
+        4. `GET /api/tts/audio/{audioId}`: Stream file audio với đầy đủ hỗ trợ HTTP 206 Partial Content (Range requests) cho phép trình duyệt tua mượt mà.
+        5. Tự động dọn dẹp cache hết hạn sau 7 ngày (TTL cleanup) ngăn chặn tràn ổ đĩa.
 
 ---
 

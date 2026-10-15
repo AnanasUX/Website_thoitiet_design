@@ -443,6 +443,167 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
   return paragraphs.join('\n\n').trim();
 }
 
+export interface ExtractedArticleContent {
+  title: string;
+  sapo: string;
+  body: string;
+  fullText: string;
+}
+
+/**
+ * Trích xuất nội dung bài báo toàn diện theo chuẩn website tin tức:
+ * - Tiêu đề (title), Sapo/mô tả ngắn (sapo), Thân bài (body), Văn bản hoàn chỉnh (fullText)
+ * - Loại bỏ: Menu, footer, quảng cáo, nút chia sẻ, bài liên quan, boilerplate rác, script, avatar tác giả
+ * - Chuẩn hóa khoảng trắng và ký tự tiếng Việt
+ */
+export function extractArticleContentDetailed(
+  article: any,
+  blocks: any[] = [],
+  options: { includeTitle?: boolean; includeSapo?: boolean; maxChars?: number } = {}
+): ExtractedArticleContent {
+  const { includeTitle = true, includeSapo = true, maxChars = 50000 } = options;
+  if (!article) return { title: '', sapo: '', body: '', fullText: '' };
+
+  const rawTitle = (article.title || article.author || '').trim();
+  const cleanTitle = rawTitle.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+  const rawSapo = (article.description || article.desc || article.summary || article.sapo || '').trim();
+  const cleanSapo = rawSapo.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+  const bodyParagraphs: string[] = [];
+  if (Array.isArray(blocks) && blocks.length > 0) {
+    for (const b of blocks) {
+      if (
+        b.type === 'title' ||
+        b.type === 'author' ||
+        b.type === 'image' ||
+        b.type === 'video' ||
+        b.type === 'iframe' ||
+        b.type === 'related-link'
+      ) {
+        continue;
+      }
+      if (b.type === 'text' || b.type === 'quote' || b.type === 'heading') {
+        const text = (b.content || '').replace(/<[^>]*>/g, '').trim();
+        const lower = text.toLowerCase();
+        if (cleanTitle && (lower === cleanTitle.toLowerCase() || cleanTitle.toLowerCase().includes(lower))) {
+          continue;
+        }
+        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(lower)) {
+          continue;
+        }
+        if (text.length > 3) {
+          bodyParagraphs.push(text);
+        }
+      }
+    }
+  }
+
+  if (bodyParagraphs.length === 0) {
+    const rawBody = (article.body || article.content || '').replace(/<[^>]*>/g, '').trim();
+    if (rawBody) {
+      const sentences = rawBody.split(/(?<=[.?!])\s+|\n+/);
+      for (const s of sentences) {
+        const cleanS = s.trim();
+        const lowerS = cleanS.toLowerCase();
+        if (cleanS && lowerS !== cleanTitle.toLowerCase() && !cleanTitle.toLowerCase().includes(lowerS)) {
+          bodyParagraphs.push(cleanS);
+        }
+      }
+    }
+  }
+
+  const cleanBody = bodyParagraphs.join('\n\n').trim();
+
+  const fullParts: string[] = [];
+  if (includeTitle && cleanTitle) {
+    fullParts.push(cleanTitle.endsWith('.') ? cleanTitle : `${cleanTitle}.`);
+  }
+  if (includeSapo && cleanSapo && cleanSapo.toLowerCase() !== cleanTitle.toLowerCase()) {
+    fullParts.push(cleanSapo);
+  }
+  if (cleanBody) {
+    fullParts.push(cleanBody);
+  }
+
+  let fullText = fullParts.join('\n\n').trim();
+  if (maxChars && fullText.length > maxChars) {
+    fullText = fullText.slice(0, maxChars);
+  }
+
+  return {
+    title: cleanTitle,
+    sapo: cleanSapo,
+    body: cleanBody,
+    fullText
+  };
+}
+
+/**
+ * Định dạng số giây thành chuỗi thời gian MM:SS hoặc HH:MM:SS chuẩn xác
+ */
+export function formatAudioTime(seconds: number): string {
+  if (isNaN(seconds) || seconds < 0) return '00:00';
+  const s = Math.floor(seconds);
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+  if (mins >= 60) {
+    const hrs = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return `${hrs.toString().padStart(2, '0')}:${remMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+const BACKEND_BASE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+  ? 'http://127.0.0.1:8000'
+  : 'http://127.0.0.1:8000';
+
+export async function fetchBackendTTSVoices(): Promise<VieNeuVoiceOption[]> {
+  try {
+    const res = await fetch(`${BACKEND_BASE_URL}/api/tts/voices`, { signal: AbortSignal.timeout(3000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.voices) && data.voices.length > 0) {
+        return data.voices;
+      }
+    }
+  } catch (err) {
+    console.warn('[VieNeu-TTS] Backend voice fetch fallback to local presets:', err);
+  }
+  return VIENEU_VOICES;
+}
+
+export async function requestBackendArticleTTS(
+  articleId: string,
+  payload: { title?: string; sapo?: string; content?: string; voice?: string; includeTitle?: boolean; format?: string }
+): Promise<any> {
+  const cleanId = (articleId || 'default-article').replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 120);
+  const res = await fetch(`${BACKEND_BASE_URL}/api/tts/articles/${cleanId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`TTS API Error (${res.status}): ${errText}`);
+  }
+  return await res.json();
+}
+
+export async function pollTTSJob(jobId: string, maxAttempts: number = 30): Promise<any> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch(`${BACKEND_BASE_URL}/api/tts/jobs/${jobId}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'completed') return data;
+      if (data.status === 'failed') throw new Error(data.error || 'TTS job failed');
+    }
+    await new Promise(r => setTimeout(r, 600));
+  }
+  throw new Error('TTS job polling timed out');
+}
+
 /**
  * 2. CHUẨN HÓA VĂN BẢN TIẾNG VIỆT THEO CHUẨN VIENEU-TTS (Text Normalization)
  * Chuyển đổi các từ viết tắt, ký hiệu tiền tệ, số đo lường, ngày tháng sang dạng âm đọc tự nhiên.

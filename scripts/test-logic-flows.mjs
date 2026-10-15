@@ -91,6 +91,8 @@ import {
   findSystemVoiceForCharacter,
   hasSystemVietnameseVoice,
   getCharacterVoiceModulation,
+  formatAudioTime,
+  extractArticleContentDetailed,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS,
   getVieNeuTTSV3TurboSpecs,
@@ -1118,7 +1120,29 @@ export function runAllLogicFlowTests() {
   assert(!openAIPayload.input.includes("[cười]"), "Làm sạch thẻ cảm xúc [cười] khỏi văn bản phát âm thanh chuẩn");
   assert(openAIPayload.input.includes("Thành phố Hồ Chí Minh"), "Văn bản trong payload được chuẩn hóa tiếng Việt chuẩn mực");
 
-  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS v3 Turbo: Đạt toàn bộ kiểm tra bóc tách KHÔNG TIÊU ĐỀ, chuẩn hóa tiếng Việt, 23 Preset Voices 3 miền, đặc tả 48 kHz & OpenAI-compatible Speech API${colors.reset}\n`);
+  // 13. KIỂM TRA BỘ TRÍCH XUẤT NỘI DUNG BÀI BÁO CHI TIẾT (extractArticleContentDetailed)
+  const detailedSample = {
+    title: "Triển vọng kinh tế số Việt Nam năm 2026",
+    description: "Đoạn mô tả ngắn Sapo về bước tiến mạnh mẽ của công nghệ và kinh tế số.",
+    body: "Nội dung chính: Quy mô thị trường số ước đạt hàng chục tỷ USD. Các doanh nghiệp đang tích cực đổi mới sáng tạo."
+  };
+  const detailedRes = extractArticleContentDetailed(detailedSample, [], { includeTitle: true, includeSapo: true });
+  assert(detailedRes.title.includes("Triển vọng kinh tế số"), "Trích xuất đúng tiêu đề bài viết");
+  assert(detailedRes.sapo.includes("Đoạn mô tả ngắn Sapo"), "Trích xuất đúng Sapo mở đầu");
+  assert(detailedRes.body.includes("Quy mô thị trường số"), "Trích xuất đúng thân bài chính");
+  assert(detailedRes.fullText.includes(detailedRes.title) && detailedRes.fullText.includes(detailedRes.sapo), "Văn bản hoàn chỉnh kết hợp đầy đủ tiêu đề, sapo và thân bài");
+
+  // Kiểm tra xử lý bài viết rỗng an toàn
+  const emptyRes = extractArticleContentDetailed(null);
+  assert(emptyRes.title === '' && emptyRes.fullText === '', "Xử lý bài viết null/rỗng an toàn không gây crash");
+
+  // 14. KIỂM TRA ĐỊNH DẠNG THỜI LƯỢNG AUDIO THẬT (formatAudioTime)
+  assert(formatAudioTime(0) === '00:00', "0 giây định dạng thành '00:00'");
+  assert(formatAudioTime(65) === '01:05', "65 giây định dạng thành '01:05'");
+  assert(formatAudioTime(3665) === '01:01:05', "3665 giây định dạng thành '01:01:05'");
+  assert(formatAudioTime(-10) === '00:00', "Thời gian âm được bảo vệ thành '00:00'");
+
+  console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS v3 Turbo: Đạt toàn bộ kiểm tra bóc tách KHÔNG TIÊU ĐỀ, chuẩn hóa tiếng Việt, 23 Preset Voices 3 miền, trích xuất toàn văn, định dạng thời lượng & OpenAI-compatible Speech API${colors.reset}\n`);
 
 
 

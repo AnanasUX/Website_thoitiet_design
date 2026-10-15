@@ -989,6 +989,7 @@ export type {
 
 export {
   extractContentForVieNeuTTS,
+  extractArticleContentDetailed,
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
   buildVieNeuAudioUrl,
@@ -996,6 +997,10 @@ export {
   findSystemVoiceForCharacter,
   hasSystemVietnameseVoice,
   getCharacterVoiceModulation,
+  formatAudioTime,
+  fetchBackendTTSVoices,
+  requestBackendArticleTTS,
+  pollTTSJob,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS,
   VieNeuTTSController,
@@ -1007,7 +1012,8 @@ export type {
   VieNeuVoiceOption,
   VieNeuPlayerState,
   VieNeuModelSpecs,
-  VieNeuOpenAISpeechPayload
+  VieNeuOpenAISpeechPayload,
+  ExtractedArticleContent
 } from './vieneuTTS.ts';
 
 
