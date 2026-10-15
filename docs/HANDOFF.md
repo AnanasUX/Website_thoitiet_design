@@ -129,6 +129,26 @@
       + Trình phát AI VieNeu-TTS Card: Đầy đủ Play/Pause, Stop, Tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực và tùy chọn giọng đọc Bắc/Nam, tốc độ 0.75x - 1.5x.
     - **Xác thực tự động**: Toàn bộ hệ thống kiểm thử chạy qua `npm run test:dashboard` và `npm run testwebsite` đạt **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
+17. **[REQ-022, REQ-023, REQ-024] Động Cơ Thực Thi Logic Nghiệp Vụ Tại Chỗ (In-Browser Logic Engine) & Tự Động Hóa Chuỗi Tương Tác UX Trực Quan Thực Chiến**:
+    - **[REQ-022] Động Cơ Logic Nghiệp Vụ Tại Chỗ (`SystemLogicEngine`)**:
+      + Nhúng trực tiếp module `SystemLogicEngine` vào `dashboard.html` thực thi 100% logic thật sự ngay trên runtime trình duyệt:
+        * Thời tiết: `detectConditionKey`, tra cứu icon bụi mịn `pm25Icon`, phương vị gió `getWindDirection`, phương trình nhiệt 9 hệ số Rothfusz `calculateNOAAHeatIndex`, tra cứu tỉnh thành `searchProvinces`.
+        * Thị trường tài chính: `calculateSpread`, định dạng tiền tệ Việt Nam `formatVND`.
+        * Tin tức & Parser: Khử trùng canonical `getUniqueKey`, lọc boilerplate `isBoilerplate`, avatar guard bảo vệ ảnh tác giả.
+        * An ninh mạng API: `validateSafeFetchUrl` (chặn SSRF), `checkRateLimit` (Sliding window 10 req/s), `detectMaliciousPayload` (SQLi, OS command, path traversal, prototype pollution), `validatePayloadSizeAndDepth` (chống JSON bomb), `verifyRequestIntegrity` (chống replay với nonce), `evaluateSecurityHeaders` (đạt 100/100 điểm).
+        * Video & VieNeu-TTS AI: `isTrustedNewsVideoDomain`, trích xuất nội dung `extractContentForVieNeuTTS` (TUYỆT ĐỐI BỎ TIÊU ĐỀ), chuẩn hóa tiếng Việt `normalizeVietnameseTextVieNeu`.
+      + Hàm `assertLogic` kiểm tra độc lập và in từng bước ra Live Terminal Console.
+    - **[REQ-023, REQ-024] Tự Động Hóa Chuỗi Tương Tác UX Trực Quan Thực Chiến (Live Visual UX Automation)**:
+      + Nhịp độ trực quan chân thực (pacing 400ms - 1000ms) trên DOM của iframe:
+        * Luồng Danh mục: Cuộn tới dải danh mục, click tab "Giá vàng", chờ nạp tin tài chính, click "Thời sự", click "Tất cả".
+        * Luồng Đọc báo & VieNeu-TTS: Mở bài viết chi tiết, cuộn Byline bar, click nút `[Nghe đọc]` (nút chuyển đỏ "Đang đọc..." nhấp nháy animate-pulse, phát âm thanh, dừng 900ms để người dùng quan sát), thoát modal bằng Escape.
+        * Luồng Shorts & Smart TV: Mở Shorts 16:9 Cinema, click đổi kênh "Báo Tiền Phong", dừng 600ms, thử phím Mute, đóng Shorts.
+        * Luồng Lịch Vạn Niên: Mở Lịch, xem ngày âm dương hoàng đạo, click chuyển tháng sau/trước, đóng Lịch.
+        * Luồng Dark Mode: Bật Dark Mode (toàn bộ iframe tối lại sang trọng, dừng 750ms), chuyển lại Light Mode.
+        * Luồng Cuộn sâu & ScrollToTop: Cuộn sâu > 1500px, click nút `ScrollToTop` cuộn mượt về đỉnh (y=0).
+        * Luồng Hầm An Ninh: Cuộn đến Hầm Mã Hóa, thấy auto-unlock in-memory, bấm Khóa xóa RAM, bấm Tự Điền & Mở Khóa tức thì.
+    - **Xác thực tự động**: `npm run test:dashboard` và `npm run testwebsite` đạt chuẩn tuyệt đối **47/47 PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)

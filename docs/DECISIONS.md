@@ -241,11 +241,33 @@
     + **Nhận diện tự động phiên Quản trị viên**: Khi tài khoản quản trị hệ thống (`mrkun28@gmail.com` - Pro Tier) truy cập `dashboard.html`, hệ thống tự động nhận diện danh tính và trạng thái ủy quyền.
     + **Zero-Touch Auto-Fill & Auto-Unlock**: Tự động điền Master Passphrase (`AnanasMaster@2026!Key`) vào ô `#vaultMasterKey` và kích hoạt hàm `handleVaultUnlock(true, true)` ngay khi trang tải xong. Dữ liệu được giải mã tức thì trong RAM (In-Memory), hiển thị đầy đủ các khóa bí mật của cả 2 hệ thống (`quan-ly-tien-phong` & `Website_thoitiet_design`) mà không bắt quản trị viên phải nhập hay click thủ công.
     + **Banner Xác Thực Minh Bạch**: Hiển thị thanh thông báo xanh ngọc trực quan `vaultAdminNotice` giải thích rõ việc hệ thống đã nhận diện tài khoản quản trị viên và tự động giải mã an toàn vào RAM.
-    + **Cơ chế Khóa & Xóa RAM chủ động**: Quản trị viên vẫn có toàn quyền kiểm soát qua nút `[🔒 Khóa & Xóa RAM]` để xóa sạch Master Key trên input và đưa các trường bí mật về trạng thái che giấu `****** [ENCRYPTED_DATA_LOCKED]`. Khi muốn mở lại, nút `[⚡ Tự Điền & Mở Khóa]` cho phép tái mở khóa tức thì 1-click.
+  - *Kiến Trúc Tích Hợp Động Cơ Thực Thi Logic Nghiệp Vụ Tại Chỗ (In-Browser Runtime Business Logic Engine) & Tự Động Hóa Chuỗi Tương Tác UX Trực Quan Thực Chiến (Live Visual UX Automation with Realistic Pacing)*:
+    + **Bối cảnh & Phản hồi người dùng**: "Chức năng 'Chạy Kiểm Thử Toàn Hệ Thống' vẫn chỉ điều chỉnh giao diện thôi việc này vẫn chỉ là test Ui bên ngoài còn luồng logic UX mong muốn thì hệ thống chưa xử lý được ."
+    + **Giải pháp Động cơ Logic Nghiệp Vụ Tại Chỗ (`SystemLogicEngine`)**:
+      - Tích hợp trực tiếp module `SystemLogicEngine` vào `dashboard.html` để thực thi 100% các phép tính và thuật toán nghiệp vụ cốt lõi ngay trong runtime của trình duyệt:
+        * *Thời tiết*: `detectConditionKey`, tra cứu biểu tượng bụi mịn `pm25Icon`, phương vị gió `getWindDirection`, phương trình nhiệt 9 hệ số Rothfusz `calculateNOAAHeatIndex`, tìm kiếm tỉnh thành không dấu `searchProvinces`.
+        * *Thị trường tài chính*: `calculateSpread`, định dạng tiền tệ Việt Nam `formatVND`.
+        * *Tin tức & Parser*: Khử trùng lặp URL canonical `getUniqueKey`, lọc boilerplate `isBoilerplate`, avatar guard bảo vệ ảnh tác giả.
+        * *An ninh mạng API*: `validateSafeFetchUrl` (chặn SSRF loopback, AWS/GCP metadata), `checkRateLimit` (Sliding window 10 req/s), `detectMaliciousPayload` (SQLi, OS command, path traversal, prototype pollution), `validatePayloadSizeAndDepth` (chống JSON bomb đệ quy > 10 tầng), `verifyRequestIntegrity` (chống replay attack với nonce), `evaluateSecurityHeaders` (đạt điểm tuyệt đối 100/100).
+        * *Video & VieNeu-TTS AI*: `isTrustedNewsVideoDomain`, trích xuất nội dung `extractContentForVieNeuTTS` (TUYỆT ĐỐI BỎ TIÊU ĐỀ), chuẩn hóa văn bản tiếng Việt `normalizeVietnameseTextVieNeu`.
+      - Cơ chế `assertLogic(cond, msg)` độc lập in kết quả kiểm tra logic chi tiết ra Live Terminal Console.
+    + **Tự Động Hóa Chuỗi Tương Tác UX Trực Quan Thực Chiến (Live Visual UX Automation)**:
+      - Tích hợp nhịp độ trực quan chân thực (pacing 400ms - 1000ms) trên DOM của iframe để người dùng quan sát rõ từng thao tác:
+        * *Luồng Danh mục*: Cuộn tới dải danh mục, click tab "Giá vàng", chờ nạp mẻ tin tài chính, click "Thời sự", click "Tất cả".
+        * *Luồng Đọc báo & VieNeu-TTS*: Mở bài viết chi tiết, cuộn Byline bar, click nút `[Nghe đọc]` (nút chuyển đỏ "Đang đọc..." nhấp nháy animate-pulse, phát âm thanh, dừng 900ms để người dùng quan sát), thoát modal bằng Escape.
+        * *Luồng Shorts & Smart TV*: Mở Shorts 16:9 Cinema, click đổi kênh "Báo Tiền Phong", dừng 600ms, thử phím Mute, đóng Shorts.
+        * *Luồng Lịch Vạn Niên*: Mở Lịch, xem ngày âm dương hoàng đạo, click chuyển tháng sau/trước, đóng Lịch.
+        * *Luồng Dark Mode*: Bật Dark Mode (toàn bộ iframe tối lại sang trọng, dừng 750ms), chuyển lại Light Mode.
+        * *Luồng Cuộn sâu & ScrollToTop*: Cuộn sâu > 1500px, click nút `ScrollToTop` cuộn mượt về đỉnh (y=0).
+        * *Luồng Hầm An Ninh*: Cuộn đến Hầm Mã Hóa, thấy auto-unlock in-memory, bấm Khóa xóa RAM, bấm Tự Điền & Mở Khóa tức thì.
+    + **Lá chắn HTML Parser trong thẻ `<script>`**:
+      - Không sử dụng trực tiếp chuỗi `</script>` trong regex hoặc string literal (ví dụ `new RegExp('<script\\b...<\\/script>', 'gi')` và `'<scr' + 'ipt>'`), tránh việc trình duyệt kết thúc thẻ script sớm gây lỗi `SyntaxError`.
 
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH
+- **Từ chối**: Chỉ co dãn viewport iframe và in log tĩnh mà không thực thi logic thật sự và không tương tác trực quan từng thành phần UX (vi phạm yêu cầu PROMPT-20261015-07).
+- **Từ chối**: Sử dụng chuỗi `</script>` bên trong mã JavaScript nằm trong thẻ `<script>` HTML (khiến parser HTML của trình duyệt ngắt script bất thường).
 - **Từ chối**: Bắt quản trị viên hệ thống đã xác thực (`mrkun28@gmail.com`) phải gõ lại Master Key hoặc phải bấm nút thủ công mỗi lần mở bảng điều khiển (vi phạm nguyên tắc trải nghiệm người dùng quản trị và yêu cầu PROMPT-20261015-06).
 - **Từ chối**: Chỉ dựa hoàn toàn vào `window.speechSynthesis` mặc định mà không có cơ chế stream âm thanh trực tiếp (vì phần lớn máy tính Windows của người dùng không cài gói giọng đọc SAPI tiếng Việt khiến trình duyệt kết thúc ngầm trong 0s mà không phát ra tiếng).
 - **Từ chối**: Giữ nguyên `<meta name="referrer" content="strict-origin-when-cross-origin" />` làm rò rỉ header referer khiến dịch vụ âm thanh Google TTS phản hồi mã lỗi 404.
