@@ -3,7 +3,7 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.18.0`
-- **Commit gần nhất**: `PENDING_COMMIT` (`feat(tts): implement recommended independent VieNeu-TTS v3 Turbo FastAPI backend and full-featured frontend audio player`)
+- **Commit gần nhất**: `73c3b88` (`feat(tts): implement recommended independent VieNeu-TTS v3 Turbo FastAPI backend and full-featured frontend audio player`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí, VieNeu-TTS v3 Turbo 48 kHz Studio & FastAPI Independent Backend)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
