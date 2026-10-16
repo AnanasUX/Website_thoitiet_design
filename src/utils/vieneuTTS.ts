@@ -712,90 +712,7 @@ export function normalizeVietnameseTextVieNeu(rawText: string): string {
   return text;
 }
 
-/**
- * 3. TÌM KIẾM GIỌNG ĐỌC NỮ TIẾNG VIỆT CỦA HỆ THỐNG (AI VieNeu-TTS Female Voice)
- * Tự động quét và chọn giọng đọc nữ tiếng Việt chuẩn nhất trong trình duyệt:
- * - Google Tiếng Việt (chuẩn giọng nữ tự nhiên trên Chrome/Android)
- * - Microsoft Hoài My (giọng nữ tự nhiên chuẩn trên Edge/Windows)
- * - Apple Linh / Mai (giọng nữ trên macOS/iOS)
- */
-export function findSystemFemaleVoice(): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-  const synth = window.speechSynthesis;
-  const voices = synth.getVoices();
-  if (!voices || voices.length === 0) return null;
 
-  // 1. Ưu tiên giọng nữ tiếng Việt rõ ràng theo tên
-  const femaleVn = voices.find(v => 
-    (v.lang === 'vi-VN' || v.lang.startsWith('vi')) &&
-    (/hoaimy|hoài my|linh|mai|nu|female|woman|girl/i.test(v.name) || /female/i.test((v as any).gender || ''))
-  );
-  if (femaleVn) return femaleVn;
-
-  // 2. Google Tiếng Việt (mặc định giọng nữ rất mượt trên Google Chrome)
-  const googleVn = voices.find(v => 
-    (v.lang === 'vi-VN' || v.lang.startsWith('vi')) && 
-    /google/i.test(v.name)
-  );
-  if (googleVn) return googleVn;
-
-  // 3. Bất kỳ giọng tiếng Việt nào trong hệ thống
-  const anyVn = voices.find(v => v.lang === 'vi-VN' || v.lang.startsWith('vi'));
-  if (anyVn) return anyVn;
-
-  return null;
-}
-
-/**
- * 3b. TÌM KIẾM GIỌNG ĐỌC TƯƠNG ỨNG VỚI TỪNG NHÂN VẬT VIENEU-TTS (REQ-047)
- * Ánh xạ chính xác giới tính (Nam / Nữ) và đặc tính phát thanh viên vào danh sách giọng của trình duyệt:
- * - Tránh tuyệt đối trường hợp Windows dùng giọng tiếng Anh (Microsoft David) đọc tiếng Việt gây méo mó, buồn cười.
- * - Nếu không có giọng tiếng Việt, trả về null để hệ thống dùng audio stream thay vì đọc ngọng.
- */
-export function findSystemVoiceForCharacter(voiceId: string): SpeechSynthesisVoice | null {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
-  const synth = window.speechSynthesis;
-  const voices = synth.getVoices();
-  if (!voices || voices.length === 0) return null;
-
-  const charDef = VIENEU_VOICES.find(v => v.id === voiceId) || VIENEU_VOICES[0];
-  const isMale = charDef.gender === 'male';
-
-  // Lọc danh sách giọng tiếng Việt khả dụng
-  const vnVoices = voices.filter(v => 
-    v.lang === 'vi-VN' || v.lang.startsWith('vi') || v.lang.includes('vi') || /vietnamese/i.test(v.name)
-  );
-  if (vnVoices.length === 0) return null;
-
-  if (isMale) {
-    const maleVn = vnVoices.find(v => 
-      /namminh|nam minh|an\b|male|man\b|boy\b/i.test(v.name) || /male/i.test((v as any).gender || '')
-    );
-    if (maleVn) return maleVn;
-  } else {
-    const femaleVn = vnVoices.find(v => 
-      /hoaimy|hoài my|linh|mai|nu\b|nữ\b|female|woman|girl/i.test(v.name) || /female/i.test((v as any).gender || '')
-    );
-    if (femaleVn) return femaleVn;
-  }
-
-  // Ưu tiên giọng tự nhiên Google / Microsoft Natural
-  const naturalVn = vnVoices.find(v => /google|natural|online/i.test(v.name));
-  if (naturalVn) return naturalVn;
-
-  return vnVoices[0];
-}
-
-/**
- * KIỂM TRA TRÌNH DUYỆT CÓ CÀI ĐẶT GÓI GIỌNG ĐỌC TIẾNG VIỆT HAY KHÔNG
- */
-export function hasSystemVietnameseVoice(): boolean {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return false;
-  const voices = window.speechSynthesis.getVoices();
-  return Boolean(voices && voices.some(v => 
-    v.lang === 'vi-VN' || v.lang.startsWith('vi') || /vietnamese/i.test(v.name)
-  ));
-}
 
 /**
  * TÍNH TOÁN THÔNG SỐ ĐIỀU BIẾN ÂM THANH (PITCH & TỐC ĐỘ) THEO TỪNG NHÂN VẬT VIENEU-TTS
@@ -930,96 +847,7 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   return `${baseUrl}/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
 }
 
-/**
- * TỰ ĐỘNG TỔNG HỢP ÂM THANH 48 KHZ MONO 16-BIT PCM CHUẨN PHÒNG THU TẠI TRÌNH DUYỆT (IN-MEMORY AUDIO SYNTHESIS)
- * Tự động kích hoạt khi chạy trên môi trường static hosting (GitHub Pages), điện thoại, hoặc khi máy chủ mạng/backend tạm thời không phản hồi.
- * Đảm bảo 100% không bao giờ bị nghẽn bởi lỗi "Không thể tải âm thanh từ máy chủ VieNeu-TTS".
- * Tuyệt đối không gọi speechSynthesis, không gọi Google Translate, giữ vững chuẩn 48 kHz và đặc tính từng giọng đọc.
- */
-export function generateClientVieNeuWavBlob(text: string, voiceId?: string): string {
-  const cleanText = (text || '').trim();
-  const wordCount = Math.max(1, cleanText.split(/\s+/).length);
-  const sampleRate = 48000;
-  
-  const resolved = resolveVieNeuVoice(voiceId || VIENEU_CENTRAL_CONFIG.defaultVoice);
-  const vid = resolved.id.toLowerCase();
-  const isMale = resolved.gender === 'male';
-                 
-  let pitch = isMale ? 0.85 : 1.05;
-  if (vid.includes('ngoc_tran')) pitch = 1.07;
-  else if (vid.includes('thuy_dung')) pitch = 1.06;
-  else if (vid.includes('doan_trang')) pitch = 1.04;
-  else if (vid.includes('minh_triet') || vid === 'nam_nam') pitch = 0.82;
-  else if (vid.includes('thai_son')) pitch = 0.81;
 
-  // Thời lượng âm thanh: ~3 từ/giây (khoảng 180 từ/phút)
-  const durationSec = Math.max(1.2, Math.min(15.0, wordCount / 3.0));
-  const numSamples = Math.floor(durationSec * sampleRate);
-  
-  const dataSize = numSamples * 2;
-  const arrayBuffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(arrayBuffer);
-  
-  const writeString = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) {
-      view.setUint8(offset + i, str.charCodeAt(i));
-    }
-  };
-  
-  // 1. RIFF Header
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeString(8, 'WAVE');
-  
-  // 2. fmt subchunk
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true); // PCM
-  view.setUint16(22, 1, true); // Mono
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, 16, true);
-  
-  // 3. data subchunk
-  writeString(36, 'data');
-  view.setUint32(40, dataSize, true);
-  
-  const baseFreq = isMale ? 130 * pitch : 220 * pitch;
-  const attackSamples = Math.min(2400, Math.floor(sampleRate * 0.05));
-  const decaySamples = Math.min(2400, Math.floor(sampleRate * 0.05));
-  
-  for (let i = 0; i < numSamples; i++) {
-    const t = i / sampleRate;
-    let sampleVal = 0.50 * Math.sin(2 * Math.PI * baseFreq * t) +
-                    0.25 * Math.sin(2 * Math.PI * (baseFreq * 2.0) * t) +
-                    0.12 * Math.sin(2 * Math.PI * (baseFreq * 3.0) * t) +
-                    0.08 * Math.sin(2 * Math.PI * (baseFreq * 4.0) * t);
-                    
-    if (i < attackSamples) {
-      sampleVal *= (i / attackSamples);
-    } else if (i > numSamples - decaySamples) {
-      sampleVal *= ((numSamples - i) / decaySamples);
-    }
-    
-    const intSample = Math.max(-32767, Math.min(32767, Math.round(sampleVal * 28000)));
-    view.setInt16(44 + i * 2, intSample, true);
-  }
-  
-  if (typeof Blob !== 'undefined' && typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-    const blob = new Blob([arrayBuffer], { type: 'audio/wav' });
-    return URL.createObjectURL(blob);
-  }
-  
-  // Fallback Data URI if Blob/URL not available
-  let binary = '';
-  const bytes = new Uint8Array(arrayBuffer);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return 'data:audio/wav;base64,' + (typeof btoa === 'function' ? btoa(binary) : Buffer.from(binary, 'binary').toString('base64'));
-}
 
 /**
  * 5. TÁCH ĐOẠN VĂN BẢN THÀNH CÁC CHUNK ĐỌC TỰ NHIÊN (Khống chế cứng <= 120 ký tự mỗi chunk)
@@ -1361,77 +1189,30 @@ export class VieNeuTTSController {
       currentlySpeakingText: chunkText
     });
 
-    const advanceSimulated = () => {
-      if (this.isPaused || reqId !== this.activeRequestId) return;
-      const durationMs = Math.max(2000, Math.round((chunkText.length / 15) * 1000 / this.state.playbackSpeed));
-      setTimeout(() => {
-        if (!this.isPaused && reqId === this.activeRequestId && this.state.status === 'playing') {
-          this.playChunk(this.currentChunkIndex + 1, reqId);
-        }
-      }, durationMs);
-    };
-
-    const fallbackToWebSpeech = () => {
-      if (this.isPaused || reqId !== this.activeRequestId) return;
-
-      // 2. Tự động đọc bằng Web Speech API tiếng Việt giọng Nữ tự nhiên của hệ thống
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(chunkText);
-          utterance.lang = 'vi-VN';
-          const femaleVoice = findSystemFemaleVoice();
-          if (femaleVoice) utterance.voice = femaleVoice;
-          utterance.rate = this.state.playbackSpeed;
-          const modulation = getCharacterVoiceModulation(this.state.selectedVoice);
-          utterance.pitch = modulation.pitch;
-
-          utterance.onend = () => {
-            if (!this.isPaused && reqId === this.activeRequestId && this.state.status === 'playing') {
-              this.playChunk(this.currentChunkIndex + 1, reqId);
-            }
-          };
-
-          utterance.onerror = () => {
-            advanceSimulated();
-          };
-
-          this.updateState({ status: 'playing', errorMessage: undefined, isFallback: true });
-          window.speechSynthesis.speak(utterance);
-          return;
-        } catch (_e) {
-          advanceSimulated();
-          return;
-        }
-      }
-
-      advanceSimulated();
-    };
-
     const handleChunkError = () => {
       if (this.isPaused || reqId !== this.activeRequestId) return;
 
-      // 1. Tự động chuyển tiếp sang stream âm thanh tiếng Việt chuẩn Google Neural TTS
-      if (this.audio && !this.audio.src.includes('translate.google.com')) {
-        try {
-          const directTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText.slice(0, 140))}&tl=vi&client=tw-ob`;
-          this.audio.onerror = null;
-          this.audio.src = directTtsUrl;
-          this.updateState({ errorMessage: undefined, isFallback: true, status: 'playing' });
-          const retryPromise = this.audio.play();
-          if (retryPromise) {
-            retryPromise.catch(() => {
-              fallbackToWebSpeech();
-            });
-          }
-          return;
-        } catch (_err) {
-          fallbackToWebSpeech();
-          return;
-        }
+      // 1. Dừng luồng phát hiện tại và hủy audio element
+      if (this.audio) {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio.src = '';
       }
 
-      fallbackToWebSpeech();
+      // 2. Chuyển trạng thái sang error, hiển thị thông báo rõ ràng, tuyệt đối KHÔNG fallback sang engine khác
+      this.updateState({
+        status: 'error',
+        errorMessage: '⚠️ Không thể tải âm thanh từ backend VieNeu-TTS v3 Turbo. Vui lòng kiểm tra kết nối mạng hoặc backend server và bấm Thử lại.',
+        isFallback: false
+      });
+
+      // 3. Ghi log lỗi kỹ thuật để truy vết nguyên nhân
+      console.error('[VieNeu-TTS] Backend audio load error for chunk:', {
+        chunkIndex: index,
+        chunkText: chunkText.slice(0, 60),
+        voice: this.state.selectedVoice,
+        model: VIENEU_CENTRAL_CONFIG.modelId
+      });
     };
 
     try {

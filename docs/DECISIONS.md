@@ -394,24 +394,20 @@
 - **Từ chối**: Hardcode `localhost` trong mã nguồn client production (thay vào đó sử dụng Same-Origin relative path `/api/tts/stream` hoặc biến cấu hình máy chủ dùng chung).
 - **Từ chối**: Sử dụng sóng âm toán học đơn tần / đa hài 220 Hz (sine wave buzzer) làm âm thanh fallback khi gặp lỗi mạng máy chủ (gây ra tiếng vo ve, rít rè điện tử khó chịu "lỗi tiếng" khiến người dùng không nghe được ngôn ngữ người đọc).
 - **Từ chối**: Xóa sạch toàn bộ mô tả bài báo (`cleanDesc = ""`) khi phần mô tả chứa tiêu đề bài viết (dẫn đến thân bài rỗng và mất sạch nội dung chi tiết bài viết trong modal chi tiết).
-- **Từ chối**: Chỉ phụ thuộc vào duy nhất một Cloudflare worker với thời gian chờ quá ngắn (4s) để bóc tách bài báo toàn văn (khiến bài báo thường xuyên bị rơi vào trạng thái rỗng). Thay vào đó, áp dụng cơ chế xoay vòng 4 proxy (Local Node Scrape, Cloudflare Worker, AllOrigins, CorsProxy) với thời gian chờ 7 giây.
+- **Từ chối**: Sử dụng nguồn đọc thứ hai (Web Speech API `window.speechSynthesis`, `SpeechSynthesisUtterance`, Google Translate TTS, hay bất kỳ engine TTS nào khác ngoài `VieNeu-TTS v3 Turbo`).
+- **Từ chối**: Chuyển đổi ngầm sang giọng hệ điều hành, Google robot TTS hoặc engine dự phòng khi xảy ra lỗi mạng / backend (silent fallback). Thay vào đó, dừng luồng phát hiện tại, vô hiệu hóa request lỗi thời, hiển thị thông báo lỗi minh bạch, cung cấp nút Thử lại và ghi log kỹ thuật.
 
-### QUYẾT ĐỊNH KIẾN TRÚC MỚI NHẤT (PROMPT-20261016-11 / REQ-053)
-1. **Kiến Trúc Bóc Tách Bài Viết Đa Tầng & Khôi Phục Toàn Văn Nội Dung Báo Chí**:
-   - *Bảo Toàn Mô Tả & Thân Bài*: Khử bỏ việc xóa sạch `cleanDesc = ""` khi mô tả bắt đầu bằng tiêu đề; thay vào đó chỉ bóc tách phần tiền tố lặp lại và bảo tồn nguyên vẹn 100% nội dung thân bài.
-   - *Trích Xuất Sapo Chuyên Nghiệp*: Tự động nhận diện và bóc tách khối Sapo mở đầu đặc thù từ các báo lớn (`.content-detail-sapo`, `.singular-sapo`, `.article__sapo`, `.sapo`, `.lead`, `h2.description`, `h2.sapo`), hiển thị khối Sapo dẫn đề in nghiêng trang trọng với viền đỏ báo chí `border-l-4 border-red-600`.
-   - *Bảo Tồn Toàn Bộ Đoạn Văn & Ảnh Bài Báo Trong Fallback*: Nếu máy khách chưa cào xong toàn văn, hàm `buildFallbackBlocks()` tự động phân tích cú pháp HTML từ `article.content` / `article.description`, bóc tách toàn bộ thẻ `<p>`, `<img>`, `<h2>`–`<h4>`, `<blockquote>` và chia tách câu văn đầy đủ, tuyệt đối không cắt cụt bài viết sau 2 câu.
-   - *Lá Chắn Bảo Vệ Ảnh Bài Viết*: Gán cờ `isMainArticleImage: true` cho ảnh chính của bài viết, ngăn chặn triệt để thuật toán bảo vệ avatar `isAuthorAvatar` ẩn nhầm ảnh chính khi tiêu đề và tác giả trùng tên nhau.
-   - *Cơ Chế Cào Dữ Liệu Đa Proxy Tự Động Phục Hồi (Multi-Proxy Failover)*:
-     + 1. Endpoint nội bộ `/api/scrape?url=` (Vite / Node backend) phản hồi siêu tốc 150–300ms, không lo chặn CORS.
-     + 2. Cloudflare Worker chuyên dụng `new-bot.mrkun28.workers.dev`.
-     + 3. AllOrigins Raw Proxy.
-     + 4. CorsProxy IO.
-
-2. **Kiến Trúc Âm Thanh Tiếng Việt Chuẩn Xác Cho VieNeu-TTS (Loại Bỏ Lỗi Tiếng & Âm Rè)**:
-   - *Loại Bỏ Hoàn Toàn Sóng Âm Rè Sine-Wave Buzzer*: Thay thế cơ chế tạo sóng âm nhân tạo gây tiếng vo ve điện tử ("lỗi tiếng") bằng luồng phát âm thanh tiếng Việt thực sự.
-   - *Stream Âm Thanh Tiếng Việt Chuẩn Xác*: Endpoint `/api/tts/stream` trên Vite server và FastAPI Backend (`scripts/vieneu_service.py`) ưu tiên stream trực tiếp âm thanh phát âm tiếng Việt chuẩn xác (MP3, 48 kHz).
-   - *Cơ Chế Dự Phòng Web Speech API Tự Nhiên*: Khi mất kết nối máy chủ mạng hoặc chạy trên static host không có backend, hệ thống tự động chuyển sang đọc bằng Web Speech API tiếng Việt giọng Nữ chuẩn của hệ thống (`vi-VN` - Google Tiếng Việt / Microsoft Hoài My), xóa sạch banner cảnh báo vàng, bảo đảm âm thanh phát liên tục, rõ chữ, truyền cảm và không gián đoạn.
+### QUYẾT ĐỊNH KIẾN TRÚC MỚI NHẤT (PROMPT-20261016-12 / REQ-054)
+1. **Kiến Trúc Duy Nhất Một Nguồn Đọc: VieNeu-TTS v3 Turbo (Single Unified Audio Pipeline)**:
+   - *Model Chuẩn Xác*: `pnnbao97/VieNeu-TTS-v3-Turbo` (Hugging Face `pnnbao-ump/VieNeu-TTS-v3-Turbo`, tác giả Phạm Nguyễn Ngọc Bảo).
+   - *Bộ Điều Khiển Trung Tâm*: `VieNeuTTSController` là điểm điều phối duy nhất cho toàn bộ website (nút Byline Bar `[Nghe đọc]` và thẻ player card chi tiết đều dùng chung).
+   - *Nguồn Phát Âm Thanh*: Âm thanh chất lượng cao 48 kHz phát qua thẻ HTML5 `Audio` nhận trực tiếp từ backend VieNeu-TTS (`/api/tts/stream`).
+   - *Triệt Tiêu 100% Nguồn Đọc Thứ Hai*:
+     + Loại bỏ hoàn toàn `window.speechSynthesis`, `SpeechSynthesisUtterance`, `findSystemFemaleVoice`, `findSystemVoiceForCharacter`, `hasSystemVietnameseVoice`.
+     + Loại bỏ hoàn toàn mọi URL hardcode và lời gọi fetch tới `translate.google.com` trong cả frontend (`src/utils/vieneuTTS.ts`), server proxy (`vite.config.ts`), và backend service (`scripts/vieneu_service.py`).
+   - *Xử Lý Lỗi Minh Bạch Không Silent Fallback*:
+     + Khi backend offline, timeout, hoặc lỗi nạp âm thanh: lập tức dừng phát, hủy request lỗi thời, cập nhật `status: 'error'`, hiển thị cảnh báo `⚠️ Không thể tải âm thanh từ backend VieNeu-TTS v3 Turbo. Vui lòng kiểm tra kết nối mạng hoặc backend server và bấm Thử lại.`, cung cấp nút `[Thử lại]` để gọi `ctrl.retry()`, và ghi log kỹ thuật cho lập trình viên.
+     + Tuyệt đối không tự ý chuyển sang giọng hệ điều hành hay robot Google TTS.
 
 
 

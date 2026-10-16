@@ -111,6 +111,7 @@
 | PROMPT-20261016-09 | 2026-10-16 | Kiểm tra logic cũ của telegram đã gửi bài viết theo thời gian cố định và thời tiết cố định chưa | REQ-051 | Resolved | Approved |
 | PROMPT-20261016-10 | 2026-10-16 | Lỗi Không thể tải âm thanh từ máy chủ VieNeu-TTS này xử lý thế nào | REQ-052 | Resolved | Approved |
 | PROMPT-20261016-11 | 2026-10-16 | Thứ nhất trong bài viết chi tiết phải hiện thị nội dung chi tiết kèm giọng đọc AI như tại, đã bị xóa hết nội dung bài viết đi. Thứ 2 khi người dùng nhấn Phát thì lỗi không đọc được đang bị lỗi tiếng. | REQ-053 | Resolved | Approved |
+| PROMPT-20261016-12 | 2026-10-16 | Chỉ sử dụng duy nhất VieNeu-TTS v3 Turbo trên toàn bộ website, loại bỏ hoàn toàn nguồn đọc thứ hai (speechSynthesis, Google Translate TTS), tuyệt đối không fallback ngầm khi gặp lỗi mạng. | REQ-054 | Resolved | Approved |
 
 
 

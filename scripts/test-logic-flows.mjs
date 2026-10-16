@@ -89,9 +89,6 @@ import {
   buildVieNeuAudioUrl,
   getVieNeuApiBaseUrl,
   resolveVieNeuVoice,
-  findSystemFemaleVoice,
-  findSystemVoiceForCharacter,
-  hasSystemVietnameseVoice,
   getCharacterVoiceModulation,
   formatAudioTime,
   extractArticleContentDetailed,
@@ -1051,39 +1048,29 @@ export function runAllLogicFlowTests() {
   assert(extraNormText.includes("Bộ Tài nguyên và Môi trường"), "Chuẩn hóa Bộ TN&MT sang Bộ Tài nguyên và Môi trường");
   assert(extraNormText.includes("Tập đoàn Điện lực Việt Nam"), "Chuẩn hóa EVN sang Tập đoàn Điện lực Việt Nam");
 
-  // 7. Kiểm tra hàm tìm giọng nữ AI VieNeu-TTS của hệ thống (findSystemFemaleVoice)
-  const nullVoiceInNode = findSystemFemaleVoice();
-  assert(nullVoiceInNode === null, "findSystemFemaleVoice trả về null an toàn khi không có môi trường trình duyệt");
-
-  global.window = {
-    speechSynthesis: {
-      getVoices: () => [
-        { name: 'Microsoft David Desktop', lang: 'en-US' },
-        { name: 'Google Tiếng Việt', lang: 'vi-VN' },
-        { name: 'Microsoft NamMinh Online', lang: 'vi-VN' },
-        { name: 'Microsoft An Online', lang: 'vi-VN' }
-      ]
-    }
-  };
-  const mockFemaleVoice = findSystemFemaleVoice();
-  assert(mockFemaleVoice !== null && mockFemaleVoice.name === 'Google Tiếng Việt', "Nhận diện chính xác giọng nữ tiếng Việt Google Tiếng Việt");
-
-  // 7b. Kiểm tra nhận diện giọng đọc tương ứng từng nhân vật (findSystemVoiceForCharacter)
-  const mockMaleVoice = findSystemVoiceForCharacter('minh_quan');
-  assert(mockMaleVoice !== null && mockMaleVoice.name.includes('NamMinh'), "Nhân vật Nam Minh Quân tự động khớp giọng Nam tiếng Việt NamMinh");
-
-  const mockCharFemaleVoice = findSystemVoiceForCharacter('mai_anh');
-  assert(mockCharFemaleVoice !== null && mockCharFemaleVoice.name.includes('Google'), "Nhân vật Nữ Mai Anh tự động khớp giọng Nữ tiếng Việt");
-
-  assert(hasSystemVietnameseVoice() === true, "hasSystemVietnameseVoice nhận diện đúng khi có giọng tiếng Việt");
-
-  // 7c. Kiểm tra thông số điều biến âm thanh (getCharacterVoiceModulation)
+  // 7. Kiểm tra thông số điều biến âm thanh (getCharacterVoiceModulation)
   const maleMod = getCharacterVoiceModulation('minh_quan');
   assert(maleMod.pitch <= 0.85, "Giọng nam Minh Quân có cao độ trầm ấm (pitch <= 0.85)");
 
   const femaleMod = getCharacterVoiceModulation('mai_anh');
   assert(femaleMod.pitch >= 1.0, "Giọng nữ Mai Anh có cao độ chuẩn phát thanh viên (pitch >= 1.0)");
   assert(femaleMod.rateMultiplier >= 1.0, "Phong cách đọc báo News có tốc độ nhỉnh hơn một chút");
+
+  // 7b. Kiểm tra VieNeuTTSController: Chỉ dùng duy nhất VieNeu-TTS v3 Turbo, tuyệt đối không dùng nguồn đọc thứ hai
+  let synthCalled = false;
+  global.window = {
+    speechSynthesis: {
+      speak: () => { synthCalled = true; },
+      cancel: () => {},
+      getVoices: () => []
+    }
+  };
+
+  const strictVieNeuCtrl = new VieNeuTTSController();
+  strictVieNeuCtrl.loadArticle('art-strict-1', 'Thử nghiệm đọc bài viết duy nhất bằng VieNeu-TTS.', 'mai_anh');
+  assert(strictVieNeuCtrl.getState().status === 'ready', "Trạng thái sẵn sàng sau khi nạp bài viết");
+  assert(strictVieNeuCtrl.getState().selectedVoice === 'mai_anh', "Giữ đúng voiceId được chỉ định");
+  assert(synthCalled === false, "Tuyệt đối không kích hoạt speechSynthesis khi nạp hoặc chuyển bài");
 
   delete global.window;
   // 8. Kiểm tra URL stream âm thanh Neural VieNeu-TTS đồng nhất (buildVieNeuAudioUrl)

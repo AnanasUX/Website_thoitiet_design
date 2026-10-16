@@ -406,6 +406,25 @@
       + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT)**.
       + `npm run test:logic`: **373/373 assertions PASS (100% ĐẠT)**.
       + `npm run build`: **Thành công 100% không lỗi trong 475ms**.
+33. **[REQ-054 / PROMPT-20261016-12] Chuẩn Hóa Duy Nhất Một Nguồn Đọc VieNeu-TTS v3 Turbo & Triệt Tiêu Hoàn Toàn Nguồn Đọc Thứ Hai**:
+    - **Vấn đề giải quyết**:
+      + Website trước đây vẫn giữ nhánh dự phòng gọi Google Translate TTS (`translate.google.com`) và Web Speech API (`window.speechSynthesis`) khi gặp lỗi mạng, dẫn đến giọng đọc không đồng nhất giữa các thiết bị (Edge đọc Hoài My, Android đọc Google TTS, macOS đọc Siri, hoặc đè 2 giọng đọc).
+      + Các URL hardcode `translate.google.com` tồn tại trong `vite.config.ts`, `scripts/vieneu_service.py` và `src/utils/vieneuTTS.ts`.
+    - **Giải pháp chuyển hóa & Khắc phục triệt để**:
+      + *Loại bỏ 100% Nguồn Đọc Thứ Hai*:
+        * Xóa bỏ hoàn toàn `window.speechSynthesis`, `SpeechSynthesisUtterance`, `findSystemFemaleVoice`, `findSystemVoiceForCharacter`, `hasSystemVietnameseVoice` khỏi toàn bộ codebase frontend (`src/utils/vieneuTTS.ts`, `src/utils/logicFlows.ts`, `src/App.tsx`).
+        * Xóa bỏ hoàn toàn tất cả các khối gọi `https://translate.google.com/translate_tts` trong `vite.config.ts`, `scripts/vieneu_service.py` và `src/utils/vieneuTTS.ts`.
+        * Xóa bỏ hàm `generateClientVieNeuWavBlob` khỏi frontend nhằm ngăn ngừa việc tự tổng hợp client synthesizer riêng rẽ; toàn bộ audio đọc đều qua backend VieNeu-TTS v3 Turbo 48 kHz.
+      + *Thống Nhất Một Luồng Duy Nhất*:
+        * `Nút đọc bài báo → VieNeuTTSController → Backend VieNeu-TTS v3 Turbo → Audio response → HTML5 Audio`.
+        * Cả nút Byline Bar `[Nghe đọc]` và card player chi tiết đều dùng chung `VieNeuTTSController`.
+      + *Xử Lý Lỗi Minh Bạch (Strict Error Handling, Tuyệt Đối Không Silent Fallback)*:
+        * Khi backend offline, timeout hoặc lỗi nạp âm thanh: dừng luồng phát hiện tại, hủy request cũ, cập nhật `status: 'error'`, hiển thị thông báo lỗi `⚠️ Không thể tải âm thanh từ backend VieNeu-TTS v3 Turbo. Vui lòng kiểm tra kết nối mạng hoặc backend server và bấm Thử lại.`, cung cấp nút `[Thử lại]` gọi `ctrl.retry()`, và ghi log kỹ thuật cho lập trình viên.
+        * Tuyệt đối không fallback ngầm sang giọng robot Google hay giọng hệ điều hành.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:logic`: **371/371 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 2.69s**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---

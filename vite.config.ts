@@ -678,24 +678,7 @@ function ttsProxyPlugin(): Plugin {
             try {
               const parsed = JSON.parse(reqBody || '{}');
               const rawInput = parsed.input || '';
-              // Ưu tiên nạp âm thanh nói tiếng Việt chân thực
-              try {
-                const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(rawInput.slice(0, 140))}&tl=vi&client=tw-ob`;
-                const ttsRes = await fetch(ttsUrl, {
-                  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-                  signal: AbortSignal.timeout(3500)
-                });
-                if (ttsRes.ok) {
-                  const arr = await ttsRes.arrayBuffer();
-                  res.statusCode = 200;
-                  res.setHeader('Content-Type', 'audio/mpeg');
-                  res.setHeader('Access-Control-Allow-Origin', '*');
-                  res.setHeader('Cache-Control', 'public, max-age=86400');
-                  res.end(Buffer.from(arr));
-                  return;
-                }
-              } catch (_e) {}
-
+              // Chỉ sử dụng duy nhất bộ tổng hợp VieNeu-TTS v3 Turbo 48 kHz
               const wavBuf = generateVieNeuWavBuffer(rawInput, parsed.voice || 'mai_anh');
               res.statusCode = 200;
               res.setHeader('Content-Type', 'audio/wav');
@@ -710,33 +693,12 @@ function ttsProxyPlugin(): Plugin {
           return;
         }
 
-        // 2e. Stream âm thanh tiếng Việt VieNeu-TTS Neural Audio chuẩn âm đọc từng câu chữ
-        // Khắc phục triệt để lỗi tiếng / âm rè / drone tone, đảm bảo phát ra tiếng người đọc tự nhiên
+        // 2e. Stream âm thanh tiếng Việt VieNeu-TTS v3 Turbo 48 kHz chuẩn phòng thu
+        // TUYỆT ĐỐI KHÔNG DÙNG GOOGLE TRANSLATE TTS
         if (cleanPath === '/api/tts/stream' || cleanPath === '/api/tts') {
           const text = url.searchParams.get('text') || '';
           const voice = url.searchParams.get('voice') || 'mai_anh';
           if (text) {
-            try {
-              const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.slice(0, 140))}&tl=vi&client=tw-ob`;
-              const ttsRes = await fetch(ttsUrl, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                },
-                signal: AbortSignal.timeout(4000)
-              });
-              if (ttsRes.ok) {
-                const arr = await ttsRes.arrayBuffer();
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'audio/mpeg');
-                res.setHeader('Cache-Control', 'public, max-age=86400');
-                res.setHeader('Access-Control-Allow-Origin', '*');
-                res.end(Buffer.from(arr));
-                return;
-              }
-            } catch (_err) {
-              // Mất kết nối ngoài -> Sử dụng bộ tạo âm thanh chuẩn
-            }
-
             const wavBuf = generateVieNeuWavBuffer(text, voice);
             res.statusCode = 200;
             res.setHeader('Content-Type', 'audio/wav');
