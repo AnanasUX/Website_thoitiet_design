@@ -1,6 +1,35 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
-## Phiên bản 1.22.0 (2026-10-16) - Triệt Tiêu Hoàn Toàn Google Translate TTS & Đồng Bộ Hóa Đa Thiết Bị Bằng Native 48 kHz VieNeu WAV Engine (PROMPT-20261016-04 / REQ-047)
+## Phiên bản 1.23.0 (2026-10-16) - Khôi Phục & Kiểm Thử Toàn Diện 100% Logic Hệ Thống Bot Telegram & Đồng Bộ Dữ Liệu Hai Chiều (PROMPT-20261016-05 / REQ-048)
+
+### 1. Khôi Phục & Chuẩn Hóa Toàn Diện Logic Bot Telegram (`quan-ly-tien-phong`)
+- **Khôi phục toàn bộ logic gốc chuẩn xác từ Checkpoint `f9ca420` (`10h52 10/12/2026`)**:
+  + Khôi phục đầy đủ bộ API keys & Fallback mặc định chuẩn: OpenWeather API, Gemini 2.5 Flash, Google Drive PowerPoint Folder (`1BwFCLX0Fjag9xM13mHIJTOYvZ6dYW5Ox`), Google Docs (`1a9_qNqFEpbmuIoKuEvT3cExHzpszov4THOfm1ztCZc8`).
+  + Xóa bỏ triệt để các module gây lỗi 401 Unauthorized do thiếu khóa dự phòng (`crypto_vault.py`).
+  + Sửa lỗi bộ lọc ngày tháng `p_dt.year < now_dt.year` làm mất tin tức trong `lay_tat_ca_bai_viet_ngau_nhien()`, trả lại đầy đủ 211–255 bài báo tươi mới từ hơn 38 nguồn RSS.
+  + Sửa xung đột route `/` giữa API chiết xuất nội dung và endpoint kiểm tra sức khỏe `home()`.
+- **Thẩm định & Kiểm thử 14 luồng tính năng Telegram độc lập (`test_all_telegram_commands.py`)**:
+  1. `/start`: Menu tương tác động phân quyền Admin/Người dùng thường.
+  2. `/tintuc`: Cào 5 bài báo thời sự nóng nhất, gửi kèm ảnh minh họa và kích hoạt đồng bộ Google Docs.
+  3. `/thoitiethientai`: Đo đạc thời tiết OpenWeather, chỉ số chất lượng không khí PM2.5/AQI, cảnh báo ngập lụt, tìm kiếm Google News và video thời sự VTV24, ghim tin tự động.
+  4. `/thoitiet [địa điểm]`: Tra cứu thời tiết tùy chỉnh theo tọa độ địa lý.
+  5. `/vung [tên vùng]`: Chuyển đổi trạm quan trắc mặc định của Admin.
+  6. `/websitecn`: Đóng gói toàn bộ payload thời tiết + tin tức nén zlib/base64 thành liên kết URL chuyển tiếp sang GitHub Pages.
+  7. `/shopee` & `/shoppe`: Cập nhật kho mã giảm giá Shopee mới nhất.
+  8. `/shopeefd`: Cập nhật voucher ShopeeFood.
+  9. `/tinhcn`: Tính nhanh hóa đơn tiền nhà 1 dòng dấu chấm phẩy (`sdcu;sdm;sncm;snm;sk`), tự động khóa trạng thái `pending_sonuocngay`.
+  10. `/tinh`: Quy trình hội thoại 5 bước nhập tuần tự điện cũ/mới, nước cũ/mới, số khóa.
+  11. `.sonuocngay`: Tính số ngày dùng từ số khóa (`ceil(so_khoa / sn)`), tự động lên lịch Google Calendar "💧 Lịch chốt số nước" khung giờ 19:00 - 19:30, khử trùng lặp sự kiện cũ trong tương lai, và tự động kích hoạt hủy phiên xóa sạch dấu vết sau 30 giây.
+  12. `/startgemini` & `/endgemini`: Mở/đóng phiên trò chuyện Gemini AI với chuỗi mô hình Flash dự phòng, tạm dừng cơ chế tự xóa tin nhắn trong phiên chat.
+  13. APScheduler: Lịch trình tự động cập nhật thời tiết hàng giờ (`job_thoi_tiet_hang_gio`), đẩy 5 tin mới mỗi giờ (`job_tu_dong_day_tin`), và cập nhật tài liệu Google Docs lúc nửa đêm (`job_cap_nhat_docs_tin_tuc`).
+  14. `/baocao`: Quét thư mục PowerPoint trên Google Drive (`thu_muc_goc`), phân loại 2 tab độc lập trên Google Sheets (`TOAN` và `TIENGVIET`) với STT bắt đầu từ 1, xóa tin nhắn báo cáo sau 120 giây.
+
+### 2. Nghiệm Thu Thực Tế
+- `test_all_telegram_commands.py`: **14/14 tests PASS (100% OK)**.
+- `python -m unittest discover tests -v`: **18/18 tests PASS (100% OK)**.
+- `npm run testwebsite`: **47/47 tests PASS (100% OK, RELEASE GATE: PASSED)**.
+- Git commit & push remote `origin/main` (`f6dc683`).
+
 
 ### 1. Triệt Tiêu Hoàn Toàn Google Translate TTS & Fallback SpeechSynthesis
 - **Loại bỏ 100% URL hardcode Google Translate**:

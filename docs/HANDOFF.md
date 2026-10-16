@@ -2,9 +2,12 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.22.0`
-- **Commit gần nhất**: `7a7f910` (`fix(tts): eliminate external Google Translate TTS and standardize 48kHz WAV multi-device synthesis`)
-- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí, VieNeu-TTS v3 Turbo 48 kHz Studio & FastAPI Independent Backend)**:
+- **Phiên bản**: `1.23.0`
+- **Commit gần nhất Frontend**: `7a7f910` (`fix(tts): eliminate external Google Translate TTS and standardize 48kHz WAV multi-device synthesis`)
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `f6dc683` (`test(telegram): add comprehensive 14-point Telegram test suite covering all commands, calculations, and schedulers`)
+- **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
+  + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
+  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram (`python -m unittest discover tests -v`)**: 18/18 tests PASS (100% OK).
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
     2. *Click bài viết chi tiết*: Mở modal bài viết, cuộn nội dung, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan, thoát modal qua phím `Escape`.
