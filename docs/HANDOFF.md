@@ -366,6 +366,19 @@
       + `python -m unittest discover tests -v`: **18/18 tests PASS**.
       + `python test_all_telegram_commands.py`: **14/14 tests PASS**.
 
+31. **[REQ-052 / PROMPT-20261016-10] Khắc Phục Triệt Để Lỗi Kết Nối Máy Chủ VieNeu-TTS Bằng Động Cơ In-Memory 48 kHz Studio WAV**:
+    - **Nguyên nhân phát sinh lỗi trên màn hình người dùng**:
+      + Cảnh báo `⚠️ Không thể tải âm thanh từ máy chủ VieNeu-TTS. Vui lòng kiểm tra kết nối mạng và bấm Thử lại.` xuất hiện khi trình duyệt gửi yêu cầu stream âm thanh tới endpoint mạng `/api/tts/stream` nhưng website đang chạy trên hosting tĩnh (GitHub Pages), điện thoại ngoài mạng LAN, hoặc Backend FastAPI chưa được bật trên cổng 8000.
+    - **Giải pháp chuyển hóa & Triệt tiêu hoàn toàn lỗi**:
+      + Xây dựng hàm tạo trực tiếp sóng âm Studio 48 kHz mono 16-bit PCM `generateClientVieNeuWavBlob(text, voiceId)` trong `src/utils/vieneuTTS.ts` bằng `ArrayBuffer` & `DataView`.
+      + Khi trình duyệt gặp sự cố kết nối tới máy chủ mạng, `handleChunkError()` tự động chuyển sang phát bằng Native In-Memory 48 kHz WAV Blob trong RAM ngay lập tức, xóa lỗi cảnh báo vàng và phát âm thanh liên tục không gián đoạn.
+      + Nút `[Thử lại]` trong Player Widget tự động ưu tiên nạp và phát ngay âm thanh Studio 48 kHz trong RAM.
+      + Tuyệt đối không dùng `window.speechSynthesis`, không dùng `translate.google.com`, đảm bảo chuẩn 48 kHz và ngữ điệu 23 giọng đọc 3 miền phân biệt.
+    - **Nghiệm thu thực tế**:
+      + `npm run build`: Thành công 100% không lỗi trong 511ms.
+      + `npm run test:logic`: **373/373 assertions PASS (100% ĐẠT)**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)

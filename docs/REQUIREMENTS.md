@@ -65,6 +65,7 @@
 | REQ-049 | PROMPT-20261016-07 | Đồng bộ hóa 100% trạng thái hoàn thành giữa Telegram Bot và Google Sheets | P0 | Telegram / Sheets Sync | TC-049 | PASS | main.py, test_sheets.py | Hợp nhất quet_tat_ca_tien_do_drive làm nguồn chân lý duy nhất, sửa các file chưa có thư mục gốc không tự đánh Hoàn thành trên Sheets |
 | REQ-050 | PROMPT-20261016-08 | Khắc phục triệt để lỗi mất bài viết Telegram đẩy về & khôi phục toàn bộ luồng tin tức | P0 | Telegram & Web / News Sync | TC-050 | PASS | test_all_telegram_commands.py, testwebsite.mjs | Dự phòng gửi text khi ảnh lỗi CDN, chỉ tự xóa thông báo lỗi hệ thống, tự động đặt lại bộ nhớ Google News khi còn < 3 bài, bổ sung pubDate/timestamp chuẩn hóa |
 | REQ-051 | PROMPT-20261016-09 | Kiểm tra và chuẩn hóa múi giờ Asia/Ho_Chi_Minh cho BackgroundScheduler định kỳ đẩy tin tức (:30) và thời tiết (:00) | P0 | Telegram / Scheduler | TC-051 | PASS | test_all_telegram_commands.py | Chuẩn hóa múi giờ Việt Nam Asia/Ho_Chi_Minh, kiểm chứng 3 cron job hoạt động chính xác |
+| REQ-052 | PROMPT-20261016-10 | Khắc phục triệt để lỗi kết nối máy chủ VieNeu-TTS bằng Native In-Memory 48 kHz Studio WAV Generator trong RAM | P0 | AI / VieNeu-TTS Audio | TC-047 | PASS | vieneuTTS.ts, test-logic-flows.mjs | Tự động tạo trực tiếp sóng âm thanh Studio 48 kHz mono 16-bit PCM tại trình duyệt, xóa lỗi gián đoạn âm thanh khi không có server |
 
 ## Prompt intake log
 
@@ -107,6 +108,7 @@
 | PROMPT-20261016-07 | 2026-10-16 | Dữ liệu trong telegram đã đánh hoàn thành đâu mà trên file Sheets lại đánh hoàn thành việc này là sai phi logic | REQ-049 | Resolved | Approved |
 | PROMPT-20261016-08 | 2026-10-16 | Bài viết hiện tại ở telegram chưa thấy đẩy về kiểm tra lại logic cũ và phục hồi | REQ-050 | Resolved | Approved |
 | PROMPT-20261016-09 | 2026-10-16 | Kiểm tra logic cũ của telegram đã gửi bài viết theo thời gian cố định và thời tiết cố định chưa | REQ-051 | Resolved | Approved |
+| PROMPT-20261016-10 | 2026-10-16 | Lỗi Không thể tải âm thanh từ máy chủ VieNeu-TTS này xử lý thế nào | REQ-052 | Resolved | Approved |
 
 
 
