@@ -3,8 +3,8 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.23.0`
-- **Commit gần nhất Frontend**: `7a7f910` (`fix(tts): eliminate external Google Translate TTS and standardize 48kHz WAV multi-device synthesis`)
-- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `0fc4448` (`fix(sheets-sync): dong bo trang thai hoan thanh giua Telegram va Google Sheets, sua cac file chua co thu muc goc khong tu danh Hoan thanh`)
+- **Commit gần nhất Frontend**: `51d871e` (`fix(sync-news): hoan tat phuc hoi logic day bai tin tuc telegram va dong bo sang website`)
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `3e1a19a` (`fix(scheduler): dinh danh ro rang mui gio Asia/Ho_Chi_Minh cho BackgroundScheduler`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Đồng bộ hóa 100% Tiến độ Telegram & Google Sheets**: Đã hợp nhất module quét tiến độ Drive `quet_tat_ca_tien_do_drive()` làm nguồn chân lý duy nhất (Single Source of Truth), sửa lỗi các file chưa có thư mục gốc/chưa làm bị đánh dấu nhầm "Hoàn thành" trên Sheets. Dữ liệu trên Google Sheets tab `TIENGVIET` (dòng 74–84) đã được cập nhật chuẩn xác thành "Chưa làm" đồng bộ tuyệt đối với báo cáo Telegram `/baocao`.
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
@@ -351,6 +351,20 @@
       + `python test_all_telegram_commands.py`: **14/14 tests PASS (100% ĐẠT)**.
       + Frontend `npm run build`: **Thành công 100% không lỗi**.
       + Frontend `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+30. **[REQ-051 / PROMPT-20261016-09] Kiểm Tra & Khẳng Định Logic Gửi Tin Tức & Thời Tiết Theo Giờ Cố Định Telegram**:
+    - **Kết quả đối chiếu logic cũ**:
+      + Hệ thống đã được thiết kế hoàn chỉnh theo cơ chế tự động hóa `APScheduler` (`BackgroundScheduler`) chạy 3 job định kỳ:
+        1. `job_thoi_tiet_hang_gio()`: Chạy cố định vào phút thứ **:00** của mỗi giờ (24 lần/ngày). Lấy thời tiết tức thời Hà Nội/khu vực cấu hình, ghim tin nhắn mới, tự động hủy ghim và xóa tin nhắn thời tiết cũ của giờ trước để chống rác nhóm. Riêng lúc 00:00 phát bản tin tổng hợp ngày.
+        2. `job_tu_dong_day_tin()`: Chạy cố định vào phút thứ **:30** của mỗi giờ (24 lần/ngày). Gửi 5 bài báo nóng nhất, mới nhất kèm ảnh, tóm tắt và link gốc tới tất cả các chat trong `active_auto_news_chats` (có cooldown chống spam).
+        3. `job_cap_nhat_docs_tin_tuc()`: Chạy cố định lúc **00:01** đêm mỗi ngày, đồng bộ toàn bộ tin tức ngày vào Google Docs.
+    - **Nâng cấp múi giờ tường minh**:
+      + Đã bổ sung cấu hình tường minh `timezone="Asia/Ho_Chi_Minh"` cho `BackgroundScheduler` trong `main.py` để đảm bảo dù bot chạy trên cloud server múi giờ UTC/quốc tế thì toàn bộ lịch chạy cron vẫn kích hoạt chính xác tuyệt đối theo giờ Việt Nam.
+    - **Nghiệm thu thực tế**:
+      + Chạy mô phỏng live 2 job: `job_thoi_tiet_hang_gio()` gửi 4 actions (unpin, delete, sendMessage, pinChatMessage) thành công; `job_tu_dong_day_tin()` gửi 6 messages (1 banner mở đầu + 5 bài báo kèm ảnh) thành công 100%.
+      + `quan-ly-tien-phong` commit: `3e1a19a` (`fix(scheduler): dinh danh ro rang mui gio Asia/Ho_Chi_Minh cho BackgroundScheduler`) đã đẩy lên `origin/main`.
+      + `python -m unittest discover tests -v`: **18/18 tests PASS**.
+      + `python test_all_telegram_commands.py`: **14/14 tests PASS**.
 
 ---
 
