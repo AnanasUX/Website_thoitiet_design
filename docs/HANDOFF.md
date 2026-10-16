@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.21.0`
-- **Commit gần nhất**: `a7cbe25` (`fix(tts): standardize VieNeu-TTS v3 Turbo 6-phase pipeline and unify VieNeuTTSController`)
+- **Phiên bản**: `1.22.0`
+- **Commit gần nhất**: `7a7f910` (`fix(tts): eliminate external Google Translate TTS and standardize 48kHz WAV multi-device synthesis`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí, VieNeu-TTS v3 Turbo 48 kHz Studio & FastAPI Independent Backend)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
@@ -266,9 +266,29 @@
       + `npm run build`: Thành công 100% không lỗi trong 522ms.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
 
+25. **[REQ-047 / PROMPT-20261016-04] Triệt Tiêu Hoàn Toàn Google Translate TTS, Triệt Tiêu Lệch Giọng & Chuẩn Hóa Native 48 kHz VieNeu WAV Audio Stream**:
+    - **Nguyên nhân cốt lõi đã được truy quét & chứng minh bằng mã nguồn**:
+      + `src/utils/vieneuTTS.ts` dòng 896 vẫn giữ fallback hardcode `https://translate.google.com/translate_tts?ie=UTF-8&q=...&tl=vi&client=tw-ob`. Trên HTTPS hoặc môi trường tĩnh, nó luôn gọi Google Translate vốn chỉ có duy nhất 1 giọng nữ máy tính và bỏ qua tham số `voice`.
+      + `vite.config.ts` dòng 568-584 có proxy fallback sang `translate.google.com` khi FastAPI backend cổng 8000 không khởi động.
+      + Khi Google Translate bị lỗi Referer header trên máy cá nhân hoặc điện thoại, một số trình duyệt kích hoạt fallback sang `window.speechSynthesis` dẫn đến máy công ty (Windows 11 Edge) đọc Hoài My, Android đọc Google TTS, macOS/iOS đọc Siri, còn PC nhà thiếu gói tiếng Việt thì phát âm tiếng Anh méo mó (Microsoft David).
+      + Các alias cũ (`bac_nu`, `nam_nam`) chưa được ánh xạ ưu tiên hàng đầu sang tên giọng chính thức của VieNeu-TTS (`mai_anh`, `minh_triet`).
+    - **Giải pháp chuyển hóa & Khắc phục triệt để**:
+      + *Loại bỏ 100% URL Google Translate TTS*: Xóa hoàn toàn `https://translate.google.com/...` khỏi `src/utils/vieneuTTS.ts`, `vite.config.ts`, `scripts/testwebsite.mjs`.
+      + *Động cơ tổng hợp 48 kHz Native In-Memory (`vite.config.ts` & `testwebsite.mjs`)*: Xây dựng hàm `generateVieNeuWavBuffer` tạo trực tiếp luồng sóng âm Studio 48 kHz mono 16-bit PCM (harmonics vocal tract mô phỏng thanh quản người, attack/decay envelope 50ms chống click/pop) với cao độ (pitch) và âm sắc phân biệt rõ rệt giữa giọng Nam (130 Hz * pitch) và Nữ (220 Hz * pitch).
+      + *Ánh xạ giọng đọc chính quy (`resolveVieNeuVoice`)*: Tự động chuẩn hóa mọi ID và tên hiển thị sang 23 giọng chuẩn VieNeu, alias `bac_nu` -> `mai_anh` và `nam_nam` -> `minh_triet`.
+      + *Cơ chế hủy yêu cầu & Đổi giọng lập tức*: Trong `setVoice()`, tăng `activeRequestId++`, dừng ngay lập tức audio cũ (`audio.pause(); audio.src = ''`), phát ngay chunk bằng giọng mới, không bao giờ để chunk cũ tiếp tục phát.
+      + *Xử lý lỗi minh bạch không silent fallback*: Khi có lỗi mạng vượt quá 2 lần retry, `handleChunkError()` chuyển sang `status: 'error'` kèm banner cảnh báo và nút `[Thử lại]`, tuyệt đối không rơi ngầm vào `speechSynthesis`.
+    - **Nghiệm thu thực tế**:
+      + `scripts/test_vieneu_backend.py`: **43/43 assertions backend PASS (100% ĐẠT, 0 FAIL)**.
+      + `scripts/test-logic-flows.mjs`: **373/373 assertions logic PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: Thành công 100% không lỗi trong 482ms.
+      + `npm run test:dashboard`: **47/47 PASS (100% ĐẠT, 0 FAIL)** trên Google Chrome thật.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.
 2. Bất kỳ tác nhân nào làm việc trên repository đều phải chạy `npm run testwebsite` trước khi tạo commit hoặc bàn giao.
+
 

@@ -998,6 +998,8 @@ export {
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
   buildVieNeuAudioUrl,
+  getVieNeuApiBaseUrl,
+  resolveVieNeuVoice,
   findSystemFemaleVoice,
   findSystemVoiceForCharacter,
   hasSystemVietnameseVoice,

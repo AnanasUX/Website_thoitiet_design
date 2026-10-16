@@ -1573,6 +1573,22 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         </div>
                       )}
 
+                      {/* Cảnh báo lỗi kết nối máy chủ giọng đọc nếu có kèm nút Thử lại */}
+                      {playerState.errorMessage && (
+                        <div className="mb-2.5 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <svg className="size-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            <span className="truncate">{playerState.errorMessage}</span>
+                          </div>
+                          <button
+                            onClick={() => controllerRef.current?.retry()}
+                            className="px-2.5 py-1 bg-amber-600 text-white rounded font-medium text-[11px] hover:bg-amber-700 transition-colors shrink-0 cursor-pointer"
+                          >
+                            Thử lại
+                          </button>
+                        </div>
+                      )}
+
                       {/* Hàng điều khiển Play/Pause/Seek/Tốc độ/Giọng đọc */}
                       <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
                         <div className="flex items-center gap-1.5">

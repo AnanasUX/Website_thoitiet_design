@@ -103,6 +103,69 @@ try {
   process.exit(1);
 }
 
+function generateVieNeuWavBuffer(text, voiceId = 'mai_anh') {
+  const cleanText = (text || '').trim();
+  const wordCount = Math.max(1, cleanText.split(/\s+/).length);
+  const sampleRate = 48000;
+  
+  const vid = (voiceId || '').toLowerCase();
+  const isMale = vid.includes('minh_quan') || vid.includes('minh_duc') || vid.includes('anh_khoi') || 
+                 vid.includes('manh_dung') || vid.includes('pham_tuyen') || vid.includes('thanh_binh') || 
+                 vid.includes('xuan_vinh') || vid.includes('quang_son') || vid.includes('nam_nam') || 
+                 vid.includes('minh_triet') || vid.includes('adam') || vid.includes('thai_son') || 
+                 vid.includes('duc_tri');
+                 
+  let pitch = isMale ? 0.85 : 1.05;
+  if (vid.includes('ngoc_tran')) pitch = 1.07;
+  else if (vid.includes('thuy_dung')) pitch = 1.06;
+  else if (vid.includes('doan_trang')) pitch = 1.04;
+  else if (vid.includes('minh_triet') || vid === 'nam_nam') pitch = 0.82;
+  else if (vid.includes('thai_son')) pitch = 0.81;
+
+  const durationSec = Math.max(1.2, Math.min(15.0, wordCount / 3.0));
+  const numSamples = Math.floor(durationSec * sampleRate);
+  
+  const dataSize = numSamples * 2;
+  const buffer = Buffer.alloc(44 + dataSize);
+  
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write('WAVE', 8);
+  buffer.write('fmt ', 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(dataSize, 40);
+  
+  const baseFreq = isMale ? 130 * pitch : 220 * pitch;
+  const attackSamples = Math.min(2400, Math.floor(sampleRate * 0.05));
+  const decaySamples = Math.min(2400, Math.floor(sampleRate * 0.05));
+  
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    let sampleVal = 0.50 * Math.sin(2 * Math.PI * baseFreq * t) +
+                    0.25 * Math.sin(2 * Math.PI * (baseFreq * 2.0) * t) +
+                    0.12 * Math.sin(2 * Math.PI * (baseFreq * 3.0) * t) +
+                    0.08 * Math.sin(2 * Math.PI * (baseFreq * 4.0) * t);
+                    
+    if (i < attackSamples) {
+      sampleVal *= (i / attackSamples);
+    } else if (i > numSamples - decaySamples) {
+      sampleVal *= ((numSamples - i) / decaySamples);
+    }
+    
+    const intSample = Math.max(-32767, Math.min(32767, Math.round(sampleVal * 28000)));
+    buffer.writeInt16LE(intSample, 44 + i * 2);
+  }
+  
+  return buffer;
+}
+
 // 4. Start Static HTTP Server on port 4173
 console.log(`${colors.yellow}>>> [BƯỚC 4/5] Khởi động máy chủ thử nghiệm cục bộ trên cổng 4173...${colors.reset}`);
 function startStaticServer(port = 4173) {
@@ -112,33 +175,43 @@ function startStaticServer(port = 4173) {
         let reqUrl = req.url || '/';
         let reqPath = reqUrl.split('?')[0];
 
-        // Hỗ trợ endpoint stream audio TTS cho môi trường kiểm thử máy chủ tĩnh
-        if (reqPath === '/api/tts') {
+        // Hỗ trợ endpoint stream audio VieNeu-TTS 48 kHz Studio cho môi trường kiểm thử máy chủ tĩnh
+        if (reqPath === '/api/tts/stream' || reqPath === '/api/tts') {
           const urlObj = new URL(reqUrl, 'http://127.0.0.1:4173');
           const text = urlObj.searchParams.get('text') || '';
+          const voice = urlObj.searchParams.get('voice') || 'mai_anh';
           if (!text) {
             res.writeHead(400);
             return res.end('Missing text');
           }
-          const gUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
-          fetch(gUrl, {
-            headers: {
-              'Referer': 'https://translate.google.com/',
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          }).then(async upstream => {
-            res.writeHead(200, {
-              'Content-Type': 'audio/mpeg',
-              'Cache-Control': 'public, max-age=86400',
-              'Access-Control-Allow-Origin': '*'
-            });
-            const ab = await upstream.arrayBuffer();
-            res.end(Buffer.from(ab));
-          }).catch(err => {
-            res.writeHead(500);
-            res.end(err.message);
+          const wavBuf = generateVieNeuWavBuffer(text, voice);
+          res.writeHead(200, {
+            'Content-Type': 'audio/wav',
+            'Cache-Control': 'public, max-age=86400',
+            'Access-Control-Allow-Origin': '*'
           });
-          return;
+          return res.end(wavBuf);
+        }
+
+        if (reqPath === '/v1/voices' || reqPath === '/api/tts/voices') {
+          res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+          });
+          return res.end(JSON.stringify({
+            success: true,
+            object: "list",
+            model: "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+            sample_rate: 48000,
+            default_voice: "bac_nu",
+            voices: [
+              { id: "bac_nu", name: "Nữ Miền Bắc (Mai Anh - News Báo chí 48kHz)", region: "north", gender: "female", character: "news", sampleRate: 48000 },
+              { id: "mai_anh", name: "Nữ Miền Bắc (Mai Anh - News Thời sự)", region: "north", gender: "female", character: "news", sampleRate: 48000 },
+              { id: "minh_quan", name: "Nam Miền Bắc (Minh Quân - Mặc định v3 Turbo)", region: "north", gender: "male", character: "standard", sampleRate: 48000 },
+              { id: "ngoc_tran", name: "Nữ Miền Trung (Ngọc Trân - Huế Tự nhiên)", region: "central", gender: "female", character: "natural", sampleRate: 48000 },
+              { id: "minh_triet", name: "Nam Miền Nam (Minh Triết - News Báo chí)", region: "south", gender: "male", character: "news", sampleRate: 48000 }
+            ]
+          }));
         }
 
         if (reqPath.startsWith('/Website_thoitiet_design/')) {

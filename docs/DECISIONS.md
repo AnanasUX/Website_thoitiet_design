@@ -388,6 +388,10 @@
 - **Từ chối**: Kích hoạt song song 2 luồng xử lý âm thanh (vừa stream chunk trực tiếp vừa gửi POST request tới backend `/api/tts/articles` khi người dùng nhấn Byline Bar), gây lãng phí tài nguyên và phát sinh lỗi mạng 404 trên các nền tảng tĩnh như GitHub Pages.
 - **Từ chối**: Tách riêng mã nguồn xử lý audio giữa `NewsDetailView` trong `App.tsx` và `VieNeuTTSController` trong `src/utils/vieneuTTS.ts` (khiến logic bị trùng lặp, trạng thái không đồng bộ và các cải tiến không phát huy tác dụng trên giao diện thực tế).
 - **Từ chối**: Sử dụng audio cache key chỉ dựa trên `articleId` (khiến việc đổi giọng đọc khác vẫn nhận lại file audio cũ của giọng trước đó; cache key bắt buộc phải băm từ `articleId:voiceId:modelVersion:content`).
-- **Từ chối**: Âm thầm fallback về `speechSynthesis` của hệ điều hành khi gặp sự cố mạng (gây lệch chất giọng nghiêm trọng giữa các thiết bị khác nhau; phải giữ đúng luồng VieNeu-TTS v3 Turbo với cơ chế bounded retry 2 lần).
+- **Từ chối**: Giữ lại bất kỳ URL hardcode nào trỏ tới `translate.google.com` (Google Translate TTS) trong frontend `src/utils/vieneuTTS.ts` hoặc server middleware `vite.config.ts`, vì dịch vụ này chỉ hỗ trợ duy nhất 1 giọng nữ máy tính, hoàn toàn bỏ qua tham số `voice` và gây lỗi âm thầm khi bị chặn header Referer.
+- **Từ chối**: Cho phép chunk âm thanh của giọng cũ tiếp tục phát sau khi người dùng đổi giọng đọc mới (khi người dùng đổi giọng trong `setVoice`, hệ thống bắt buộc phải hủy ngay token yêu cầu cũ `activeRequestId++`, ngắt âm thanh cũ ngay lập tức và phát lại đoạn văn bản bằng đúng chất giọng mới đã chọn).
+- **Từ chối**: Sử dụng ID giả (`bac_nu`, `nam_nam`) mà không có tầng ánh xạ ưu tiên chuẩn hóa sang tên giọng chính thức của VieNeu-TTS (`mai_anh`, `minh_triet`).
+- **Từ chối**: Hardcode `localhost` trong mã nguồn client production (thay vào đó sử dụng Same-Origin relative path `/api/tts/stream` hoặc biến cấu hình máy chủ dùng chung).
+
 
 

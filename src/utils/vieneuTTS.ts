@@ -860,14 +860,60 @@ export function computeVieNeuAudioCacheKey(
 }
 
 /**
+ * LẤY ĐƯỜNG DẪN GỐC CỦA MÁY CHỦ VIENEU-TTS API (Single Source of Truth)
+ * Không hardcode localhost cho môi trường production của máy khách.
+ * Hỗ trợ window.__VIENEU_BACKEND_URL__, biến môi trường VIENEU_BACKEND_URL hoặc Same-Origin relative URL.
+ */
+export function getVieNeuApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    if ((window as any).__VIENEU_BACKEND_URL__) {
+      return String((window as any).__VIENEU_BACKEND_URL__).replace(/\/+$/, '');
+    }
+    // Trong môi trường trình duyệt, sử dụng Same-Origin relative path để hoạt động thông suốt
+    // trên mọi domain, mọi cổng mạng và qua reverse proxy mà không hardcode localhost
+    return '';
+  }
+  if (typeof process !== 'undefined' && process.env?.VIENEU_BACKEND_URL) {
+    return process.env.VIENEU_BACKEND_URL.replace(/\/+$/, '');
+  }
+  return 'http://127.0.0.1:8000';
+}
+
+/**
+ * ĐỐI CHIẾU VÀ ÁNH XẠ VOICE ID / TÊN GIỌNG ĐỌC THÀNH GIỌNG VIENEU HỢP LỆ
+ * Đảm bảo mọi ID (kể cả alias ngược bac_nu, nam_nam hoặc tên hiển thị) đều được ánh xạ về giọng VieNeu-TTS chính thức.
+ */
+export function resolveVieNeuVoice(voiceIdOrName?: string): VieNeuVoiceOption {
+  if (!voiceIdOrName) return VIENEU_VOICES[0];
+  const clean = voiceIdOrName.trim().toLowerCase();
+
+  // 1. Khớp các alias tương thích ngược (Legacy Aliases) sang tên giọng chính thức của VieNeu-TTS
+  if (clean === 'bac_nu') return VIENEU_VOICES.find(v => v.id === 'mai_anh') || VIENEU_VOICES[0];
+  if (clean === 'nam_nam') return VIENEU_VOICES.find(v => v.id === 'minh_triet') || VIENEU_VOICES[0];
+
+  // 2. Khớp chính xác ID trong danh mục 23 preset voices
+  const byId = VIENEU_VOICES.find(v => v.id.toLowerCase() === clean);
+  if (byId) return byId;
+
+  // 3. Khớp theo tên nhân vật (e.g., "Mai Anh", "Minh Quân", "Ngọc Trân", "Thùy Dung")
+  const byName = VIENEU_VOICES.find(v => 
+    v.name.toLowerCase().includes(clean) || clean.includes(v.id.replace(/_/g, ' '))
+  );
+  if (byName) return byName;
+
+  return VIENEU_VOICES.find(v => v.id === 'mai_anh') || VIENEU_VOICES[0];
+}
+
+/**
  * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS ĐỒNG NHẤT (Single Unified Audio Stream)
  * Hoạt động đồng nhất 100% trên MỌI MÔI TRƯỜNG (localhost, IP LAN, điện thoại, máy tính công ty, máy tính ở nhà, GitHub Pages).
  * Cùng một luồng xử lý duy nhất không rẽ nhánh, đảm bảo 100% thiết bị phát ra cùng 1 giọng đọc đồng nhất.
+ * TUYỆT ĐỐI LOẠI BỎ TRANSLATE.GOOGLE.COM VÀ SPEECHSYNTHESIS FALLBACK.
  */
 export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
-  const vid = voiceId || VIENEU_CENTRAL_CONFIG.defaultVoice;
+  const canonicalVoice = resolveVieNeuVoice(voiceId || VIENEU_CENTRAL_CONFIG.defaultVoice);
 
   // Đảm bảo document-level referrer policy luôn là no-referrer để không bao giờ bị máy chủ chặn do Referer
   if (typeof document !== 'undefined') {
@@ -880,20 +926,8 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
     meta.content = 'no-referrer';
   }
 
-  // Nếu môi trường hỗ trợ Same-Origin Proxy / FastAPI backend (localhost hoặc http host)
-  const isLocalOrProxied = typeof window !== 'undefined' && (
-    window.location.protocol === 'http:' || 
-    window.location.hostname === 'localhost' || 
-    window.location.hostname === '127.0.0.1' ||
-    window.location.hostname.endsWith('.localhost')
-  );
-
-  if (isLocalOrProxied) {
-    return `/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(vid)}&format=mp3`;
-  }
-
-  // Trên GitHub Pages hoặc môi trường static production: stream trực tiếp với chính sách no-referrer
-  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
+  const baseUrl = getVieNeuApiBaseUrl();
+  return `${baseUrl}/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
 }
 
 /**
@@ -1076,17 +1110,30 @@ export class VieNeuTTSController {
   }
 
   public setVoice(voiceId: string) {
-    // Xác thực voiceId trong allowlist
-    const isValid = VIENEU_VOICES.some(v => v.id === voiceId);
-    const resolved = isValid ? voiceId : VIENEU_CENTRAL_CONFIG.defaultVoice;
-    this.state.selectedVoice = resolved;
+    // Đối chiếu và ánh xạ giọng đọc hợp lệ từ VieNeu-TTS
+    const resolvedVoice = resolveVieNeuVoice(voiceId);
+    this.state.selectedVoice = resolvedVoice.id;
     this.chunkRetryCount = 0;
+
+    // Hủy yêu cầu cũ, dừng âm thanh cũ và chuyển sang giọng mới ngay lập tức
+    this.activeRequestId++;
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.audio.src = '';
+    }
 
     if (this.state.status === 'playing' && this.chunks.length > 0) {
       this.playChunk(this.currentChunkIndex, this.activeRequestId);
     } else {
       this.notifyState();
     }
+  }
+
+  public retry() {
+    this.chunkRetryCount = 0;
+    this.updateState({ status: 'playing', errorMessage: undefined });
+    this.playChunk(this.currentChunkIndex, this.activeRequestId);
   }
 
   public setSpeed(speed: number) {
@@ -1244,7 +1291,12 @@ export class VieNeuTTSController {
         }, 300);
       } else {
         this.chunkRetryCount = 0;
-        advanceSimulated();
+        // Hiển thị trạng thái lỗi rõ ràng trên UI và cho phép thử lại
+        // Tuyệt đối không fallback sang speechSynthesis hay Google Translate
+        this.updateState({
+          status: 'error',
+          errorMessage: 'Không thể tải âm thanh từ máy chủ VieNeu-TTS. Vui lòng kiểm tra kết nối mạng và bấm Thử lại.'
+        });
       }
     };
 

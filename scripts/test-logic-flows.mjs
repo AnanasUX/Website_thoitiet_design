@@ -87,6 +87,8 @@ import {
   normalizeVietnameseTextVieNeu,
   splitVieNeuAudioChunks,
   buildVieNeuAudioUrl,
+  getVieNeuApiBaseUrl,
+  resolveVieNeuVoice,
   findSystemFemaleVoice,
   findSystemVoiceForCharacter,
   hasSystemVietnameseVoice,
@@ -1084,10 +1086,23 @@ export function runAllLogicFlowTests() {
   assert(femaleMod.rateMultiplier >= 1.0, "Phong cách đọc báo News có tốc độ nhỉnh hơn một chút");
 
   delete global.window;
-  // 8. Kiểm tra URL stream âm thanh Neural VieNeu-TTS (buildVieNeuAudioUrl)
-  const audioStreamUrl = buildVieNeuAudioUrl("Bản tin thời tiết hôm nay");
-  assert(audioStreamUrl.includes("translate_tts") && audioStreamUrl.includes("tl=vi"), "Tạo URL stream Google Neural TTS tiếng Việt chuẩn");
+  // 8. Kiểm tra URL stream âm thanh Neural VieNeu-TTS đồng nhất (buildVieNeuAudioUrl)
+  // Tuyệt đối loại bỏ translate.google.com, trỏ về chuẩn /api/tts/stream
+  const audioStreamUrl = buildVieNeuAudioUrl("Bản tin thời tiết hôm nay", "mai_anh");
+  assert(audioStreamUrl.includes("/api/tts/stream") && audioStreamUrl.includes("voice=mai_anh"), "Tạo URL stream VieNeu-TTS chuẩn hóa endpoint và voiceId");
+  assert(!audioStreamUrl.includes("translate.google.com"), "Tuyệt đối không chứa URL hardcode Google Translate TTS");
   assert(buildVieNeuAudioUrl("") === "", "buildVieNeuAudioUrl xử lý an toàn chuỗi rỗng");
+
+  // 8b. Kiểm tra hàm đối chiếu và ánh xạ giọng đọc chính quy resolveVieNeuVoice
+  const mappedBacNu = resolveVieNeuVoice("bac_nu");
+  assert(mappedBacNu.id === "mai_anh", "Ánh xạ alias bac_nu về giọng chuẩn mai_anh");
+  const mappedNamNam = resolveVieNeuVoice("nam_nam");
+  assert(mappedNamNam.id === "minh_triet", "Ánh xạ alias nam_nam về giọng chuẩn minh_triet");
+  const mappedMinhQuan = resolveVieNeuVoice("Minh Quân");
+  assert(mappedMinhQuan.id === "minh_quan", "Nhận diện đúng giọng theo tên hiển thị Minh Quân");
+
+  // 8c. Kiểm tra cấu hình base URL không hardcode localhost cho môi trường client
+  assert(typeof getVieNeuApiBaseUrl() === 'string', "getVieNeuApiBaseUrl trả về chuỗi cấu hình an toàn");
 
   // 9. Kiểm tra tách câu dài thành các chunk an toàn (< 160 ký tự) cho luồng Audio
   const longSentence = "Thủ tướng Chính phủ vừa ký quyết định phê duyệt kế hoạch triển khai thi hành Luật Trật tự an toàn giao thông đường bộ trên quy mô toàn quốc, nhằm nâng cao ý thức chấp hành và giảm thiểu tai nạn giao thông.";

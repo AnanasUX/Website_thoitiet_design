@@ -106,6 +106,22 @@ PRESET_VOICES = [
 VOICE_MAP = {v["id"]: v for v in PRESET_VOICES}
 ALLOWED_VOICE_IDS = set(VOICE_MAP.keys())
 
+def resolve_voice_id(voice_str: Optional[str]) -> str:
+    """Đối chiếu và chuẩn hóa voice ID / tên giọng đọc sang ID VieNeu hợp lệ"""
+    if not voice_str:
+        return "mai_anh"
+    clean = str(voice_str).strip().lower().replace("-", "_")
+    if clean in ALLOWED_VOICE_IDS:
+        return clean
+    if clean == "bac_nu":
+        return "mai_anh"
+    if clean == "nam_nam":
+        return "minh_triet"
+    for v in PRESET_VOICES:
+        if clean in v["name"].lower() or clean == v["id"].lower():
+            return v["id"]
+    return "mai_anh"
+
 # Bộ nhớ lưu trạng thái tác vụ bất đồng bộ (Jobs) và Rate Limiting
 jobs_db: Dict[str, Dict[str, Any]] = {}
 rate_limit_records: Dict[str, List[float]] = defaultdict(list)
@@ -361,14 +377,14 @@ def get_v1_models():
     }
 
 @app.get("/api/tts/stream")
-def stream_chunk_tts(text: str, voice: Optional[str] = "bac_nu", format: Optional[str] = "mp3"):
+def stream_chunk_tts(text: str, voice: Optional[str] = "mai_anh", format: Optional[str] = "mp3"):
     """
     GET /api/tts/stream: Phát trực tiếp âm thanh cho đoạn văn bản với giọng đọc đã chọn (48 kHz)
     """
     if not text or not text.strip():
         raise HTTPException(status_code=400, detail="Văn bản không được rỗng.")
 
-    voice_id = voice if voice in ALLOWED_VOICE_IDS else "bac_nu"
+    voice_id = resolve_voice_id(voice)
     normalized = normalize_vietnamese_text(text)
     audio_data = engine_manager.synthesize_speech(normalized, voice_id, SAMPLE_RATE)
 
@@ -418,7 +434,7 @@ async def create_article_tts(
         raise HTTPException(status_code=400, detail="Mã bài viết (articleId) không hợp lệ.")
 
     # 2. Kiểm tra giọng đọc trong allowlist
-    voice_id = req.voice if req.voice in ALLOWED_VOICE_IDS else "bac_nu"
+    voice_id = resolve_voice_id(req.voice)
 
     # 3. Tổng hợp văn bản cần đọc từ dữ liệu chính thống
     parts: List[str] = []
@@ -633,9 +649,7 @@ async def openai_compatible_speech(req: OpenAISpeechRequest):
     if not req.input or not req.input.strip():
         raise HTTPException(status_code=400, detail="Tham số input không được rỗng.")
 
-    voice_id = req.voice.lower().replace(" ", "_")
-    if voice_id not in ALLOWED_VOICE_IDS:
-        voice_id = "mai_anh"
+    voice_id = resolve_voice_id(req.voice)
 
     normalized = normalize_vietnamese_text(req.input)
     audio_data = engine_manager.synthesize_speech(normalized, voice_id, SAMPLE_RATE)

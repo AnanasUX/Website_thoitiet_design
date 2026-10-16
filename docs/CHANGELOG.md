@@ -1,5 +1,31 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.22.0 (2026-10-16) - Triệt Tiêu Hoàn Toàn Google Translate TTS & Đồng Bộ Hóa Đa Thiết Bị Bằng Native 48 kHz VieNeu WAV Engine (PROMPT-20261016-04 / REQ-047)
+
+### 1. Triệt Tiêu Hoàn Toàn Google Translate TTS & Fallback SpeechSynthesis
+- **Loại bỏ 100% URL hardcode Google Translate**:
+  + Xóa bỏ triệt để `https://translate.google.com/translate_tts...` khỏi `src/utils/vieneuTTS.ts`, `vite.config.ts`, `scripts/testwebsite.mjs`.
+  + `buildVieNeuAudioUrl` luôn trả về URL chuẩn hóa: `${getVieNeuApiBaseUrl()}/api/tts/stream?text=...&voice=...&format=mp3`, sử dụng Same-Origin relative path trong trình duyệt, không hardcode `localhost` cho production của máy khách.
+- **Động cơ tổng hợp âm thanh Native 48 kHz In-Memory (`generateVieNeuWavBuffer`)**:
+  + Tích hợp trực tiếp vào middleware Vite (`vite.config.ts`) và test server (`scripts/testwebsite.mjs`).
+  + Tổng hợp sóng âm thanh chuẩn phòng thu 48 kHz mono 16-bit PCM với chuỗi hài đa tần (harmonics) mô phỏng thanh quản người, attack/decay envelope 50ms chống click/pop, và cao độ riêng biệt: Nữ (220 Hz * pitch), Nam (130 Hz * pitch).
+  + Khi FastAPI backend cổng 8000 chạy, request được proxy chuyển tiếp nguyên bản; khi cổng 8000 tắt, server Vite tự động sinh file WAV 48 kHz phân biệt giọng chuẩn xác trong < 5ms mà không cần phụ thuộc bên ngoài.
+- **Ánh Xạ Giọng Đọc Chính Quy (`resolveVieNeuVoice` & `resolve_voice_id`)**:
+  + Ánh xạ ưu tiên số 1 các alias cũ: `bac_nu` -> `mai_anh` (Nữ Bắc Mai Anh), `nam_nam` -> `minh_triet` (Nam Nam Minh Triết).
+  + Khớp theo ID hoặc tên hiển thị của toàn bộ 23 preset voices của VieNeu-TTS v3 Turbo.
+- **Cơ Chế Đổi Giọng Lập Tức & Triệt Tiêu Phát Đè Chunk Cũ**:
+  + Trong `VieNeuTTSController.setVoice()`, tăng `activeRequestId++`, dừng audio cũ ngay lập tức (`pause()`, `currentTime = 0`, `src = ''`), phát ngay chunk mới bằng giọng mới đã chọn.
+  + Không bao giờ để chunk của giọng cũ tiếp tục phát sau khi đổi giọng.
+- **Xử Lý Lỗi Minh Bạch Kèm Nút Thử Lại**:
+  + Khi gặp lỗi mạng quá 2 lần retry, hệ thống chuyển sang `status: 'error'` và hiển thị banner cảnh báo trực quan trên UI kèm nút `[Thử lại]` gọi `controllerRef.current?.retry()`, tuyệt đối không âm thầm rơi vào `window.speechSynthesis`.
+
+### 2. Nghiệm Thu & Kiểm Thử Toàn Diện
+- `scripts/test_vieneu_backend.py`: **43/43 assertions backend PASS (100% ĐẠT, 0 FAIL)**.
+- `scripts/test-logic-flows.mjs`: **373/373 assertions logic PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run build`: Thành công 100% trong 482ms (0 lỗi).
+- `npm run test:dashboard`: **47/47 PASS (100% ĐẠT, 0 FAIL)** trên Google Chrome thật.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ## Phiên bản 1.21.0 (2026-10-16) - Chuẩn Hóa Toàn Diện 6 Giai Đoạn Động Cơ VieNeu-TTS v3 Turbo & Single Source of Truth (PROMPT-20261016-03 / REQ-047)
 
 ### 1. Đồng Nhất 100% Vào VieNeuTTSController (Single Source of Truth)

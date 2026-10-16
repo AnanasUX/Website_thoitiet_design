@@ -95,9 +95,14 @@ Website_thoitiet_design/
 ---
 
 ## 8. ĐỘNG CƠ AI CHUYỂN ĐỔI VĂN BẢN THÀNH GIỌNG NÓI VIENEU-TTS (`src/utils/vieneuTTS.ts`)
-- **Công nghệ cốt lõi**: Tích hợp kiến trúc Vietnamese Neural Text-to-Speech (VieNeu-TTS - Phạm Nguyễn Ngọc Bảo).
-- **Quy tắc trích xuất khắt khe**: Bóc tách toàn bộ nội dung thân bài, **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT** (`article.title`), loại bỏ chú thích ảnh và boilerplate tác giả.
+- **Công nghệ cốt lõi**: Tích hợp kiến trúc Vietnamese Neural Text-to-Speech v3 Turbo 48 kHz High-Fidelity Studio Speech (`pnnbao-ump/VieNeu-TTS-v3-Turbo` - Phạm Nguyễn Ngọc Bảo).
+- **Hợp nhất bộ điều khiển duy nhất (Single Source of Truth)**: Toàn bộ giao diện Byline Bar `[data-testid="article-tts-btn"]` và Audio Player Card `[data-testid="vieneu-play-btn"]` được đồng nhất vào một thể hiện `VieNeuTTSController` duy nhất.
+- **Triệt tiêu lệch giọng đa thiết bị & Loại bỏ hoàn toàn Google Translate TTS**: 100% URL stream âm thanh trỏ về Same-Origin endpoint `/api/tts/stream?text=...&voice=...` không hardcode localhost. Khi FastAPI daemon cổng 8000 hoạt động, proxy chuyển tiếp nguyên bản; khi daemon tắt, middleware Vite tự động tổng hợp sóng âm Studio 48 kHz mono 16-bit PCM (Native In-Memory WAV Synthesis) phân biệt rõ rệt âm sắc Nam/Nữ và từng nhân vật, đảm bảo mọi thiết bị (PC công ty, PC ở nhà, điện thoại) phát ra CÙNG 1 GIỌNG ĐỌC ĐỒNG NHẤT.
+- **Ánh xạ giọng đọc chuẩn quy (`resolveVieNeuVoice`)**: Đối chiếu 23 preset voices, tự động ánh xạ alias `bac_nu` -> `mai_anh` và `nam_nam` -> `minh_triet`.
+- **Hủy yêu cầu tức thời khi đổi giọng**: Hủy token yêu cầu cũ `activeRequestId++`, dừng audio cũ ngay lập tức và phát lại đoạn văn bản bằng đúng giọng mới, không bao giờ để chunk cũ tiếp tục phát.
+- **Quy tắc trích xuất khắt khe**: Bóc tách toàn bộ nội dung thân bài + Sapo, **TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ BÀI VIẾT** (`article.title`), loại bỏ chú thích ảnh và boilerplate tác giả.
 - **Chuẩn hóa văn bản tiếng Việt**: Quy đổi chức danh học thuật (PGS.TS), cơ quan nhà nước (UBND TP.HCM), tiền tệ (200 tỷ VND, \$500), ngày tháng (15/10/2026), nhiệt độ và tốc độ.
-- **Trình phát AI Player Card**: Tích hợp thanh điều khiển phát/dừng, tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực và tùy chọn giọng đọc Bắc/Nam, tốc độ đọc 0.75x - 1.5x.
+- **Trình phát AI Player Card**: Tích hợp thanh điều khiển phát/dừng, tua ±10s, sóng âm thanh động (Audio Waveform), thanh tiến trình đọc thời gian thực, tùy chọn giọng đọc 3 miền Bắc - Trung - Nam, tốc độ đọc 0.75x - 1.5x, hiển thị câu đang đọc thời gian thực và banner báo lỗi mạng kèm nút `[Thử lại]`.
+
 
 
