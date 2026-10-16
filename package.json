@@ -14,6 +14,8 @@
     "qa:dashboard": "node scripts/build-dashboard-data.mjs",
     "test:logic": "node scripts/test-logic-flows.mjs",
     "test:dashboard": "node scripts/test-dashboard-live.mjs",
+    "test:tts": "python scripts/test_vieneu_backend.py",
+    "tts:serve": "python scripts/vieneu_service.py",
     "testwebsite": "node scripts/validate-registry.mjs && node scripts/build-dashboard-data.mjs && node scripts/testwebsite.mjs"
   },
   "dependencies": {

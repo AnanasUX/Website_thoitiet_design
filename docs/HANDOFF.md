@@ -285,6 +285,24 @@
       + `npm run test:dashboard`: **47/47 PASS (100% ĐẠT, 0 FAIL)** trên Google Chrome thật.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
+26. **[REQ-047 / PROMPT-20261016-05] Tự Động Hóa 100% Khởi Chạy Backend AI VieNeu-TTS & Script 1-Click Windows**:
+    - **Vấn đề giải quyết**: Người dùng không cần phải mở terminal gõ lệnh `python scripts/vieneu_service.py` thủ công.
+    - **Giải pháp chuyển hóa & Tự động hóa**:
+      + *Tự động kích hoạt từ Vite (`vite.config.ts`)*: Hàm `ensureFastApiDaemon()` tự động thăm dò endpoint `http://127.0.0.1:8000/health`. Nếu chưa chạy, Vite tự động kích hoạt `python scripts/vieneu_service.py` bằng `child_process.spawn(..., { detached: true })` trong background.
+      + *Bộ kịch bản 1-click Windows*:
+        * `start_he_thong.bat`: Nhấp đúp là khởi động cả Backend AI VieNeu-TTS (cổng 8000) và Web Dev Server cùng lúc.
+        * `start_vieneu_tts.bat`: Nhấp đúp để chạy riêng máy chủ VieNeu-TTS với giao diện console trực quan.
+      + *Tích hợp lệnh npm chuẩn trong `package.json`*:
+        * `"tts:serve": "python scripts/vieneu_service.py"`
+        * `"test:tts": "python scripts/test_vieneu_backend.py"`
+      + *Đảm bảo 100% bài viết có Byline Bar & Nút Nghe Đọc TTS*: Điều chỉnh `parseHTMLToBlocks` luôn sinh khối `type: 'author'` với fallback sang nguồn tin chính thống, giúp nút TTS hiển thị liên tục, thông suốt.
+    - **Nghiệm thu thực tế**:
+      + Backend FastAPI daemon đang chạy nền trực tiếp tại `http://127.0.0.1:8000` (`status: "online"`, 48000 Hz).
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:logic`: **373/373 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: Thành công 100% không lỗi trong 483ms.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)

@@ -3,6 +3,7 @@ import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import { spawn } from 'node:child_process'
 
 import siteConfiguration from './.figma/make/site.json' with { type: 'json' }
 
@@ -685,12 +686,36 @@ function ttsProxyPlugin(): Plugin {
     next();
   };
 
+  const ensureFastApiDaemon = () => {
+    fetch('http://127.0.0.1:8000/health', { signal: AbortSignal.timeout(800) })
+      .then((r) => {
+        if (r.ok) {
+          console.log('\x1b[32m[VieNeu-TTS]\x1b[0m AI Backend Daemon đang hoạt động tại http://127.0.0.1:8000');
+        }
+      })
+      .catch(() => {
+        console.log('\x1b[33m[VieNeu-TTS]\x1b[0m Đang tự động kích hoạt Backend AI (python scripts/vieneu_service.py)...');
+        try {
+          const pyProc = spawn('python', ['scripts/vieneu_service.py'], {
+            detached: true,
+            stdio: 'ignore',
+            cwd: path.resolve(import.meta.dirname)
+          });
+          pyProc.unref();
+        } catch (_err) {
+          console.warn('[VieNeu-TTS] Sử dụng Native 48 kHz In-Memory Audio Synthesis.');
+        }
+      });
+  };
+
   return {
     name: 'tts-proxy-middleware',
     configureServer(server) {
+      ensureFastApiDaemon();
       server.middlewares.use(handler);
     },
     configurePreviewServer(server) {
+      ensureFastApiDaemon();
       server.middlewares.use(handler);
     }
   };

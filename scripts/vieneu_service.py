@@ -671,8 +671,7 @@ def run():
     print(f" 🎙️  VieNeu-TTS v3 Turbo Audio Backend Server")
     print(f" 🌐  Máy chủ đang chạy tại: http://127.0.0.1:{port}")
     print(f" 📚  Swagger API Docs    : http://127.0.0.1:{port}/docs")
-    print(f"=======================================================\n")
-    uvicorn.run("vieneu_service:app", host="127.0.0.1", port=port, reload=False)
+    uvicorn.run(app, host="127.0.0.1", port=port)
 
 if __name__ == "__main__":
     run()

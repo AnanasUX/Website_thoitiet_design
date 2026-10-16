@@ -1263,14 +1263,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       if (pageTitle) {
         resBlocks.push({ type: 'title', content: pageTitle });
       }
-      if (authorName || authorAvatar) {
-        resBlocks.push({
-          type: 'author',
-          name: authorName || (article.src || 'Ban biên tập'),
-          avatar: authorAvatar ? getProxyImageUrl(authorAvatar) : '',
-          date: authorDate || article.pubDate || ''
-        });
-      }
+      // Luôn luôn tạo khối Tác giả (Byline Bar) chuẩn báo chính thống & Nút Nghe đọc TTS (REQ-012, REQ-047)
+      resBlocks.push({
+        type: 'author',
+        name: authorName || (article.src || article.source || 'Ban biên tập'),
+        avatar: authorAvatar ? getProxyImageUrl(authorAvatar) : (article.logo || ''),
+        date: authorDate || article.pubDate || 'Vừa xong'
+      });
       const filtered = cleanedBlocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
       resBlocks.push(...filtered);
       return resBlocks;
