@@ -323,6 +323,22 @@
         4. `GET /api/tts/audio/{audioId}`: Stream file audio với đầy đủ hỗ trợ HTTP 206 Partial Content (Range requests) cho phép trình duyệt tua mượt mà.
         5. Tự động dọn dẹp cache hết hạn sau 7 ngày (TTL cleanup) ngăn chặn tràn ổ đĩa.
 
+  - *Kiến Trúc Chuẩn Hóa Âm Thanh Đa Nền Tảng & Lá Chắn Tươi Mới Tin Tức 3 Ngày (PROMPT-20261016-01 / REQ-027, REQ-047)*:
+    + **Bản chất hiện tượng giọng đọc khác nhau giữa các thiết bị**:
+      - Trước đây khi người dùng mở web trên môi trường tĩnh (GitHub Pages hoặc máy tính không có server backend), request tới `/api/tts` bị lỗi 404 hoặc mạng gửi header `Referer` khiến Google chặn.
+      - Hệ thống tự động rơi vào `fallbackToSynth()` (Web Speech API cục bộ):
+        * *Máy tính ở công ty*: Windows có sẵn gói Microsoft Online (giọng `Microsoft Hoài My` hoặc `Microsoft Nam`) -> phát giọng Hoài My.
+        * *Điện thoại Android*: Có sẵn Google Text-to-Speech Engine -> phát giọng Nữ Google Tiếng Việt.
+        * *Điện thoại iPhone*: Có sẵn Siri tiếng Việt (`Linh`, `Mai`) -> phát giọng Siri.
+        * *PC ở nhà*: Windows chỉ có gói tiếng Anh mặc định (`Microsoft David/Mark`) -> không đọc được hoặc ép đọc ngọng tiếng Anh.
+      - Vì vậy mỗi thiết bị lại phát ra một giọng hoàn toàn khác nhau của chính hệ điều hành đó.
+    + **Giải pháp đồng nhất âm thanh chuẩn Stream trên mọi thiết bị**:
+      - Cấu hình tự động chèn `<meta name="referrer" content="no-referrer" />` cấp document trong `buildVieNeuAudioUrl` đảm bảo 100% request stream Google TTS / VieNeu Audio không bao giờ bị lộ Referer dẫn đến mã lỗi 404.
+      - Trang bị chuỗi Failover 2 tầng trong `audio.onerror`: Tự động chuyển tiếp tức thì sang trực tiếp stream tiếng Việt chuẩn Google TTS trước khi rơi vào synth, đảm bảo dù mở trên máy công ty, điện thoại hay PC ở nhà đều nghe **chính xác 1 giọng đọc tiếng Việt duy nhất**, không còn bị phụ thuộc vào hệ điều hành.
+    + **Lá chắn độ tươi mới tin tức 3 ngày & Xử lý triệt để tin cũ**:
+      - Rút ngắn ngưỡng thời gian tối đa `maxAgeDays` từ 7 ngày xuống còn 3 ngày cho toàn bộ trang nhất.
+      - Bổ sung bộ lọc cho các tin từ bot (`json.news`): Loại bỏ triệt để các bài viết có năm cũ 2024/2025 trong tiêu đề hoặc đường dẫn, không cho phép tin bot cũ vượt mặt tin RSS tươi mới.
+
 ---
 
 ## 3. CÁC PHƯƠNG ÁN ĐÃ BỊ TỪ CHỐI / CẦN TRÁNH

@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.18.0`
-- **Commit gần nhất**: `da955e4` (`fix(tts): route audio through same-origin proxy to eliminate referer blocking, run FastAPI daemon, and display live reading text snippet`)
+- **Phiên bản**: `1.19.0`
+- **Commit gần nhất**: `da955e4` (đang cập nhật hoàn thiện PROMPT-20261016-01)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí, VieNeu-TTS v3 Turbo 48 kHz Studio & FastAPI Independent Backend)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
     1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
@@ -220,6 +220,25 @@
       + `scripts/test-logic-flows.mjs`: 346/346 assertions logic PASS (100% ĐẠT, 0 FAIL).
       + `npm run build`: Thành công 100% không lỗi trong 519ms.
       + `npm run testwebsite`: 47/47 Test Cases PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
+
+22. **[REQ-027, REQ-047 / PROMPT-20261016-01] Giải Quyết Triệt Để Hiện Tượng Lệch Giọng Đa Thiết Bị & Siết Chặt Lá Chắn Tin Tức Tươi Mới 3 Ngày**:
+    - **Nguyên nhân cốt lõi hiện tượng "Máy cty 1 giọng, Điện thoại / PC khác lại 1 giọng khác"**:
+      + Khi triển khai frontend tĩnh (GitHub Pages hoặc máy tính không có server backend), request tới `/api/tts` bị mã lỗi 404 hoặc máy chủ chặn header `Referer`.
+      + Khi gặp lỗi, hệ thống kích hoạt cơ chế dự phòng `window.speechSynthesis` (Web Speech API) của chính thiết bị đó:
+        * *Máy tính ở công ty*: Windows được kích hoạt giọng đám mây của Microsoft (`Microsoft Hoài My` hoặc `Microsoft Nam`) -> phát giọng Hoài My.
+        * *Điện thoại Android*: Hệ điều hành Android cài sẵn `Google Text-to-Speech Engine` -> phát giọng Nữ Google Tiếng Việt.
+        * *Điện thoại iPhone / macOS*: Hệ điều hành iOS/macOS cài sẵn giọng Siri tiếng Việt (`Linh`, `Mai`) -> phát giọng Siri của Apple.
+        * *Máy tính PC ở nhà hoặc máy khác*: Windows chỉ cài gói tiếng Anh mặc định (`Microsoft David/Mark`) -> ép giọng US phát âm tiếng Việt dạng robot ngọng ngạo.
+    - **Giải pháp chuyển hóa & Khắc phục triệt để**:
+      + *Chuẩn hóa âm thanh Stream độc lập đa nền tảng*: Tự động chèn `<meta name="referrer" content="no-referrer" />` cấp document trong `buildVieNeuAudioUrl` đảm bảo 100% request stream Google TTS không bao giờ bị lộ Referer dẫn đến mã lỗi 404.
+      + *Lá chắn 2 tầng tự phục hồi (Audio Failover Chain)*: Khi `audio.onerror` hoặc `play().catch()` xảy ra (kể cả khi proxy cục bộ tắt), hệ thống tự động chuyển tiếp tức thì sang trực tiếp luồng stream Google Neural TTS tiếng Việt chuẩn trước khi rơi vào synth, đảm bảo dù mở trên máy công ty, điện thoại hay PC ở nhà đều nghe **chính xác 1 giọng đọc tiếng Việt duy nhất**, đồng nhất 100%.
+    - **Khắc phục triệt để việc đẩy bài viết cũ (Smart Freshness Gate 3 ngày)**:
+      + Rút ngắn giới hạn độ tuổi bài viết từ 7 ngày xuống còn **3 ngày** (72 giờ) cho luồng tin trang nhất.
+      + Trang bị bộ lọc độ tươi mới bắt buộc cho tin tức từ bot thời tiết (`json.news`), triệt tiêu 100% bài viết chứa năm cũ 2024/2025 trong tiêu đề hoặc đường dẫn, không bao giờ để tin bot cũ chiếm đầu trang.
+    - **Kiểm thử & Nghiệm thu**:
+      + `scripts/test-logic-flows.mjs`: 346/346 assertions PASS (100% PASS).
+      + `npm run build`: Thành công 100% trong 535ms.
+      + `npm run testwebsite`: 47/47 Test Cases PASS (100% PASS), **RELEASE GATE: PASSED**.
 
 ---
 

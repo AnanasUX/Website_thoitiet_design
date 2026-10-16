@@ -925,14 +925,28 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         };
 
         audio.onerror = (e) => {
-          console.warn('[VieNeu-TTS] HTML5 Audio error, switching to SpeechSynthesis fallback:', e);
+          console.warn('[VieNeu-TTS] HTML5 Audio error:', e);
+          if (audio.src && !audio.src.includes('translate.google.com')) {
+            console.info('[VieNeu-TTS] Failover to direct Google Neural TTS stream with no-referrer...');
+            audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText.slice(0, 140))}&tl=vi&client=tw-ob`;
+            const retryPromise = audio.play();
+            if (retryPromise !== undefined) {
+              retryPromise.catch(() => fallbackToSynth());
+            }
+            return;
+          }
           fallbackToSynth();
         };
 
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.catch((err) => {
-            console.warn('[VieNeu-TTS] audio.play() promise rejected, switching to SpeechSynthesis fallback:', err);
+            console.warn('[VieNeu-TTS] audio.play() promise rejected:', err);
+            if (audio.src && !audio.src.includes('translate.google.com')) {
+              audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText.slice(0, 140))}&tl=vi&client=tw-ob`;
+              audio.play().catch(() => fallbackToSynth());
+              return;
+            }
             fallbackToSynth();
           });
         }
@@ -4418,30 +4432,28 @@ useEffect(() => {
         
         const rawMixed = [...hotNews, ...normalNews];
         // Áp dụng Lá chắn độ tươi mới tin tức (Smart Freshness Gate):
-        // 1. Loại bỏ 100% các bài viết cũ hơn 7 ngày từ bất kỳ trang nào.
+        // 1. Khống chế cứng tin mới trong 3 ngày (loại bỏ triệt để các bài viết cũ hơn 3 ngày)
         // 2. Sắp xếp tin mới nhất lên đầu, ưu tiên tin nóng nếu trong vòng 3h.
-        const mixedNews = filterAndSortFreshNews(rawMixed, 7);
+        const mixedNews = filterAndSortFreshNews(rawMixed, 3);
         
         if (!isBackground) {
-          // Bảo lưu các bài viết từ bot (nếu có) trên đầu trang CHỈ KHI ở danh mục "Tất cả"
-          // Không chèn tin tức chung từ bot khi người dùng chọn mục cụ thể (Đời sống, Giá vàng,...)
           const existingLinks = new Set(mixedNews.map(n => n.link));
+          // Lọc bot items: chỉ giữ các bài tươi mới (trong 3 ngày), loại trừ triệt để tin cũ
           const botItems = activeCategory === "Tất cả"
-            ? (fullNewsPool.current || []).filter(n => (n as any)._isBot && !existingLinks.has(n.link))
+            ? (fullNewsPool.current || [])
+                .filter(n => (n as any)._isBot && !existingLinks.has(n.link))
+                .filter(n => isArticleFresh(n, 3))
             : [];
-          const finalPool = [...botItems, ...mixedNews];
+          const finalPool = filterAndSortFreshNews([...botItems, ...mixedNews], 3);
           fullNewsPool.current = finalPool;
           setLiveNews(finalPool.slice(0, 15));
         } else {
           const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
           const newItems = mixedNews.filter(n => !existingLinks.has(n.link));
           if (newItems.length > 0) {
-            fullNewsPool.current = [...newItems, ...fullNewsPool.current];
-            setLiveNews((prev: any) => {
-              const current = prev || [];
-              const uniqueNew = newItems.filter((n: any) => !current.find((c: any) => c.link === n.link));
-              return [...uniqueNew, ...current];
-            });
+            const combined = filterAndSortFreshNews([...newItems, ...fullNewsPool.current], 3);
+            fullNewsPool.current = combined;
+            setLiveNews(combined.slice(0, 15));
           }
         }
         setHasMoreNews(fullNewsPool.current.length > 15);
@@ -4530,29 +4542,41 @@ useEffect(() => {
         return newData;
       });
 
-      const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string }>;
+      const newsArr = json.news as Array<{ title?: string; source?: string; link?: string; description?: string, image?: string, pubDate?: string, date?: string }>;
       if (Array.isArray(newsArr) && newsArr.length > 0) {
           const images = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
-          const allMapped: LiveNewsItem[] = newsArr.map((item, i) => ({
-            img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
-            logo: getNewspaperLogo(item.link || ""),
-            fallbackImg: images[i % images.length],
-            author: decodeHTMLEntities(item.title       ?? "Tin tức"),
-            src:    item.source      ?? "Tin tức",
-            body:   decodeHTMLEntities(item.description ?? ""),
-            link:   item.link,
-            _isBot: true,
-          } as any));
+          const allMapped: LiveNewsItem[] = newsArr
+            .filter(item => {
+              const dStr = (item as any).pubDate || (item as any).date;
+              if (dStr) {
+                return isArticleFresh({ pubDate: dStr }, 3);
+              }
+              const text = `${item.title || ''} ${item.link || ''}`;
+              return !/202[0-5]|201\d/i.test(text);
+            })
+            .map((item, i) => ({
+              img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
+              logo: getNewspaperLogo(item.link || ""),
+              fallbackImg: images[i % images.length],
+              author: decodeHTMLEntities(item.title       ?? "Tin tức"),
+              src:    item.source      ?? "Tin tức",
+              body:   decodeHTMLEntities(item.description ?? ""),
+              link:   item.link,
+              pubDate: (item as any).pubDate || (item as any).date || new Date().toISOString(),
+              _isBot: true,
+            } as any));
           
           const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
           const trulyNewBotItems = allMapped.filter(n => !n.link || !existingLinks.has(n.link));
           
           if (fullNewsPool.current.length === 0) {
-            fullNewsPool.current = allMapped;
-            setLiveNews(allMapped.slice(0, 15));
+            const freshPool = filterAndSortFreshNews(allMapped, 3);
+            fullNewsPool.current = freshPool;
+            setLiveNews(freshPool.slice(0, 15));
           } else if (trulyNewBotItems.length > 0) {
-            fullNewsPool.current = [...trulyNewBotItems, ...fullNewsPool.current];
-            setLiveNews(prev => [...trulyNewBotItems, ...(prev || [])]);
+            const merged = filterAndSortFreshNews([...trulyNewBotItems, ...fullNewsPool.current], 3);
+            fullNewsPool.current = merged;
+            setLiveNews(merged.slice(0, 15));
           }
           setHasMoreNews(true);
         }

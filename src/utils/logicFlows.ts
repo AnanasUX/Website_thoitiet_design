@@ -315,14 +315,19 @@ export function parseFlexiblePubDate(dateStr: string | null | undefined): number
  * Nếu bài viết có ngày phát hành quá 7 ngày (hoặc từ năm 2024, 2025) -> Trả về false.
  */
 export function isArticleFresh(
-  article: { pubDate?: string; [key: string]: any } | null | undefined,
+  article: { pubDate?: string; title?: string; link?: string; [key: string]: any } | null | undefined,
   maxAgeDays: number = 7,
   referenceTimeMs: number = Date.now()
 ): boolean {
   if (!article) return false;
   const ts = parseFlexiblePubDate(article.pubDate);
   if (ts <= 0) {
-    // Không có ngày xuất bản -> Nếu không rõ ngày, giữ lại để không chặn nhầm tin vừa cào
+    // Nếu có tiêu đề hoặc link chứa năm cũ (2024, 2025, 2023...), triệt để loại bỏ!
+    const textToCheck = `${article.title || ''} ${article.link || ''} ${article.pubDate || ''}`;
+    if (/(?:202[0-5]|201\d)[\/\-_]?/i.test(textToCheck)) {
+      return false;
+    }
+    // Không có ngày xuất bản -> Nếu không rõ ngày và không chứa dấu hiệu bài cũ, giữ lại để không chặn nhầm tin vừa cào
     return true;
   }
   const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;

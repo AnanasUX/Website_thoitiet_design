@@ -819,8 +819,31 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
   const vid = voiceId || 'bac_nu';
-  const base = typeof window !== 'undefined' && window.location ? window.location.origin : '';
-  return `${base}/api/tts?translate_tts=1&tl=vi&text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(vid)}`;
+
+  // Đảm bảo document-level referrer policy luôn là no-referrer để không bao giờ bị máy chủ Google chặn do Referer
+  if (typeof document !== 'undefined') {
+    let meta = document.querySelector('meta[name="referrer"]') as HTMLMetaElement;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'referrer';
+      document.head.appendChild(meta);
+    }
+    meta.content = 'no-referrer';
+  }
+
+  // Nếu đang ở localhost hoặc 127.0.0.1: dùng proxy same-origin /api/tts
+  const isLocalDev = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.localhost')
+  );
+
+  if (isLocalDev) {
+    return `/api/tts?translate_tts=1&tl=vi&text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(vid)}`;
+  }
+
+  // Trên GitHub Pages hoặc môi trường static production: stream trực tiếp với chính sách no-referrer
+  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
 }
 
 /**
