@@ -61,6 +61,9 @@
 | REQ-044 | PROMPT-20261015-03, PROMPT-20261015-06 | Cổng phân quyền giải mã In-Memory Zero-Knowledge & Tự động điền cho Quản trị viên (mrkun28@gmail.com & Master Key Auto-Unlock) | P0 | Security / Admin Gate | TC-044 | PASS | test-logic-flows.mjs:LUONG-19 | Tự động nhận diện tài khoản quản trị mrkun28@gmail.com, tự động điền Master Key và tự động giải mã toàn bộ dữ liệu bí mật vào RAM ngay khi mở trang; hiển thị banner thông báo xác thực; hỗ trợ nút Khóa & Xóa RAM an toàn |
 | REQ-046 | PROMPT-20261015-04 | Động cơ bóc tách & phát video bài viết chi tiết từ các cơ quan báo chí chính thống | P0 | Article / Video Player | TC-046 | PASS | test-logic-flows.mjs:LUONG-21 | Bóc tách video đa nguồn (VTV, Thanh Niên, Tuổi Trẻ, Dân Trí, Tiền Phong, YouTube, TikTok), vượt chặn hotlink cross-origin, có link mở video gốc |
 | REQ-047 | PROMPT-20261015-04, PROMPT-20261015-05, PROMPT-20261015-09, PROMPT-20261015-10 | Tích hợp kiến trúc AI VieNeu-TTS v3 Turbo đọc bài viết chi tiết không tính tiêu đề, âm thanh 48 kHz Studio, 23 preset voices 3 miền, OpenAI-compatible streaming API | P0 | AI / VieNeu-TTS Audio | TC-047 | PASS | test-logic-flows.mjs:LUONG-22 | AI VieNeu-TTS v3 Turbo trích xuất toàn bộ thân bài + Sapo, TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ, áp dụng giọng đọc nữ hệ thống (Mai Anh / bac_nu) khi bấm nút article-tts-btn, chuẩn hóa tiếng Việt, hỗ trợ 23 preset voices 3 miền, OpenAI-compatible speech payload, waveform và progress bar |
+| REQ-048 | PROMPT-20261016-06 | Khôi phục logic đẩy bài tin tức và thời tiết định kỳ Telegram (`quan-ly-tien-phong`) | P0 | Telegram / News & Weather | TC-048 | PASS | test_all_telegram_commands.py, tests | Khôi phục API OpenWeatherMap, thu thập 200+ bài báo tươi mới, bản tin thời tiết hàng giờ hoàn chỉnh |
+| REQ-049 | PROMPT-20261016-07 | Đồng bộ hóa 100% trạng thái hoàn thành giữa Telegram Bot và Google Sheets | P0 | Telegram / Sheets Sync | TC-049 | PASS | main.py, test_sheets.py | Hợp nhất quet_tat_ca_tien_do_drive làm nguồn chân lý duy nhất, sửa các file chưa có thư mục gốc không tự đánh Hoàn thành trên Sheets |
+| REQ-050 | PROMPT-20261016-08 | Khắc phục triệt để lỗi mất bài viết Telegram đẩy về & khôi phục toàn bộ luồng tin tức | P0 | Telegram & Web / News Sync | TC-050 | PASS | test_all_telegram_commands.py, testwebsite.mjs | Dự phòng gửi text khi ảnh lỗi CDN, chỉ tự xóa thông báo lỗi hệ thống, tự động đặt lại bộ nhớ Google News khi còn < 3 bài, bổ sung pubDate/timestamp chuẩn hóa |
 
 ## Prompt intake log
 
@@ -97,6 +100,11 @@
 | PROMPT-20261016-01 | 2026-10-16 | Tại sao khi tôi sử dụng trình duyệt ở cty AI đọc 1 giọng khác mà sử dụng điện thoại hay PC ở nơi khác lại 1 giọng đọc khác & loại bỏ bài viết cũ | REQ-027, REQ-047 | Resolved | Approved |
 | PROMPT-20261016-02 | 2026-10-16 | Vẫn bị đọc riêng xử lý lại và fix lại toàn bộ chung 1 luồng xử lý không tách riêng vậy | REQ-047 | Resolved | Approved |
 | PROMPT-20261016-03 | 2026-10-16 | Debug và chuẩn hóa toàn diện 6 giai đoạn VieNeu-TTS v3 Turbo cho website tin tức, khắc phục lệch giọng đa thiết bị, đồng nhất VieNeuTTSController Single Source of Truth | REQ-047 | Resolved | Approved |
+| PROMPT-20261016-04 | 2026-10-16 | Trực tiếp sửa lỗi đồng bộ giọng đọc VieNeu-TTS đa thiết bị, loại bỏ Google Translate TTS, đồng nhất Controller | REQ-047 | Resolved | Approved |
+| PROMPT-20261016-05 | 2026-10-16 | Tự động hóa khởi chạy backend AI VieNeu-TTS không cần gõ lệnh thủ công, kịch bản 1-click Windows | REQ-047 | Resolved | Approved |
+| PROMPT-20261016-06 | 2026-10-16 | Khôi phục logic đẩy bài tin tức và thời tiết định kỳ Telegram (`quan-ly-tien-phong`) | REQ-048 | Resolved | Approved |
+| PROMPT-20261016-07 | 2026-10-16 | Dữ liệu trong telegram đã đánh hoàn thành đâu mà trên file Sheets lại đánh hoàn thành việc này là sai phi logic | REQ-049 | Resolved | Approved |
+| PROMPT-20261016-08 | 2026-10-16 | Bài viết hiện tại ở telegram chưa thấy đẩy về kiểm tra lại logic cũ và phục hồi | REQ-050 | Resolved | Approved |
 
 
 

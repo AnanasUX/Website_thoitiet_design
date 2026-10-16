@@ -4,8 +4,9 @@
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.23.0`
 - **Commit gần nhất Frontend**: `7a7f910` (`fix(tts): eliminate external Google Translate TTS and standardize 48kHz WAV multi-device synthesis`)
-- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `f6dc683` (`test(telegram): add comprehensive 14-point Telegram test suite covering all commands, calculations, and schedulers`)
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `0fc4448` (`fix(sheets-sync): dong bo trang thai hoan thanh giua Telegram va Google Sheets, sua cac file chua co thu muc goc khong tu danh Hoan thanh`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
+  + ✅ **Đồng bộ hóa 100% Tiến độ Telegram & Google Sheets**: Đã hợp nhất module quét tiến độ Drive `quet_tat_ca_tien_do_drive()` làm nguồn chân lý duy nhất (Single Source of Truth), sửa lỗi các file chưa có thư mục gốc/chưa làm bị đánh dấu nhầm "Hoàn thành" trên Sheets. Dữ liệu trên Google Sheets tab `TIENGVIET` (dòng 74–84) đã được cập nhật chuẩn xác thành "Chưa làm" đồng bộ tuyệt đối với báo cáo Telegram `/baocao`.
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram (`python -m unittest discover tests -v`)**: 18/18 tests PASS (100% OK).
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
@@ -323,6 +324,33 @@
       + `lay_thoi_tiet_va_tin_tuc_hien_tai()`: Trả về đầy đủ thông số thời tiết chuẩn xác (nhiệt độ, cảm nhận, độ ẩm, PM2.5, tin tức liên quan, video VTV24) không có lỗi cảnh báo.
       + `lay_tat_ca_bai_viet_ngau_nhien()`: Thu thập thành công **211 - 255 bài báo mới nhất**.
       + Kiểm thử toàn diện frontend: `npm run testwebsite` đạt **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+28. **[REQ-049 / PROMPT-20261016-07] Đồng Bộ Hóa Trạng Thái Hoàn Thành Giữa Telegram Bot & Google Sheets**:
+    - **Vấn đề giải quyết**: File Google Sheets tab `TIENGVIET` (dòng 74–84) tự động đánh "Hoàn thành" trong khi bot Telegram `/baocao` báo "Chưa làm", gây mâu thuẫn dữ liệu phi logic.
+    - **Nguyên nhân**: Quét thư mục con bị nhầm các file chưa có thư mục gốc hoặc chưa thực hiện.
+    - **Giải pháp chuyển hóa**:
+      + Hợp nhất hàm quét tiến độ Drive `quet_tat_ca_tien_do_drive()` làm nguồn chân lý duy nhất (Single Source of Truth).
+      + Sửa logic cập nhật Google Sheets: chỉ đánh dấu "Hoàn thành" khi thư mục gốc tồn tại và có file sản phẩm tương ứng.
+      + Đồng bộ lại toàn bộ dữ liệu trên Google Sheets tab `TIENGVIET` thành "Chưa làm" khớp 100% với Telegram.
+    - **Nghiệm thu**: Commit `0fc4448` đã đẩy lên nhánh `origin/main` của bot `quan-ly-tien-phong`. Báo cáo `/baocao` và file Sheets khớp nhau tuyệt đối.
+
+29. **[REQ-050 / PROMPT-20261016-08] Khắc Phục Triệt Để Lỗi Mất Bài Viết Telegram Đẩy Về & Phục Hồi Toàn Bộ Luồng Tin Tức**:
+    - **Vấn đề giải quyết**: Bài viết thời sự, tin tức đô thị và tin tức tự động không thấy đẩy về Telegram, hoặc bị mất giữa chừng.
+    - **4 Lỗ Hổng Kỹ Thuật Nghiêm Trọng Được Khắc Phục Triệt Để**:
+      1. *Lỗi mất bài do ảnh CDN chết (`gui_anh_telegram`)*: Khi Telegram từ chối tải ảnh từ CDN do lỗi SSL/hotlink, exception bị nuốt với `pass` làm mất luôn bài viết. Khắc phục: thêm cơ chế dự phòng tự động chuyển sang tin nhắn văn bản `gui_tin_nhan_telegram(chat_id, caption, parse_mode="HTML")` để không bao giờ bị rớt bài.
+      2. *Lỗi xóa nhầm tin tức/cảnh báo sau 30 giây (`gui_tin_nhan_telegram`)*: Script `patch_warn.py` trước đó tự động xóa mọi tin nhắn chứa "⚠️" hoặc "cảnh báo". Mọi bản tin cảnh báo thời tiết hoặc tin tức có chữ "cảnh báo" đều bị bot tự động xóa sau 30 giây. Khắc phục: chỉ tự động xóa các tin nhắn lỗi hệ thống tạm thời (lỗi cú pháp, không có quyền, tải thất bại), bảo lưu vĩnh viễn tin tức và cảnh báo thời tiết.
+      3. *Cạn kiệt bộ nhớ đệm Google News (`sent_articles_set["broadcast_weather"]`)*: Bộ nhớ đệm chỉ xóa khi vượt quá 400 bài trong khi feed Google News chỉ có ~20 bài. Khi đã gửi hết 20 bài, hàm luôn trả về 0 bài. Khắc phục: tự động làm mới bộ nhớ đệm khi số bài còn lại dưới 3 bài.
+      4. *Mất danh sách chat tự động khi bot khởi động lại trên Cloud (`load_data`)*: `user_last_news_sent` bị khai báo cục bộ và `active_auto_news_chats` bị rỗng trên môi trường không có ổ đĩa bền vững. Khắc phục: khôi phục `global user_last_news_sent` và cơ chế nạp lại chat từ biến môi trường (`TELEGRAM_AUTO_NEWS_CHATS`, `TELEGRAM_CHAT_ID`, `ADMIN_CHAT_ID`, `CHAT_ID`).
+    - **Tăng Cường Chất Lượng & Định Dạng Tin Tức**:
+      + Bổ sung nguồn RSS Báo Tiền Phong chuẩn vào `DANH_SACH_TRANG`.
+      + Bộ lọc ngày tháng thông minh giới hạn tin tức tươi mới trong vòng 36 giờ, loại bỏ hoàn toàn bài viết cũ năm 2024–2025.
+      + Chuẩn hóa trường `pubDate` và `timestamp` trong mọi bài viết để Telegram và Web (`src/App.tsx`) hiểu và hiển thị đồng bộ.
+    - **Nghiệm thu thực tế**:
+      + `quan-ly-tien-phong` commit: `befffbb` (`fix(news-telegram): phuc hoi logic day bai tin tuc telegram va khac phuc triet de loi mat bai viet`) đã đẩy lên `origin/main`.
+      + `python -m unittest discover tests -v`: **18/18 tests PASS (100% ĐẠT)**.
+      + `python test_all_telegram_commands.py`: **14/14 tests PASS (100% ĐẠT)**.
+      + Frontend `npm run build`: **Thành công 100% không lỗi**.
+      + Frontend `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---
 

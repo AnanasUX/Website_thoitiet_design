@@ -4289,20 +4289,30 @@ useEffect(() => {
               if (dStr) {
                 return isArticleFresh({ pubDate: dStr }, 3);
               }
+              if ((item as any).timestamp && (item as any).timestamp > 0) {
+                const ts = (item as any).timestamp * 1000;
+                return (Date.now() - ts) <= 3 * 24 * 3600 * 1000;
+              }
               const text = `${item.title || ''} ${item.link || ''}`;
               return !/202[0-5]|201\d/i.test(text);
             })
-            .map((item, i) => ({
-              img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
-              logo: getNewspaperLogo(item.link || ""),
-              fallbackImg: images[i % images.length],
-              author: decodeHTMLEntities(item.title       ?? "Tin tức"),
-              src:    item.source      ?? "Tin tức",
-              body:   decodeHTMLEntities(item.description ?? ""),
-              link:   item.link,
-              pubDate: (item as any).pubDate || (item as any).date || new Date().toISOString(),
-              _isBot: true,
-            } as any));
+            .map((item, i) => {
+              let itemPubDate = (item as any).pubDate || (item as any).date;
+              if (!itemPubDate && (item as any).timestamp) {
+                itemPubDate = new Date((item as any).timestamp * 1000).toISOString();
+              }
+              return {
+                img:    item.image ? getProxyImageUrl(item.image) : images[i % images.length],
+                logo: getNewspaperLogo(item.link || ""),
+                fallbackImg: images[i % images.length],
+                author: decodeHTMLEntities(item.title       ?? "Tin tức"),
+                src:    item.source      ?? "Tin tức",
+                body:   decodeHTMLEntities(item.description ?? ""),
+                link:   item.link,
+                pubDate: itemPubDate || new Date().toISOString(),
+                _isBot: true,
+              } as any;
+            });
           
           const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
           const trulyNewBotItems = allMapped.filter(n => !n.link || !existingLinks.has(n.link));
