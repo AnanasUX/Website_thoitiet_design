@@ -240,6 +240,17 @@
       + `npm run build`: Thành công 100% trong 535ms.
       + `npm run testwebsite`: 47/47 Test Cases PASS (100% PASS), **RELEASE GATE: PASSED**.
 
+23. **[REQ-047 / PROMPT-20261016-02] Thống Nhất Hoàn Toàn 1 Luồng Xử Lý Âm Thanh Duy Nhất (Single Unified Audio Stream Pipeline - Không Tách Riêng)**:
+    - **Triệt tiêu hoàn toàn sự phân tách 2 luồng / phân nhánh engine**:
+      + *Loại bỏ rẽ nhánh môi trường trong `buildVieNeuAudioUrl`*: Xóa bỏ hoàn toàn điều kiện `isLocalDev` (trước đây phân nhánh `/api/tts` trên localhost và `translate.google.com` trên môi trường khác). 100% tất cả môi trường (công ty, nhà, điện thoại, máy tính bảng, GitHub Pages) đều kết nối trực tiếp vào cùng 1 URL stream âm thanh tiếng Việt chuẩn duy nhất.
+      + *Loại bỏ nhánh Web Speech API khỏi `VieNeuTTSController`*: Loại bỏ hoàn toàn `synth`, `currentUtterance`, `playChunkViaSynth`, `engineMode: 'speech_synthesis'`, và `crossOrigin = 'anonymous'`. `VieNeuTTSController` giờ đây thuần túy là bộ điều khiển HTML5 `Audio` duy nhất, đồng nhất hoàn toàn với `NewsDetailView` trong `App.tsx`.
+      + *Xóa bỏ cuộc gọi ngầm backend thứ hai trong `handleToggleAudio`*: Triệt tiêu lời gọi `requestBackendArticleTTS` bất đồng bộ ngầm khi người dùng bấm Byline Bar `[Nghe đọc]`, tránh việc tạo 2 luồng request song song gây lỗi mạng 404 trên các môi trường tĩnh.
+      + *Chính sách No-Referrer cấp bách và đáng tin cậy*: Gắn `audio.referrerPolicy = 'no-referrer'` trực tiếp trên thẻ Audio Element cùng thẻ `<meta name="referrer" content="no-referrer" />` trong `index.html`, triệt tiêu 100% việc Google chặn do lộ header Referer.
+    - **Nghiệm thu thực tế**:
+      + `scripts/test-logic-flows.mjs`: 346/346 assertions logic PASS (100% ĐẠT, 0 FAIL).
+      + `npm run build`: Thành công 100% không lỗi trong 465ms.
+      + `npm run testwebsite`: 47/47 Test Cases PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)

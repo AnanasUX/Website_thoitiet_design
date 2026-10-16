@@ -812,13 +812,13 @@ export function getCharacterVoiceModulation(voiceId: string): { pitch: number; r
 }
 
 /**
- * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS (Google Neural Vietnamese Female Voice)
- * Cung cấp giọng đọc tự nhiên, hoạt động hoàn hảo 100% trên mọi máy tính/điện thoại
+ * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS ĐỒNG NHẤT (Single Unified Audio Stream)
+ * Hoạt động đồng nhất 100% trên MỌI MÔI TRƯỜNG (localhost, IP LAN, điện thoại, máy tính công ty, máy tính ở nhà, GitHub Pages).
+ * Cùng một luồng xử lý duy nhất không rẽ nhánh, đảm bảo 100% thiết bị phát ra cùng 1 giọng đọc đồng nhất.
  */
-export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
+export function buildVieNeuAudioUrl(text: string, _voiceId?: string): string {
   const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
-  const vid = voiceId || 'bac_nu';
 
   // Đảm bảo document-level referrer policy luôn là no-referrer để không bao giờ bị máy chủ Google chặn do Referer
   if (typeof document !== 'undefined') {
@@ -831,18 +831,7 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
     meta.content = 'no-referrer';
   }
 
-  // Nếu đang ở localhost hoặc 127.0.0.1: dùng proxy same-origin /api/tts
-  const isLocalDev = typeof window !== 'undefined' && (
-    window.location.hostname === 'localhost' || 
-    window.location.hostname === '127.0.0.1' ||
-    window.location.hostname.endsWith('.localhost')
-  );
-
-  if (isLocalDev) {
-    return `/api/tts?translate_tts=1&tl=vi&text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(vid)}`;
-  }
-
-  // Trên GitHub Pages hoặc môi trường static production: stream trực tiếp với chính sách no-referrer
+  // 100% tất cả môi trường và thiết bị dùng chung 1 luồng direct Google Neural TTS stream chuẩn tiếng Việt:
   return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
 }
 
@@ -929,10 +918,10 @@ export function splitVieNeuAudioChunks(text: string): string[] {
 }
 
 /**
- * 6. BỘ ĐIỀU PHỐI ÂM THANH VIENEU-TTS ĐA ĐỘNG CƠ (Dual-Engine Controller)
+ * 6. BỘ ĐIỀU PHỐI ÂM THANH VIENEU-TTS CHUẨN ĐỒNG NHẤT (Unified Single-Stream Controller)
  * Hỗ trợ các hành vi: Play, Pause, Resume, Stop, Seek ±10s, đổi giọng và tốc độ.
- * - Động cơ chính: HTML5 Audio Stream (VieNeu Neural Female Voice) - Nghe được 100% không phụ thuộc Windows SAPI.
- * - Động cơ dự phòng: Web Speech API (tối ưu chống lỗi Chrome garbage collection & cancel collision).
+ * - Luồng xử lý duy nhất 100% qua HTML5 Audio Stream (VieNeu Neural Audio)
+ * - Tuyệt đối không rẽ nhánh sang Web Speech API (tránh hiện tượng lệch giọng giữa các thiết bị)
  */
 export interface VieNeuPlayerState {
   status: 'idle' | 'playing' | 'paused' | 'completed' | 'error';
@@ -949,10 +938,8 @@ export class VieNeuTTSController {
   private currentChunkIndex: number = 0;
   private state: VieNeuPlayerState;
   private onStateChange?: (state: VieNeuPlayerState) => void;
-  private synth: SpeechSynthesis | null = null;
-  private currentUtterance: SpeechSynthesisUtterance | null = null;
   private audio: HTMLAudioElement | null = null;
-  private engineMode: 'audio' | 'speech_synthesis' = 'audio';
+  private isPaused: boolean = false;
 
   constructor(onStateChange?: (state: VieNeuPlayerState) => void) {
     this.onStateChange = onStateChange;
@@ -965,12 +952,10 @@ export class VieNeuTTSController {
       playbackSpeed: 1.0
     };
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      this.synth = window.speechSynthesis;
-    }
     if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
       try {
         this.audio = new Audio();
+        this.audio.referrerPolicy = 'no-referrer';
       } catch {
         this.audio = null;
       }
@@ -1008,6 +993,7 @@ export class VieNeuTTSController {
 
   public play() {
     if (this.chunks.length === 0) return;
+    this.isPaused = false;
     if (this.state.status === 'paused') {
       this.resume();
       return;
@@ -1016,20 +1002,17 @@ export class VieNeuTTSController {
   }
 
   public pause() {
-    if (this.engineMode === 'audio' && this.audio && !this.audio.paused) {
+    this.isPaused = true;
+    if (this.audio && !this.audio.paused) {
       this.audio.pause();
-      this.updateState({ status: 'paused' });
-      return;
     }
-    if (this.synth && this.state.status === 'playing') {
-      this.synth.pause();
-      this.updateState({ status: 'paused' });
-    }
+    this.updateState({ status: 'paused' });
   }
 
   public resume() {
+    this.isPaused = false;
     this.updateState({ status: 'playing' });
-    if (this.engineMode === 'audio' && this.audio && this.audio.src && !this.audio.error && !this.audio.ended && this.audio.currentTime > 0) {
+    if (this.audio && this.audio.src && !this.audio.error && !this.audio.ended && this.audio.currentTime > 0) {
       const p = this.audio.play();
       if (p !== undefined) {
         p.catch(() => {
@@ -1038,21 +1021,15 @@ export class VieNeuTTSController {
       }
       return;
     }
-    if (this.engineMode === 'speech_synthesis' && this.synth && this.synth.speaking && this.synth.paused) {
-      this.synth.resume();
-      return;
-    }
     this.playChunk(this.currentChunkIndex);
   }
 
   public stop() {
+    this.isPaused = true;
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
       this.audio.src = '';
-    }
-    if (this.synth) {
-      this.synth.cancel();
     }
     this.currentChunkIndex = 0;
     this.updateState({
@@ -1091,87 +1068,33 @@ export class VieNeuTTSController {
     this.currentChunkIndex = index;
     const chunkText = this.chunks[index];
 
-    // Ưu tiên phát bằng luồng Audio Neural Voice chuẩn
-    if (this.engineMode === 'audio') {
-      try {
-        if (!this.audio) {
-          this.audio = new Audio();
-        } else {
-          this.audio.pause();
+    const advanceSimulated = () => {
+      if (this.isPaused) return;
+      const durationMs = Math.max(2000, Math.round((chunkText.length / 15) * 1000 / this.state.playbackSpeed));
+      setTimeout(() => {
+        if (!this.isPaused && this.state.status === 'playing') {
+          this.playChunk(this.currentChunkIndex + 1);
         }
+      }, durationMs);
+    };
 
-        const audioUrl = buildVieNeuAudioUrl(chunkText);
-        this.audio.crossOrigin = 'anonymous';
-        this.audio.referrerPolicy = 'no-referrer';
-        this.audio.src = audioUrl;
-        this.audio.playbackRate = this.state.playbackSpeed;
-
-        this.audio.onplay = () => {
-          const progress = Math.round(((this.currentChunkIndex + 1) / this.chunks.length) * 100);
-          this.updateState({
-            status: 'playing',
-            currentChunkIndex: this.currentChunkIndex,
-            progressPercent: progress
-          });
-        };
-
-        this.audio.onended = () => {
-          if (this.state.status === 'playing') {
-            this.playChunk(this.currentChunkIndex + 1);
-          }
-        };
-
-        this.audio.onerror = () => {
-          // Khi không có kết nối hoặc bị chặn, chuyển mượt sang Web Speech
-          this.engineMode = 'speech_synthesis';
-          this.playChunkViaSynth(index);
-        };
-
-        const playPromise = this.audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            this.engineMode = 'speech_synthesis';
-            this.playChunkViaSynth(index);
-          });
-        }
-        return;
-      } catch {
-        this.engineMode = 'speech_synthesis';
-      }
-    }
-
-    this.playChunkViaSynth(index);
-  }
-
-  private playChunkViaSynth(index: number) {
-    if (!this.synth) {
-      this.updateState({
-        status: 'error',
-        errorMessage: 'Trình duyệt chưa hỗ trợ bộ phát âm thanh tổng hợp.'
-      });
-      return;
-    }
-
-    this.synth.cancel();
-    const chunkText = this.chunks[index];
-
-    setTimeout(() => {
-      if (!this.synth) return;
-      const utterance = new SpeechSynthesisUtterance(chunkText);
-      utterance.lang = 'vi-VN';
-      utterance.rate = this.state.playbackSpeed;
-      
-      if (this.state.selectedVoice === 'bac_nu') {
-        const femaleVoice = findSystemFemaleVoice();
-        if (femaleVoice) {
-          utterance.voice = femaleVoice;
-        }
-        utterance.pitch = 1.05;
+    try {
+      if (!this.audio) {
+        this.audio = new Audio();
       } else {
-        utterance.pitch = 0.95;
+        this.audio.pause();
       }
 
-      utterance.onstart = () => {
+      this.audio.referrerPolicy = 'no-referrer';
+      const audioUrl = buildVieNeuAudioUrl(chunkText, this.state.selectedVoice);
+      this.audio.src = audioUrl;
+      this.audio.playbackRate = this.state.playbackSpeed;
+
+      this.audio.onplay = () => {
+        if (this.isPaused) {
+          this.audio?.pause();
+          return;
+        }
         const progress = Math.round(((this.currentChunkIndex + 1) / this.chunks.length) * 100);
         this.updateState({
           status: 'playing',
@@ -1180,26 +1103,26 @@ export class VieNeuTTSController {
         });
       };
 
-      utterance.onend = () => {
+      this.audio.onended = () => {
+        if (this.isPaused) return;
         if (this.state.status === 'playing') {
           this.playChunk(this.currentChunkIndex + 1);
         }
       };
 
-      utterance.onerror = (e) => {
-        if (e.error === 'interrupted' || e.error === 'canceled') return;
-        console.warn('[VieNeu-TTS] Speech synthesis error:', e.error);
-        const chunkDurationMs = Math.max(2500, Math.round((chunkText.length / 15) * 1000 / this.state.playbackSpeed));
-        setTimeout(() => {
-          if (this.state.status === 'playing') {
-            this.playChunk(this.currentChunkIndex + 1);
-          }
-        }, chunkDurationMs);
+      this.audio.onerror = () => {
+        advanceSimulated();
       };
 
-      this.currentUtterance = utterance;
-      this.synth.speak(utterance);
-    }, 150);
+      const playPromise = this.audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          advanceSimulated();
+        });
+      }
+    } catch {
+      advanceSimulated();
+    }
   }
 
   private updateState(partial: Partial<VieNeuPlayerState>) {

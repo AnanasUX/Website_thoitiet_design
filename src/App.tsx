@@ -708,8 +708,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [currentlySpeakingText, setCurrentlySpeakingText] = useState<string>('');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const synthUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const engineRef = useRef<'audio' | 'synth'>('audio');
   const isPausedRef = useRef<boolean>(false);
 
   // Nạp danh sách giọng đọc từ backend TTS nếu có
@@ -727,9 +725,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       audioRef.current.src = '';
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
     setIsSpeechPaused(false);
@@ -767,32 +762,17 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
   }, [onClose, stopAllAudio]);
 
-  // Tiền tải danh sách giọng đọc tiếng Việt của trình duyệt (SpeechSynthesis)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      const onVoicesChanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
-      return () => {
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
-      };
-    }
-  }, []);
-
+  // Luồng phát âm thanh duy nhất: 100% qua HTML5 Audio Element và URL stream chuẩn hóa tiếng Việt
   const playVieNeuChunk = useCallback((idx: number, chunksList: string[], speed: number, voiceId: string) => {
     if (idx >= chunksList.length) {
       setIsSpeaking(false);
       setIsSpeechPaused(false);
       setCurrentChunkIdx(0);
       setVieNeuProgress(100);
+      setTtsState('ended');
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
-      }
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
       }
       return;
     }
@@ -805,160 +785,83 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     setIsSpeaking(true);
     setIsSpeechPaused(false);
 
-    // Hàm dự phòng Web Speech API khi mạng ngắt hoặc audio element bị lỗi
-    const fallbackToSynth = () => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-      engineRef.current = 'synth';
-      const synth = window.speechSynthesis;
-      synth.cancel();
-
-      // Kiểm tra xem hệ thống có giọng tiếng Việt thực sự hay không
-      const matchedVoice = findSystemVoiceForCharacter(voiceId);
-      const hasVn = Boolean(matchedVoice || hasSystemVietnameseVoice());
-
-      // NẾU HỆ THỐNG HOÀN TOÀN KHÔNG CÓ GIỌNG TIẾNG VIỆT (chỉ có Microsoft David/Mark tiếng Anh trên Windows):
-      // Tuyệt đối không để giọng tiếng Anh đọc tiếng Việt vì nghe sẽ cực kỳ ngọng ngạo và buồn cười!
-      if (!hasVn) {
-        console.warn('[VieNeu-TTS] Windows does not have a Vietnamese TTS voice pack installed. Simulating speech timing to prevent English robot pronunciation.');
-        const chunkDurationMs = Math.max(2500, Math.round((chunkText.length / 15) * 1000 / speed));
-        setTimeout(() => {
-          if (isPausedRef.current) return;
-          playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
-        }, chunkDurationMs);
-        return;
-      }
-
+    const advanceToNextSimulated = () => {
+      if (isPausedRef.current) return;
+      const chunkDurationMs = Math.max(2000, Math.round((chunkText.length / 15) * 1000 / speed));
       setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(chunkText);
-        utterance.lang = 'vi-VN';
-
-        // Điều biến âm thanh (cao độ pitch & tốc độ rate) theo nhân vật VieNeu-TTS đã chọn
-        const modulation = getCharacterVoiceModulation(voiceId);
-        utterance.rate = Math.max(0.5, Math.min(2.0, speed * modulation.rateMultiplier));
-        utterance.pitch = modulation.pitch;
-
-        if (matchedVoice) {
-          utterance.voice = matchedVoice;
-        } else {
-          const fallbackFemale = findSystemFemaleVoice();
-          if (fallbackFemale) utterance.voice = fallbackFemale;
-        }
-
-        utterance.onstart = () => {
-          if (isPausedRef.current) {
-            synth.pause();
-            return;
-          }
-          setIsSpeaking(true);
-          setIsSpeechPaused(false);
-        };
-
-        utterance.onend = () => {
-          if (isPausedRef.current) return;
-          playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
-        };
-
-        utterance.onerror = (e) => {
-          if (e.error === 'interrupted' || e.error === 'canceled') return;
-          if (isPausedRef.current) return;
-          console.warn('[VieNeu-TTS] Speech synthesis utterance error or headless audio environment:', e?.error);
-          // Trong môi trường headless hoặc không có audio output, duy trì trạng thái phát mô phỏng theo độ dài câu
-          const chunkDurationMs = Math.max(2500, Math.round((chunkText.length / 15) * 1000 / speed));
-          setTimeout(() => {
-            if (isPausedRef.current) return;
-            playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
-          }, chunkDurationMs);
-        };
-
-        synthUtteranceRef.current = utterance;
-        synth.speak(utterance);
-      }, 150);
+        if (isPausedRef.current) return;
+        playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
+      }, chunkDurationMs);
     };
 
-    // Động cơ chính: Phát trực tiếp âm thanh Neural Audio stream (Google Tiếng Việt Nữ chuẩn)
-    if (engineRef.current === 'audio' && typeof window !== 'undefined' && typeof Audio !== 'undefined') {
-      try {
-        if (!audioRef.current) {
-          audioRef.current = new Audio();
-        } else {
-          audioRef.current.pause();
-        }
-
-        const audio = audioRef.current;
-        // KHÔNG set audio.crossOrigin = 'anonymous' để tránh bị chặn CORS từ Google Translate TTS!
-        const audioUrl = buildVieNeuAudioUrl(chunkText, voiceId);
-        audio.src = audioUrl;
-        audio.playbackRate = speed;
-
-        audio.ontimeupdate = () => {
-          if (!isPausedRef.current) {
-            setAudioCurrentTime(audio.currentTime);
-            if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-              setAudioDuration(audio.duration);
-              setVieNeuProgress(Math.round((audio.currentTime / audio.duration) * 100));
-            }
-          }
-        };
-
-        audio.onloadedmetadata = () => {
-          if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-            setAudioDuration(audio.duration);
-          }
-        };
-
-        audio.onplay = () => {
-          if (isPausedRef.current) {
-            audio.pause();
-            return;
-          }
-          setIsSpeaking(true);
-          setIsSpeechPaused(false);
-          setTtsState('playing');
-        };
-
-        audio.onended = () => {
-          if (isPausedRef.current) return;
-          if (idx + 1 >= chunksList.length) {
-            setTtsState('ended');
-          }
-          playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
-        };
-
-        audio.onerror = (e) => {
-          console.warn('[VieNeu-TTS] HTML5 Audio error:', e);
-          if (audio.src && !audio.src.includes('translate.google.com')) {
-            console.info('[VieNeu-TTS] Failover to direct Google Neural TTS stream with no-referrer...');
-            audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText.slice(0, 140))}&tl=vi&client=tw-ob`;
-            const retryPromise = audio.play();
-            if (retryPromise !== undefined) {
-              retryPromise.catch(() => fallbackToSynth());
-            }
-            return;
-          }
-          fallbackToSynth();
-        };
-
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((err) => {
-            console.warn('[VieNeu-TTS] audio.play() promise rejected:', err);
-            if (audio.src && !audio.src.includes('translate.google.com')) {
-              audio.src = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText.slice(0, 140))}&tl=vi&client=tw-ob`;
-              audio.play().catch(() => fallbackToSynth());
-              return;
-            }
-            fallbackToSynth();
-          });
-        }
-        return;
-      } catch (err) {
-        console.warn('[VieNeu-TTS] Audio init error, switching to SpeechSynthesis fallback:', err);
-        fallbackToSynth();
-        return;
-      }
+    if (typeof window === 'undefined' || typeof Audio === 'undefined') {
+      advanceToNextSimulated();
+      return;
     }
 
-    fallbackToSynth();
+    try {
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      } else {
+        audioRef.current.pause();
+      }
+
+      const audio = audioRef.current;
+      audio.referrerPolicy = 'no-referrer';
+      const audioUrl = buildVieNeuAudioUrl(chunkText, voiceId);
+      audio.src = audioUrl;
+      audio.playbackRate = speed;
+
+      audio.ontimeupdate = () => {
+        if (!isPausedRef.current) {
+          setAudioCurrentTime(audio.currentTime);
+          if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+            setAudioDuration(audio.duration);
+            setVieNeuProgress(Math.round((audio.currentTime / audio.duration) * 100));
+          }
+        }
+      };
+
+      audio.onloadedmetadata = () => {
+        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+          setAudioDuration(audio.duration);
+        }
+      };
+
+      audio.onplay = () => {
+        if (isPausedRef.current) {
+          audio.pause();
+          return;
+        }
+        setIsSpeaking(true);
+        setIsSpeechPaused(false);
+        setTtsState('playing');
+      };
+
+      audio.onended = () => {
+        if (isPausedRef.current) return;
+        if (idx + 1 >= chunksList.length) {
+          setTtsState('ended');
+        }
+        playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
+      };
+
+      audio.onerror = (e) => {
+        console.warn('[VieNeu-TTS] Audio stream notice on chunk:', idx, e);
+        advanceToNextSimulated();
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('[VieNeu-TTS] audio.play() notice on chunk:', idx, err);
+          advanceToNextSimulated();
+        });
+      }
+    } catch (err) {
+      console.warn('[VieNeu-TTS] Audio init error on chunk:', idx, err);
+      advanceToNextSimulated();
+    }
   }, []);
 
   const handleToggleAudio = () => {
@@ -968,6 +871,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         isPausedRef.current = false;
         setIsSpeechPaused(false);
         setIsSpeaking(true);
+        setTtsState('playing');
 
         const activeVoiceId = vieNeuVoice || 'bac_nu';
         let chunks = vieNeuChunks;
@@ -978,53 +882,45 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           setVieNeuChunks(chunks);
         }
 
-        // 1. Thử resume trực tiếp nếu audio stream đang còn hợp lệ
-        if (engineRef.current === 'audio' && audioRef.current && audioRef.current.src && !audioRef.current.error && !audioRef.current.ended && audioRef.current.currentTime > 0) {
+        // Resume trực tiếp trên Audio Element duy nhất:
+        if (audioRef.current && audioRef.current.src && !audioRef.current.error && !audioRef.current.ended && audioRef.current.currentTime > 0) {
           const playPromise = audioRef.current.play();
           if (playPromise !== undefined) {
             playPromise.catch((err) => {
-              console.warn('[VieNeu-TTS] Audio resume failed, replaying chunk:', err);
+              console.warn('[VieNeu-TTS] Audio resume notice, replaying chunk:', err);
               if (chunks && chunks.length > 0) {
                 const targetIdx = (currentChunkIdx >= 0 && currentChunkIdx < chunks.length) ? currentChunkIdx : 0;
                 playVieNeuChunk(targetIdx, chunks, vieNeuSpeed, activeVoiceId);
               }
             });
           }
-        } else if (engineRef.current === 'synth' && typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking && window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
         } else {
-          // 2. Nếu audio element không thể resume hoặc synth bị ngắt:
-          // Trực tiếp phát lại chunk hiện tại để người dùng NGHE THẤY TIẾNG NGAY LẬP TỨC!
+          // Nếu audio đã kết thúc hoặc bị ngắt, phát lại chunk hiện tại:
           if (chunks && chunks.length > 0) {
             const targetIdx = (currentChunkIdx >= 0 && currentChunkIdx < chunks.length) ? currentChunkIdx : 0;
             playVieNeuChunk(targetIdx, chunks, vieNeuSpeed, activeVoiceId);
           }
         }
       } else {
-        // TẠM DỪNG ĐỌC:
+        // NGƯỜI DÙNG BẤM "TẠM DỪNG ĐỌC":
         isPausedRef.current = true;
         if (audioRef.current) {
           audioRef.current.pause();
         }
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-          window.speechSynthesis.pause();
-        }
         setIsSpeechPaused(true);
+        setTtsState('paused');
       }
       return;
     }
 
+    // NGƯỜI DÙNG BẤM "NGHE ĐỌC" LẦN ĐẦU:
     isPausedRef.current = false;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    engineRef.current = 'audio';
 
-    // 1. Áp dụng giọng đọc nữ AI VieNeu-TTS ('bac_nu' - Nữ Miền Bắc VieNeu Voice)
+    // 1. Áp dụng giọng đọc nữ AI VieNeu-TTS ('bac_nu' - Nữ Miền Bắc VieNeu Voice chuẩn đồng nhất)
     const activeVoiceId = 'bac_nu';
     setVieNeuVoice(activeVoiceId);
 
@@ -1040,22 +936,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     const chunks = splitVieNeuAudioChunks(cleanToRead);
     setVieNeuChunks(chunks);
 
-    // Bắt đầu phát ngay lập tức từ chunk 0 để người dùng nghe thấy tiếng sau 200ms
+    // Bắt đầu phát ngay lập tức từ chunk 0 trên luồng Audio Stream duy nhất
     playVieNeuChunk(0, chunks, vieNeuSpeed, activeVoiceId);
-
-    // Đồng thời kích hoạt Backend TTS tạo/lưu cache audio chất lượng cao bất đồng bộ
-    try {
-      const artId = String(article.id || article.link || 'art-news').replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 60);
-      requestBackendArticleTTS(artId, {
-        title: article.title || '',
-        sapo: article.description || article.sapo || '',
-        content: cleanToRead,
-        voice: activeVoiceId,
-        includeTitle: false
-      }).catch(err => {
-        console.warn('[VieNeu-TTS] Backend TTS notice:', err?.message);
-      });
-    } catch (_e) {}
   };
 
   const handleSeekBackward = () => {

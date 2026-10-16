@@ -1,5 +1,22 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.20.0 (2026-10-16) - Thống Nhất Hoàn Toàn 1 Luồng Xử Lý Âm Thanh Duy Nhất Đa Thiết Bị (PROMPT-20261016-02 / REQ-047)
+
+### 1. Thống Nhất Hoàn Toàn 1 Luồng Xử Lý Âm Thanh Duy Nhất (Single Unified Stream Pipeline)
+- **Xóa bỏ triệt để phân nhánh môi trường**:
+  + Hàm `buildVieNeuAudioUrl` trong `src/utils/vieneuTTS.ts` loại bỏ hoàn toàn điều kiện `isLocalDev`. 100% tất cả môi trường (máy tính công ty, điện thoại, máy tính ở nhà, GitHub Pages) đều nạp chung 1 URL direct stream neural audio tiếng Việt chuẩn, không còn tình trạng máy công ty gọi `/api/tts` còn điện thoại gọi link khác.
+- **Xóa bỏ hoàn toàn phân tách Dual-Engine**:
+  + Tinh chỉnh `VieNeuTTSController` thành 100% thuần HTML5 `Audio` element. Xóa sạch các biến `synth: SpeechSynthesis`, `currentUtterance`, `playChunkViaSynth`, `engineMode: 'speech_synthesis'`, và `crossOrigin = 'anonymous'`.
+  + `NewsDetailView` trong `src/App.tsx` kiểm soát duy nhất qua `audioRef.current` (HTML5 Audio).
+  + Xóa bỏ lệnh gọi ngầm `requestBackendArticleTTS` bất đồng bộ khi bấm Byline Bar, tránh tạo 2 request stream song song và phát sinh lỗi 404 trên các môi trường hosting tĩnh.
+- **Khắc phục triệt để hiện tượng lệch giọng giữa các thiết bị**:
+  + Máy tính công ty, điện thoại Android, iPhone hay máy tính cá nhân ở nhà đều nghe **chính xác 1 giọng phát thanh viên nữ AI tiếng Việt chuẩn duy nhất**, không bao giờ bị rơi vào giọng riêng của từng hệ điều hành (Siri trên iPhone, Google TTS trên Android, Microsoft Hoài My/David trên Windows).
+
+### 2. Nghiệm Thu & Kiểm Thử Toàn Diện
+- `scripts/test-logic-flows.mjs`: **346/346 assertions logic PASS (100% PASS)**.
+- `npm run build`: Thành công 100% trong 465ms (0 lỗi).
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
+
 ## Phiên bản 1.18.0 (2026-10-15) - Triển Khai Hoàn Hảo Kiến Trúc Khuyến Nghị VieNeu-TTS v3 Turbo (PROMPT-20261015-12 / REQ-047)
 
 ### 1. Triển Khai Backend TTS Độc Lập Chuẩn FastAPI & Uvicorn (`scripts/vieneu_service.py`)

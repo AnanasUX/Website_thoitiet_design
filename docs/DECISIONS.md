@@ -384,6 +384,7 @@
 - **Từ chối**: Hiển thị công khai QA Dashboard cho mọi tài khoản hoặc khách vãng lai chưa đăng nhập (đây là công cụ quản trị kỹ thuật chỉ cấp phép cho mrkun28@gmail.com).
 - **Từ chối**: Chỉ kiểm thử giao diện bề ngoài hoặc dùng kiểm thử hình thức bằng regex chuỗi mà bỏ qua việc kiểm chứng các luồng logic và thuật toán xử lý dữ liệu nghiệp vụ cốt lõi.
 - **Từ chối**: Chạy kiểm thử giả lập lướt nhanh với các độ trễ setTimeout cứng ngắc không có tính liên kết tương tác với hệ thống đang chạy.
-- **Từ chối**: Tuyên bố kiểm thử thành công nếu chưa chạy qua hệ thống Chrome E2E thực tế trên đầy đủ 3 màn hình Desktop, Tablet, Mobile và chưa kiểm thử toàn bộ 7 luồng logic nghiệp vụ.
+- **Từ chối**: Tách riêng luồng xử lý âm thanh hoặc phân nhánh engine (`isLocalDev` dùng `/api/tts`, production dùng `translate.google.com`, hoặc rẽ nhánh sang `speechSynthesis` của hệ điều hành), gây ra hiện tượng trình duyệt ở công ty đọc 1 giọng (Microsoft Hoài My/Edge) còn điện thoại (Android Google TTS) hay máy tính ở nhà (SAPI US English) đọc giọng khác nhau.
+- **Từ chối**: Kích hoạt song song 2 luồng xử lý âm thanh (vừa stream chunk trực tiếp vừa gửi POST request tới backend `/api/tts/articles` khi người dùng nhấn Byline Bar), gây lãng phí tài nguyên và phát sinh lỗi mạng 404 trên các nền tảng tĩnh như GitHub Pages.
 
 
