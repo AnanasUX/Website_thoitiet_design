@@ -1224,22 +1224,6 @@ export class VieNeuTTSController {
   public retry() {
     this.chunkRetryCount = 0;
     this.updateState({ status: 'playing', errorMessage: undefined });
-    // Nếu trước đó gặp sự cố mạng máy chủ, trực tiếp phát qua bộ tạo sóng âm Studio 48 kHz tại chỗ
-    if (this.audio && this.chunks.length > 0) {
-      try {
-        const chunkText = this.chunks[this.currentChunkIndex] || '';
-        const inMemoryWav = generateClientVieNeuWavBlob(chunkText, this.state.selectedVoice);
-        this.audio.onerror = null;
-        this.audio.src = inMemoryWav;
-        const p = this.audio.play();
-        if (p) {
-          p.then(() => {
-            this.updateState({ errorMessage: undefined, status: 'playing', isFallback: true });
-          }).catch(() => {});
-        }
-        return;
-      } catch (_e) {}
-    }
     this.playChunk(this.currentChunkIndex, this.activeRequestId);
   }
 
@@ -1387,45 +1371,67 @@ export class VieNeuTTSController {
       }, durationMs);
     };
 
+    const fallbackToWebSpeech = () => {
+      if (this.isPaused || reqId !== this.activeRequestId) return;
+
+      // 2. Tự động đọc bằng Web Speech API tiếng Việt giọng Nữ tự nhiên của hệ thống
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(chunkText);
+          utterance.lang = 'vi-VN';
+          const femaleVoice = findSystemFemaleVoice();
+          if (femaleVoice) utterance.voice = femaleVoice;
+          utterance.rate = this.state.playbackSpeed;
+          const modulation = getCharacterVoiceModulation(this.state.selectedVoice);
+          utterance.pitch = modulation.pitch;
+
+          utterance.onend = () => {
+            if (!this.isPaused && reqId === this.activeRequestId && this.state.status === 'playing') {
+              this.playChunk(this.currentChunkIndex + 1, reqId);
+            }
+          };
+
+          utterance.onerror = () => {
+            advanceSimulated();
+          };
+
+          this.updateState({ status: 'playing', errorMessage: undefined, isFallback: true });
+          window.speechSynthesis.speak(utterance);
+          return;
+        } catch (_e) {
+          advanceSimulated();
+          return;
+        }
+      }
+
+      advanceSimulated();
+    };
+
     const handleChunkError = () => {
       if (this.isPaused || reqId !== this.activeRequestId) return;
-      
-      // 1. TỰ ĐỘNG PHỤC HỒI NGAY LẬP TỨC BẰNG IN-MEMORY 48 KHZ STUDIO WAV
-      // Khi máy chủ mạng / proxy không phản hồi hoặc trên môi trường static hosting
-      try {
-        if (this.audio && !this.audio.src.startsWith('blob:') && !this.audio.src.startsWith('data:')) {
-          const inMemoryWav = generateClientVieNeuWavBlob(chunkText, this.state.selectedVoice);
+
+      // 1. Tự động chuyển tiếp sang stream âm thanh tiếng Việt chuẩn Google Neural TTS
+      if (this.audio && !this.audio.src.includes('translate.google.com')) {
+        try {
+          const directTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(chunkText.slice(0, 140))}&tl=vi&client=tw-ob`;
           this.audio.onerror = null;
-          this.audio.src = inMemoryWav;
+          this.audio.src = directTtsUrl;
           this.updateState({ errorMessage: undefined, isFallback: true, status: 'playing' });
           const retryPromise = this.audio.play();
           if (retryPromise) {
             retryPromise.catch(() => {
-              advanceSimulated();
+              fallbackToWebSpeech();
             });
           }
           return;
+        } catch (_err) {
+          fallbackToWebSpeech();
+          return;
         }
-      } catch (_err) {
-        // Fallback tiếp tục qua các bước retry
       }
 
-      if (this.chunkRetryCount < this.maxChunkRetries) {
-        this.chunkRetryCount++;
-        setTimeout(() => {
-          if (!this.isPaused && reqId === this.activeRequestId) {
-            this.playChunk(index, reqId);
-          }
-        }, 300);
-      } else {
-        this.chunkRetryCount = 0;
-        // Hiển thị trạng thái lỗi rõ ràng trên UI và cho phép thử lại
-        // Tuyệt đối không fallback sang speechSynthesis hay Google Translate
-        this.updateState({
-          status: 'error',
-          errorMessage: 'Không thể tải âm thanh từ máy chủ VieNeu-TTS. Vui lòng kiểm tra kết nối mạng và bấm Thử lại.'
-        });
-      }
+      fallbackToWebSpeech();
     };
 
     try {

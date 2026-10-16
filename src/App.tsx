@@ -968,6 +968,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
       }
 
+      // Trích xuất Sapo (đoạn mở đầu đặc thù của báo chí) trước khi gỡ bỏ các khối phụ
+      let sapoText = '';
+      const sapoEl = doc.querySelector('.content-detail-sapo, .singular-sapo, .article__sapo, .sapo, .lead, h2.description, h2.sapo, .detail-sapo, .content-sapo');
+      if (sapoEl) {
+        sapoText = sapoEl.textContent?.trim() || '';
+      }
+
       // Pre-cleaning selector loại bỏ rác, quảng cáo, script và các khối tác giả để KHÔNG bị parse thành ảnh hay đoạn văn trong thân bài
       doc.querySelectorAll(`
         script, style, nav, footer, header, .ads, .ad, .advertisement, .qc, .banner, .banner-ads,
@@ -1270,7 +1277,18 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         avatar: authorAvatar ? getProxyImageUrl(authorAvatar) : (article.logo || ''),
         date: authorDate || article.pubDate || 'Vừa xong'
       });
-      const filtered = cleanedBlocks.filter(b => !(b.type !== 'image' && b.type !== 'video' && norm(b.content || '') === pageTitle));
+
+      // Bổ sung khối Sapo mở đầu đặc thù của bài báo chính thống
+      if (sapoText) {
+        resBlocks.push({ type: 'sapo', content: sapoText, tag: 'p' });
+      }
+
+      const filtered = cleanedBlocks.filter(b => {
+        const text = norm(b.content || '');
+        if (b.type !== 'image' && b.type !== 'video' && text === pageTitle) return false;
+        if (sapoText && text === sapoText) return false;
+        return true;
+      });
       resBlocks.push(...filtered);
       return resBlocks;
     };
@@ -1290,20 +1308,68 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       if (article.videoSrc) {
         fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: title });
       } else if (article.img) {
-        fallbackBlocks.push({ type: 'image', src: article.img, caption: title });
+        fallbackBlocks.push({ type: 'image', src: article.img, caption: title, isMainArticleImage: true });
       }
 
-      const bodyText = article.body || article.description || article.desc || article.summary || "";
-      if (bodyText) {
-        const sentences = bodyText.split('. ').filter(Boolean);
-        if (sentences.length > 2) {
-          fallbackBlocks.push({ type: 'text', content: sentences.slice(0, 2).join('. ') + '.', tag: 'p' });
-          fallbackBlocks.push({ type: 'text', content: sentences.slice(2).join('. ') + (sentences.slice(2).join('. ').endsWith('.') ? '' : '.'), tag: 'p' });
-        } else {
-          fallbackBlocks.push({ type: 'text', content: bodyText, tag: 'p' });
+      // Khôi phục và bóc tách toàn diện nội dung bài viết từ description / content / body
+      const rawHtml = article.content || article.description || article.desc || article.summary || article.body || "";
+      if (rawHtml) {
+        // Kiểm tra xem có chứa các thẻ HTML như <p>, <img>, <h3> hay không
+        if (/<(p|div|img|h[2-4]|blockquote)[^>]*>/i.test(rawHtml)) {
+          try {
+            const parser = new DOMParser();
+            const tempDoc = parser.parseFromString(rawHtml, 'text/html');
+            const nodes = tempDoc.body.querySelectorAll('p, img, h2, h3, h4, blockquote');
+            if (nodes.length > 0) {
+              nodes.forEach(n => {
+                const tn = n.tagName.toLowerCase();
+                if (tn === 'img') {
+                  const s = n.getAttribute('src') || n.getAttribute('data-src');
+                  if (s && !s.startsWith('data:') && !s.includes('1x1')) {
+                    fallbackBlocks.push({ type: 'image', src: getProxyImageUrl(s), caption: n.getAttribute('alt') || title });
+                  }
+                } else if (tn.startsWith('h')) {
+                  const hText = n.textContent?.trim();
+                  if (hText) fallbackBlocks.push({ type: 'heading', content: hText, tag: tn });
+                } else if (tn === 'blockquote') {
+                  const qText = n.textContent?.trim();
+                  if (qText) fallbackBlocks.push({ type: 'quote', content: qText });
+                } else {
+                  const pText = n.textContent?.trim();
+                  if (pText && pText !== title && !title.includes(pText)) {
+                    fallbackBlocks.push({ type: 'text', content: pText, tag: 'p' });
+                  }
+                }
+              });
+            }
+          } catch (_e) {}
         }
-      } else {
-        fallbackBlocks.push({ type: 'text', content: `Bản tin được cập nhật và tổng hợp từ nguồn báo chí chính thống ${article.src || 'Thời sự 24h'}.`, tag: 'p' });
+      }
+
+      // Nếu chưa có đoạn văn bản nào được thêm từ HTML:
+      if (!fallbackBlocks.some(b => b.type === 'text' || b.type === 'heading')) {
+        let cleanText = (article.body || article.description || article.desc || article.summary || "")
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (cleanText) {
+          // Bỏ tiêu đề nếu bị lặp ở đầu
+          if (cleanText.toLowerCase().startsWith(title.toLowerCase())) {
+            cleanText = cleanText.slice(title.length).replace(/^[\s:\-\–—]+/, '').trim();
+          }
+          const sentences = cleanText.split(/(?<=[.?!])\s+/).filter(Boolean);
+          if (sentences.length > 2) {
+            for (let i = 0; i < sentences.length; i += 2) {
+              const para = sentences.slice(i, i + 2).join(' ');
+              if (para) fallbackBlocks.push({ type: 'text', content: para, tag: 'p' });
+            }
+          } else {
+            fallbackBlocks.push({ type: 'text', content: cleanText, tag: 'p' });
+          }
+        } else {
+          fallbackBlocks.push({ type: 'text', content: `Bản tin được cập nhật và tổng hợp từ nguồn báo chí chính thống ${article.src || 'Thời sự 24h'}.`, tag: 'p' });
+        }
       }
 
       fallbackBlocks.push({
@@ -1315,22 +1381,47 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
 
     const scrapeViaProxy = async (articleUrl: string) => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4s timeout
+      // Danh sách các proxy hỗ trợ cào dữ liệu với cơ chế Auto-Failover
+      const proxies = [
+        // 1. Máy chủ proxy nội bộ siêu tốc (Vite / Node server)
+        (u: string) => `/api/scrape?url=${encodeURIComponent(u)}`,
+        // 2. Cloudflare Worker chuyên dụng
+        (u: string) => `https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(u)}`,
+        // 3. AllOrigins Raw
+        (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        // 4. CorsProxy IO
+        (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`
+      ];
 
-        const PROXY = 'https://new-bot.mrkun28.workers.dev/?url=';
-        const res = await fetch(PROXY + encodeURIComponent(articleUrl), { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (!data.contents) return null;
-        
-        return parseHTMLToBlocks(data.contents, articleUrl);
-      } catch (err) {
-        console.warn('[Scrape] Error or timeout:', err);
-        return null;
+      for (const getProxyUrl of proxies) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 7000);
+          const reqUrl = getProxyUrl(articleUrl);
+          const res = await fetch(reqUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!res.ok) continue;
+
+          let html = '';
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            html = data.contents || data.data || '';
+          } else {
+            html = await res.text();
+          }
+
+          if (html && html.length > 500) {
+            const blocks = parseHTMLToBlocks(html, articleUrl);
+            if (blocks && blocks.some((b: any) => b.type === 'text' || b.type === 'sapo' || b.type === 'heading')) {
+              return blocks;
+            }
+          }
+        } catch (_err) {
+          // Thử proxy tiếp theo
+        }
       }
+      return null;
     };
     
     let cleanLink = (article.link || '').replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
@@ -1705,6 +1796,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                   </div>
                 );
               }
+                if (block.type === 'sapo') {
+                  return (
+                    <div key={idx} className="my-2.5 p-4 bg-slate-50 border-l-4 border-red-600 rounded-r-xl font-bold text-[17px] md:text-[18px] text-[#1e293b] leading-relaxed italic shadow-2xs">
+                      {block.content}
+                    </div>
+                  );
+                }
                 if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                 if (block.type === 'heading') {
                   if (block.tag === 'h2') {
@@ -1743,12 +1841,14 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                   );
                 }
                 if (block.type === 'image') {
-                  // Khử triệt để trường hợp avatar tác giả bị lọt vào làm ảnh bài viết
+                  // Khử triệt để trường hợp avatar tác giả bị lọt vào làm ảnh bài viết (nhưng luôn bảo tồn ảnh đại diện bài viết)
                   if (
-                    block.isAvatar || 
-                    (block.src && /avatar|tac-gia/i.test(block.src)) ||
-                    (block.caption && contentBlocks.some((b: any) => b.type === 'author' && b.name && b.name.toLowerCase() === block.caption.toLowerCase())) ||
-                    isAuthorAvatar({ src: block.src, className: '' }, block.caption, block.src, article.author)
+                    !block.isMainArticleImage && (
+                      block.isAvatar || 
+                      (block.src && /avatar|tac-gia/i.test(block.src)) ||
+                      (block.caption && contentBlocks.some((b: any) => b.type === 'author' && b.name && b.name.toLowerCase() === block.caption.toLowerCase())) ||
+                      isAuthorAvatar({ src: block.src, className: '' }, block.caption, block.src, article.author)
+                    )
                   ) {
                     return null;
                   }
@@ -4093,11 +4193,14 @@ useEffect(() => {
             
             let cleanDesc = "";
             if (item.description) {
-               cleanDesc = item.description.replace(/<[^>]+>/g, '').trim();
+               cleanDesc = item.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
             }
-            
-            if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) {
-               cleanDesc = "";
+            if (cleanDesc && item.title) {
+               if (cleanDesc.toLowerCase().startsWith(item.title.toLowerCase())) {
+                  cleanDesc = cleanDesc.slice(item.title.length).replace(/^[\s:\-\–—]+/, '').trim();
+               } else if (cleanDesc.includes(item.title)) {
+                  cleanDesc = cleanDesc.replace(item.title, '').replace(/^[\s:\-\–—]+/, '').trim();
+               }
             }
             
             const isVid = !!item._isVideo || /video/i.test(item.link || '') || /video/i.test(item.title || '') || (item.enclosure?.type && item.enclosure.type.includes('video'));
@@ -4107,9 +4210,12 @@ useEffect(() => {
               img: finalImage,
               logo: getNewspaperLogo(item.link || ""),
               fallbackImg: catFallback,
+              title: decodeHTMLEntities(item.title ?? "Tin tức"),
               author: decodeHTMLEntities(item.title ?? "Tin tức"),
               src: item.source || item._sourceName || "Tin tức",
-              body: decodeHTMLEntities(cleanDesc),
+              body: decodeHTMLEntities(cleanDesc || item.title || ""),
+              description: item.description || "",
+              content: item.content || item['content:encoded'] || item.description || "",
               link: item.link,
               pubDate: item.pubDate,
               _isHot: item._isHot,

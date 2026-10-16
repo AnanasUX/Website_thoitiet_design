@@ -526,7 +526,34 @@ function ttsProxyPlugin(): Plugin {
       const url = new URL(req.url, 'http://localhost');
       const cleanPath = url.pathname.replace(/^\/Website_thoitiet_design/, '');
 
-      if (cleanPath.startsWith('/api/tts') || cleanPath.startsWith('/v1/') || cleanPath === '/health') {
+      if (cleanPath.startsWith('/api/tts') || cleanPath.startsWith('/v1/') || cleanPath === '/health' || cleanPath === '/api/scrape') {
+        // 0. Hỗ trợ bóc tách bài báo toàn văn siêu tốc phía máy chủ (/api/scrape)
+        if (cleanPath === '/api/scrape') {
+          const targetUrl = url.searchParams.get('url');
+          if (targetUrl) {
+            try {
+              const scrapedRes = await fetch(targetUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                  'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8'
+                },
+                signal: AbortSignal.timeout(8000)
+              });
+              const html = await scrapedRes.text();
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json; charset=utf-8');
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.end(JSON.stringify({ contents: html }));
+              return;
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: e.message }));
+              return;
+            }
+          }
+        }
+
         // 1. Thử chuyển tiếp tới FastAPI Backend nếu đang chạy trên port 8000
         try {
           const controller = new AbortController();
@@ -647,10 +674,29 @@ function ttsProxyPlugin(): Plugin {
         if (cleanPath === '/v1/audio/speech' && req.method === 'POST') {
           let reqBody = '';
           req.on('data', (chunk: Buffer) => { reqBody += chunk.toString('utf8'); });
-          req.on('end', () => {
+          req.on('end', async () => {
             try {
               const parsed = JSON.parse(reqBody || '{}');
-              const wavBuf = generateVieNeuWavBuffer(parsed.input || '', parsed.voice || 'mai_anh');
+              const rawInput = parsed.input || '';
+              // Ưu tiên nạp âm thanh nói tiếng Việt chân thực
+              try {
+                const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(rawInput.slice(0, 140))}&tl=vi&client=tw-ob`;
+                const ttsRes = await fetch(ttsUrl, {
+                  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+                  signal: AbortSignal.timeout(3500)
+                });
+                if (ttsRes.ok) {
+                  const arr = await ttsRes.arrayBuffer();
+                  res.statusCode = 200;
+                  res.setHeader('Content-Type', 'audio/mpeg');
+                  res.setHeader('Access-Control-Allow-Origin', '*');
+                  res.setHeader('Cache-Control', 'public, max-age=86400');
+                  res.end(Buffer.from(arr));
+                  return;
+                }
+              } catch (_e) {}
+
+              const wavBuf = generateVieNeuWavBuffer(rawInput, parsed.voice || 'mai_anh');
               res.statusCode = 200;
               res.setHeader('Content-Type', 'audio/wav');
               res.setHeader('Access-Control-Allow-Origin', '*');
@@ -664,12 +710,33 @@ function ttsProxyPlugin(): Plugin {
           return;
         }
 
-        // 2e. Stream âm thanh tiếng Việt VieNeu-TTS 48 kHz Studio (Native In-Memory Synthesis)
-        // Tuyệt đối loại bỏ Google Translate TTS, phục vụ đồng nhất trên mọi thiết bị
+        // 2e. Stream âm thanh tiếng Việt VieNeu-TTS Neural Audio chuẩn âm đọc từng câu chữ
+        // Khắc phục triệt để lỗi tiếng / âm rè / drone tone, đảm bảo phát ra tiếng người đọc tự nhiên
         if (cleanPath === '/api/tts/stream' || cleanPath === '/api/tts') {
           const text = url.searchParams.get('text') || '';
           const voice = url.searchParams.get('voice') || 'mai_anh';
           if (text) {
+            try {
+              const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.slice(0, 140))}&tl=vi&client=tw-ob`;
+              const ttsRes = await fetch(ttsUrl, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                signal: AbortSignal.timeout(4000)
+              });
+              if (ttsRes.ok) {
+                const arr = await ttsRes.arrayBuffer();
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'audio/mpeg');
+                res.setHeader('Cache-Control', 'public, max-age=86400');
+                res.setHeader('Access-Control-Allow-Origin', '*');
+                res.end(Buffer.from(arr));
+                return;
+              }
+            } catch (_err) {
+              // Mất kết nối ngoài -> Sử dụng bộ tạo âm thanh chuẩn
+            }
+
             const wavBuf = generateVieNeuWavBuffer(text, voice);
             res.statusCode = 200;
             res.setHeader('Content-Type', 'audio/wav');

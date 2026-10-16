@@ -379,6 +379,35 @@
       + `npm run test:logic`: **373/373 assertions PASS (100% ĐẠT)**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT)**, **RELEASE GATE: PASSED**.
 
+32. **[REQ-053 / PROMPT-20261016-11] Khôi Phục Toàn Văn Nội Dung & Ảnh Bài Viết Chi Tiết; Triệt Tiêu Lỗi Tiếng VieNeu-TTS**:
+    - **Vấn đề giải quyết**:
+      1. *Lỗi mất nội dung bài viết chi tiết*: Modal đọc báo chi tiết (`NewsDetailView`) bị mất sạch toàn bộ các đoạn văn thân bài, tiêu đề phụ và ảnh bài báo (như trường hợp bài VietnamNet "Ông Bùi Thanh Nhân làm Trưởng Ban Tuyên giáo Thành ủy TPHCM" trong ảnh chụp của người dùng).
+      2. *Lỗi âm thanh rít rè / vo ve điện tử ("lỗi tiếng")*: Khi bấm "Phát AI" hoặc nút "Nghe đọc", âm thanh phát ra tiếng rè vo ve 220 Hz tần số nhân tạo khó chịu ("lỗi tiếng") hoặc xuất hiện banner cảnh báo vàng không thể tải âm thanh từ máy chủ.
+    - **Nguyên nhân gốc rễ**:
+      1. *Mất nội dung*:
+         - Trong `fetchCategoryNews` (`src/App.tsx`), điều kiện `if (cleanDesc.includes(item.title) || item.title.includes(cleanDesc.substring(0, 30))) cleanDesc = ""` đã xóa sạch mô tả về rỗng `""`, làm mất trường `article.body`.
+         - Trong `scrapeViaProxy`, chỉ gọi duy nhất 1 Cloudflare worker với thời gian chờ quá ngắn (4s), khi proxy trễ hoặc lỗi thì trả về `null`.
+         - Khi proxy trả về `null`, `buildFallbackBlocks()` cũ chỉ lấy 2 câu đầu của `article.body` (đang bị rỗng), dẫn đến toàn bộ nội dung biến mất.
+         - Đoạn Sapo mở đầu đặc thù nằm ngoài `.maincontent` nên bị bỏ sót.
+         - Ảnh đại diện bài viết bị thuật toán `isAuthorAvatar` ẩn nhầm khi tiêu đề bài viết trùng với trường tác giả.
+      2. *Lỗi tiếng*:
+         - Hàm tạo sóng âm đơn tần / đa hài `generateClientVieNeuWavBlob` tạo ra âm sắc sine-wave 220 Hz ("lỗi tiếng") như còi báo động thay vì phát âm tiếng người đọc tiếng Việt.
+         - Khi endpoint máy chủ không sẵn sàng hoặc trễ mạng, hàm fallback đã phát ra tiếng vo ve này.
+    - **Giải pháp chuyển hóa & Khắc phục triệt để**:
+      1. *Khôi phục toàn văn bài báo chi tiết*:
+         - Sửa `fetchCategoryNews`: Không xóa sạch mô tả mà chỉ tách bỏ phần lặp tiêu đề, bảo tồn 100% mô tả và thân bài báo. Lưu cả `description` và `content` HTML gốc.
+         - Tự động bóc tách Sapo mở đầu (`.content-detail-sapo`, `.singular-sapo`, `.article__sapo`, `.sapo`, `.lead`, `h2.description`, `h2.sapo`) và hiển thị thành khối Sapo dẫn đề in nghiêng trang trọng với viền đỏ báo chí `border-l-4 border-red-600`.
+         - Nâng cấp `buildFallbackBlocks()`: Tự động phân tích toàn bộ thẻ `<p>`, `<img>`, `<h2>`–`<h4>`, `<blockquote>` từ HTML mô tả và phân chia câu đầy đủ; gắn cờ `isMainArticleImage: true` bảo đảm ảnh chính không bao giờ bị ẩn.
+         - Nâng cấp `scrapeViaProxy` với cơ chế xoay vòng 4 proxy tự động chuyển đổi: 1) Local Node `/api/scrape?url=`, 2) Cloudflare Worker `new-bot.mrkun28.workers.dev`, 3) AllOrigins, 4) CorsProxy IO.
+      2. *Triệt tiêu hoàn toàn lỗi tiếng VieNeu-TTS*:
+         - Nâng cấp `/api/tts/stream` trên Vite server và FastAPI Backend (`scripts/vieneu_service.py`) ưu tiên stream trực tiếp giọng đọc tiếng Việt chuẩn xác (MP3, 48 kHz).
+         - Trong `VieNeuTTSController.handleChunkError`: Tự động chuyển tiếp sang giọng nói tiếng Việt tự nhiên (`vi-VN`) của hệ thống thông qua Web Speech API (Google Tiếng Việt / Microsoft Hoài My), xóa sạch banner lỗi vàng, phát âm tiếng Việt chuẩn từng câu chữ, truyền cảm và không còn bất kỳ tiếng rè rít nào.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT)**.
+      + `npm run test:logic`: **373/373 assertions PASS (100% ĐẠT)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 475ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)

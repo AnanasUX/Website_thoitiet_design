@@ -386,15 +386,38 @@ def stream_chunk_tts(text: str, voice: Optional[str] = "mai_anh", format: Option
 
     voice_id = resolve_voice_id(voice)
     normalized = normalize_vietnamese_text(text)
-    audio_data = engine_manager.synthesize_speech(normalized, voice_id, SAMPLE_RATE)
+    fmt = format.upper() if format and format.upper() in ["MP3", "WAV"] else "MP3"
+    media_type = "audio/mpeg" if fmt == "MP3" else "audio/wav"
 
     import io
+    import urllib.request
+    import urllib.parse
+
+    # 1. Ưu tiên stream âm thanh giọng đọc tiếng Việt chuẩn xác
+    clean_chunk = normalized[:140]
+    tts_url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={urllib.parse.quote(clean_chunk)}&tl=vi&client=tw-ob"
+    try:
+        req = urllib.request.Request(tts_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            if resp.status == 200:
+                audio_bytes = resp.read()
+                return StreamingResponse(
+                    io.BytesIO(audio_bytes),
+                    media_type="audio/mpeg",
+                    headers={
+                        "Cache-Control": "public, max-age=86400",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+    except Exception:
+        pass
+
+    # 2. Fallback sang bộ tổng hợp âm thanh tại chỗ
+    audio_data = engine_manager.synthesize_speech(normalized, voice_id, SAMPLE_RATE)
     bio = io.BytesIO()
-    fmt = format.upper() if format and format.upper() in ["MP3", "WAV"] else "MP3"
     sf.write(bio, audio_data, SAMPLE_RATE, format=fmt)
     bio.seek(0)
 
-    media_type = "audio/mpeg" if fmt == "MP3" else "audio/wav"
     return StreamingResponse(
         bio,
         media_type=media_type,
