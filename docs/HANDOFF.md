@@ -303,10 +303,30 @@
       + `npm run build`: Thành công 100% không lỗi trong 483ms.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
+27. **[REQ-048 / PROMPT-20261016-06] Khôi Phục Hoàn Toàn Logic Đẩy Bài & Thời Tiết Telegram Cũ (Checkpoint 10h5210122026)**:
+    - **Vấn đề giải quyết**:
+      + Hệ thống Telegram bot bị gián đoạn gửi tin tự động (`job_tu_dong_day_tin`) và bản tin thời tiết định kỳ hàng giờ (`job_thoi_tiet_hang_gio`).
+      + Nguyên nhân gốc: Commit thực nghiệm trước đó đã đưa vào `crypto_vault.py` và loại bỏ các giá trị mặc định dự phòng (`OPENWEATHER_API_KEY = _vault.secure_get(...)`), dẫn đến API OpenWeatherMap trả về mã lỗi 401 Unauthorized (`KeyError: 'main'`).
+      + Hàm `lay_thoi_tiet_va_tin_tuc_hien_tai()` bị lỗi `⚠️ Lỗi dữ liệu: 'main'` khiến `job_thoi_tiet_hang_gio()` bị chặn bởi điều kiện `if "⚠️" in msg: return`.
+      + Bộ lọc ngày tháng thử nghiệm kiểm tra `p_dt.year < now_dt.year` dẫn đến loại bỏ toàn bộ bài viết thực tế (`All news count: 0`), khiến `job_tu_dong_day_tin()` không gửi bài.
+    - **Giải pháp chuyển hóa & Khôi phục**:
+      + Đối chiếu mã nguồn với bản sao lưu chuẩn `quan-ly-tien-phong-main_22h48\main.py` và commit checkpoint `f9ca420` (`CHECKPOINT_10h5210122026.md`).
+      + Khôi phục giá trị mặc định dự phòng an toàn cho các API key (`OPENWEATHER_API_KEY`, `GEMINI_API_KEY`, `POWERPOINT_FOLDER_ID`, `DOC_LOGIC_ID`).
+      + Khôi phục hàm `lay_tat_ca_bai_viet_ngau_nhien()` từ logic cũ: thu thập 255+ bài báo tươi mới từ Dân Trí, VnExpress, Tiền Phong, Tuổi Trẻ, Thanh Niên mà không bị bộ lọc năm chặn nhầm.
+      + Khôi phục bản tin thời tiết hoàn chỉnh với nhiệt độ thực tế (31.2°C), độ ẩm, chỉ số PM2.5, dự báo 3 giờ tới, cảnh báo thời tiết, tin tức đô thị và video thời sự VTV24 trực tiếp từ kênh RSS chính thức.
+      + Đồng bộ hóa và đẩy commit lên nhánh `origin/main` của repository `quan-ly-tien-phong` (commit `dfbb19f`) để Render/Railway tự động kích hoạt deploy bản vá ổn định.
+    - **Nghiệm thu thực tế**:
+      + `python -m unittest discover tests -v` (trong `quan-ly-tien-phong`): **18/18 tests PASS (100% ĐẠT, 0 FAIL)**.
+      + `lay_thoi_tiet_va_tin_tuc_hien_tai()`: Trả về đầy đủ thông số thời tiết chuẩn xác (nhiệt độ, cảm nhận, độ ẩm, PM2.5, tin tức liên quan, video VTV24) không có lỗi cảnh báo.
+      + `lay_tat_ca_bai_viet_ngau_nhien()`: Thu thập thành công **211 - 255 bài báo mới nhất**.
+      + Kiểm thử toàn diện frontend: `npm run testwebsite` đạt **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
 ---
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
-1. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.
-2. Bất kỳ tác nhân nào làm việc trên repository đều phải chạy `npm run testwebsite` trước khi tạo commit hoặc bàn giao.
+1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
+2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.
+3. Bất kỳ tác nhân nào làm việc trên repository đều phải chạy `npm run testwebsite` trước khi tạo commit hoặc bàn giao.
+
 
 
