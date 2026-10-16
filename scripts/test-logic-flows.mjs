@@ -95,6 +95,9 @@ import {
   extractArticleContentDetailed,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS,
+  VIENEU_CENTRAL_CONFIG,
+  computeVieNeuAudioCacheKey,
+  VieNeuTTSController,
   getVieNeuTTSV3TurboSpecs,
   buildVieNeuOpenAISpeechPayload
 } from '../src/utils/logicFlows.ts';
@@ -1141,6 +1144,54 @@ export function runAllLogicFlowTests() {
   assert(formatAudioTime(65) === '01:05', "65 giây định dạng thành '01:05'");
   assert(formatAudioTime(3665) === '01:01:05', "3665 giây định dạng thành '01:01:05'");
   assert(formatAudioTime(-10) === '00:00', "Thời gian âm được bảo vệ thành '00:00'");
+
+  // 15. KIỂM TRA CẤU HÌNH TRUNG TÂM VIENEU-TTS (VIENEU_CENTRAL_CONFIG)
+  assert(VIENEU_CENTRAL_CONFIG.engine === 'VieNeu-TTS v3 Turbo', "Cấu hình trung tâm engine chuẩn VieNeu-TTS v3 Turbo");
+  assert(VIENEU_CENTRAL_CONFIG.modelId === 'pnnbao-ump/VieNeu-TTS-v3-Turbo', "Cấu hình trung tâm modelId chuẩn pnnbao-ump/VieNeu-TTS-v3-Turbo");
+  assert(VIENEU_CENTRAL_CONFIG.sampleRate === 48000, "Cấu hình trung tâm sampleRate 48000 Hz");
+  assert(VIENEU_CENTRAL_CONFIG.format === 'mp3', "Cấu hình trung tâm format mp3");
+  assert(VIENEU_CENTRAL_CONFIG.modelVersion === 'v3-turbo', "Cấu hình trung tâm modelVersion v3-turbo");
+
+  // 16. KIỂM TRA TÍNH TOÁN AUDIO CACHE KEY ĐỘC LẬP (computeVieNeuAudioCacheKey)
+  const audioKey1 = computeVieNeuAudioCacheKey('art-101', 'bac_nu', 'Noi dung bai viet 101');
+  const audioKey2 = computeVieNeuAudioCacheKey('art-101', 'nam_nam', 'Noi dung bai viet 101');
+  const audioKey3 = computeVieNeuAudioCacheKey('art-102', 'bac_nu', 'Noi dung bai viet 102');
+  assert(audioKey1.startsWith('vieneu_'), "Cache key có tiền tố vieneu_ chuẩn");
+  assert(audioKey1 !== audioKey2, "Hai giọng đọc khác nhau tạo ra hai cache key hoàn toàn độc lập");
+  assert(audioKey1 !== audioKey3, "Hai bài viết khác nhau tạo ra hai cache key hoàn toàn độc lập");
+  assert(computeVieNeuAudioCacheKey('art-101', 'bac_nu', 'Noi dung bai viet 101') === audioKey1, "Cache key có tính xác định deterministic cao");
+
+  // 17. KIỂM TRA VÒNG ĐỜI TRẠNG THÁI VIENEU TTS CONTROLLER (VieNeuTTSController)
+  let recordedStates = [];
+  const testCtrl = new VieNeuTTSController((st) => {
+    recordedStates.push(st.status);
+  });
+  assert(testCtrl.getState().status === 'idle', "Khởi tạo VieNeuTTSController với trạng thái idle");
+  assert(testCtrl.getState().selectedVoice === 'bac_nu', "Khởi tạo giọng mặc định bac_nu");
+
+  const longArticleSample = 'Theo dự báo của Trung tâm Khí tượng Thủy văn Quốc gia, khu vực Bắc Bộ tiếp tục có mưa vừa đến mưa to trên diện rộng trong những ngày tới. Các địa phương cần chủ động triển khai phương án ứng phó với nguy cơ xảy ra lũ quét và sạt lở đất đá tại vùng núi cao.';
+  testCtrl.loadArticle('article-test', longArticleSample, 'mai_anh');
+  assert(testCtrl.getState().status === 'ready', "loadArticle chuyển trạng thái sang ready");
+  assert(testCtrl.getState().articleId === 'article-test', "articleId được bảo toàn chuẩn xác");
+  assert(testCtrl.getState().totalChunks >= 2, "Tách bài viết thành danh sách chunks an toàn");
+  assert(testCtrl.getState().selectedVoice === 'mai_anh', "Giọng được chọn là mai_anh");
+
+  testCtrl.setVoice('minh_quan');
+  assert(testCtrl.getState().selectedVoice === 'minh_quan', "setVoice cập nhật giọng sang minh_quan");
+
+  testCtrl.setSpeed(1.25);
+  assert(testCtrl.getState().playbackSpeed === 1.25, "setSpeed cập nhật tốc độ sang 1.25x");
+
+  testCtrl.seekToChunk(1);
+  assert(testCtrl.getState().currentChunkIndex === 1, "seekToChunk di chuyển chỉ số chunk chuẩn xác");
+  assert(testCtrl.getState().progressPercent > 0, "Tiến trình progressPercent được cập nhật khi tua");
+
+  testCtrl.pause();
+  assert(testCtrl.getState().status === 'paused', "pause chuyển trạng thái sang paused");
+
+  testCtrl.stop();
+  assert(testCtrl.getState().status === 'idle', "stop dừng hoàn toàn và chuyển trạng thái về idle");
+  assert(testCtrl.getState().progressPercent === 0, "stop reset tiến trình về 0%");
 
   console.log(`    ${colors.green}✓ Luồng Động Cơ AI VieNeu-TTS v3 Turbo: Đạt toàn bộ kiểm tra bóc tách KHÔNG TIÊU ĐỀ, chuẩn hóa tiếng Việt, 23 Preset Voices 3 miền, trích xuất toàn văn, định dạng thời lượng & OpenAI-compatible Speech API${colors.reset}\n`);
 

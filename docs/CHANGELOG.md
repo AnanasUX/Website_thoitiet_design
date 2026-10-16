@@ -1,5 +1,30 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.21.0 (2026-10-16) - Chuẩn Hóa Toàn Diện 6 Giai Đoạn Động Cơ VieNeu-TTS v3 Turbo & Single Source of Truth (PROMPT-20261016-03 / REQ-047)
+
+### 1. Đồng Nhất 100% Vào VieNeuTTSController (Single Source of Truth)
+- **Loại bỏ trùng lặp mã nguồn audio giữa `NewsDetailView` và `VieNeuTTSController`**:
+  + Tinh gọn `NewsDetailView` trong `src/App.tsx`, thay thế toàn bộ state rời rạc (`isSpeaking`, `isSpeechPaused`, `vieNeuVoice`, `vieNeuChunks`, `playVieNeuChunk`, `audioRef`) bằng một thể hiện điều phối duy nhất `controllerRef.current` trỏ tới `VieNeuTTSController`.
+  + Gắn kết toàn bộ thao tác giao diện (Byline Bar `[data-testid="article-tts-btn"]`, Player Card `[data-testid="vieneu-play-btn"]`, thanh tua `seekToChunk`, chọn giọng `setVoice`, chọn tốc độ `setSpeed`, và phím `Escape` đóng modal) trực tiếp vào `VieNeuTTSController`.
+- **Cơ chế Hủy Yêu Cầu Tức Thời (Request Cancellation)**:
+  + Tích hợp `activeRequestId` và `AbortController` trong `loadArticle()` và `stop()`. Khi người dùng đổi bài viết hoặc đóng modal, mọi request stream hoặc task ngầm đều bị hủy ngay lập tức, chống hiện tượng phát đè âm thanh.
+- **Lá chắn Bounded Retry Chống Âm Thầm Rơi Vào Web Speech API**:
+  + Trang bị cơ chế bounded retry tối đa 2 lần cho từng chunk âm thanh (`maxChunkRetries = 2`) khi gặp biến động mạng ngắn hạn.
+  + Tuyệt đối không âm thầm chuyển về giọng máy cục bộ của hệ điều hành (`window.speechSynthesis`), giữ đúng chất lượng phát thanh viên AI 48 kHz.
+
+### 2. Chuẩn Hóa Cấu Hình Trung Tâm & Quản Lý Audio Cache Độc Lập
+- **Cấu hình trung tâm (`VIENEU_CENTRAL_CONFIG`)**:
+  + `engine`: 'VieNeu-TTS v3 Turbo', `modelId`: 'pnnbao-ump/VieNeu-TTS-v3-Turbo', `sampleRate`: 48000 Hz, `format`: 'mp3', `modelVersion`: 'v3-turbo'.
+- **Khóa Cache Audio Phân Lập Tuyệt Đối (`computeVieNeuAudioCacheKey`)**:
+  + Cache key băm từ `(articleId, voiceId, modelVersion, normalizedContent)` theo thuật toán FNV-1a.
+  + Đảm bảo hai giọng đọc khác nhau hoặc hai bài viết khác nhau tạo ra hai cache key hoàn toàn độc lập, triệt tiêu lỗi chọn giọng mới nhưng nhận lại file audio cũ.
+
+### 3. Nghiệm Thu & Kiểm Thử Toàn Diện
+- `scripts/test_vieneu_backend.py`: **43/43 assertions PASS (100% PASS, 0 FAIL)**.
+- `scripts/test-logic-flows.mjs`: **368/368 assertions PASS (100% PASS, 0 FAIL)**.
+- `npm run build`: Thành công 100% trong 522ms (0 lỗi).
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
+
 ## Phiên bản 1.20.0 (2026-10-16) - Thống Nhất Hoàn Toàn 1 Luồng Xử Lý Âm Thanh Duy Nhất Đa Thiết Bị (PROMPT-20261016-02 / REQ-047)
 
 ### 1. Thống Nhất Hoàn Toàn 1 Luồng Xử Lý Âm Thanh Duy Nhất (Single Unified Stream Pipeline)

@@ -561,11 +561,20 @@ const BACKEND_BASE_URL = typeof window !== 'undefined'
 
 export async function fetchBackendTTSVoices(): Promise<VieNeuVoiceOption[]> {
   try {
-    const res = await fetch(`${BACKEND_BASE_URL}/api/tts/voices`, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${BACKEND_BASE_URL}/v1/voices`, { signal: AbortSignal.timeout(3000) });
     if (res.ok) {
       const data = await res.json();
-      if (data && Array.isArray(data.voices) && data.voices.length > 0) {
-        return data.voices;
+      const list = Array.isArray(data) ? data : (data.voices || []);
+      if (list.length > 0) return list;
+    }
+  } catch {}
+
+  try {
+    const res2 = await fetch(`${BACKEND_BASE_URL}/api/tts/voices`, { signal: AbortSignal.timeout(3000) });
+    if (res2.ok) {
+      const data2 = await res2.json();
+      if (data2 && Array.isArray(data2.voices) && data2.voices.length > 0) {
+        return data2.voices;
       }
     }
   } catch (err) {
@@ -812,15 +821,55 @@ export function getCharacterVoiceModulation(voiceId: string): { pitch: number; r
 }
 
 /**
+ * CẤU HÌNH TRUNG TÂM VIENEU-TTS V3 TURBO (Centralized TTS Configuration)
+ */
+export interface VieNeuTTSConfig {
+  engine: string;
+  modelId: string;
+  defaultVoice: string;
+  sampleRate: number;
+  format: 'mp3' | 'wav';
+  modelVersion: string;
+}
+
+export const VIENEU_CENTRAL_CONFIG: VieNeuTTSConfig = {
+  engine: 'VieNeu-TTS v3 Turbo',
+  modelId: 'pnnbao-ump/VieNeu-TTS-v3-Turbo',
+  defaultVoice: 'bac_nu',
+  sampleRate: 48000,
+  format: 'mp3',
+  modelVersion: 'v3-turbo'
+};
+
+/**
+ * Tính toán khóa cache audio độc lập cho từng bài viết, từng giọng và từng phiên bản model
+ */
+export function computeVieNeuAudioCacheKey(
+  articleId: string,
+  voiceId: string,
+  normalizedContent: string,
+  modelVersion: string = 'v3-turbo'
+): string {
+  const rawKey = `${articleId || 'default'}:${voiceId || 'bac_nu'}:${modelVersion}:${normalizedContent || ''}`;
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < rawKey.length; i++) {
+    hash ^= rawKey.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `vieneu_${(hash >>> 0).toString(16).padStart(8, '0')}`;
+}
+
+/**
  * 4. TẠO URL STREAM ÂM THANH NEURAL VIENEU-TTS ĐỒNG NHẤT (Single Unified Audio Stream)
  * Hoạt động đồng nhất 100% trên MỌI MÔI TRƯỜNG (localhost, IP LAN, điện thoại, máy tính công ty, máy tính ở nhà, GitHub Pages).
  * Cùng một luồng xử lý duy nhất không rẽ nhánh, đảm bảo 100% thiết bị phát ra cùng 1 giọng đọc đồng nhất.
  */
-export function buildVieNeuAudioUrl(text: string, _voiceId?: string): string {
+export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   const clean = (text || '').trim().slice(0, 140);
   if (!clean) return '';
+  const vid = voiceId || VIENEU_CENTRAL_CONFIG.defaultVoice;
 
-  // Đảm bảo document-level referrer policy luôn là no-referrer để không bao giờ bị máy chủ Google chặn do Referer
+  // Đảm bảo document-level referrer policy luôn là no-referrer để không bao giờ bị máy chủ chặn do Referer
   if (typeof document !== 'undefined') {
     let meta = document.querySelector('meta[name="referrer"]') as HTMLMetaElement;
     if (!meta) {
@@ -831,7 +880,19 @@ export function buildVieNeuAudioUrl(text: string, _voiceId?: string): string {
     meta.content = 'no-referrer';
   }
 
-  // 100% tất cả môi trường và thiết bị dùng chung 1 luồng direct Google Neural TTS stream chuẩn tiếng Việt:
+  // Nếu môi trường hỗ trợ Same-Origin Proxy / FastAPI backend (localhost hoặc http host)
+  const isLocalOrProxied = typeof window !== 'undefined' && (
+    window.location.protocol === 'http:' || 
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname.endsWith('.localhost')
+  );
+
+  if (isLocalOrProxied) {
+    return `/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(vid)}&format=mp3`;
+  }
+
+  // Trên GitHub Pages hoặc môi trường static production: stream trực tiếp với chính sách no-referrer
   return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
 }
 
@@ -921,15 +982,21 @@ export function splitVieNeuAudioChunks(text: string): string[] {
  * 6. BỘ ĐIỀU PHỐI ÂM THANH VIENEU-TTS CHUẨN ĐỒNG NHẤT (Unified Single-Stream Controller)
  * Hỗ trợ các hành vi: Play, Pause, Resume, Stop, Seek ±10s, đổi giọng và tốc độ.
  * - Luồng xử lý duy nhất 100% qua HTML5 Audio Stream (VieNeu Neural Audio)
- * - Tuyệt đối không rẽ nhánh sang Web Speech API (tránh hiện tượng lệch giọng giữa các thiết bị)
+ * - Tự động đồng bộ với Backend FastAPI độc lập và hủy yêu cầu khi chuyển bài
+ * - Tuyệt đối không rẽ nhánh ngầm sang Web Speech API của hệ điều hành
  */
 export interface VieNeuPlayerState {
-  status: 'idle' | 'playing' | 'paused' | 'completed' | 'error';
+  status: 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'completed' | 'error';
   currentChunkIndex: number;
   totalChunks: number;
   progressPercent: number;
   selectedVoice: string;
   playbackSpeed: number;
+  currentTime: number;
+  duration: number;
+  isFallback: boolean;
+  currentlySpeakingText: string;
+  articleId: string;
   errorMessage?: string;
 }
 
@@ -940,6 +1007,10 @@ export class VieNeuTTSController {
   private onStateChange?: (state: VieNeuPlayerState) => void;
   private audio: HTMLAudioElement | null = null;
   private isPaused: boolean = false;
+  private activeRequestId: number = 0;
+  private abortController: AbortController | null = null;
+  private chunkRetryCount: number = 0;
+  private readonly maxChunkRetries: number = 2;
 
   constructor(onStateChange?: (state: VieNeuPlayerState) => void) {
     this.onStateChange = onStateChange;
@@ -948,8 +1019,13 @@ export class VieNeuTTSController {
       currentChunkIndex: 0,
       totalChunks: 0,
       progressPercent: 0,
-      selectedVoice: 'bac_nu',
-      playbackSpeed: 1.0
+      selectedVoice: VIENEU_CENTRAL_CONFIG.defaultVoice,
+      playbackSpeed: 1.0,
+      currentTime: 0,
+      duration: 0,
+      isFallback: false,
+      currentlySpeakingText: '',
+      articleId: ''
     };
 
     if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
@@ -962,43 +1038,75 @@ export class VieNeuTTSController {
     }
   }
 
-  public setContent(text: string) {
+  /**
+   * Nạp bài viết và chuẩn bị dữ liệu đọc
+   */
+  public loadArticle(articleId: string, fullText: string, voiceId?: string) {
     this.stop();
-    this.chunks = splitVieNeuAudioChunks(text);
+    this.chunkRetryCount = 0;
+    this.activeRequestId++;
+    if (this.abortController) {
+      this.abortController.abort();
+    }
+    this.abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+
+    const cleanId = (articleId || 'art-default').replace(/[^a-zA-Z0-9_\-\.]/g, '_').slice(0, 100);
+    const chosenVoice = voiceId && VIENEU_VOICES.some(v => v.id === voiceId) ? voiceId : this.state.selectedVoice;
+
+    this.chunks = splitVieNeuAudioChunks(fullText || '');
     this.currentChunkIndex = 0;
+
     this.updateState({
-      status: 'idle',
+      status: this.chunks.length > 0 ? 'ready' : 'idle',
+      articleId: cleanId,
+      selectedVoice: chosenVoice,
       currentChunkIndex: 0,
       totalChunks: this.chunks.length,
-      progressPercent: 0
+      progressPercent: 0,
+      currentTime: 0,
+      duration: 0,
+      isFallback: false,
+      currentlySpeakingText: '',
+      errorMessage: undefined
     });
   }
 
-  public setVoice(voiceId: string) {
-    this.state.selectedVoice = voiceId;
-    this.notifyState();
+  public setContent(text: string) {
+    this.loadArticle(this.state.articleId || 'default', text);
   }
 
-  public setSpeed(speed: number) {
-    this.state.playbackSpeed = speed;
-    if (this.audio) {
-      this.audio.playbackRate = speed;
-    }
-    if (this.state.status === 'playing') {
-      this.playChunk(this.currentChunkIndex);
+  public setVoice(voiceId: string) {
+    // Xác thực voiceId trong allowlist
+    const isValid = VIENEU_VOICES.some(v => v.id === voiceId);
+    const resolved = isValid ? voiceId : VIENEU_CENTRAL_CONFIG.defaultVoice;
+    this.state.selectedVoice = resolved;
+    this.chunkRetryCount = 0;
+
+    if (this.state.status === 'playing' && this.chunks.length > 0) {
+      this.playChunk(this.currentChunkIndex, this.activeRequestId);
     } else {
       this.notifyState();
     }
   }
 
+  public setSpeed(speed: number) {
+    const validSpeed = Math.max(0.5, Math.min(2.5, speed || 1.0));
+    this.state.playbackSpeed = validSpeed;
+    if (this.audio) {
+      this.audio.playbackRate = validSpeed;
+    }
+    this.notifyState();
+  }
+
   public play() {
     if (this.chunks.length === 0) return;
     this.isPaused = false;
+    this.chunkRetryCount = 0;
     if (this.state.status === 'paused') {
       this.resume();
       return;
     }
-    this.playChunk(this.currentChunkIndex);
+    this.playChunk(this.currentChunkIndex, this.activeRequestId);
   }
 
   public pause() {
@@ -1016,16 +1124,22 @@ export class VieNeuTTSController {
       const p = this.audio.play();
       if (p !== undefined) {
         p.catch(() => {
-          this.playChunk(this.currentChunkIndex);
+          this.playChunk(this.currentChunkIndex, this.activeRequestId);
         });
       }
       return;
     }
-    this.playChunk(this.currentChunkIndex);
+    this.playChunk(this.currentChunkIndex, this.activeRequestId);
   }
 
   public stop() {
     this.isPaused = true;
+    this.chunkRetryCount = 0;
+    this.activeRequestId++;
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
@@ -1035,47 +1149,103 @@ export class VieNeuTTSController {
     this.updateState({
       status: 'idle',
       currentChunkIndex: 0,
-      progressPercent: 0
+      progressPercent: 0,
+      currentTime: 0,
+      currentlySpeakingText: ''
     });
   }
 
   public seekForward(seconds: number = 10) {
+    if (this.audio && this.audio.duration > 0) {
+      const target = Math.min(this.audio.duration, this.audio.currentTime + seconds);
+      this.audio.currentTime = target;
+      this.updateState({ currentTime: target });
+      return;
+    }
     const step = Math.max(1, Math.round(seconds / 8));
     const nextIndex = Math.min(this.chunks.length - 1, this.currentChunkIndex + step);
-    this.playChunk(nextIndex);
+    this.seekToChunk(nextIndex);
   }
 
   public seekBackward(seconds: number = 10) {
+    if (this.audio && this.audio.duration > 0) {
+      const target = Math.max(0, this.audio.currentTime - seconds);
+      this.audio.currentTime = target;
+      this.updateState({ currentTime: target });
+      return;
+    }
     const step = Math.max(1, Math.round(seconds / 8));
     const prevIndex = Math.max(0, this.currentChunkIndex - step);
-    this.playChunk(prevIndex);
+    this.seekToChunk(prevIndex);
+  }
+
+  public seekToChunk(index: number) {
+    if (this.chunks.length === 0) return;
+    const bounded = Math.max(0, Math.min(this.chunks.length - 1, index));
+    this.currentChunkIndex = bounded;
+    this.chunkRetryCount = 0;
+    if (this.state.status === 'playing' || this.state.status === 'ready') {
+      this.playChunk(bounded, this.activeRequestId);
+    } else {
+      const prog = Math.round(((bounded + 1) / this.chunks.length) * 100);
+      this.updateState({ currentChunkIndex: bounded, progressPercent: prog });
+    }
   }
 
   public getState(): VieNeuPlayerState {
     return { ...this.state };
   }
 
-  private playChunk(index: number) {
+  public getChunks(): string[] {
+    return [...this.chunks];
+  }
+
+  private playChunk(index: number, reqId: number) {
+    if (reqId !== this.activeRequestId) return;
     if (index >= this.chunks.length) {
       this.updateState({
         status: 'completed',
         currentChunkIndex: this.chunks.length,
-        progressPercent: 100
+        progressPercent: 100,
+        currentlySpeakingText: ''
       });
       return;
     }
 
     this.currentChunkIndex = index;
     const chunkText = this.chunks[index];
+    const progress = Math.round(((index + 1) / this.chunks.length) * 100);
+
+    this.updateState({
+      status: 'playing',
+      currentChunkIndex: index,
+      progressPercent: progress,
+      currentlySpeakingText: chunkText
+    });
 
     const advanceSimulated = () => {
-      if (this.isPaused) return;
+      if (this.isPaused || reqId !== this.activeRequestId) return;
       const durationMs = Math.max(2000, Math.round((chunkText.length / 15) * 1000 / this.state.playbackSpeed));
       setTimeout(() => {
-        if (!this.isPaused && this.state.status === 'playing') {
-          this.playChunk(this.currentChunkIndex + 1);
+        if (!this.isPaused && reqId === this.activeRequestId && this.state.status === 'playing') {
+          this.playChunk(this.currentChunkIndex + 1, reqId);
         }
       }, durationMs);
+    };
+
+    const handleChunkError = () => {
+      if (this.isPaused || reqId !== this.activeRequestId) return;
+      if (this.chunkRetryCount < this.maxChunkRetries) {
+        this.chunkRetryCount++;
+        setTimeout(() => {
+          if (!this.isPaused && reqId === this.activeRequestId) {
+            this.playChunk(index, reqId);
+          }
+        }, 300);
+      } else {
+        this.chunkRetryCount = 0;
+        advanceSimulated();
+      }
     };
 
     try {
@@ -1090,38 +1260,49 @@ export class VieNeuTTSController {
       this.audio.src = audioUrl;
       this.audio.playbackRate = this.state.playbackSpeed;
 
+      this.audio.ontimeupdate = () => {
+        if (!this.isPaused && reqId === this.activeRequestId && this.audio) {
+          this.updateState({
+            currentTime: this.audio.currentTime,
+            duration: this.audio.duration || 0
+          });
+        }
+      };
+
       this.audio.onplay = () => {
-        if (this.isPaused) {
+        if (this.isPaused || reqId !== this.activeRequestId) {
           this.audio?.pause();
           return;
         }
-        const progress = Math.round(((this.currentChunkIndex + 1) / this.chunks.length) * 100);
+        this.chunkRetryCount = 0;
         this.updateState({
           status: 'playing',
           currentChunkIndex: this.currentChunkIndex,
-          progressPercent: progress
+          progressPercent: progress,
+          currentlySpeakingText: chunkText
         });
       };
 
       this.audio.onended = () => {
-        if (this.isPaused) return;
+        if (this.isPaused || reqId !== this.activeRequestId) return;
+        this.chunkRetryCount = 0;
         if (this.state.status === 'playing') {
-          this.playChunk(this.currentChunkIndex + 1);
+          this.playChunk(this.currentChunkIndex + 1, reqId);
         }
       };
 
       this.audio.onerror = () => {
-        advanceSimulated();
+        handleChunkError();
       };
 
       const playPromise = this.audio.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {
-          advanceSimulated();
+          handleChunkError();
         });
       }
     } catch {
-      advanceSimulated();
+      handleChunkError();
     }
   }
 

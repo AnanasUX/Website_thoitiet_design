@@ -318,6 +318,76 @@ def get_supported_voices():
         "voices": PRESET_VOICES
     }
 
+@app.get("/v1/voices")
+def get_v1_voices():
+    """
+    GET /v1/voices: Trả về danh sách giọng đọc theo chuẩn VieNeu repository
+    """
+    return {
+        "object": "list",
+        "model": "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+        "sample_rate": SAMPLE_RATE,
+        "default_voice": "bac_nu",
+        "voices": PRESET_VOICES
+    }
+
+@app.get("/v1/models")
+def get_v1_models():
+    """
+    GET /v1/models: Trả về danh sách mô hình VieNeu-TTS v3 Turbo hỗ trợ
+    """
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+                "object": "model",
+                "created": 1729000000,
+                "owned_by": "pnnbao-ump",
+                "sample_rate": SAMPLE_RATE,
+                "architecture": "VieNeu-TTS v3 Turbo 48kHz High-Fidelity",
+                "languages": ["vi"]
+            },
+            {
+                "id": "vieneu-v3-turbo",
+                "object": "model",
+                "created": 1729000000,
+                "owned_by": "pnnbao-ump",
+                "sample_rate": SAMPLE_RATE,
+                "architecture": "VieNeu-TTS v3 Turbo 48kHz High-Fidelity",
+                "languages": ["vi"]
+            }
+        ]
+    }
+
+@app.get("/api/tts/stream")
+def stream_chunk_tts(text: str, voice: Optional[str] = "bac_nu", format: Optional[str] = "mp3"):
+    """
+    GET /api/tts/stream: Phát trực tiếp âm thanh cho đoạn văn bản với giọng đọc đã chọn (48 kHz)
+    """
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="Văn bản không được rỗng.")
+
+    voice_id = voice if voice in ALLOWED_VOICE_IDS else "bac_nu"
+    normalized = normalize_vietnamese_text(text)
+    audio_data = engine_manager.synthesize_speech(normalized, voice_id, SAMPLE_RATE)
+
+    import io
+    bio = io.BytesIO()
+    fmt = format.upper() if format and format.upper() in ["MP3", "WAV"] else "MP3"
+    sf.write(bio, audio_data, SAMPLE_RATE, format=fmt)
+    bio.seek(0)
+
+    media_type = "audio/mpeg" if fmt == "MP3" else "audio/wav"
+    return StreamingResponse(
+        bio,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
 def compute_cache_hash(article_id: str, voice_id: str, text: str) -> str:
     """Tính toán mã băm SHA-256 duy nhất cho cache audio"""
     return hashlib.sha256(f"{article_id}:{voice_id}:{text}:v3turbo".encode('utf-8')).hexdigest()

@@ -1008,6 +1008,8 @@ export {
   pollTTSJob,
   VIENEU_VOICES,
   VIENEU_SPEED_OPTIONS,
+  VIENEU_CENTRAL_CONFIG,
+  computeVieNeuAudioCacheKey,
   VieNeuTTSController,
   getVieNeuTTSV3TurboSpecs,
   buildVieNeuOpenAISpeechPayload

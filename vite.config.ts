@@ -445,7 +445,7 @@ function ttsProxyPlugin(): Plugin {
       const url = new URL(req.url, 'http://localhost');
       const cleanPath = url.pathname.replace(/^\/Website_thoitiet_design/, '');
 
-      if (cleanPath.startsWith('/api/tts')) {
+      if (cleanPath.startsWith('/api/tts') || cleanPath.startsWith('/v1/') || cleanPath === '/health') {
         // 1. Thử chuyển tiếp tới FastAPI Backend nếu đang chạy trên port 8000
         try {
           const controller = new AbortController();
@@ -488,20 +488,75 @@ function ttsProxyPlugin(): Plugin {
         }
 
         // 2. Fallback xử lý tại chỗ:
-        // 2a. Danh sách giọng đọc
-        if (cleanPath === '/api/tts/voices') {
+        // 2a. Health check
+        if (cleanPath === '/health') {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.end(JSON.stringify({
+            status: "online",
+            service: "VieNeu-TTS v3 Turbo Gateway",
+            model_id: "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+            sample_rate: 48000
+          }));
+          return;
+        }
+
+        // 2b. Danh sách mô hình v1/models
+        if (cleanPath === '/v1/models') {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.end(JSON.stringify({
+            object: "list",
+            data: [
+              {
+                id: "pnnbao-ump/VieNeu-TTS-v3-Turbo",
+                object: "model",
+                owned_by: "pnnbao-ump",
+                sample_rate: 48000,
+                architecture: "VieNeu-TTS v3 Turbo 48kHz High-Fidelity",
+                languages: ["vi"]
+              }
+            ]
+          }));
+          return;
+        }
+
+        // 2c. Danh sách giọng đọc
+        if (cleanPath === '/api/tts/voices' || cleanPath === '/v1/voices') {
           res.setHeader('Content-Type', 'application/json; charset=utf-8');
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.end(JSON.stringify({
             success: true,
+            object: "list",
             model: "pnnbao-ump/VieNeu-TTS-v3-Turbo",
             sample_rate: 48000,
             default_voice: "bac_nu",
             voices: [
-              { id: "bac_nu", name: "Mai Anh (Chuẩn)", gender: "female", accent: "northern", style: "news", is_default: true },
-              { id: "bac_nam", name: "Minh Quân (Chuẩn)", gender: "male", accent: "northern", style: "natural", is_default: false },
-              { id: "trung_nu", name: "Ngọc Trân (Huế)", gender: "female", accent: "central", style: "natural", is_default: false },
-              { id: "nam_nu", name: "Thùy Dung (Sài Gòn)", gender: "female", accent: "southern", style: "news", is_default: false }
+              { id: "bac_nu", name: "Nữ Miền Bắc (Mai Anh - News Báo chí 48kHz)", region: "north", gender: "female", character: "news", sampleRate: 48000 },
+              { id: "mai_anh", name: "Nữ Miền Bắc (Mai Anh - News Thời sự)", region: "north", gender: "female", character: "news", sampleRate: 48000 },
+              { id: "doan_trang", name: "Nữ Miền Bắc (Đoan Trang - Tự nhiên)", region: "north", gender: "female", character: "natural", sampleRate: 48000 },
+              { id: "ngoc_huyen", name: "Nữ Miền Bắc (Ngọc Huyền - Tự nhiên)", region: "north", gender: "female", character: "natural", sampleRate: 48000 },
+              { id: "ngoc_linh", name: "Nữ Miền Bắc (Ngọc Linh - Kể chuyện)", region: "north", gender: "female", character: "storytelling", sampleRate: 48000 },
+              { id: "quynh_anh", name: "Nữ Miền Bắc (Quỳnh Anh - Kể chuyện)", region: "north", gender: "female", character: "storytelling", sampleRate: 48000 },
+              { id: "truc_ly", name: "Nữ Miền Bắc (Trúc Ly - Tự nhiên)", region: "north", gender: "female", character: "natural", sampleRate: 48000 },
+              { id: "minh_quan", name: "Nam Miền Bắc (Minh Quân - Mặc định v3 Turbo)", region: "north", gender: "male", character: "standard", sampleRate: 48000 },
+              { id: "minh_duc", name: "Nam Miền Bắc (Minh Đức - News Báo chí)", region: "north", gender: "male", character: "news", sampleRate: 48000 },
+              { id: "anh_khoi", name: "Nam Miền Bắc (Anh Khôi - Kể chuyện)", region: "north", gender: "male", character: "storytelling", sampleRate: 48000 },
+              { id: "manh_dung", name: "Nam Miền Bắc (Mạnh Dũng - Tự nhiên)", region: "north", gender: "male", character: "natural", sampleRate: 48000 },
+              { id: "pham_tuyen", name: "Nam Miền Bắc (Phạm Tuyên - Tự nhiên)", region: "north", gender: "male", character: "natural", sampleRate: 48000 },
+              { id: "thanh_binh", name: "Nam Miền Bắc (Thanh Bình - Kể chuyện)", region: "north", gender: "male", character: "storytelling", sampleRate: 48000 },
+              { id: "xuan_vinh", name: "Nam Miền Bắc (Xuân Vĩnh - Tự nhiên)", region: "north", gender: "male", character: "natural", sampleRate: 48000 },
+              { id: "ngoc_tran", name: "Nữ Miền Trung (Ngọc Trân - Huế Tự nhiên)", region: "central", gender: "female", character: "natural", sampleRate: 48000 },
+              { id: "quang_son", name: "Nam Miền Trung (Quang Sơn - Tự nhiên)", region: "central", gender: "male", character: "natural", sampleRate: 48000 },
+              { id: "nam_nam", name: "Nam Miền Nam (Minh Triết - Báo chí 48kHz)", region: "south", gender: "male", character: "news", sampleRate: 48000 },
+              { id: "minh_triet", name: "Nam Miền Nam (Minh Triết - News Báo chí)", region: "south", gender: "male", character: "news", sampleRate: 48000 },
+              { id: "thuy_dung", name: "Nữ Miền Nam (Thùy Dung - News Báo chí)", region: "south", gender: "female", character: "news", sampleRate: 48000 },
+              { id: "kim_thanh", name: "Nữ Miền Nam (Kim Thanh - Kể chuyện)", region: "south", gender: "female", character: "storytelling", sampleRate: 48000 },
+              { id: "my_duyen", name: "Nữ Miền Nam (Mỹ Duyên - Kể chuyện)", region: "south", gender: "female", character: "storytelling", sampleRate: 48000 },
+              { id: "thuc_doan", name: "Nữ Miền Nam (Thục Đoan - Kể chuyện)", region: "south", gender: "female", character: "storytelling", sampleRate: 48000 },
+              { id: "adam", name: "Nam Miền Nam (Adam - Tự nhiên)", region: "south", gender: "male", character: "natural", sampleRate: 48000 },
+              { id: "thai_son", name: "Nam Miền Nam (Thái Sơn - Kể chuyện)", region: "south", gender: "male", character: "storytelling", sampleRate: 48000 },
+              { id: "duc_tri", name: "Nam Miền Nam (Đức Trí - Kể chuyện)", region: "south", gender: "male", character: "storytelling", sampleRate: 48000 }
             ]
           }));
           return;

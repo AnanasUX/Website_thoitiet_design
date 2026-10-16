@@ -51,9 +51,11 @@ import {
   getCharacterVoiceModulation,
   formatAudioTime,
   fetchBackendTTSVoices,
-  requestBackendArticleTTS,
   VIENEU_VOICES,
-  VIENEU_SPEED_OPTIONS
+  VIENEU_SPEED_OPTIONS,
+  VIENEU_CENTRAL_CONFIG,
+  VieNeuTTSController,
+  type VieNeuPlayerState
 } from "./utils/logicFlows";
 
 export {
@@ -693,24 +695,37 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
   const [fullContent, setFullContent] = useState<string>('RICH_RENDER');
   const [isLoadingFull, setIsLoadingFull] = useState(false);
   const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
-  // ── Phân hệ AI VieNeu-TTS Audio Player (REQ-047 / TC-047) ──
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isSpeechPaused, setIsSpeechPaused] = useState(false);
-  const [vieNeuVoice, setVieNeuVoice] = useState<string>('bac_nu');
-  const [vieNeuSpeed, setVieNeuSpeed] = useState<number>(1.0);
-  const [vieNeuProgress, setVieNeuProgress] = useState<number>(0);
-  const [vieNeuChunks, setVieNeuChunks] = useState<string[]>([]);
-  const [currentChunkIdx, setCurrentChunkIdx] = useState<number>(0);
-  const [audioDuration, setAudioDuration] = useState<number>(0);
-  const [audioCurrentTime, setAudioCurrentTime] = useState<number>(0);
-  const [ttsState, setTtsState] = useState<'idle' | 'generating' | 'playing' | 'paused' | 'ended' | 'error'>('idle');
+  // ── Phân hệ AI VieNeu-TTS Audio Player Thống Nhất 1 Luồng Duy Nhất (REQ-047 / TC-047) ──
+  const controllerRef = useRef<VieNeuTTSController | null>(null);
+  const [playerState, setPlayerState] = useState<VieNeuPlayerState>({
+    status: 'idle',
+    currentChunkIndex: 0,
+    totalChunks: 0,
+    progressPercent: 0,
+    selectedVoice: VIENEU_CENTRAL_CONFIG.defaultVoice,
+    playbackSpeed: 1.0,
+    currentTime: 0,
+    duration: 0,
+    isFallback: false,
+    currentlySpeakingText: '',
+    articleId: ''
+  });
   const [backendVoicesList, setBackendVoicesList] = useState<any[]>(VIENEU_VOICES);
-  const [currentlySpeakingText, setCurrentlySpeakingText] = useState<string>('');
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const isPausedRef = useRef<boolean>(false);
+  // Khởi tạo VieNeuTTSController duy nhất và kết nối lắng nghe trạng thái (Single Unified Controller)
+  useEffect(() => {
+    const ctrl = new VieNeuTTSController((st) => {
+      setPlayerState({ ...st });
+    });
+    controllerRef.current = ctrl;
+    setPlayerState(ctrl.getState());
 
-  // Nạp danh sách giọng đọc từ backend TTS nếu có
+    return () => {
+      ctrl.stop();
+    };
+  }, []);
+
+  // Nạp danh sách giọng đọc từ backend VieNeu nếu có
   useEffect(() => {
     fetchBackendTTSVoices().then(voices => {
       if (voices && Array.isArray(voices) && voices.length > 0) {
@@ -719,22 +734,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     }).catch(() => {});
   }, []);
 
+  // Khi chuyển bài viết (article thay đổi), dừng ngay lập tức mọi âm thanh đang phát
+  useEffect(() => {
+    controllerRef.current?.stop();
+  }, [article.link, article.id]);
+
   const stopAllAudio = useCallback(() => {
-    isPausedRef.current = false;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.src = '';
-    }
-    setIsSpeaking(false);
-    setIsSpeechPaused(false);
-    setTtsState('idle');
-    setVieNeuProgress(0);
-    setCurrentChunkIdx(0);
-    setAudioCurrentTime(0);
-    setAudioDuration(0);
-    setCurrentlySpeakingText('');
+    controllerRef.current?.stop();
   }, []);
+
+  const isSpeaking = playerState.status === 'playing' || playerState.status === 'paused';
+  const isSpeechPaused = playerState.status === 'paused';
+  const currentChunkIdx = playerState.currentChunkIndex;
+  const vieNeuProgress = playerState.progressPercent;
+  const audioCurrentTime = playerState.currentTime;
+  const audioDuration = playerState.duration;
+  const currentlySpeakingText = playerState.currentlySpeakingText;
+  const vieNeuVoice = playerState.selectedVoice;
+  const vieNeuSpeed = playerState.playbackSpeed;
 
   const related = useMemo(() => {
     const pool = Array.isArray(allNews) && allNews.length > 0 ? allNews : DEFAULT_NEWS_FEED;
@@ -762,169 +779,21 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
   }, [onClose, stopAllAudio]);
 
-  // Luồng phát âm thanh duy nhất: 100% qua HTML5 Audio Element và URL stream chuẩn hóa tiếng Việt
-  const playVieNeuChunk = useCallback((idx: number, chunksList: string[], speed: number, voiceId: string) => {
-    if (idx >= chunksList.length) {
-      setIsSpeaking(false);
-      setIsSpeechPaused(false);
-      setCurrentChunkIdx(0);
-      setVieNeuProgress(100);
-      setTtsState('ended');
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
-      return;
-    }
-
-    setCurrentChunkIdx(idx);
-    const chunkText = chunksList[idx];
-    setCurrentlySpeakingText(chunkText);
-    const prog = Math.round(((idx + 1) / chunksList.length) * 100);
-    setVieNeuProgress(prog);
-    setIsSpeaking(true);
-    setIsSpeechPaused(false);
-
-    const advanceToNextSimulated = () => {
-      if (isPausedRef.current) return;
-      const chunkDurationMs = Math.max(2000, Math.round((chunkText.length / 15) * 1000 / speed));
-      setTimeout(() => {
-        if (isPausedRef.current) return;
-        playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
-      }, chunkDurationMs);
-    };
-
-    if (typeof window === 'undefined' || typeof Audio === 'undefined') {
-      advanceToNextSimulated();
-      return;
-    }
-
-    try {
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-      } else {
-        audioRef.current.pause();
-      }
-
-      const audio = audioRef.current;
-      audio.referrerPolicy = 'no-referrer';
-      const audioUrl = buildVieNeuAudioUrl(chunkText, voiceId);
-      audio.src = audioUrl;
-      audio.playbackRate = speed;
-
-      audio.ontimeupdate = () => {
-        if (!isPausedRef.current) {
-          setAudioCurrentTime(audio.currentTime);
-          if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-            setAudioDuration(audio.duration);
-            setVieNeuProgress(Math.round((audio.currentTime / audio.duration) * 100));
-          }
-        }
-      };
-
-      audio.onloadedmetadata = () => {
-        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-          setAudioDuration(audio.duration);
-        }
-      };
-
-      audio.onplay = () => {
-        if (isPausedRef.current) {
-          audio.pause();
-          return;
-        }
-        setIsSpeaking(true);
-        setIsSpeechPaused(false);
-        setTtsState('playing');
-      };
-
-      audio.onended = () => {
-        if (isPausedRef.current) return;
-        if (idx + 1 >= chunksList.length) {
-          setTtsState('ended');
-        }
-        playVieNeuChunk(idx + 1, chunksList, speed, voiceId);
-      };
-
-      audio.onerror = (e) => {
-        console.warn('[VieNeu-TTS] Audio stream notice on chunk:', idx, e);
-        advanceToNextSimulated();
-      };
-
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.warn('[VieNeu-TTS] audio.play() notice on chunk:', idx, err);
-          advanceToNextSimulated();
-        });
-      }
-    } catch (err) {
-      console.warn('[VieNeu-TTS] Audio init error on chunk:', idx, err);
-      advanceToNextSimulated();
-    }
-  }, []);
-
   const handleToggleAudio = () => {
-    if (isSpeaking) {
-      if (isSpeechPaused) {
-        // NGƯỜI DÙNG BẤM "TIẾP TỤC ĐỌC":
-        isPausedRef.current = false;
-        setIsSpeechPaused(false);
-        setIsSpeaking(true);
-        setTtsState('playing');
+    const ctrl = controllerRef.current;
+    if (!ctrl) return;
 
-        const activeVoiceId = vieNeuVoice || 'bac_nu';
-        let chunks = vieNeuChunks;
-        if (!chunks || chunks.length === 0) {
-          const bodyText = extractContentForVieNeuTTS(article, contentBlocks);
-          const cleanToRead = bodyText || (article.body || article.description || '').replace(/<[^>]*>/g, '').trim();
-          chunks = splitVieNeuAudioChunks(cleanToRead);
-          setVieNeuChunks(chunks);
-        }
-
-        // Resume trực tiếp trên Audio Element duy nhất:
-        if (audioRef.current && audioRef.current.src && !audioRef.current.error && !audioRef.current.ended && audioRef.current.currentTime > 0) {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((err) => {
-              console.warn('[VieNeu-TTS] Audio resume notice, replaying chunk:', err);
-              if (chunks && chunks.length > 0) {
-                const targetIdx = (currentChunkIdx >= 0 && currentChunkIdx < chunks.length) ? currentChunkIdx : 0;
-                playVieNeuChunk(targetIdx, chunks, vieNeuSpeed, activeVoiceId);
-              }
-            });
-          }
-        } else {
-          // Nếu audio đã kết thúc hoặc bị ngắt, phát lại chunk hiện tại:
-          if (chunks && chunks.length > 0) {
-            const targetIdx = (currentChunkIdx >= 0 && currentChunkIdx < chunks.length) ? currentChunkIdx : 0;
-            playVieNeuChunk(targetIdx, chunks, vieNeuSpeed, activeVoiceId);
-          }
-        }
-      } else {
-        // NGƯỜI DÙNG BẤM "TẠM DỪNG ĐỌC":
-        isPausedRef.current = true;
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        setIsSpeechPaused(true);
-        setTtsState('paused');
-      }
+    if (playerState.status === 'playing') {
+      ctrl.pause();
+      return;
+    }
+    if (playerState.status === 'paused') {
+      ctrl.resume();
       return;
     }
 
     // NGƯỜI DÙNG BẤM "NGHE ĐỌC" LẦN ĐẦU:
-    isPausedRef.current = false;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-
-    // 1. Áp dụng giọng đọc nữ AI VieNeu-TTS ('bac_nu' - Nữ Miền Bắc VieNeu Voice chuẩn đồng nhất)
-    const activeVoiceId = 'bac_nu';
-    setVieNeuVoice(activeVoiceId);
-
-    // 2. BẢO ĐẢM ĐỌC ĐÚNG VÀ ĐỦ CÁC THÔNG TIN CHI TIẾT (TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ)
+    // BẢO ĐẢM ĐỌC ĐÚNG VÀ ĐỦ CÁC THÔNG TIN CHI TIẾT (TUYỆT ĐỐI KHÔNG TÍNH TIÊU ĐỀ)
     const bodyText = extractContentForVieNeuTTS(article, contentBlocks);
     const cleanToRead = bodyText || (article.body || article.description || '').replace(/<[^>]*>/g, '').trim();
 
@@ -933,65 +802,37 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       return;
     }
 
-    const chunks = splitVieNeuAudioChunks(cleanToRead);
-    setVieNeuChunks(chunks);
-
-    // Bắt đầu phát ngay lập tức từ chunk 0 trên luồng Audio Stream duy nhất
-    playVieNeuChunk(0, chunks, vieNeuSpeed, activeVoiceId);
+    ctrl.loadArticle(article.id || article.link || 'art-current', cleanToRead, vieNeuVoice || 'bac_nu');
+    ctrl.play();
   };
 
   const handleSeekBackward = () => {
-    if (audioRef.current && audioRef.current.duration > 0) {
-      const target = Math.max(0, audioRef.current.currentTime - 10);
-      audioRef.current.currentTime = target;
-      setAudioCurrentTime(target);
-      if (audioDuration > 0) setVieNeuProgress(Math.round((target / audioDuration) * 100));
-      return;
-    }
-    if (vieNeuChunks.length === 0) return;
-    const targetIdx = Math.max(0, currentChunkIdx - 1);
-    playVieNeuChunk(targetIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+    controllerRef.current?.seekBackward(10);
   };
 
   const handleSeekForward = () => {
-    if (audioRef.current && audioRef.current.duration > 0) {
-      const target = Math.min(audioRef.current.duration, audioRef.current.currentTime + 10);
-      audioRef.current.currentTime = target;
-      setAudioCurrentTime(target);
-      if (audioDuration > 0) setVieNeuProgress(Math.round((target / audioDuration) * 100));
-      return;
-    }
-    if (vieNeuChunks.length === 0) return;
-    const targetIdx = Math.min(vieNeuChunks.length - 1, currentChunkIdx + 1);
-    playVieNeuChunk(targetIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+    controllerRef.current?.seekForward(10);
   };
 
   const handleSeekChange = (newVal: number) => {
-    if (audioRef.current && audioDuration > 0) {
-      audioRef.current.currentTime = newVal;
-      setAudioCurrentTime(newVal);
-      setVieNeuProgress(Math.round((newVal / audioDuration) * 100));
-    } else if (vieNeuChunks.length > 0) {
-      const chunkIdx = Math.min(
-        vieNeuChunks.length - 1,
-        Math.floor((newVal / 100) * vieNeuChunks.length)
+    const ctrl = controllerRef.current;
+    if (!ctrl) return;
+    const st = ctrl.getState();
+    if (st.totalChunks > 0) {
+      const targetIdx = Math.min(
+        st.totalChunks - 1,
+        Math.floor((newVal / 100) * st.totalChunks)
       );
-      playVieNeuChunk(chunkIdx, vieNeuChunks, vieNeuSpeed, vieNeuVoice);
+      ctrl.seekToChunk(targetIdx);
     }
   };
 
   const handleVoiceChange = (vId: string) => {
-    setVieNeuVoice(vId);
-    if (isSpeaking && vieNeuChunks.length > 0) {
-      playVieNeuChunk(currentChunkIdx, vieNeuChunks, vieNeuSpeed, vId);
-    }
+    controllerRef.current?.setVoice(vId);
   };
 
   const handleSpeedChange = (spd: number) => {
-    setVieNeuSpeed(spd);
-    if (audioRef.current) {
-      audioRef.current.playbackRate = spd;
-    }
+    controllerRef.current?.setSpeed(spd);
   };
 
   useEffect(() => {

@@ -170,11 +170,39 @@ def run_tests():
     check(openai_res.media_type == "audio/mpeg", "OpenAI Speech API trả về StreamingResponse audio/mpeg")
 
     # 7. Kiểm tra Healthcheck (GET /health)
-    print("\n>>> [7/7] Kiểm tra GET /health...")
+    print("\n>>> [7/8] Kiểm tra GET /health...")
     health = s.health_check()
     check(health["status"] == "online", "Dịch vụ trạng thái online")
     check(health["sample_rate"] == 48000, "Tần số lấy mẫu 48000 Hz")
     check(health["total_voices"] >= 23, "Xác nhận quản lý 23 preset voices")
+
+    # 8. Kiểm tra Endpoints VieNeu Chuẩn Repository & Phân Biệt Giọng / Cache
+    print("\n>>> [8/8] Kiểm tra GET /v1/voices, GET /v1/models & Phân Biệt Giọng / Cache...")
+    v1_voices = s.get_v1_voices()
+    check(v1_voices.get("object") == "list" and len(v1_voices.get("voices", [])) >= 23, "GET /v1/voices chuẩn VieNeu trả về danh sách 23 giọng")
+    
+    v1_models = s.get_v1_models()
+    check(v1_models.get("object") == "list" and len(v1_models.get("data", [])) >= 1, "GET /v1/models trả về thông số mô hình VieNeu-TTS v3 Turbo")
+    check(any(m["id"] == "pnnbao-ump/VieNeu-TTS-v3-Turbo" for m in v1_models.get("data", [])), "Xác thực Model ID pnnbao-ump/VieNeu-TTS-v3-Turbo")
+
+    # Kiểm tra phân tách cache key: cùng nội dung nhưng 2 giọng khác nhau phải có hash khác nhau
+    hash_female = s.compute_cache_hash("art-100", "mai_anh", "Nội dung bài viết")
+    hash_male = s.compute_cache_hash("art-100", "minh_quan", "Nội dung bài viết")
+    check(hash_female != hash_male, "Hai giọng đọc khác nhau tạo ra hai cache key hoàn toàn độc lập")
+
+    # Kiểm tra phân tách cache key: cùng giọng nhưng 2 bài viết khác nhau phải có hash khác nhau
+    hash_art2 = s.compute_cache_hash("art-101", "mai_anh", "Nội dung bài viết")
+    check(hash_female != hash_art2, "Hai bài viết khác nhau tạo ra hai cache key hoàn toàn độc lập")
+
+    # Kiểm tra luồng stream trực tiếp GET /api/tts/stream
+    stream_res = s.stream_chunk_tts("Tin tức thời sự hôm nay.", voice="mai_anh", format="mp3")
+    check(stream_res.media_type == "audio/mpeg", "GET /api/tts/stream phản hồi media_type audio/mpeg chuẩn")
+
+    # Kiểm tra điều biến âm sắc giữa giọng Nam và giọng Nữ
+    female_wave = s.engine_manager.synthesize_speech("Thử nghiệm âm thanh", "mai_anh", 48000)
+    male_wave = s.engine_manager.synthesize_speech("Thử nghiệm âm thanh", "minh_quan", 48000)
+    check(len(female_wave) > 0 and len(male_wave) > 0, "Tạo thành công dữ liệu sóng âm cho cả giọng Nam và Nữ")
+    check(not (female_wave == male_wave).all(), "Dữ liệu âm thanh của giọng Nam và giọng Nữ có tần số & âm sắc khác biệt rõ rệt")
 
     print("\n==================================================================")
     print(f"  TỔNG KẾT: \033[92m{passed} PASSED\033[0m | \033[91m{failed} FAILED\033[0m")

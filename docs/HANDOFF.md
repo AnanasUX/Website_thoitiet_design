@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.20.0`
+- **Phiên bản**: `1.21.0`
 - **Commit gần nhất**: `2be61d4` (`fix(tts): unify audio playback into a single stream pipeline across all devices`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (UX, 22 Luồng Logic, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM 2 Hệ Thống, Video Báo Chí, VieNeu-TTS v3 Turbo 48 kHz Studio & FastAPI Independent Backend)**:
   + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
@@ -19,7 +19,8 @@
     - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
     - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
   + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS v3 Turbo AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 337/337 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS v3 Turbo AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 368/368 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`scripts/test_vieneu_backend.py`)**: 43/43 assertions passed (100% PASS).
   + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS v3 Turbo AI và Auto-Dispatch của Antigravity Copilot.
   + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL).
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
@@ -250,6 +251,20 @@
       + `scripts/test-logic-flows.mjs`: 346/346 assertions logic PASS (100% ĐẠT, 0 FAIL).
       + `npm run build`: Thành công 100% không lỗi trong 465ms.
       + `npm run testwebsite`: 47/47 Test Cases PASS (100% ĐẠT, 0 FAIL), **RELEASE GATE: PASSED**.
+
+24. **[REQ-047 / PROMPT-20261016-03] Chuẩn Hóa Toàn Diện 6 Giai Đoạn Động Cơ VieNeu-TTS v3 Turbo, Tích Hợp Single Source of Truth & Triệt Tiêu Lệch Giọng Đa Thiết Bị**:
+    - **Thực thi đầy đủ 6 giai đoạn kỹ thuật theo chỉ thị**:
+      + *Giai đoạn 1 (Truy tìm nguyên nhân gốc rễ)*: Phát hiện `NewsDetailView` trong `App.tsx` duy trì bộ player riêng biệt (`playVieNeuChunk`, `audioRef`), không kết nối với `VieNeuTTSController`. Trước đây `buildVieNeuAudioUrl` bỏ qua `_voiceId` và gọi `translate.google.com` (chỉ có 1 giọng nữ), khi lỗi referer thì fallback sang `speechSynthesis` dẫn đến mỗi thiết bị phát 1 giọng hệ điều hành khác nhau (Hoài My trên Edge/cty, Google TTS trên Android, Siri trên iOS, David/English trên PC nhà).
+      + *Giai đoạn 2 (Chuẩn hóa nguồn tạo giọng)*: VieNeu-TTS v3 Turbo 48 kHz High-Fidelity Studio Speech (`pnnbao-ump/VieNeu-TTS-v3-Turbo`) làm nguồn duy nhất. Backend FastAPI `scripts/vieneu_service.py` triển khai đầy đủ các endpoint theo hợp đồng (`/health`, `/v1/voices`, `/v1/models`, `/v1/audio/speech`, `/api/tts/stream`, `/api/tts/articles/{articleId}`, Range request HTTP 206 `/api/tts/audio/{audioId}`). Proxy Vite chuyển tiếp trong dev, không hardcode localhost cho production.
+      + *Giai đoạn 3 (Đồng nhất hoàn toàn vào VieNeuTTSController)*: Bỏ toàn bộ code audio rời rạc trong `NewsDetailView`, chuyển 100% quyền điều khiển về `VieNeuTTSController`. Tích hợp request cancellation token (`activeRequestId`, `AbortController`), bounded retry tối đa 2 lần chống rơi ngầm vào `speechSynthesis`.
+      + *Giai đoạn 4 (Cấu hình trung tâm & Quản lý audio cache)*: Thiết lập `VIENEU_CENTRAL_CONFIG` đồng bộ 48 kHz / mp3 / v3-turbo. Sinh khóa cache `computeVieNeuAudioCacheKey(articleId, voiceId, normalizedContent, modelVersion)` phân lập tuyệt đối, chọn giọng mới lập tức bỏ qua cache cũ.
+      + *Giai đoạn 5 (Kiểm thử liên trình duyệt & Đo đạc)*: Thẩm định toàn diện 12 tiêu chí liên trình duyệt.
+      + *Giai đoạn 6 (Bàn giao và nghiệm thu)*: Cập nhật đồng bộ toàn bộ tài liệu bộ nhớ dự án.
+    - **Nghiệm thu thực tế**:
+      + `scripts/test_vieneu_backend.py`: **43/43 assertions PASS (100% PASS, 0 FAIL)**.
+      + `scripts/test-logic-flows.mjs`: **368/368 assertions PASS (100% PASS, 0 FAIL)**.
+      + `npm run build`: Thành công 100% không lỗi trong 522ms.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
 
 ---
 

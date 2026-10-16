@@ -386,5 +386,8 @@
 - **Từ chối**: Chạy kiểm thử giả lập lướt nhanh với các độ trễ setTimeout cứng ngắc không có tính liên kết tương tác với hệ thống đang chạy.
 - **Từ chối**: Tách riêng luồng xử lý âm thanh hoặc phân nhánh engine (`isLocalDev` dùng `/api/tts`, production dùng `translate.google.com`, hoặc rẽ nhánh sang `speechSynthesis` của hệ điều hành), gây ra hiện tượng trình duyệt ở công ty đọc 1 giọng (Microsoft Hoài My/Edge) còn điện thoại (Android Google TTS) hay máy tính ở nhà (SAPI US English) đọc giọng khác nhau.
 - **Từ chối**: Kích hoạt song song 2 luồng xử lý âm thanh (vừa stream chunk trực tiếp vừa gửi POST request tới backend `/api/tts/articles` khi người dùng nhấn Byline Bar), gây lãng phí tài nguyên và phát sinh lỗi mạng 404 trên các nền tảng tĩnh như GitHub Pages.
+- **Từ chối**: Tách riêng mã nguồn xử lý audio giữa `NewsDetailView` trong `App.tsx` và `VieNeuTTSController` trong `src/utils/vieneuTTS.ts` (khiến logic bị trùng lặp, trạng thái không đồng bộ và các cải tiến không phát huy tác dụng trên giao diện thực tế).
+- **Từ chối**: Sử dụng audio cache key chỉ dựa trên `articleId` (khiến việc đổi giọng đọc khác vẫn nhận lại file audio cũ của giọng trước đó; cache key bắt buộc phải băm từ `articleId:voiceId:modelVersion:content`).
+- **Từ chối**: Âm thầm fallback về `speechSynthesis` của hệ điều hành khi gặp sự cố mạng (gây lệch chất giọng nghiêm trọng giữa các thiết bị khác nhau; phải giữ đúng luồng VieNeu-TTS v3 Turbo với cơ chế bounded retry 2 lần).
 
 

@@ -96,6 +96,7 @@
 | PROMPT-20261015-12 | 2026-10-15 | Chỉ tập trung vào việc giọng đọc trong bài viết chi tiết: Kiến trúc khuyến nghị VieNeu-TTS v3 Turbo (Frontend Audio Player thời lượng thật, seek slider, 23 voices + Backend FastAPI độc lập GET /api/tts/voices, POST /api/tts/articles, GET /api/tts/jobs, GET /api/tts/audio HTTP 206 Range, Caching, Rate Limit) | REQ-047 | None | Approved |
 | PROMPT-20261016-01 | 2026-10-16 | Tại sao khi tôi sử dụng trình duyệt ở cty AI đọc 1 giọng khác mà sử dụng điện thoại hay PC ở nơi khác lại 1 giọng đọc khác & loại bỏ bài viết cũ | REQ-027, REQ-047 | Resolved | Approved |
 | PROMPT-20261016-02 | 2026-10-16 | Vẫn bị đọc riêng xử lý lại và fix lại toàn bộ chung 1 luồng xử lý không tách riêng vậy | REQ-047 | Resolved | Approved |
+| PROMPT-20261016-03 | 2026-10-16 | Debug và chuẩn hóa toàn diện 6 giai đoạn VieNeu-TTS v3 Turbo cho website tin tức, khắc phục lệch giọng đa thiết bị, đồng nhất VieNeuTTSController Single Source of Truth | REQ-047 | Resolved | Approved |
 
 
 
