@@ -937,12 +937,15 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
       }
 
-      // 4. Fallback từ JSON-LD schema
+      // 4. Fallback từ JSON-LD schema và dataLayer
       if (!authorName || !authorAvatar || !authorDate) {
-        for (const s of ldJsonMatches) {
+        const ldScripts = doc.querySelectorAll('script[type="application/ld+json"]');
+        for (let i = 0; i < ldScripts.length; i++) {
           try {
-            let jsonText = s.replace(/<script[^>]*>|<\/script>/gi, '').trim().replace(/[\u0000-\u001F\u007F-\u009F]/g, c => (c === '\n' || c === '\r' ? ' ' : ''));
-            const parsed = JSON.parse(jsonText);
+            const raw = ldScripts[i].textContent || '';
+            const clean = raw.trim().replace(/[\u0000-\u001F\u007F-\u009F]/g, c => (c === '\n' || c === '\r' ? ' ' : ''));
+            if (!clean) continue;
+            const parsed = JSON.parse(clean);
             const list = Array.isArray(parsed) ? parsed : [parsed];
             for (const item of list) {
               if (!authorName && item.author) {
@@ -963,6 +966,23 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             }
           } catch(e) {}
         }
+
+        // Bổ sung quét window.dataLayer cho VietnamNet và các báo điện tử
+        if (!authorName || !authorDate) {
+          const dlAuthorMatch = htmlStr.match(/['"]ArticleAuthor['"]\s*:\s*['"]([^'"]+)['"]/i);
+          if (dlAuthorMatch && dlAuthorMatch[1] && !authorName) {
+            authorName = dlAuthorMatch[1].trim();
+          }
+          const dlDateMatch = htmlStr.match(/['"]ArticlePublishDate['"]\s*:\s*['"]([^'"]+)['"]/i);
+          if (dlDateMatch && dlDateMatch[1] && !authorDate) {
+            try {
+              const d = new Date(dlDateMatch[1]);
+              if (!isNaN(d.getTime())) {
+                authorDate = d.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+              }
+            } catch(e) {}
+          }
+        }
       }
 
       // Trích xuất Sapo (đoạn mở đầu đặc thù của báo chí) trước khi gỡ bỏ các khối phụ
@@ -978,7 +998,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         ins.adsbygoogle, .google-auto-placed, [class*="ad-"], [id*="ad-"], [class*="banner"],
         .social, .comment, iframe:not([data-keep-video="true"]), .return-thread-body-btn, 
         .readmore-body-btn, .box-author-detail, .author-info, .bread-crumb, 
-        .breadcrumb, .share, .like-fb,
+        .breadcrumb, .share, .like-fb, .content-detail-top, .back-to-top,
         [data-content-name="article-author"], [data-content-piece*="author"],
         a[rel="author"], a[href*="/tac-gia/"], .author-avatar, .article-author, .dt-author,
         .box-author, .details__author, .article__author,
@@ -986,11 +1006,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       `).forEach(el => el.remove());
 
       const contentSelectors = [
+        '#maincontent', '.maincontent', '#main-content', '.main-content',
         'article.fck_detail', '.fck_detail', '[data-role="content"]', '.detail-cmain',
         '#main-detail-body', '.detail-content [data-role="content"]', '#articleContent', 
         '.singular-content', '.e-magazine__body', '.the-article-body', '.knc-content', 
         '.post-content', '.entry-content', '.article-content',
-        '.maincontent', '.article__body', '.zce-content-body', '.cms-body', 
+        '.article__body', '.zce-content-body', '.cms-body', 
         '.content-detail', '.detail-content-body', '.content-body', '.post-detail',
         '.noidung', '.news-content', '.detail-content', 'article'
       ];
@@ -998,7 +1019,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       let mainContent = null;
       for (const sel of contentSelectors) {
         const candidate = doc.querySelector(sel);
-        if (candidate && (candidate.textContent?.trim().length || 0) > 20 || candidate?.querySelector('p, img, video, iframe, [type="VideoStream"]')) {
+        if (candidate && ((candidate.querySelectorAll('p').length >= 2 || candidate.querySelectorAll('img').length >= 2) || (candidate.textContent?.trim().length || 0) > 100)) {
           mainContent = candidate;
           break;
         }
@@ -1085,28 +1106,35 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                                el.classList?.contains('relate-container') ||
                                el.classList?.contains('readmore-body-box') ||
                                el.getAttribute('type') === 'RelatedOneNews' ||
-                               el.classList?.contains('story__heading');
+                               el.classList?.contains('story__heading') ||
+                               el.classList?.contains('ck-cms-insert-neww-group') ||
+                               el.classList?.contains('vnn-template-noneditable') ||
+                               el.classList?.contains('insert-wiki-group') ||
+                               el.classList?.contains('vnn-content-related');
 
         if (isRelatedBlock) {
-          const anchor = el.querySelector('a') || (tag === 'a' ? (el as HTMLAnchorElement) : null);
-          if (anchor) {
+          const anchors = el.querySelectorAll('a');
+          const anchorList = anchors.length > 0 ? Array.from(anchors) : (tag === 'a' ? [el as HTMLAnchorElement] : []);
+          for (const anchor of anchorList) {
             let rHref = anchor.getAttribute('href') || '';
             if (rHref && !rHref.startsWith('javascript:')) {
               if (rHref.startsWith('/')) {
                 try { rHref = new URL(rHref, baseUrl).href; } catch(e){}
               }
               const rTitle = anchor.textContent?.trim() || el.textContent?.trim() || 'Bài viết liên quan';
-              const rImgEl = el.querySelector('img');
-              const rImg = rImgEl ? getBestImgSrc(rImgEl) : '';
-              blocks.push({
-                type: 'related-link',
-                title: rTitle.replace(/^(bài viết liên quan|tin liên quan|xem thêm)\s*[:\-]\s*/i, '').trim(),
-                link: rHref,
-                img: rImg ? getProxyImageUrl(rImg) : ''
-              });
-              return;
+              if (rTitle && rTitle.length > 15 && !isBoilerplate(rTitle)) {
+                const rImgEl = anchor.querySelector('img') || el.querySelector('img');
+                const rImg = rImgEl ? getBestImgSrc(rImgEl) : '';
+                blocks.push({
+                  type: 'related-link',
+                  title: rTitle.replace(/^(bài viết liên quan|tin liên quan|xem thêm)\s*[:\-]\s*/i, '').trim(),
+                  link: rHref,
+                  img: rImg ? getProxyImageUrl(rImg) : ''
+                });
+              }
             }
           }
+          return;
         }
 
         const isAuthorAvatar = (imgEl: Element | null, captionText: string, imgSrc: string) => {
@@ -1129,13 +1157,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           if (img) {
             const src = getBestImgSrc(img);
             if (isAuthorAvatar(img, caption, src)) return;
-            if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif')) {
+            if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif') && !src.endsWith('.svg') && !src.includes('icon')) {
               blocks.push({ type: 'image', src: getProxyImageUrl(src), caption });
             }
-          }
-          // Quét và chuyển đổi chú thích ảnh của phóng sự ảnh thành các đoạn văn toàn văn
-          if (caption && caption.length > 25 && !isBoilerplate(caption)) {
-            blocks.push({ type: 'text', content: caption, tag: 'p' });
           }
           return;
         }
@@ -1223,10 +1247,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               return; // BỎ QUA tên tác giả bị lọt lại dưới dạng đoạn văn đơn độc
             }
             if (cleanHtml && textContent) {
+              const children = Array.from(el.children);
+              const isOnlyStrong = children.length === 1 && (children[0].tagName === 'STRONG' || children[0].tagName === 'B') && children[0].textContent?.trim() === textContent;
+              const isHeading = tag.startsWith('h') || (tag === 'p' && isOnlyStrong && textContent.length < 120 && !textContent.endsWith('.'));
               blocks.push({ 
-                type: tag === 'blockquote' ? 'quote' : (tag.startsWith('h') ? 'heading' : 'text'), 
+                type: tag === 'blockquote' ? 'quote' : (isHeading ? 'heading' : 'text'), 
                 content: cleanHtml, 
-                tag 
+                tag: isHeading ? (tag.startsWith('h') ? tag : 'h3') : tag 
               });
             }
           }
@@ -1252,16 +1279,19 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         });
       }
 
-      // Quét bổ sung toàn bộ figcaption cho bài viết dạng Photo Story / Phóng sự ảnh
-      const currentTextSet = new Set(blocks.filter(b => b.type === 'text').map(b => (b.content || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()));
-      doc.querySelectorAll('figcaption, [class*="caption"], [class*="desc"]').forEach(fc => {
-        const fcTxt = fc.textContent?.trim() || '';
-        const cleanFcTxt = fcTxt.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-        if (cleanFcTxt.length > 25 && !currentTextSet.has(cleanFcTxt) && !isBoilerplate(cleanFcTxt)) {
-          currentTextSet.add(cleanFcTxt);
-          blocks.push({ type: 'text', content: fcTxt, tag: 'p' });
-        }
-      });
+      // Quét bổ sung toàn bộ figcaption CHỈ KHI bài viết dạng Photo Story / Phóng sự ảnh (dưới 3 đoạn văn thuần)
+      const textParagraphsCount = blocks.filter(b => b.type === 'text').length;
+      if (textParagraphsCount < 3) {
+        const currentTextSet = new Set(blocks.filter(b => b.type === 'text').map(b => (b.content || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()));
+        doc.querySelectorAll('figcaption, [class*="caption"], [class*="desc"]').forEach(fc => {
+          const fcTxt = fc.textContent?.trim() || '';
+          const cleanFcTxt = fcTxt.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+          if (cleanFcTxt.length > 25 && !currentTextSet.has(cleanFcTxt) && !isBoilerplate(cleanFcTxt)) {
+            currentTextSet.add(cleanFcTxt);
+            blocks.push({ type: 'text', content: fcTxt, tag: 'p' });
+          }
+        });
+      }
 
       const norm = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
       const isBoilerplate = (text: string) => {
@@ -1270,6 +1300,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         if (t === 'đọc tiếp về trang chủ đề' || t.includes('về trang chủ đề') || t === 'trở lại chủ đề' || t === 'đọc tiếp') return true;
         if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(t)) return true;
         if (/^theo\s+(nguồn|dân trí|tiền phong|vnexpress|thanh niên|tuổi trẻ|vtv|lao động|báo)/i.test(t)) return true;
+        if (/BEGIN COMPONENT|END COMPONENT/i.test(t)) return true;
         return false;
       };
 
@@ -4171,6 +4202,11 @@ useEffect(() => {
           author = "Phát hiện một nam sinh bỏ đại học sáng lập startup AI trị giá 10 tỷ USD sau 2 năm thành tỷ phú tự thân trẻ nhất thế giới";
           link = "https://soha.vn/phat-hien-mot-nam-sinh-bo-dai-hoc-sang-lap-startup-ai-tri-gia-10-ty-usd-sau-2-nam-thanh-ty-phu-tu-than-tre-nhat-the-gioi-198261016135659085.htm";
           body = "Ở tuổi 22, Surya Midha trở thành tỷ phú tự thân trẻ nhất thế giới sau khi startup trí tuệ nhân tạo Mercor đạt định giá 10 tỷ USD chỉ sau 2 năm thành lập.";
+        } else if (slug.includes("hoa-sua") || slug.includes("cat-tia-cay")) {
+          author = "Hoa sữa nở nồng nặc, người dân có được tự ý cắt tỉa cây trước nhà?";
+          link = "https://vietnamnet.vn/hoa-sua-no-nong-nac-nguoi-dan-co-duoc-tu-y-cat-tia-cay-truoc-nha-2565458.html";
+          body = "Hoa sữa nở rộ, tỏa mùi hương nồng nặc, ảnh hưởng đến sinh hoạt của người dân. Vậy người dân có được tự ý cắt tỉa cây trước nhà hay phải kiến nghị cơ quan chức năng xử lý?";
+          img = "https://static-images.vnncdn.net/vps_images_publish/000001/000003/2026/10/16/w-hoa-sua-1-659-2715.jpg?width=0&s=8l_0esTDp-pWhzwy8qWwiA";
         } else {
           link = `https://tienphong.vn/${slug}.tpo`;
         }
@@ -4178,7 +4214,7 @@ useEffect(() => {
         const provisional = {
           author,
           title: author,
-          src: "Báo Tiền Phong",
+          src: link.includes('vietnamnet') ? "Báo VietNamNet" : (link.includes('soha') ? "Báo Soha" : "Báo Tiền Phong"),
           img,
           fallbackImg: img,
           link,
