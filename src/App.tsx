@@ -4017,64 +4017,17 @@ export default function App() {
     window.history.pushState({}, '', `/Website_thoitiet_design/`);
   };
 
-  // Handle direct URL slug on load and browser back/forward buttons
+  // Handle browser back/forward buttons
   useEffect(() => {
-    const syncArticleFromUrl = () => {
+    const handlePopState = () => {
       const path = window.location.pathname;
-      const match = path.match(/\/chi-tiet-([a-zA-Z0-9_-]+)/);
-      if (!match) {
+      if (!path.includes('/chi-tiet-')) {
         setSelectedArticle(null);
-        return;
-      }
-
-      const slug = match[1];
-      if (selectedArticle && toSlug(selectedArticle.author || selectedArticle.title || '') === slug) {
-        return;
-      }
-
-      const pool = [...(liveNews || []), ...(fullNewsPool.current || [])];
-      const found = pool.find(item => {
-        const itemSlug = toSlug(item.author || item.title || "");
-        return itemSlug === slug || itemSlug.includes(slug) || slug.includes(itemSlug);
-      });
-
-      if (found) {
-        handleArticleSelect(found);
-      } else {
-        let link = "";
-        let author = slug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        let img = "https://image.tienphong.vn/w890/Uploaded/2026/rnrnumu/2026_10_17/to-lam-thuy-si-8-6170.jpg";
-        let body = "";
-
-        if (slug.includes("to-lam") && slug.includes("thuy-si")) {
-          author = "Tổng Bí thư, Chủ tịch nước Tô Lâm cùng Tổng thống Thụy Sĩ đi dạo Hồ Gươm";
-          link = "https://tienphong.vn/tong-bi-thu-chu-tich-nuoc-to-lam-cung-tong-thong-thuy-si-di-dao-ho-guom-post1886196.tpo";
-          body = "Tối 17/10, Tổng Bí thư, Chủ tịch nước Tô Lâm và Phu nhân Ngô Phương Ly cùng Tổng thống Thụy Sĩ Guy Parmelin và Phu nhân dạo phố đi bộ hồ Hoàn Kiếm, tham quan các nét văn hóa đặc sắc của Thủ đô Hà Nội.";
-        } else if (slug.includes("startup-ai") || slug.includes("ty-phu-tu-than")) {
-          author = "Phát hiện một nam sinh bỏ đại học sáng lập startup AI trị giá 10 tỷ USD sau 2 năm thành tỷ phú tự thân trẻ nhất thế giới";
-          link = "https://soha.vn/phat-hien-mot-nam-sinh-bo-dai-hoc-sang-lap-startup-ai-tri-gia-10-ty-usd-sau-2-nam-thanh-ty-phu-tu-than-tre-nhat-the-gioi-198261016135659085.htm";
-          body = "Ở tuổi 22, Surya Midha trở thành tỷ phú tự thân trẻ nhất thế giới sau khi startup trí tuệ nhân tạo Mercor đạt định giá 10 tỷ USD chỉ sau 2 năm thành lập.";
-        } else {
-          link = `https://tienphong.vn/${slug}.tpo`;
-        }
-
-        const provisional = {
-          author,
-          title: author,
-          src: "Báo Tiền Phong",
-          img,
-          fallbackImg: img,
-          link,
-          body
-        };
-        handleArticleSelect(provisional);
       }
     };
-
-    syncArticleFromUrl();
-    window.addEventListener('popstate', syncArticleFromUrl);
-    return () => window.removeEventListener('popstate', syncArticleFromUrl);
-  }, [liveNews]);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -4180,6 +4133,65 @@ useEffect(() => {
       setIsLoadingMore(false);
     }
   }, [liveNews, hasMoreNews]);
+
+  // Handle direct URL slug on load and browser back/forward buttons
+  useEffect(() => {
+    const syncArticleFromUrl = () => {
+      const path = window.location.pathname;
+      const match = path.match(/\/chi-tiet-([a-zA-Z0-9_-]+)/);
+      if (!match) {
+        setSelectedArticle(null);
+        return;
+      }
+
+      const slug = match[1];
+      if (selectedArticle && toSlug(selectedArticle.author || selectedArticle.title || '') === slug) {
+        return;
+      }
+
+      const pool = [...(liveNews || []), ...(fullNewsPool.current || [])];
+      const found = pool.find(item => {
+        const itemSlug = toSlug(item.author || item.title || "");
+        return itemSlug === slug || itemSlug.includes(slug) || slug.includes(itemSlug);
+      });
+
+      if (found) {
+        handleArticleSelect(found);
+      } else {
+        let link = "";
+        let author = slug.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        let img = "https://image.tienphong.vn/w890/Uploaded/2026/rnrnumu/2026_10_17/to-lam-thuy-si-8-6170.jpg";
+        let body = "";
+
+        if (slug.includes("to-lam") && slug.includes("thuy-si")) {
+          author = "Tổng Bí thư, Chủ tịch nước Tô Lâm cùng Tổng thống Thụy Sĩ đi dạo Hồ Gươm";
+          link = "https://tienphong.vn/tong-bi-thu-chu-tich-nuoc-to-lam-cung-tong-thong-thuy-si-di-dao-ho-guom-post1886196.tpo";
+          body = "Tối 17/10, Tổng Bí thư, Chủ tịch nước Tô Lâm và Phu nhân Ngô Phương Ly cùng Tổng thống Thụy Sĩ Guy Parmelin và Phu nhân dạo phố đi bộ hồ Hoàn Kiếm, tham quan các nét văn hóa đặc sắc của Thủ đô Hà Nội.";
+        } else if (slug.includes("startup-ai") || slug.includes("ty-phu-tu-than")) {
+          author = "Phát hiện một nam sinh bỏ đại học sáng lập startup AI trị giá 10 tỷ USD sau 2 năm thành tỷ phú tự thân trẻ nhất thế giới";
+          link = "https://soha.vn/phat-hien-mot-nam-sinh-bo-dai-hoc-sang-lap-startup-ai-tri-gia-10-ty-usd-sau-2-nam-thanh-ty-phu-tu-than-tre-nhat-the-gioi-198261016135659085.htm";
+          body = "Ở tuổi 22, Surya Midha trở thành tỷ phú tự thân trẻ nhất thế giới sau khi startup trí tuệ nhân tạo Mercor đạt định giá 10 tỷ USD chỉ sau 2 năm thành lập.";
+        } else {
+          link = `https://tienphong.vn/${slug}.tpo`;
+        }
+
+        const provisional = {
+          author,
+          title: author,
+          src: "Báo Tiền Phong",
+          img,
+          fallbackImg: img,
+          link,
+          body
+        };
+        handleArticleSelect(provisional);
+      }
+    };
+
+    syncArticleFromUrl();
+    window.addEventListener('popstate', syncArticleFromUrl);
+    return () => window.removeEventListener('popstate', syncArticleFromUrl);
+  }, [liveNews]);
 
   
   
