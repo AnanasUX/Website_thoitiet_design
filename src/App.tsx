@@ -1053,6 +1053,17 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           .replace(/\s*style="\s*"/gi, '');
       };
 
+      const norm = (s: string) => (s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+      const isBoilerplate = (text: string) => {
+        const t = (text || '').toLowerCase().trim();
+        if (!t) return true;
+        if (t === 'đọc tiếp về trang chủ đề' || t.includes('về trang chủ đề') || t === 'trở lại chủ đề' || t === 'đọc tiếp') return true;
+        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(t)) return true;
+        if (/^theo\s+(nguồn|dân trí|tiền phong|vnexpress|thanh niên|tuổi trẻ|vtv|lao động|báo)/i.test(t)) return true;
+        if (/BEGIN COMPONENT|END COMPONENT/i.test(t)) return true;
+        return false;
+      };
+
       const blocks: any[] = [];
       const processNode = (node: Node) => {
         if (!node) return;
@@ -1296,18 +1307,6 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           }
         });
       }
-
-      const norm = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-      const isBoilerplate = (text: string) => {
-        const t = text.toLowerCase().trim();
-        if (!t) return true;
-        if (t === 'đọc tiếp về trang chủ đề' || t.includes('về trang chủ đề') || t === 'trở lại chủ đề' || t === 'đọc tiếp') return true;
-        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(t)) return true;
-        if (/^theo\s+(nguồn|dân trí|tiền phong|vnexpress|thanh niên|tuổi trẻ|vtv|lao động|báo)/i.test(t)) return true;
-        if (/BEGIN COMPONENT|END COMPONENT/i.test(t)) return true;
-        return false;
-      };
-
       const cleanedBlocks = blocks.filter(b => {
         if (b.type === 'image' || b.type === 'video') return true;
         const text = norm(b.content || '');
@@ -1428,10 +1427,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
 
     const scrapeViaProxy = async (articleUrl: string) => {
-      // Danh sách các proxy hỗ trợ cào dữ liệu với cơ chế Auto-Failover
+      const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       const proxies = [
-        `/api/article-detail?url=${encodeURIComponent(articleUrl)}`,
-        `http://localhost:5000/api/article-detail?url=${encodeURIComponent(articleUrl)}`,
+        ...(isLocal ? [`http://localhost:5000/api/article-detail?url=${encodeURIComponent(articleUrl)}`] : []),
         (u: string) => `https://new-bot.mrkun28.workers.dev/api/news?url=${encodeURIComponent(u)}`,
         (u: string) => `https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(u)}`,
         (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -1492,11 +1490,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           if (html && html.length > 500) {
             let blocks = parseHTMLToBlocks(html, articleUrl);
 
-            // Nếu là bài phóng sự ảnh hoặc bài dẫn nguồn có ít hơn 3 đoạn văn:
-            // Tự động kiểm tra và cào bài viết gốc (Link bài gốc) để lấy trọn vẹn 100%
-            const textCount = (blocks || []).filter((b: any) => b.type === 'text').length;
+            // Nếu là bài phóng sự ảnh hoặc bài dẫn nguồn có ít hơn 2 đoạn văn/ảnh có chú thích:
+            const meaningfulCount = (blocks || []).filter((b: any) => b.type === 'text' || (b.type === 'image' && b.caption && b.caption.length > 20)).length;
             const sourceMatch = html.match(/(?:Link bài gốc|Nguồn|Theo)\s*:\s*(https?:\/\/[^\s<"']+)/i);
-            if (textCount < 3 && sourceMatch && sourceMatch[1] && !sourceMatch[1].includes(articleUrl)) {
+            if (meaningfulCount < 2 && sourceMatch && sourceMatch[1] && !sourceMatch[1].includes(articleUrl)) {
               try {
                 const sourceUrl = sourceMatch[1];
                 for (const getSrcProxy of proxies) {
@@ -1523,7 +1520,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               } catch (_followErr) {}
             }
 
-            if (blocks && blocks.some((b: any) => b.type === 'text' || b.type === 'sapo' || b.type === 'heading')) {
+            if (blocks && blocks.some((b: any) => b.type === 'text' || b.type === 'sapo' || b.type === 'heading' || (b.type === 'image' && b.caption))) {
               return blocks;
             }
           }
