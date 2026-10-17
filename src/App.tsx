@@ -1070,7 +1070,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
         const getBestImgSrc = (imgEl: Element | null) => {
           if (!imgEl) return '';
-          let s = imgEl.getAttribute('data-src') ||
+          let s = imgEl.getAttribute('data-large-src') ||
+                  imgEl.getAttribute('data-src') ||
                   imgEl.getAttribute('data-original') ||
                   imgEl.getAttribute('data-lazy-src') ||
                   imgEl.getAttribute('data-actualsrc') ||
@@ -1159,6 +1160,9 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             if (isAuthorAvatar(img, caption, src)) return;
             if (src && !src.startsWith('data:') && !src.includes('1x1') && !src.includes('blank.gif') && !src.endsWith('.svg') && !src.includes('icon')) {
               blocks.push({ type: 'image', src: getProxyImageUrl(src), caption });
+              if (caption && caption.length > 20 && !isBoilerplate(caption)) {
+                blocks.push({ type: 'text', content: caption, tag: 'p', isCaptionText: true });
+              }
             }
           }
           return;
@@ -1408,36 +1412,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               if (para) fallbackBlocks.push({ type: 'text', content: para, tag: 'p' });
             }
           } else {
-            const isToLam = title.toLowerCase().includes('tô lâm') || title.toLowerCase().includes('thụy sĩ') || title.toLowerCase().includes('hồ gươm');
-            const isStartup = title.toLowerCase().includes('startup') || title.toLowerCase().includes('tỷ phú') || title.toLowerCase().includes('mercor');
-
-            if (isToLam) {
-              fallbackBlocks.push(
-                { type: 'text', content: "Tối 17/10, trong khuôn khổ chuyến thăm chính thức Việt Nam của Tổng thống Liên bang Thụy Sĩ Guy Parmelin, Tổng Bí thư, Chủ tịch nước Tô Lâm và Phu nhân Ngô Phương Ly đã cùng Tổng thống Thụy Sĩ Guy Parmelin và Phu nhân đi dạo phố đi bộ khu vực hồ Hoàn Kiếm (Hà Nội).", tag: 'p' },
-                { type: 'text', content: "Tại không gian văn hóa phố đi bộ Hồ Gươm, hai nhà lãnh đạo cùng hai Phu nhân đã cùng hòa mình vào không khí sôi động, ấm áp và thân thiện của người dân Thủ đô và du khách quốc tế.", tag: 'p' },
-                { type: 'text', content: "Tổng Bí thư, Chủ tịch nước Tô Lâm đã giới thiệu với Tổng thống Thụy Sĩ Guy Parmelin về lịch sử nghìn năm văn hiến của Thăng Long - Hà Nội, cũng như các giá trị văn hóa truyền thống đặc sắc của dân tộc Việt Nam được gìn giữ qua nhiều thế hệ.", tag: 'p' },
-                { type: 'text', content: "Đặc biệt, đoàn đã dừng chân chiêm ngưỡng chiếc 'Đồng hồ hoa Thụy Sĩ' khổng lồ bên bờ hồ Hoàn Kiếm. Đây là món quà mang ý nghĩa sâu sắc của Thị trưởng thành phố Bern (Thụy Sĩ) trao tặng Thủ đô Hà Nội nhân dịp Đại lễ 1.000 năm Thăng Long - Hà Nội năm 2010, biểu trưng cho tình hữu nghị bền chặt giữa nhân dân hai nước.", tag: 'p' },
-                { type: 'text', content: "Tại các gian hàng nghệ thuật dân gian, Tổng thống Guy Parmelin cùng Phu nhân bày tỏ sự thích thú đặc biệt khi được tận mắt xem các nghệ nhân làng Xuân La nặn tò he truyền thống, tái hiện sinh động các hình tượng dân gian Việt Nam.", tag: 'p' },
-                { type: 'text', content: "Các nghệ sĩ ký họa đường phố cũng đã trân trọng vẽ và trao tặng Tổng thống Thụy Sĩ và Phu nhân những bức tranh chân dung độc đáo làm kỷ niệm trong chuyến dạo bước đáng nhớ quanh Hồ Gươm.", tag: 'p' },
-                { type: 'text', content: "Chuyến dạo bộ diễn ra trong bầu không khí thân tình, cởi mở, thể hiện sự mến khách của người dân Việt Nam và thắt chặt hơn nữa quan hệ hữu nghị truyền thống, hợp tác nhiều mặt giữa Việt Nam và Thụy Sĩ.", tag: 'p' }
-              );
-            } else if (isStartup) {
-              fallbackBlocks.push(
-                { type: 'text', content: "Ở tuổi 22, Surya Midha đã tạo nên một kỳ tích chấn động giới công nghệ toàn cầu khi trở thành tỷ phú tự thân trẻ nhất thế giới sau khi startup AI mang tên Mercor đạt mức định giá 10 tỷ USD chỉ sau 2 năm thành lập.", tag: 'p' },
-                { type: 'text', content: "Quyết định rời ghế trường Đại học danh tiếng Harvard khi còn là sinh viên năm hai để theo đuổi đam mê trí tuệ nhân tạo của Midha từng khiến gia đình và bạn bè hoài nghi, nhưng đã nhanh chóng được chứng minh bằng năng lực đột phá.", tag: 'p' },
-                { type: 'text', content: "Mercor được sáng lập cùng hai người bạn cùng trường, tập trung giải quyết bài toán tuyển dụng và đánh giá nhân tài công nghệ cấp cao bằng việc ứng dụng các mô hình ngôn ngữ lớn (LLM) và thuật toán phân tích chuyên sâu.", tag: 'p' },
-                { type: 'text', content: "Nền tảng của Mercor có khả năng phỏng vấn tự động, kiểm tra trình độ code thời gian thực và ghép nối chính xác các kỹ sư xuất sắc nhất thế giới với các tập đoàn công nghệ hàng đầu Thung lũng Silicon.", tag: 'p' },
-                { type: 'text', content: "Vòng gọi vốn mới nhất từ các quỹ đầu tư mạo hiểm hàng đầu đã chính thức định giá Mercor ở mức 10 tỷ USD, đưa Surya Midha vượt qua nhiều tên tuổi lớn để trở thành tỷ phú tự thân trẻ tuổi nhất lịch sử công nghệ hiện đại.", tag: 'p' }
-              );
-            } else {
-              fallbackBlocks.push(
-                { type: 'text', content: cleanText, tag: 'p' },
-                { type: 'text', content: `Theo ghi nhận từ các nguồn tin thời sự chính thống, sự việc liên quan đến "${title}" đang nhận được sự quan tâm sâu sắc của đông đảo bạn đọc và dư luận xã hội.`, tag: 'p' },
-                { type: 'text', content: `Các cơ quan chức năng và đơn vị chuyên trách đã chủ động triển khai các giải pháp đồng bộ, phối hợp chặt chẽ nhằm xử lý kịp thời và đảm bảo ổn định tình hình.`, tag: 'p' },
-                { type: 'text', content: `Các chuyên gia đầu ngành đánh giá đây là vấn đề mang tính thời điểm quan trọng, đòi hỏi sự phối hợp liên ngành cũng như nâng cao nhận thức của cộng đồng.`, tag: 'p' },
-                { type: 'text', content: `Tòa soạn tiếp tục theo dõi sát sao và gửi tới quý độc giả các thông tin cập nhật mới nhất trong các bản tin tiếp theo.`, tag: 'p' }
-              );
-            }
+            fallbackBlocks.push({ type: 'text', content: cleanText, tag: 'p' });
           }
         } else {
           fallbackBlocks.push({ type: 'text', content: `Bản tin được cập nhật và tổng hợp từ nguồn báo chí chính thống ${article.src || 'Thời sự 24h'}.`, tag: 'p' });
@@ -1455,20 +1430,19 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     const scrapeViaProxy = async (articleUrl: string) => {
       // Danh sách các proxy hỗ trợ cào dữ liệu với cơ chế Auto-Failover
       const proxies = [
-        // 1. Cloudflare Worker chuyên dụng (đã kiểm tra hoạt động 100% không bị CORS)
+        `/api/article-detail?url=${encodeURIComponent(articleUrl)}`,
+        `http://localhost:5000/api/article-detail?url=${encodeURIComponent(articleUrl)}`,
         (u: string) => `https://new-bot.mrkun28.workers.dev/api/news?url=${encodeURIComponent(u)}`,
         (u: string) => `https://new-bot.mrkun28.workers.dev/?url=${encodeURIComponent(u)}`,
-        // 2. AllOrigins Raw
         (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-        // 3. CorsProxy IO
         (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`
       ];
 
-      for (const getProxyUrl of proxies) {
+      for (const item of proxies) {
         try {
+          const reqUrl = typeof item === 'function' ? item(articleUrl) : item;
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 7000);
-          const reqUrl = getProxyUrl(articleUrl);
           const res = await fetch(reqUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
           if (!res.ok) continue;
@@ -1477,6 +1451,39 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
           const contentType = res.headers.get('content-type') || '';
           if (contentType.includes('application/json')) {
             const data = await res.json();
+            // Nếu là response từ backend /api/article-detail
+            if (data && Array.isArray(data.paragraphs) && data.paragraphs.length > 0) {
+              const blocks: any[] = [];
+              if (data.title) blocks.push({ type: 'title', content: data.title });
+              if (data.author || data.published_at || data.published_time) {
+                blocks.push({
+                  type: 'author',
+                  name: data.author || article.author || 'Tòa soạn',
+                  date: data.published_at || data.published_time || ''
+                });
+              }
+              if (data.summary || data.sapo) {
+                blocks.push({ type: 'sapo', content: data.summary || data.sapo });
+              }
+              let imgIdx = 0;
+              const imgs = Array.isArray(data.images) ? data.images : [];
+              data.paragraphs.forEach((p: string, pIdx: number) => {
+                if (p !== data.summary && p !== data.sapo && p !== data.title) {
+                  blocks.push({ type: 'text', content: p, tag: 'p' });
+                }
+                if ((pIdx + 1) % 3 === 0 && imgIdx < imgs.length) {
+                  blocks.push({ type: 'image', src: getProxyImageUrl(imgs[imgIdx].url), caption: imgs[imgIdx].caption });
+                  imgIdx++;
+                }
+              });
+              while (imgIdx < imgs.length) {
+                blocks.push({ type: 'image', src: getProxyImageUrl(imgs[imgIdx].url), caption: imgs[imgIdx].caption });
+                imgIdx++;
+              }
+              if (blocks.some((b: any) => b.type === 'text' || b.type === 'sapo')) {
+                return blocks;
+              }
+            }
             html = data.contents || data.data || '';
           } else {
             html = await res.text();
@@ -1494,7 +1501,8 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 const sourceUrl = sourceMatch[1];
                 for (const getSrcProxy of proxies) {
                   try {
-                    const sRes = await fetch(getSrcProxy(sourceUrl), { signal: AbortSignal.timeout(6000) });
+                    const srcReqUrl = typeof getSrcProxy === 'function' ? getSrcProxy(sourceUrl) : getSrcProxy;
+                    const sRes = await fetch(srcReqUrl, { signal: AbortSignal.timeout(6000) });
                     if (!sRes.ok) continue;
                     let sHtml = '';
                     const sContentType = sRes.headers.get('content-type') || '';

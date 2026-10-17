@@ -473,10 +473,19 @@ export function extractArticleContentDetailed(
   const bodyParagraphs: string[] = [];
   if (Array.isArray(blocks) && blocks.length > 0) {
     for (const b of blocks) {
+      if (b.type === 'image') {
+        if (b.caption && b.caption.length > 20) {
+          const capText = b.caption.replace(/<[^>]*>/g, '').trim();
+          const lowerCap = capText.toLowerCase();
+          if (!/^(ảnh|nguồn|theo|xem thêm|tin liên quan)\s*:\s*$/i.test(lowerCap) && !bodyParagraphs.includes(capText)) {
+            bodyParagraphs.push(capText);
+          }
+        }
+        continue;
+      }
       if (
         b.type === 'title' ||
         b.type === 'author' ||
-        b.type === 'image' ||
         b.type === 'video' ||
         b.type === 'iframe' ||
         b.type === 'related-link'
