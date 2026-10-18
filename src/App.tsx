@@ -841,7 +841,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       let imgIdx = 0;
       
       fc.headings?.forEach((h: string) => {
-        html += `<h2 class="font-bold text-[#182033] text-[20px] md:text-[22px] mt-8 mb-4">${h}</h2>`;
+        html += `<h2 class="font-bold text-[#182033] text-[20px] md:text-[22px] mt-8 mb-4 font-sans">${h}</h2>`;
       });
       
       fc.paragraphs.forEach((p: string, i: number) => {
@@ -1044,9 +1044,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       
       if (!mainContent) mainContent = doc.body;
 
-      // Hàm khử sạch inline styles làm nhảy kích thước font chữ
+      // Hàm khử sạch inline styles làm nhảy kích thước font chữ và đảm bảo dùng font hệ thống
       const sanitizeInnerHtml = (rawHtml: string) => {
         return rawHtml
+          .replace(/<\/?font[^>]*>/gi, '')
           .replace(/\s*style="[^"]*"/gi, (match) => {
             return match.replace(/(font-size|font-family|line-height|color)\s*:[^;"]+;?/gi, '');
           })
@@ -1629,7 +1630,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               }}
             >
               {contentBlocks.map((block: any, idx: number) => {
-                if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3]">{block.content}</h1>;
+                if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3] font-sans">{block.content}</h1>;
                 if (block.type === 'author') {
                   return (
                     <div key={idx} className="w-full">
@@ -1913,12 +1914,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                 if (block.type === 'heading') {
                   if (block.tag === 'h2') {
-                    return <h2 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[20px] md:text-[22px] font-bold text-[#182033] mt-5 mb-2.5 leading-snug" />;
+                    return <h2 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="font-sans text-[20px] md:text-[22px] font-bold text-[#182033] mt-5 mb-2.5 leading-snug" />;
                   }
                   if (block.tag === 'h3') {
-                    return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[18px] md:text-[19px] font-bold text-[#182033] mt-4 mb-2 leading-snug" />;
+                    return <h3 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="font-sans text-[18px] md:text-[19px] font-bold text-[#182033] mt-4 mb-2 leading-snug" />;
                   }
-                  return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
+                  return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="font-sans text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
                 }
                 if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
                 if (block.type === 'related-link') {
@@ -2036,7 +2037,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                   if (/youtube\.com|youtu\.be/i.test(finalSrc)) {
                     const ytMatch = finalSrc.match(/(?:embed\/|shorts\/|v=|\/v\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
                     if (ytMatch && ytMatch[1]) {
-                      finalSrc = `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1&playsinline=1`;
+                      finalSrc = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&iv_load_policy=3&fs=0&controls=1&playsinline=1`;
                     }
                   }
                   if (block.isShort) {
@@ -2045,7 +2046,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         <div className="relative w-full max-w-[340px] aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
                           <iframe
                             src={finalSrc}
-                            referrerPolicy="no-referrer"
+                            referrerPolicy="strict-origin-when-cross-origin"
                             className="w-full h-full border-0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           />
@@ -2061,7 +2062,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                       </div>
                       <iframe
                         src={finalSrc}
-                        referrerPolicy="no-referrer"
+                        referrerPolicy="strict-origin-when-cross-origin"
                         className="w-full h-full border-0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       />

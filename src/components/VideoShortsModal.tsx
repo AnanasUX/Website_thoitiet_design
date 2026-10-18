@@ -2091,7 +2091,8 @@ export function VideoShortsModal({
   }, [userRole]);
 
   // ── TV CHANNEL & MEDIA TAB STATES ──
-  const [selectedChannelId, setSelectedChannelId] = useState<string>('all');
+  // Mặc định kênh nổi bật VTV24 là chủ đạo khi người dùng mở giao diện
+  const [selectedChannelId, setSelectedChannelId] = useState<string>('vtv24');
   const [showChannelMenu, setShowChannelMenu] = useState<boolean>(false);
   const [mediaTab, setMediaTab] = useState<'all' | 'video' | 'short'>('all');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
@@ -2375,12 +2376,29 @@ export function VideoShortsModal({
       return tB - tA;
     });
 
+    // Nếu người dùng đã đăng nhập Google: Ưu tiên phát video từ các kênh người dùng đã đăng ký theo dõi
+    if (activeUser.isLoggedIn && (selectedChannelId === 'all' || selectedChannelId === 'subscribed')) {
+      const isSubscribed = (item: ShortItem) => {
+        return Boolean(
+          followedMap[item.channel] || 
+          followedMap[item.channelId || ''] || 
+          followedMap[item.id] ||
+          Object.keys(followedMap).some(k => followedMap[k] && (item.channel.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(item.channel.toLowerCase())))
+        );
+      };
+      const subVideos = result.filter(isSubscribed);
+      const otherVideos = result.filter(item => !isSubscribed(item));
+      if (subVideos.length > 0) {
+        result = selectedChannelId === 'subscribed' ? subVideos : [...subVideos, ...otherVideos];
+      }
+    }
+
     if (result.length === 0) {
       result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
     }
 
     return result.length > 0 ? result : BACKUP_FALLBACK_SHORTS;
-  }, [allAvailableVideos, selectedChannelId, mediaTab]);
+  }, [allAvailableVideos, selectedChannelId, mediaTab, activeUser.isLoggedIn, followedMap]);
 
   const currentShort = playlist[currentIndex] || playlist[0] || BACKUP_FALLBACK_SHORTS[0];
 
@@ -2686,17 +2704,17 @@ export function VideoShortsModal({
           );
         }
 
-        // YouTube onError (100=not found, 101/150=embedding forbidden): Hiện overlay lỗi nhẹ nhàng rồi tự chuyển clip
+        // YouTube onError (100=not found, 101/150=embedding forbidden, 153=configuration error): Hiện overlay nhẹ rồi tự chuyển clip
         if (
           data.event === 'onError' ||
-          data.info === 100 || data.info === 101 || data.info === 150
+          data.info === 100 || data.info === 101 || data.info === 150 || data.info === 153
         ) {
           setVideoErrorState(true);
           if (videoErrorTimerRef.current) clearTimeout(videoErrorTimerRef.current);
           videoErrorTimerRef.current = setTimeout(() => {
             setVideoErrorState(false);
             handleNextShort();
-          }, 2200);
+          }, 1500);
         }
 
         // Hết video -> Tự động cuộn sang clip kế tiếp
@@ -2926,7 +2944,8 @@ export function VideoShortsModal({
               <iframe
                 ref={iframeRef}
                 key={currentShort.youtubeId}
-                src={`https://www.youtube-nocookie.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&fs=0&disablekb=1&hl=vi&origin=${encodeURIComponent(window.location.origin)}&widget_referrer=${encodeURIComponent(window.location.origin)}`}
+                src={`https://www.youtube.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&fs=0&disablekb=1&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
+                referrerPolicy="strict-origin-when-cross-origin"
                 title={cleanVideoTitle(currentShort.title)}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"

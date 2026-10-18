@@ -2681,8 +2681,12 @@
         await new Promise(r => setTimeout(r, 150));
       }
       } catch (stepErr) {
-        console.warn(`Lỗi ca ${id}:`, stepErr);
-        appendLog("CẢNH-BÁO", `Ca ${id} xử lý an toàn: ${stepErr.message || stepErr}`);
+        console.error(`Lỗi ca ${id}:`, stepErr);
+        appendLog("FAIL", `❌ Ca ${id} THẤT BẠI: ${stepErr.message || stepErr}`);
+        item.status = "FAIL";
+        item.evidence = `Thất bại kiểm thử thực tế: ${stepErr.message || stepErr}`;
+        item.duration = Date.now() - stepStart;
+        continue;
       }
 
       item.status = "PASS";

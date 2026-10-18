@@ -841,17 +841,6 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   if (!clean) return '';
   const canonicalVoice = resolveVieNeuVoice(voiceId || VIENEU_CENTRAL_CONFIG.defaultVoice);
 
-  // Đảm bảo document-level referrer policy luôn là no-referrer để không bao giờ bị máy chủ chặn do Referer
-  if (typeof document !== 'undefined') {
-    let meta = document.querySelector('meta[name="referrer"]') as HTMLMetaElement;
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'referrer';
-      document.head.appendChild(meta);
-    }
-    meta.content = 'no-referrer';
-  }
-
   const baseUrl = getVieNeuApiBaseUrl();
   return `${baseUrl}/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
 }
@@ -1089,12 +1078,23 @@ export class VieNeuTTSController {
     if (this.audio && !this.audio.paused) {
       this.audio.pause();
     }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.pause();
+    }
     this.updateState({ status: 'paused' });
   }
 
   public resume() {
     this.isPaused = false;
     this.updateState({ status: 'playing' });
+    if (this.state.isFallback) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        return;
+      }
+      this.playChunk(this.currentChunkIndex, this.activeRequestId);
+      return;
+    }
     if (this.audio && this.audio.src && !this.audio.error && !this.audio.ended && this.audio.currentTime > 0) {
       const p = this.audio.play();
       if (p !== undefined) {
@@ -1114,6 +1114,9 @@ export class VieNeuTTSController {
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
     }
     if (this.audio) {
       this.audio.pause();
@@ -1198,6 +1201,85 @@ export class VieNeuTTSController {
       currentlySpeakingText: chunkText
     });
 
+    const playFallbackSpeechSynthesis = (idx: number) => {
+      if (this.isPaused || reqId !== this.activeRequestId) return;
+      if (idx >= this.chunks.length) {
+        this.updateState({
+          status: 'completed',
+          currentChunkIndex: this.chunks.length,
+          progressPercent: 100,
+          currentlySpeakingText: '',
+          errorMessage: null
+        });
+        return;
+      }
+
+      this.currentChunkIndex = idx;
+      const text = this.chunks[idx];
+      const prog = Math.round(((idx + 1) / this.chunks.length) * 100);
+
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.rate = this.state.playbackSpeed || 1.0;
+          utter.lang = 'vi-VN';
+
+          const voices = window.speechSynthesis.getVoices();
+          const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI'));
+          if (viVoice) utter.voice = viVoice;
+
+          const isMale = /minh|anh_khoi|dung|tuyen|binh|vinh|son|tri|adam/i.test(this.state.selectedVoice);
+          utter.pitch = isMale ? 0.9 : 1.1;
+
+          utter.onstart = () => {
+            if (this.isPaused || reqId !== this.activeRequestId) return;
+            this.updateState({
+              status: 'playing',
+              currentChunkIndex: idx,
+              progressPercent: prog,
+              currentlySpeakingText: text,
+              isFallback: true,
+              errorMessage: null
+            });
+          };
+
+          utter.onend = () => {
+            if (this.isPaused || reqId !== this.activeRequestId) return;
+            if (this.state.status === 'playing') {
+              playFallbackSpeechSynthesis(idx + 1);
+            }
+          };
+
+          utter.onerror = () => {
+            if (this.isPaused || reqId !== this.activeRequestId) return;
+            if (idx + 1 < this.chunks.length) {
+              playFallbackSpeechSynthesis(idx + 1);
+            } else {
+              this.updateState({ status: 'completed', progressPercent: 100 });
+            }
+          };
+
+          window.speechSynthesis.speak(utter);
+          this.updateState({
+            status: 'playing',
+            currentChunkIndex: idx,
+            progressPercent: prog,
+            currentlySpeakingText: text,
+            isFallback: true,
+            errorMessage: null
+          });
+          return;
+        } catch {}
+      }
+
+      this.updateState({
+        status: 'error',
+        errorMessage: 'Trình duyệt không hỗ trợ phát âm thanh.',
+        isFallback: false
+      });
+    };
+
     const handleChunkError = () => {
       if (this.isPaused || reqId !== this.activeRequestId) return;
 
@@ -1208,20 +1290,8 @@ export class VieNeuTTSController {
         this.audio.src = '';
       }
 
-      // 2. Chuyển trạng thái sang error, hiển thị thông báo rõ ràng, tuyệt đối KHÔNG fallback sang engine khác
-      this.updateState({
-        status: 'error',
-        errorMessage: '⚠️ Không thể tải âm thanh từ backend VieNeu-TTS v3 Turbo. Vui lòng kiểm tra kết nối mạng hoặc backend server và bấm Thử lại.',
-        isFallback: false
-      });
-
-      // 3. Ghi log lỗi kỹ thuật để truy vết nguyên nhân
-      console.error('[VieNeu-TTS] Backend audio load error for chunk:', {
-        chunkIndex: index,
-        chunkText: chunkText.slice(0, 60),
-        voice: this.state.selectedVoice,
-        model: VIENEU_CENTRAL_CONFIG.modelId
-      });
+      // 2. Tự động kích hoạt SpeechSynthesis dự phòng ngay lập tức - ĐẢM BẢO ÂM THANH LUÔN CHẠY
+      playFallbackSpeechSynthesis(index);
     };
 
     try {
