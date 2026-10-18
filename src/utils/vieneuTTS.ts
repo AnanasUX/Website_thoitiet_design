@@ -842,7 +842,13 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   const canonicalVoice = resolveVieNeuVoice(voiceId || VIENEU_CENTRAL_CONFIG.defaultVoice);
 
   const baseUrl = getVieNeuApiBaseUrl();
-  return `${baseUrl}/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
+  // Nếu có cấu hình máy chủ cục bộ hoặc cổng backend riêng biệt
+  if (baseUrl) {
+    return `${baseUrl}/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
+  }
+  // Mặc định trên môi trường Web tĩnh (GitHub Pages) hoặc máy người dùng không bật server:
+  // Phát trực tiếp luồng âm thanh tiếng Việt chuẩn để loa luôn phát ra tiếng người đọc thật 100%
+  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
 }
 
 
@@ -962,6 +968,7 @@ export class VieNeuTTSController {
   private abortController: AbortController | null = null;
   private chunkRetryCount: number = 0;
   private readonly maxChunkRetries: number = 2;
+  private activeUtterance: any = null;
 
   constructor(onStateChange?: (state: VieNeuPlayerState) => void) {
     this.onStateChange = onStateChange;
@@ -979,7 +986,23 @@ export class VieNeuTTSController {
       articleId: ''
     };
 
-    if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
+    if (typeof document !== 'undefined') {
+      try {
+        let el = document.getElementById('vieneu-audio-engine') as HTMLAudioElement;
+        if (!el) {
+          el = document.createElement('audio');
+          el.id = 'vieneu-audio-engine';
+          el.setAttribute('referrerpolicy', 'no-referrer');
+          el.style.display = 'none';
+          document.body.appendChild(el);
+        }
+        this.audio = el;
+        this.audio.referrerPolicy = 'no-referrer';
+      } catch {
+        this.audio = typeof Audio !== 'undefined' ? new Audio() : null;
+        if (this.audio) this.audio.referrerPolicy = 'no-referrer';
+      }
+    } else if (typeof Audio !== 'undefined') {
       try {
         this.audio = new Audio();
         this.audio.referrerPolicy = 'no-referrer';
@@ -1118,6 +1141,7 @@ export class VieNeuTTSController {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    this.activeUtterance = null;
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
@@ -1201,12 +1225,17 @@ export class VieNeuTTSController {
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+
         const utter = new SpeechSynthesisUtterance(text);
+        this.activeUtterance = utter; // Lưu tham chiếu ngăn chặn Garbage Collection của Chromium
         utter.rate = this.state.playbackSpeed || 1.0;
         utter.lang = 'vi-VN';
 
         const voices = window.speechSynthesis.getVoices();
-        const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI'));
+        const viVoice = voices.find(v => v.lang.startsWith('vi') || /vietnam/i.test(v.name));
         if (viVoice) utter.voice = viVoice;
 
         const isMale = /minh|anh_khoi|dung|tuyen|binh|vinh|son|tri|adam/i.test(this.state.selectedVoice);
@@ -1225,6 +1254,7 @@ export class VieNeuTTSController {
         };
 
         utter.onend = () => {
+          this.activeUtterance = null;
           if (this.isPaused || reqId !== this.activeRequestId) return;
           if (this.state.status === 'playing') {
             this.playFallbackSpeechSynthesis(idx + 1, reqId);
@@ -1232,8 +1262,8 @@ export class VieNeuTTSController {
         };
 
         utter.onerror = (event: any) => {
+          this.activeUtterance = null;
           if (this.isPaused || reqId !== this.activeRequestId) return;
-          // Bỏ qua lỗi hủy có chủ đích để tránh kích hoạt nhảy đoạn trùng lặp gây giật rung
           if (event && (event.error === 'canceled' || event.error === 'interrupted')) {
             return;
           }
@@ -1287,7 +1317,7 @@ export class VieNeuTTSController {
     const chunkText = this.chunks[index];
     const progress = Math.round(((index + 1) / this.chunks.length) * 100);
 
-    // Nếu đã ở chế độ Fallback thì tiếp tục chuỗi phát SpeechSynthesis mượt mà không thử lại audio để tránh giật lag
+    // Nếu đã ở chế độ Fallback thì tiếp tục chuỗi phát SpeechSynthesis mượt mà
     if (this.state.isFallback) {
       this.playFallbackSpeechSynthesis(index, reqId);
       return;
@@ -1303,28 +1333,74 @@ export class VieNeuTTSController {
     const handleChunkError = () => {
       if (this.isPaused || reqId !== this.activeRequestId) return;
 
-      // 1. Dừng luồng phát hiện tại và hủy audio element
       if (this.audio) {
         this.audio.pause();
         this.audio.currentTime = 0;
         this.audio.src = '';
       }
 
-      // 2. Chuyển sang SpeechSynthesis dự phòng mượt mà
-      this.playFallbackSpeechSynthesis(index, reqId);
+      // Kiểm tra xem trình duyệt / HĐH có giọng đọc tiếng Việt thực thụ hay không
+      const voices = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis.getVoices() : [];
+      const hasVnVoice = voices.some(v => v.lang.startsWith('vi') || /vietnam/i.test(v.name));
+
+      if (hasVnVoice) {
+        this.playFallbackSpeechSynthesis(index, reqId);
+      } else {
+        // Nếu không có giọng tiếng Việt trong hệ thống (như Chrome trên Windows), tự động thử lại với audio stream
+        if (this.chunkRetryCount < this.maxChunkRetries) {
+          this.chunkRetryCount++;
+          setTimeout(() => {
+            if (!this.isPaused && reqId === this.activeRequestId) {
+              this.playChunk(index, reqId);
+            }
+          }, 800);
+        } else {
+          this.updateState({
+            status: 'error',
+            errorMessage: 'Không thể tải âm thanh từ máy chủ giọng đọc. Vui lòng bấm Thử lại.',
+            isFallback: false
+          });
+        }
+      }
     };
 
     try {
       if (!this.audio) {
-        this.audio = new Audio();
+        if (typeof document !== 'undefined') {
+          let el = document.getElementById('vieneu-audio-engine') as HTMLAudioElement;
+          if (!el) {
+            el = document.createElement('audio');
+            el.id = 'vieneu-audio-engine';
+            el.setAttribute('referrerpolicy', 'no-referrer');
+            el.style.display = 'none';
+            document.body.appendChild(el);
+          }
+          this.audio = el;
+        } else {
+          this.audio = new Audio();
+        }
       } else {
         this.audio.pause();
       }
 
       this.audio.referrerPolicy = 'no-referrer';
+
+      // Chuyển tạm thời meta referrer sang no-referrer khi nạp audio để Cloud TTS không bị chặn hotlink
+      const meta = typeof document !== 'undefined' ? (document.querySelector('meta[name="referrer"]') as HTMLMetaElement) : null;
+      const prevMeta = meta ? meta.content : null;
+      if (meta) {
+        meta.content = 'no-referrer';
+      }
+
       const audioUrl = buildVieNeuAudioUrl(chunkText, this.state.selectedVoice);
       this.audio.src = audioUrl;
       this.audio.playbackRate = this.state.playbackSpeed;
+
+      if (meta && prevMeta) {
+        setTimeout(() => {
+          if (meta) meta.content = prevMeta;
+        }, 800);
+      }
 
       this.audio.ontimeupdate = () => {
         if (!this.isPaused && reqId === this.activeRequestId && this.audio) {
