@@ -3682,30 +3682,104 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
     console.warn('[YouTube API] Không thể lấy kênh của tài khoản:', err);
   }
 
+  // 1. Quét danh sách kênh đã đăng ký thực tế từ tài khoản Google của người dùng (hỗ trợ phân trang)
   try {
-    const subRes = await fetch('https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    if (subRes.ok) {
-      const subData = await subRes.json();
-      if (subData.items && Array.isArray(subData.items) && subData.items.length > 0) {
-        userInfo.youtubeSubscriptions = subData.items;
-      } else {
-        userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+    let allSubs: any[] = [];
+    let pageToken = '';
+    let maxPages = 4; // Quét tối đa 200 kênh đã đăng ký từ tài khoản thực tế
+
+    do {
+      const pageQuery = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
+      const subUrl = `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet,contentDetails&mine=true&maxResults=50&order=alphabetical${pageQuery}`;
+      const subRes = await fetch(subUrl, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!subRes.ok) {
+        if (subRes.status === 403 || subRes.status === 401) {
+          userInfo.youtubeNeedsAuth = true;
+        }
+        break;
       }
+
+      const subData = await subRes.json();
+      if (subData.items && Array.isArray(subData.items)) {
+        allSubs = allSubs.concat(subData.items);
+      }
+      pageToken = subData.nextPageToken || '';
+      maxPages--;
+    } while (pageToken && maxPages > 0);
+
+    if (allSubs.length > 0) {
+      userInfo.youtubeSubscriptions = allSubs;
+      userInfo.isLiveRealYouTube = true;
+    } else if (allSubs.length === 0 && !userInfo.youtubeNeedsAuth) {
+      // Tài khoản thật nhưng chưa đăng ký kênh nào
+      userInfo.youtubeSubscriptions = [];
+      userInfo.isLiveRealYouTube = true;
     } else {
       userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
-      if (subRes.status === 403 || subRes.status === 401) {
-        userInfo.youtubeNeedsAuth = true;
-      }
     }
   } catch (err) {
     console.warn('[YouTube API] Không thể lấy danh sách kênh đã đăng ký:', err);
-    userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+    if (!userInfo.youtubeSubscriptions) {
+      userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+    }
+  }
+
+  // 2. Tự động nạp danh sách video từ các kênh đã đăng ký thực tế của người dùng
+  if (userInfo.youtubeSubscriptions && userInfo.youtubeSubscriptions.length > 0) {
+    try {
+      const subVideos: any[] = [];
+      const targetChannels = userInfo.youtubeSubscriptions.slice(0, 8);
+      await Promise.all(
+        targetChannels.map(async (sub: any) => {
+          try {
+            const channelId = sub.snippet?.resourceId?.channelId || sub.id;
+            if (!channelId || !channelId.startsWith('UC')) return;
+            // Playlists Uploads chuẩn của YouTube bắt đầu bằng UU thay cho UC
+            const uploadPlaylistId = 'UU' + channelId.substring(2);
+            const plRes = await fetch(
+              `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadPlaylistId}&maxResults=8`,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+            if (!plRes.ok) return;
+            const plData = await plRes.json();
+            if (plData.items && Array.isArray(plData.items)) {
+              plData.items.forEach((item: any) => {
+                const vidId = item.snippet?.resourceId?.videoId;
+                if (!vidId) return;
+                subVideos.push({
+                  id: `yt-real-${vidId}`,
+                  youtubeId: vidId,
+                  title: item.snippet.title,
+                  channel: item.snippet.channelTitle || sub.snippet?.title || 'YouTube Channel',
+                  channelId: channelId,
+                  badge: 'ĐÃ ĐĂNG KÝ',
+                  category: 'Kênh của bạn',
+                  subCategory: sub.snippet?.title || 'Video từ kênh',
+                  duration: 'Video',
+                  mediaType: 'video',
+                  thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`,
+                  publishedAt: item.snippet.publishedAt || new Date().toISOString()
+                });
+              });
+            }
+          } catch {}
+        })
+      );
+      if (subVideos.length > 0) {
+        userInfo.subscribedVideos = subVideos;
+      }
+    } catch (e) {
+      console.warn('[YouTube API] Không thể lấy video từ các kênh đăng ký:', e);
+    }
   }
 
   if (!userInfo.youtubeSubscriptions || userInfo.youtubeSubscriptions.length === 0) {
-    userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+    if (!userInfo.isLiveRealYouTube) {
+      userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+    }
   }
 
   if (!userInfo.youtubeChannel && userInfo.email) {
@@ -4169,16 +4243,35 @@ export default function App() {
     }
   }, [userRole]);
   
-  // Check for expired token on load or silently refresh using top-level redirect
+  // Làm mới token Google ngầm (Silent Refresh) bằng iframe ẩn - TUYỆT ĐỐI KHÔNG redirect top-level để tránh đẩy người dùng về trang chủ hoặc đóng Shorts
   useEffect(() => {
     if (userRole && userRole.email && !userRole._access_token) {
-      if (!sessionStorage.getItem('google_silent_failed')) {
-        const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
-        const redirectUri = window.location.origin + basePath;
-        const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
-        window.location.replace(authUrl);
-      }
+      if (sessionStorage.getItem('google_silent_failed')) return;
+
+      const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+      const redirectUri = window.location.origin + basePath;
+      const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
+
+      // Sử dụng iframe ẩn: URL top-level và các modal (Shorts, chi tiết bài viết) hoàn toàn không bị ảnh hưởng
+      const silentIframe = document.createElement('iframe');
+      silentIframe.style.display = 'none';
+      silentIframe.src = authUrl;
+      document.body.appendChild(silentIframe);
+
+      const timeout = setTimeout(() => {
+        try {
+          if (silentIframe.parentNode) silentIframe.parentNode.removeChild(silentIframe);
+        } catch {}
+        sessionStorage.setItem('google_silent_failed', '1');
+      }, 5000);
+
+      return () => {
+        clearTimeout(timeout);
+        try {
+          if (silentIframe.parentNode) silentIframe.parentNode.removeChild(silentIframe);
+        } catch {}
+      };
     }
   }, [userRole]);
 
@@ -4239,32 +4332,56 @@ useEffect(() => {
   }, [darkMode]);
 
 
+  const isShortsOpenRef = useRef(isShortsOpen);
+  isShortsOpenRef.current = isShortsOpen;
+
+  const selectedArticleRef = useRef(selectedArticle);
+  selectedArticleRef.current = selectedArticle;
+
   const lastActivityRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__isVideoWatching = isShortsOpen;
+      (window as any).__isShortsOpen = isShortsOpen;
+    }
+  }, [isShortsOpen]);
 
   useEffect(() => {
     const handleWheel = (e: any) => {
       lastActivityRef.current = Date.now();
+      if (typeof window !== 'undefined') (window as any).__lastUserActivity = Date.now();
       if (e.ctrlKey) {
         e.preventDefault();
       }
     };
     const handleKeydown = (e: any) => {
       lastActivityRef.current = Date.now();
+      if (typeof window !== 'undefined') (window as any).__lastUserActivity = Date.now();
       if (e.ctrlKey && (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0')) {
         e.preventDefault();
       }
     };
-    const updateActivity = () => { lastActivityRef.current = Date.now(); };
+    const updateActivity = () => { 
+      lastActivityRef.current = Date.now(); 
+      if (typeof window !== 'undefined') (window as any).__lastUserActivity = Date.now();
+    };
     document.addEventListener('wheel', handleWheel, { passive: false });
     document.addEventListener('keydown', handleKeydown, { passive: false });
     document.addEventListener('mousemove', updateActivity, { passive: true });
+    document.addEventListener('mousedown', updateActivity, { passive: true });
+    document.addEventListener('pointerdown', updateActivity, { passive: true });
     document.addEventListener('touchstart', updateActivity, { passive: true });
+    document.addEventListener('touchmove', updateActivity, { passive: true });
     document.addEventListener('scroll', updateActivity, { passive: true });
     return () => {
       document.removeEventListener('wheel', handleWheel);
       document.removeEventListener('keydown', handleKeydown);
       document.removeEventListener('mousemove', updateActivity);
+      document.removeEventListener('mousedown', updateActivity);
+      document.removeEventListener('pointerdown', updateActivity);
       document.removeEventListener('touchstart', updateActivity);
+      document.removeEventListener('touchmove', updateActivity);
       document.removeEventListener('scroll', updateActivity);
     };
   }, []);
@@ -4638,8 +4755,9 @@ useEffect(() => {
     fetchCategoryNews(false);
     timer = setInterval(() => { 
       const idleTime = Date.now() - lastActivityRef.current;
-      // Chỉ tự động tải thêm tin tức nếu người dùng không tương tác trong vòng 30 giây (idle)
-      if (idleTime > 30000) {
+      const isUserBusy = isShortsOpenRef.current || selectedArticleRef.current || idleTime < 45000;
+      // Chỉ tự động tải thêm tin tức khi người dùng không tương tác và không đang xem Shorts/bài viết
+      if (!isUserBusy) {
         fetchCategoryNews(true); 
       }
     }, 2 * 60 * 1000);
@@ -5101,7 +5219,15 @@ useEffect(() => {
     }; // end loadData
 
     loadData();
-    const intervalId = setInterval(loadData, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
+    const intervalId = setInterval(() => {
+      const isUserBusy = isShortsOpenRef.current || selectedArticleRef.current || (Date.now() - lastActivityRef.current < 45000);
+      if (isUserBusy) {
+        // Người dùng đang thao tác hoặc đang mở Shorts/bài viết -> Không kích hoạt tải lại
+        return;
+      }
+      // Không có tác động gì mới load dữ liệu định kỳ theo logic cũ
+      loadData();
+    }, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
     return () => clearInterval(intervalId);
   }, []);
 

@@ -377,7 +377,8 @@ export function matchesChannel(item: ShortItem, channelId: string): boolean {
       chLower.includes('jay') || chLower.includes('prehistoric') ||
       chLower.includes('vietsuccess') || chLower.includes('pinkfong') ||
       chLower.includes('cá mập') || chLower.includes('j house') ||
-      chLower.includes('an#') || chLower.includes('anmusic')
+      chLower.includes('an#') || chLower.includes('anmusic') ||
+      item.badge === 'ĐÃ ĐĂNG KÝ' || item.category === 'Kênh của bạn'
     );
   }
   if (idLower === 'sub-vtv24') return chLower.includes('vtv24') || (chLower.includes('vtv') && !chLower.includes('thời tiết'));
@@ -2312,20 +2313,39 @@ export function VideoShortsModal({
     }
   }, [isOpen, activeUser.isLoggedIn, activeUser.accessToken]);
 
-  // Danh sách kênh hiển thị cho người dùng (đồng bộ chính xác toàn bộ kênh đã đăng ký từ YouTube)
+  // Danh sách kênh hiển thị cho người dùng (quét và đồng bộ chính xác toàn bộ kênh đã đăng ký từ tài khoản thật)
   const displayUserChannels = useMemo(() => {
     if (syncedYtSubs && syncedYtSubs.length > 0) {
-      const map = new Map<string, any>();
-      USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.forEach(ch => {
-        const key = (ch.snippet?.customUrl || ch.snippet?.title || ch.id).toLowerCase();
-        map.set(key, ch);
+      // Quét và hiển thị chính xác danh sách kênh thực tế từ tài khoản Google của người dùng
+      return syncedYtSubs.map((sub: any) => {
+        const title = sub.snippet?.title || '';
+        const customUrl = sub.snippet?.customUrl || '';
+        const chId = sub.snippet?.resourceId?.channelId || sub.id || '';
+        
+        // Tìm thông tin bổ trợ (vector SVG avatar, verified badge) nếu trùng với bộ kênh nổi tiếng
+        const known = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(k => 
+          k.snippet.title.toLowerCase() === title.toLowerCase() ||
+          (customUrl && k.snippet.customUrl?.toLowerCase() === customUrl.toLowerCase()) ||
+          k.snippet.resourceId?.channelId === chId
+        );
+
+        if (known) {
+          return {
+            ...known,
+            ...sub,
+            snippet: {
+              ...known.snippet,
+              ...sub.snippet,
+              thumbnails: sub.snippet?.thumbnails?.medium?.url 
+                ? sub.snippet.thumbnails 
+                : known.snippet.thumbnails
+            }
+          };
+        }
+        return sub;
       });
-      syncedYtSubs.forEach(ch => {
-        const key = (ch.snippet?.customUrl || ch.snippet?.title || ch.id).toLowerCase();
-        map.set(key, { ...(map.get(key) || {}), ...ch });
-      });
-      return Array.from(map.values());
     }
+    // Nếu chưa đăng nhập hoặc offline, sử dụng snapshot để trải nghiệm demo
     return USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
   }, [syncedYtSubs]);
 
@@ -2488,6 +2508,43 @@ export function VideoShortsModal({
     };
   }, []);
 
+  // ── GIỮ MÀN HÌNH LUÔN SÁNG KHI ĐANG XEM SHORTS (CHỐNG TỰ TẮT MÀN HÌNH TRÊN MOBILE / PC) ──
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let wakeLockSentinel: any = null;
+    let isMounted = true;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && (navigator as any).wakeLock?.request) {
+          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (e) {
+        // Trình duyệt không hỗ trợ hoặc từ chối do chính sách pin
+      }
+    };
+
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isOpen && isMounted) {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLockSentinel && wakeLockSentinel.release) {
+        wakeLockSentinel.release().catch(() => {});
+        wakeLockSentinel = null;
+      }
+    };
+  }, [isOpen]);
+
   // Tự động ẩn controls sau 5s khi không thao tác
   const [isControlsVisible, setIsControlsVisible] = useState<boolean>(false);
   const [slideTransition, setSlideTransition] = useState<'slide-up' | 'slide-down' | null>(null);
@@ -2623,13 +2680,18 @@ export function VideoShortsModal({
     // 2. Thêm toàn bộ video thực tế từ các kênh người dùng đã đăng ký
     SUBSCRIBED_CHANNELS_VIDEOS.forEach(addUnique);
 
-    // 3. Thêm video fetch từ API nếu có
+    // 3. Thêm video quét trực tiếp từ tài khoản thật của người dùng (nếu có)
+    if (userRole?.subscribedVideos && Array.isArray(userRole.subscribedVideos)) {
+      userRole.subscribedVideos.forEach(addUnique);
+    }
+
+    // 4. Thêm video fetch từ API nếu có
     if (multiChannelVideos && multiChannelVideos.length > 0) {
       multiChannelVideos.forEach(addUnique);
     }
 
     return list;
-  }, [multiChannelVideos]);
+  }, [multiChannelVideos, userRole?.subscribedVideos]);
 
   // Thống kê số lượng video & shorts theo kênh TV
   const channelStatsMap = useMemo(() => {
@@ -2803,7 +2865,8 @@ export function VideoShortsModal({
     }
     setIsControlsVisible(false);
     const ch = TV_CHANNELS.find(c => c.id === channelId);
-    const subCh = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(s => s.id === channelId);
+    const subCh = displayUserChannels.find((s: any) => s.id === channelId || s.snippet?.resourceId?.channelId === channelId || s.snippet?.title === channelId) ||
+                  USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(s => s.id === channelId);
     const name = ch ? `${ch.number}: ${ch.name}` : (subCh?.snippet?.title || 'Kênh đã chọn');
     setShowToast(`📺 Đang phát ${name} • Từ video mới nhất`);
     setTimeout(() => setShowToast(null), 2500);
@@ -2814,6 +2877,7 @@ export function VideoShortsModal({
     const snippet = sub.snippet || {};
     const title = snippet.title || 'Kênh YouTube';
     const subId = sub.id || '';
+    const chId = snippet.resourceId?.channelId || '';
 
     // Khớp kênh nếu là VTV24
     if (subId === 'sub-vtv24' || title.toLowerCase().includes('vtv24')) {
@@ -2821,7 +2885,7 @@ export function VideoShortsModal({
       return;
     }
 
-    handleSelectChannel(subId || 'subscribed');
+    handleSelectChannel(chId || subId || title);
   };
 
   // Chọn chuyên mục phân loại bản tin (Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
@@ -3104,10 +3168,14 @@ export function VideoShortsModal({
     setVideoErrorState(false);
     if (videoErrorTimerRef.current) clearTimeout(videoErrorTimerRef.current);
 
-    const durationSec = parseDurationSeconds(currentShort.duration) || 55;
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      handleNextShort();
-    }, (durationSec + 2) * 1000);
+    // Chỉ thiết lập auto-advance timer nếu thời lượng video được khai báo rõ ràng và ngắn (<= 120s)
+    // TUYỆT ĐỐI KHÔNG ép ngắt/chuyển video sau 55s mặc định khi người dùng đang xem
+    const durationSec = parseDurationSeconds(currentShort.duration);
+    if (durationSec > 0 && durationSec <= 120 && currentShort.mediaType === 'short') {
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        handleNextShort();
+      }, (durationSec + 2) * 1000);
+    }
 
     return () => {
       window.removeEventListener('message', handleMessage);

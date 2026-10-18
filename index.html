@@ -49,6 +49,18 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      window.__lastUserActivity = Date.now();
+      window.__isVideoWatching = false;
+      const recordUserActivity = function() {
+        window.__lastUserActivity = Date.now();
+      };
+      window.addEventListener('mousedown', recordUserActivity, { passive: true });
+      window.addEventListener('keydown', recordUserActivity, { passive: true });
+      window.addEventListener('touchstart', recordUserActivity, { passive: true });
+      window.addEventListener('touchmove', recordUserActivity, { passive: true });
+      window.addEventListener('wheel', recordUserActivity, { passive: true });
+      window.addEventListener('scroll', recordUserActivity, { passive: true });
+
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           for (var r of regs) {
@@ -59,7 +71,17 @@
           }
         });
         navigator.serviceWorker.addEventListener('controllerchange', function() {
-          window.location.reload();
+          // CHỈ TỰ ĐỘNG TẢI LẠI TRANG KHI NGƯỜI DÙNG HOÀN TOÀN KHÔNG THAO TÁC (IDLE > 60s VÀ KHÔNG XEM SHORTS)
+          var checkAndReload = function() {
+            var isIdle = (Date.now() - (window.__lastUserActivity || 0)) > 60000;
+            var isWatching = Boolean(window.__isVideoWatching);
+            if (isIdle && !isWatching) {
+              window.location.reload();
+            } else {
+              setTimeout(checkAndReload, 30000);
+            }
+          };
+          checkAndReload();
         });
       }
     </script>
