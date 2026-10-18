@@ -1162,11 +1162,15 @@ export class VieNeuTTSController {
     const bounded = Math.max(0, Math.min(this.chunks.length - 1, index));
     this.currentChunkIndex = bounded;
     this.chunkRetryCount = 0;
+    this.activeRequestId++;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     if (this.state.status === 'playing' || this.state.status === 'ready') {
       this.playChunk(bounded, this.activeRequestId);
     } else {
       const prog = Math.round(((bounded + 1) / this.chunks.length) * 100);
-      this.updateState({ currentChunkIndex: bounded, progressPercent: prog });
+      this.updateState({ currentChunkIndex: bounded, progressPercent: prog, currentlySpeakingText: this.chunks[bounded] || '' });
     }
   }
 
@@ -1176,6 +1180,95 @@ export class VieNeuTTSController {
 
   public getChunks(): string[] {
     return [...this.chunks];
+  }
+
+  private playFallbackSpeechSynthesis(idx: number, reqId: number) {
+    if (this.isPaused || reqId !== this.activeRequestId) return;
+    if (idx >= this.chunks.length) {
+      this.updateState({
+        status: 'completed',
+        currentChunkIndex: this.chunks.length,
+        progressPercent: 100,
+        currentlySpeakingText: '',
+        errorMessage: null
+      });
+      return;
+    }
+
+    this.currentChunkIndex = idx;
+    const text = this.chunks[idx];
+    const prog = Math.round(((idx + 1) / this.chunks.length) * 100);
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = this.state.playbackSpeed || 1.0;
+        utter.lang = 'vi-VN';
+
+        const voices = window.speechSynthesis.getVoices();
+        const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI'));
+        if (viVoice) utter.voice = viVoice;
+
+        const isMale = /minh|anh_khoi|dung|tuyen|binh|vinh|son|tri|adam/i.test(this.state.selectedVoice);
+        utter.pitch = isMale ? 0.9 : 1.1;
+
+        utter.onstart = () => {
+          if (this.isPaused || reqId !== this.activeRequestId) return;
+          this.updateState({
+            status: 'playing',
+            currentChunkIndex: idx,
+            progressPercent: prog,
+            currentlySpeakingText: text,
+            isFallback: true,
+            errorMessage: null
+          });
+        };
+
+        utter.onend = () => {
+          if (this.isPaused || reqId !== this.activeRequestId) return;
+          if (this.state.status === 'playing') {
+            this.playFallbackSpeechSynthesis(idx + 1, reqId);
+          }
+        };
+
+        utter.onerror = (event: any) => {
+          if (this.isPaused || reqId !== this.activeRequestId) return;
+          // Bỏ qua lỗi hủy có chủ đích để tránh kích hoạt nhảy đoạn trùng lặp gây giật rung
+          if (event && (event.error === 'canceled' || event.error === 'interrupted')) {
+            return;
+          }
+          if (idx + 1 < this.chunks.length) {
+            this.playFallbackSpeechSynthesis(idx + 1, reqId);
+          } else {
+            this.updateState({
+              status: 'completed',
+              currentChunkIndex: this.chunks.length,
+              progressPercent: 100,
+              currentlySpeakingText: '',
+              errorMessage: null
+            });
+          }
+        };
+
+        this.updateState({
+          status: 'playing',
+          currentChunkIndex: idx,
+          progressPercent: prog,
+          currentlySpeakingText: text,
+          isFallback: true,
+          errorMessage: null
+        });
+
+        window.speechSynthesis.speak(utter);
+        return;
+      } catch {}
+    }
+
+    this.updateState({
+      status: 'error',
+      errorMessage: 'Trình duyệt không hỗ trợ phát âm thanh.',
+      isFallback: false
+    });
   }
 
   private playChunk(index: number, reqId: number) {
@@ -1194,91 +1287,18 @@ export class VieNeuTTSController {
     const chunkText = this.chunks[index];
     const progress = Math.round(((index + 1) / this.chunks.length) * 100);
 
+    // Nếu đã ở chế độ Fallback thì tiếp tục chuỗi phát SpeechSynthesis mượt mà không thử lại audio để tránh giật lag
+    if (this.state.isFallback) {
+      this.playFallbackSpeechSynthesis(index, reqId);
+      return;
+    }
+
     this.updateState({
       status: 'playing',
       currentChunkIndex: index,
       progressPercent: progress,
       currentlySpeakingText: chunkText
     });
-
-    const playFallbackSpeechSynthesis = (idx: number) => {
-      if (this.isPaused || reqId !== this.activeRequestId) return;
-      if (idx >= this.chunks.length) {
-        this.updateState({
-          status: 'completed',
-          currentChunkIndex: this.chunks.length,
-          progressPercent: 100,
-          currentlySpeakingText: '',
-          errorMessage: null
-        });
-        return;
-      }
-
-      this.currentChunkIndex = idx;
-      const text = this.chunks[idx];
-      const prog = Math.round(((idx + 1) / this.chunks.length) * 100);
-
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          const utter = new SpeechSynthesisUtterance(text);
-          utter.rate = this.state.playbackSpeed || 1.0;
-          utter.lang = 'vi-VN';
-
-          const voices = window.speechSynthesis.getVoices();
-          const viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VI'));
-          if (viVoice) utter.voice = viVoice;
-
-          const isMale = /minh|anh_khoi|dung|tuyen|binh|vinh|son|tri|adam/i.test(this.state.selectedVoice);
-          utter.pitch = isMale ? 0.9 : 1.1;
-
-          utter.onstart = () => {
-            if (this.isPaused || reqId !== this.activeRequestId) return;
-            this.updateState({
-              status: 'playing',
-              currentChunkIndex: idx,
-              progressPercent: prog,
-              currentlySpeakingText: text,
-              isFallback: true,
-              errorMessage: null
-            });
-          };
-
-          utter.onend = () => {
-            if (this.isPaused || reqId !== this.activeRequestId) return;
-            if (this.state.status === 'playing') {
-              playFallbackSpeechSynthesis(idx + 1);
-            }
-          };
-
-          utter.onerror = () => {
-            if (this.isPaused || reqId !== this.activeRequestId) return;
-            if (idx + 1 < this.chunks.length) {
-              playFallbackSpeechSynthesis(idx + 1);
-            } else {
-              this.updateState({ status: 'completed', progressPercent: 100 });
-            }
-          };
-
-          window.speechSynthesis.speak(utter);
-          this.updateState({
-            status: 'playing',
-            currentChunkIndex: idx,
-            progressPercent: prog,
-            currentlySpeakingText: text,
-            isFallback: true,
-            errorMessage: null
-          });
-          return;
-        } catch {}
-      }
-
-      this.updateState({
-        status: 'error',
-        errorMessage: 'Trình duyệt không hỗ trợ phát âm thanh.',
-        isFallback: false
-      });
-    };
 
     const handleChunkError = () => {
       if (this.isPaused || reqId !== this.activeRequestId) return;
@@ -1290,8 +1310,8 @@ export class VieNeuTTSController {
         this.audio.src = '';
       }
 
-      // 2. Tự động kích hoạt SpeechSynthesis dự phòng ngay lập tức - ĐẢM BẢO ÂM THANH LUÔN CHẠY
-      playFallbackSpeechSynthesis(index);
+      // 2. Chuyển sang SpeechSynthesis dự phòng mượt mà
+      this.playFallbackSpeechSynthesis(index, reqId);
     };
 
     try {
