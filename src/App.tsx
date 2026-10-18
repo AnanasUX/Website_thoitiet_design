@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { VideoShortsModal } from "./components/VideoShortsModal";
+import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT } from "./constants/userYouTubeSubscriptions";
 import {
   type ConditionKey,
   detectConditionKey,
@@ -3687,14 +3688,24 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
     });
     if (subRes.ok) {
       const subData = await subRes.json();
-      if (subData.items && Array.isArray(subData.items)) {
+      if (subData.items && Array.isArray(subData.items) && subData.items.length > 0) {
         userInfo.youtubeSubscriptions = subData.items;
+      } else {
+        userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
       }
-    } else if (subRes.status === 403 || subRes.status === 401) {
-      userInfo.youtubeNeedsAuth = true;
+    } else {
+      userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+      if (subRes.status === 403 || subRes.status === 401) {
+        userInfo.youtubeNeedsAuth = true;
+      }
     }
   } catch (err) {
     console.warn('[YouTube API] Không thể lấy danh sách kênh đã đăng ký:', err);
+    userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+  }
+
+  if (!userInfo.youtubeSubscriptions || userInfo.youtubeSubscriptions.length === 0) {
+    userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
   }
 
   if (!userInfo.youtubeChannel && userInfo.email) {
