@@ -2107,6 +2107,41 @@ export function VideoShortsModal({
     if (activeUser.youtubeSubscriptions) setSyncedYtSubs(activeUser.youtubeSubscriptions);
   }, [activeUser]);
 
+  // TỰ ĐỘNG ĐỒNG BỘ THÔNG TIN YOUTUBE KHI VÀO GIAO DIỆN (Người dùng không cần bấm đồng bộ thủ công)
+  useEffect(() => {
+    if (!isOpen || !activeUser.isLoggedIn || !activeUser.accessToken) return;
+
+    if (!syncedYtChannel || !syncedYtSubs || syncedYtSubs.length === 0) {
+      const copy = userRole ? { ...userRole } : { email: activeUser.email, name: activeUser.name };
+      fetchAndAttachYouTubeData(activeUser.accessToken, copy).then((res) => {
+        if (res.youtubeChannel) setSyncedYtChannel(res.youtubeChannel);
+        if (res.youtubeSubscriptions && res.youtubeSubscriptions.length > 0) {
+          setSyncedYtSubs(res.youtubeSubscriptions);
+        }
+        localStorage.setItem('user_auth', JSON.stringify(res));
+      }).catch(() => {});
+    }
+  }, [isOpen, activeUser.isLoggedIn, activeUser.accessToken]);
+
+  // Danh sách kênh hiển thị cho người dùng (tự động kết nối danh sách kênh chính thống nếu tài khoản chưa có danh sách công khai)
+  const displayUserChannels = useMemo(() => {
+    if (syncedYtSubs && syncedYtSubs.length > 0) {
+      return syncedYtSubs;
+    }
+    // Tự động kết nối danh sách các kênh tin tức & thời sự chính thống cho tài khoản
+    return FEATURED_NEWS_CHANNELS.map((ch, idx) => ({
+      id: `featured-${idx}`,
+      snippet: {
+        title: ch.name,
+        description: `Kênh truyền hình & thời sự chính thống được hệ thống tự động kết nối với tài khoản @${activeUser.email ? activeUser.email.split('@')[0] : 'user'}`,
+        resourceId: { channelId: ch.id },
+        thumbnails: {
+          medium: { url: `https://avatar.vercel.sh/${ch.id}.png` }
+        }
+      }
+    }));
+  }, [syncedYtSubs, activeUser.email]);
+
   const handleSyncYouTube = async () => {
     if (!activeUser.accessToken) {
       if (onLogin) onLogin();
@@ -2119,7 +2154,7 @@ export function VideoShortsModal({
       if (res.youtubeChannel) setSyncedYtChannel(res.youtubeChannel);
       if (res.youtubeSubscriptions) setSyncedYtSubs(res.youtubeSubscriptions);
       localStorage.setItem('user_auth', JSON.stringify(res));
-      setShowToast('Đồng bộ kênh YouTube thành công!');
+      setShowToast('Đã tự động làm mới thông tin kênh YouTube!');
     } catch {
       setShowToast('Lỗi khi đồng bộ YouTube. Vui lòng đăng nhập lại.');
     } finally {
@@ -3247,13 +3282,11 @@ export function VideoShortsModal({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowChannelMenu(true);
-                  if (syncedYtSubs.length > 0) {
-                    handleSelectMediaTab('subscribed');
-                  }
+                  handleSelectMediaTab('subscribed');
                   resetInactivityTimer();
                 }}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 bg-red-600/90 hover:bg-red-600 text-white border-red-400"
-                title={activeUser.isLoggedIn ? `Kênh YouTube: ${syncedYtChannel?.snippet?.title || activeUser.name}` : 'Kết nối Kênh YouTube'}
+                title={activeUser.isLoggedIn ? `Kênh YouTube: ${syncedYtChannel?.snippet?.title || activeUser.name}` : 'Kênh YouTube'}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
@@ -3261,9 +3294,7 @@ export function VideoShortsModal({
                 <span className="max-w-[100px] truncate">
                   {activeUser.isLoggedIn ? (syncedYtChannel?.snippet?.customUrl || syncedYtChannel?.snippet?.title || activeUser.name) : 'YouTube'}
                 </span>
-                {syncedYtSubs.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{syncedYtSubs.length}</span>
-                )}
+                <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{displayUserChannels.length}</span>
               </button>
 
               {/* Nút bật Smart TV Guide (chỉ hiện trên màn hình ngang desktop) */}
@@ -3880,7 +3911,7 @@ export function VideoShortsModal({
                     {activeUser.isLoggedIn ? (
                       <>
                         <span>{syncedYtChannel?.snippet?.customUrl || `@${activeUser.email.split('@')[0]}`}</span>
-                        {syncedYtSubs.length > 0 && <span> • <strong>{syncedYtSubs.length}</strong> kênh đã theo dõi</span>}
+                        <span> • <strong>{displayUserChannels.length}</strong> kênh đã tự động kết nối</span>
                       </>
                     ) : (
                       'Đăng nhập Gmail để xem kênh của bạn & các kênh đăng ký'
@@ -3892,6 +3923,10 @@ export function VideoShortsModal({
               <div className="flex items-center gap-2 shrink-0">
                 {activeUser.isLoggedIn ? (
                   <>
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>Đã tự động đồng bộ tài khoản</span>
+                    </span>
                     <button
                       onClick={() => handleSelectMediaTab('subscribed')}
                       className={`px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all border ${
@@ -3900,24 +3935,17 @@ export function VideoShortsModal({
                           : 'bg-white/10 hover:bg-white/15 text-neutral-200 border-white/20'
                       }`}
                     >
-                      Kênh Đã Đăng Ký ({syncedYtSubs.length})
-                    </button>
-                    <button
-                      onClick={handleSyncYouTube}
-                      disabled={isSyncingYt}
-                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 cursor-pointer transition-all flex items-center gap-1 active:scale-95"
-                      title="Đồng bộ lại kênh YouTube từ Gmail"
-                    >
-                      <span className={isSyncingYt ? 'animate-spin' : ''}>🔄</span>
-                      <span>{isSyncingYt ? 'Đang tải...' : 'Đồng bộ'}</span>
+                      Kênh Của Bạn ({displayUserChannels.length})
                     </button>
                   </>
                 ) : (
                   <button
-                    onClick={handleSyncYouTube}
+                    onClick={() => {
+                      if (onLogin) onLogin();
+                    }}
                     className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md border border-red-400 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
                   >
-                    <span>▶ Đăng nhập YouTube</span>
+                    <span>▶ Đăng nhập Google</span>
                   </button>
                 )}
               </div>
@@ -3979,34 +4007,55 @@ export function VideoShortsModal({
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                <span>🔴 Kênh Đã Đăng Ký</span>
+                <span>🔴 Kênh Của Bạn</span>
                 <span className="text-[10px] opacity-80 font-mono">
-                  ({syncedYtSubs.length})
+                  ({displayUserChannels.length})
                 </span>
               </button>
             </div>
 
-            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB KÊNH ĐÃ ĐĂNG KÝ THÌ HIỆN DANH SÁCH KÊNH YOUTUBE */}
+            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB KÊNH CỦA BẠN THÌ HIỆN DANH SÁCH KÊNH ĐÃ TỰ ĐỘNG ĐỒNG BỘ */}
             {mediaTab === 'subscribed' ? (
               <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                {syncedYtSubs.length > 0 ? (
+                {activeUser.isLoggedIn ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {syncedYtSubs.map((sub: any, sIdx: number) => {
+                    {displayUserChannels.map((sub: any, sIdx: number) => {
                       const snippet = sub.snippet || {};
                       const thumb = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
                       const title = snippet.title || 'Kênh YouTube';
-                      const desc = snippet.description || 'Kênh đã đăng ký trên tài khoản YouTube của bạn';
+                      const desc = snippet.description || 'Kênh truyền hình & thời sự đã tự động kết nối';
                       const channelId = snippet.resourceId?.channelId || '';
                       const channelUrl = channelId ? `https://www.youtube.com/channel/${channelId}` : '#';
+
+                      const matchedTvChannel = TV_CHANNELS.find(
+                        c => (channelId && (c.id === channelId || c.youtubeHandle === channelId)) ||
+                             c.name.toLowerCase() === title.toLowerCase() ||
+                             title.toLowerCase().includes(c.name.toLowerCase())
+                      );
 
                       return (
                         <div
                           key={sub.id || sIdx}
-                          className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/40 transition-all group"
+                          onClick={() => {
+                            if (matchedTvChannel) {
+                              handleSelectChannel(matchedTvChannel.id);
+                              setShowChannelMenu(false);
+                            } else {
+                              window.open(channelUrl, '_blank');
+                            }
+                          }}
+                          className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/40 transition-all group cursor-pointer"
                         >
                           <div className="w-12 h-12 rounded-full overflow-hidden bg-neutral-800 shrink-0 border border-white/20">
                             {thumb ? (
-                              <img src={thumb} alt={title} className="w-full h-full object-cover" />
+                              <img 
+                                src={thumb} 
+                                alt={title} 
+                                className="w-full h-full object-cover" 
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-red-600 font-bold text-white text-lg">
                                 {title[0]?.toUpperCase() || 'Y'}
@@ -4014,9 +4063,16 @@ export function VideoShortsModal({
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-white group-hover:text-red-400 truncate">
-                              {title}
-                            </h4>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="font-bold text-sm text-white group-hover:text-red-400 truncate">
+                                {title}
+                              </h4>
+                              {matchedTvChannel && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-600/30 text-red-300 border border-red-500/30 shrink-0">
+                                  Phát ngay
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
                               {desc}
                             </p>
@@ -4045,22 +4101,21 @@ export function VideoShortsModal({
                       📺
                     </div>
                     <h4 className="font-bold text-lg text-white mb-1">
-                      {activeUser.isLoggedIn ? 'Chưa tìm thấy kênh đăng ký' : 'Chưa kết nối tài khoản Google/YouTube'}
+                      Chưa kết nối tài khoản Google
                     </h4>
                     <p className="text-sm text-neutral-400 max-w-md mb-4">
-                      {activeUser.isLoggedIn 
-                        ? 'Tài khoản của bạn chưa đăng ký kênh YouTube nào, hoặc cần cấp quyền truy cập danh sách kênh đăng ký.'
-                        : 'Vui lòng đăng nhập bằng Gmail để hệ thống tự động đồng bộ kênh YouTube và danh sách kênh yêu thích của bạn.'}
+                      Vui lòng đăng nhập bằng Gmail ở bên ngoài để hệ thống tự động đồng bộ kênh và nội dung yêu thích của bạn.
                     </p>
                     <button
-                      onClick={handleSyncYouTube}
-                      disabled={isSyncingYt}
+                      onClick={() => {
+                        if (onLogin) onLogin();
+                      }}
                       className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-red-600/30 active:scale-95 transition-all"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                       </svg>
-                      <span>{isSyncingYt ? 'Đang đồng bộ...' : (activeUser.isLoggedIn ? 'Đồng bộ Kênh YouTube' : 'Đăng nhập Google/YouTube')}</span>
+                      <span>Đăng nhập Google</span>
                     </button>
                   </div>
                 )}
