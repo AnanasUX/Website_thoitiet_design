@@ -2276,17 +2276,52 @@ export function VideoShortsModal({
     };
   }, [isOpen, resetInactivityTimer]);
 
-  // Xoay 16:9 / 9:16
-  const toggleOrientation = () => {
+  // Xoay 16:9 / 9:16 & Toàn màn hình
+  const toggleOrientation = useCallback(() => {
     const nextState = !isLandscape;
     setIsLandscape(nextState);
+
+    // Hỗ trợ tự động Fullscreen và Khóa màn hình xoay ngang trên Mobile
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      try {
+        if (nextState) {
+          const el = modalContainerRef.current || document.documentElement;
+          if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+            if (el.requestFullscreen) {
+              el.requestFullscreen().catch(() => {});
+            } else if ((el as any).webkitRequestFullscreen) {
+              (el as any).webkitRequestFullscreen();
+            }
+          }
+          if (screen.orientation && (screen.orientation as any).lock) {
+            (screen.orientation as any).lock('landscape').catch(() => {});
+          }
+        } else {
+          if (screen.orientation && (screen.orientation as any).unlock) {
+            (screen.orientation as any).unlock();
+          }
+          if (document.fullscreenElement || (document as any).webkitFullscreenElement) {
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            } else if ((document as any).webkitExitFullscreen) {
+              (document as any).webkitExitFullscreen();
+            }
+          }
+        }
+      } catch {}
+    }
+
     setShowToast(nextState ? '🖥️ Chế độ Toàn Cảnh 16:9' : '📱 Chế độ Dọc Shorts (9:16)');
     setTimeout(() => setShowToast(null), 2000);
-  };
+  }, [isLandscape]);
 
   useEffect(() => {
     const handleResize = () => {
+      if (typeof window === 'undefined') return;
       if (window.innerWidth >= 1024 && !isLandscape && mediaTab !== 'short') {
+        setIsLandscape(true);
+      } else if (window.innerWidth < 640 && window.innerWidth > window.innerHeight && !isLandscape) {
+        // Cầm ngang điện thoại thực tế
         setIsLandscape(true);
       }
     };
@@ -2647,7 +2682,7 @@ export function VideoShortsModal({
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, isFullscreen, handleNextShort, handlePrevShort, toggleBrowserFullscreen, resetInactivityTimer, onClose]);
+  }, [isOpen, showComments, showPlaylistDrawer, showChannelMenu, isLandscape, isFullscreen, handleNextShort, handlePrevShort, toggleOrientation, toggleBrowserFullscreen, resetInactivityTimer, onClose]);
 
   // Toggling âm thanh tức thì qua postMessage (Không reload iframe)
   const toggleMute = () => {
@@ -3046,7 +3081,7 @@ export function VideoShortsModal({
                   setShowChannelMenu(true);
                   resetInactivityTimer();
                 }}
-                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 backdrop-blur-md text-white transition-all shadow-md group cursor-pointer shrink-0 max-w-[130px] sm:max-w-[180px]"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 active:scale-95 border border-white/20 backdrop-blur-md text-white transition-all shadow-md group cursor-pointer shrink-0 max-w-[110px] xs:max-w-[130px] sm:max-w-[180px]"
                 title="Mở menu chọn kênh truyền hình (TV EPG) [C]"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping shrink-0"></span>
@@ -3110,36 +3145,30 @@ export function VideoShortsModal({
 
             {/* Controls: Trên khung dọc (Shorts) tinh gọn tối đa; trên khung ngang (16:9) hiển thị đầy đủ */}
             <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto shrink-0">
-              {/* Chuyển đổi tỉ lệ 16:9 / 9:16 (Ẩn trên Mobile để Header không bị chèn ép đè tên kênh) */}
-              {isLandscape ? (
-                /* Khi đang ở 16:9 ngang: Nút chuyển về 9:16 Dọc */
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleOrientation();
-                    resetInactivityTimer();
-                  }}
-                  className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ff315f] text-white border border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)] text-[11px] font-bold shrink-0 cursor-pointer active:scale-95 transition-all"
-                  title="Chuyển sang chế độ Dọc Shorts [R]"
-                >
-                  <span className="text-[12px] leading-none">📱</span>
-                  <span>9:16</span>
-                </button>
-              ) : (
-                /* Khi đang ở Dọc Shorts: Nút chuyển sang 16:9 Toàn Cảnh (Icon 32px tròn trên PC/Tablet, ẩn trên mobile) */
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleOrientation();
-                    resetInactivityTimer();
-                  }}
-                  style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-                  className="w-8 h-8 aspect-square rounded-full hidden sm:flex items-center justify-center shrink-0 bg-black/60 hover:bg-black/85 text-white backdrop-blur-md border border-white/20 cursor-pointer active:scale-90 transition-all shadow-md"
-                  title="Xem chế độ Toàn Cảnh 16:9 Cinema [R]"
-                >
-                  <span className="text-[13px] leading-none">🖥️</span>
-                </button>
-              )}
+              {/* Nút Quay Toàn Màn Hình 16:9 / 9:16 (HIỂN THỊ TRÊN MỌI THIẾT BỊ KỂ CẢ MOBILE) */}
+              <button
+                data-testid="toggle-orientation-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleOrientation();
+                  resetInactivityTimer();
+                }}
+                style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+                className={`w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 backdrop-blur-md border cursor-pointer active:scale-90 transition-all shadow-md ${
+                  isLandscape
+                    ? 'bg-[#ff315f] hover:bg-[#ff1a4d] text-white border-[#ff315f] shadow-[0_0_12px_rgba(255,49,95,0.4)]'
+                    : 'bg-black/60 hover:bg-black/85 text-white border-white/20'
+                }`}
+                title={isLandscape ? 'Chuyển về Dọc Shorts (9:16) [R]' : 'Quay Toàn Màn Hình Ngang (16:9) [R]'}
+              >
+                {isLandscape ? (
+                  <span className="text-[13px] leading-none select-none">📱</span>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                  </svg>
+                )}
+              </button>
 
               {/* Danh sách phát trên Header: CHỈ HIỂN THỊ KHI Ở CHẾ ĐỘ TOÀN CẢNH 16:9 RỘNG RÃI
                   (Khi ở chế độ Dọc Shorts, ở cột tương tác bên phải ĐÃ CÓ nút 'List' chuyên dụng, không hiển thị trên Header để tránh đè nút Kênh) */}
@@ -3382,7 +3411,7 @@ export function VideoShortsModal({
         </div>
 
         {/* ── BOTTOM VIDEO OVERLAY: KÊNH, TIÊU ĐỀ, HASHTAGS & TÀI KHOẢN ── */}
-        <div className={`absolute bottom-0 inset-x-0 z-20 p-2.5 sm:p-4 ${isLandscape ? 'pb-3 pr-[260px]' : 'pb-4 sm:pb-3.5 pr-13 sm:pr-14 pl-2.5 sm:pl-4'} bg-gradient-to-t from-black via-black/80 to-transparent flex flex-col gap-1 sm:gap-1.5 transition-opacity duration-300 ${
+        <div className={`absolute bottom-0 inset-x-0 z-20 p-2.5 sm:p-4 ${isLandscape ? 'pb-2.5 sm:pb-3 pr-14 sm:pr-24 lg:pr-[260px]' : 'pb-3 sm:pb-3.5 pr-14 sm:pr-16 pl-2.5 sm:pl-4'} bg-gradient-to-t from-black via-black/85 to-transparent flex flex-col gap-1 sm:gap-1.5 transition-opacity duration-300 ${
           isControlsVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
           
@@ -3390,25 +3419,25 @@ export function VideoShortsModal({
           <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto max-w-full overflow-hidden">
             <div 
               style={{ borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-white/25 shadow-md shrink-0 bg-[#ff315f] flex items-center justify-center font-black text-white text-[11px] sm:text-[12px] select-none"
+              className="w-6.5 h-6.5 sm:w-8 sm:h-8 rounded-full overflow-hidden border border-white/25 shadow-md shrink-0 bg-[#ff315f] flex items-center justify-center font-black text-white text-[10.5px] sm:text-[12px] select-none"
             >
               <span className="font-bold text-white">{currentShort.channel.charAt(0).toUpperCase()}</span>
             </div>
             
             <div className="flex items-center gap-1 min-w-0 shrink">
-              <span className="font-extrabold text-[12px] sm:text-[13px] text-white truncate drop-shadow">
+              <span className="font-extrabold text-[11.5px] sm:text-[13px] text-white truncate drop-shadow">
                 @{currentShort.channel}
               </span>
               <span 
                 style={{ borderRadius: '50%', aspectRatio: '1 / 1' }}
-                className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8.5px] sm:text-[9px] shrink-0 font-bold"
+                className="w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] sm:text-[9px] shrink-0 font-bold"
               >
                 ✓
               </span>
             </div>
 
             {/* Nhãn định dạng & badge */}
-            <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-wider shrink-0 ${
+            <span className={`px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full text-[8px] sm:text-[9.5px] font-black uppercase tracking-wider shrink-0 ${
               currentShort.mediaType === 'short'
                 ? 'bg-pink-600/80 text-white border border-pink-400/40'
                 : 'bg-blue-600/80 text-white border border-blue-400/40'
@@ -3423,7 +3452,7 @@ export function VideoShortsModal({
                 toggleFollowChannel();
                 resetInactivityTimer();
               }}
-              className={`flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9.5px] sm:text-[10.5px] font-bold border backdrop-blur-md cursor-pointer transition-all active:scale-95 ml-1 shrink-0 ${
+              className={`flex items-center gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10.5px] font-bold border backdrop-blur-md cursor-pointer transition-all active:scale-95 shrink-0 ${
                 isFollowingChannel
                   ? 'bg-[#ff315f] border-[#ff315f] text-white shadow-[0_0_10px_rgba(255,49,95,0.4)]'
                   : 'bg-white/10 hover:bg-white/20 border-white/25 text-neutral-200 hover:text-white'
@@ -3432,13 +3461,13 @@ export function VideoShortsModal({
             >
               {isFollowingChannel ? (
                 <>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   <span className="hidden xs:inline">Đã theo dõi</span>
                   <span className="xs:hidden">✓</span>
                 </>
               ) : (
                 <>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="12" y1="2" x2="12" y2="4"/></svg>
                   <span>Theo dõi</span>
                 </>
               )}
@@ -3447,33 +3476,33 @@ export function VideoShortsModal({
 
           {/* Title */}
           <p 
-            className={`text-[11.5px] sm:text-[13px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[90%]' : 'line-clamp-2 max-w-[94%]'} drop-shadow leading-snug notranslate`}
+            className={`text-[11px] sm:text-[13px] font-medium text-white ${isLandscape ? 'line-clamp-1 max-w-[92%]' : 'line-clamp-2 max-w-[94%]'} drop-shadow leading-tight sm:leading-snug notranslate`}
             translate="no"
           >
             {cleanVideoTitle(currentShort.title)}
           </p>
 
           {/* Hashtags & Trạng thái */}
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium flex-wrap">
+          <div className="flex items-center gap-1.5 text-[9px] sm:text-[10.5px] font-medium flex-wrap">
             <span 
-              className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[9px] sm:text-[10px] font-bold tracking-tight shadow-sm text-black"
+              className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full bg-white/15 text-white/90 border border-white/10 backdrop-blur-xs text-[8.5px] sm:text-[9.5px] font-semibold tracking-tight shadow-xs"
             >
               #{currentShort.mediaType === 'short' ? 'shorts' : 'video'}
             </span>
             <span 
-              className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[9px] sm:text-[10px] font-bold tracking-tight shadow-sm text-black"
+              className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full bg-white/15 text-white/90 border border-white/10 backdrop-blur-xs text-[8.5px] sm:text-[9.5px] font-semibold tracking-tight shadow-xs"
             >
               #tintuc24h
             </span>
             
             {activeUser.isLoggedIn && (
-              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9.5px] font-bold">
+              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] sm:text-[9.5px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 <span>{activeUser.name}</span>
               </span>
             )}
 
-            <span className="ml-auto text-[9.5px] sm:text-[10px] text-white/70 font-semibold drop-shadow">
+            <span className="ml-auto text-[9px] sm:text-[10px] text-white/70 font-semibold drop-shadow font-mono">
               {currentIndex + 1} / {playlist.length}
             </span>
           </div>
@@ -3803,7 +3832,7 @@ export function VideoShortsModal({
             </div>
 
             {/* Grid Thẻ Kênh: ĐỒNG NHẤT CHIỀU CAO MIN-HEIGHT VÀ CĂN CHỈNH THẲNG HÀNG 100% */}
-            <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex-1 overflow-y-auto p-2.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {TV_CHANNELS.map((ch) => {
                 const isActive = selectedChannelId === ch.id;
                 const stats = channelStatsMap[ch.id] || { total: 0, videos: 0, shorts: 0 };
@@ -3812,16 +3841,16 @@ export function VideoShortsModal({
                   <div
                     key={ch.id}
                     onClick={() => handleSelectChannel(ch.id)}
-                    className={`group relative p-3.5 rounded-2xl border transition-all cursor-pointer min-h-[135px] h-full flex flex-col justify-between gap-2.5 ${
+                    className={`group relative p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer min-h-[105px] sm:min-h-[130px] h-full flex flex-col justify-between gap-1.5 sm:gap-2.5 ${
                       isActive
                         ? 'bg-gradient-to-br from-red-600/30 via-red-950/40 to-neutral-900 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)] ring-1 ring-red-400/50'
                         : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-neutral-300 hover:text-white'
                     }`}
                   >
                     {/* Top Row: Channel number + Badge Text + Live indicator */}
-                    <div className="flex items-center justify-between gap-2 shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`px-2 py-0.5 rounded-md font-mono text-[10.5px] font-black tracking-wider border ${
+                    <div className="flex items-center justify-between gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
+                        <span className={`px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-md font-mono text-[9.5px] sm:text-[10.5px] font-black tracking-wider border ${
                           isActive 
                             ? 'bg-red-600 text-white border-red-400' 
                             : 'bg-black/60 text-neutral-300 border-white/15'
@@ -3830,7 +3859,7 @@ export function VideoShortsModal({
                         </span>
 
                         <span 
-                          className="px-2 py-0.5 rounded-full text-[9.5px] font-extrabold uppercase tracking-wider"
+                          className="px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-full text-[8.5px] sm:text-[9.5px] font-extrabold uppercase tracking-wider"
                           style={{
                             backgroundColor: `${ch.logoColor}25`,
                             color: ch.logoColor,
@@ -3842,31 +3871,31 @@ export function VideoShortsModal({
                       </div>
 
                       {isActive ? (
-                        <span className="flex items-center gap-1 text-[9.5px] font-black text-red-400 tracking-wider">
-                          <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                        <span className="flex items-center gap-1 text-[8.5px] sm:text-[9.5px] font-black text-red-400 tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
                           ĐANG PHÁT
                         </span>
                       ) : (
-                        <span className="text-[10px] text-neutral-400 group-hover:text-neutral-200 transition-colors font-semibold">
+                        <span className="text-[9.5px] sm:text-[10px] text-neutral-400 group-hover:text-neutral-200 transition-colors font-semibold">
                           {stats.total} clip
                         </span>
                       )}
                     </div>
 
-                    {/* Middle: Channel Name & Tagline (CỐ ĐỊNH MIN-HEIGHT ĐỂ KHÔNG BAO GIỜ BỊ LỆCH) */}
+                    {/* Middle: Channel Name & Tagline */}
                     <div className="flex-1 flex flex-col justify-start">
-                      <h4 className={`text-[13.5px] font-black flex items-center gap-1.5 truncate ${isActive ? 'text-white' : 'text-neutral-100 group-hover:text-white'}`}>
+                      <h4 className={`text-[12.5px] sm:text-[13.5px] font-black flex items-center gap-1.5 truncate ${isActive ? 'text-white' : 'text-neutral-100 group-hover:text-white'}`}>
                         <span>{ch.name}</span>
-                        {isActive && <span className="text-red-400">★</span>}
+                        {isActive && <span className="text-red-400 text-xs">★</span>}
                       </h4>
-                      <p className="text-[11px] text-neutral-400 line-clamp-2 min-h-[32px] mt-0.5 leading-snug">
+                      <p className="text-[10px] sm:text-[11px] text-neutral-400 line-clamp-1 sm:line-clamp-2 min-h-0 sm:min-h-[30px] mt-0.5 leading-tight sm:leading-snug">
                         {ch.tagline}
                       </p>
                     </div>
 
                     {/* Bottom Row: Thống kê định dạng & Trạng thái chọn */}
-                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10.5px] shrink-0 mt-auto">
-                      <span className="text-neutral-400 text-[10px] font-medium">
+                    <div className="pt-1.5 sm:pt-2 border-t border-white/10 flex items-center justify-between text-[9.5px] sm:text-[10.5px] shrink-0 mt-auto">
+                      <span className="text-neutral-400 text-[9px] sm:text-[10px] font-medium">
                         {stats.videos} video • {stats.shorts} shorts
                       </span>
                       <span className={`font-bold flex items-center gap-1 ${
