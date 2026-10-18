@@ -356,20 +356,21 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
   // 1. Nếu có danh sách blocks bóc tách chi tiết:
   if (Array.isArray(blocks) && blocks.length > 0) {
     for (const b of blocks) {
-      // TUYỆT ĐỐI BỎ QUA TIÊU ĐỀ VÀ THÔNG TIN TÁC GIẢ/ẢNH/VIDEO/LIÊN QUAN
+      // TUYỆT ĐỐI BỎ QUA TIÊU ĐỀ, TÁC GIẢ, CHÚ THÍCH ẢNH, VIDEO, LIÊN KẾT
       if (
         b.type === 'title' || 
         b.type === 'author' || 
         b.type === 'image' || 
         b.type === 'video' || 
         b.type === 'iframe' || 
-        b.type === 'related-link'
+        b.type === 'related-link' ||
+        b.isCaptionText === true
       ) {
         continue;
       }
 
       if (b.type === 'text' || b.type === 'quote' || b.type === 'heading' || b.type === 'sapo') {
-        const rawContent = (b.content || '').replace(/<[^>]*>/g, '').trim();
+        let rawContent = (b.content || '').replace(/<[^>]*>/g, '').trim();
         const lower = rawContent.toLowerCase();
 
         // TUYỆT ĐỐI KHÔNG LẤY NẾU TRÙNG TIÊU ĐỀ BÀI VIẾT
@@ -377,9 +378,11 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
           continue;
         }
 
-        // Bỏ các câu boilerplate rác của báo chí
+        // Bỏ các câu chú thích ảnh và boilerplate rác của báo chí
         if (
           lower === 'đọc tiếp' ||
+          lower.startsWith('ảnh:') ||
+          lower.startsWith('ảnh :') ||
           lower.startsWith('theo ') ||
           lower.startsWith('nguồn:') ||
           lower.startsWith('từ khóa:') ||
@@ -391,6 +394,10 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
         }
 
         if (rawContent.length > 3) {
+          // Nếu là tiêu đề phụ / heading, thêm dấu chấm để giọng đọc ngắt câu tự nhiên
+          if (b.type === 'heading' && !/[.?!;:]$/.test(rawContent)) {
+            rawContent = `${rawContent}.`;
+          }
           paragraphs.push(rawContent);
           hasValidBlockContent = true;
         }
@@ -414,11 +421,14 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
   }
 
   // 3. Fallback nếu không có blocks hoặc blocks chưa parse text hợp lệ:
-  // Lấy từ article.body hoặc article.content và TUYỆT ĐỐI BỎ TIÊU ĐỀ
+  // Lấy từ fullContent, article.body hoặc article.content và TUYỆT ĐỐI BỎ TIÊU ĐỀ
   if (!hasValidBlockContent) {
-    const rawBody = (article.body || article.content || '')
-      .replace(/<[^>]*>/g, '')
-      .trim();
+    let rawBody = '';
+    if (article.fullContent && Array.isArray(article.fullContent.paragraphs) && article.fullContent.paragraphs.length > 0) {
+      rawBody = article.fullContent.paragraphs.join('\n\n');
+    } else {
+      rawBody = (article.body || article.content || '').replace(/<[^>]*>/g, '').trim();
+    }
 
     if (rawBody) {
       // Tách theo câu và lọc bỏ câu nào trùng tiêu đề hoặc trùng Sapo
@@ -846,9 +856,8 @@ export function buildVieNeuAudioUrl(text: string, voiceId?: string): string {
   if (baseUrl) {
     return `${baseUrl}/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
   }
-  // Mặc định trên môi trường Web tĩnh (GitHub Pages) hoặc máy người dùng không bật server:
-  // Phát trực tiếp luồng âm thanh tiếng Việt chuẩn để loa luôn phát ra tiếng người đọc thật 100%
-  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean)}&tl=vi&client=tw-ob`;
+  // Mặc định trên môi trường Web tĩnh: Giữ chuẩn hóa endpoint VieNeu-TTS /api/tts/stream
+  return `/api/tts/stream?text=${encodeURIComponent(clean)}&voice=${encodeURIComponent(canonicalVoice.id)}&format=mp3`;
 }
 
 
@@ -1057,6 +1066,10 @@ export class VieNeuTTSController {
 
     // Hủy yêu cầu cũ, dừng âm thanh cũ và chuyển sang giọng mới ngay lập tức
     this.activeRequestId++;
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    this.activeUtterance = null;
     if (this.audio) {
       this.audio.pause();
       this.audio.currentTime = 0;
@@ -1068,6 +1081,29 @@ export class VieNeuTTSController {
     } else {
       this.notifyState();
     }
+  }
+
+  /**
+   * Nghe thử mẫu giọng đọc AI chuẩn theo mẫu VieNeu-TTS v3 Turbo
+   */
+  public previewVoice(voiceId: string) {
+    const canonical = resolveVieNeuVoice(voiceId);
+    const sampleText = `Xin kính chào quý thính giả. Đây là giọng đọc mẫu ${canonical.name} theo chuẩn VieNeu-TTS v3 Turbo.`;
+    this.stop();
+    this.isPaused = false;
+    this.state.selectedVoice = canonical.id;
+    this.chunks = [sampleText];
+    this.currentChunkIndex = 0;
+    this.updateState({
+      status: 'playing',
+      selectedVoice: canonical.id,
+      currentlySpeakingText: sampleText,
+      totalChunks: 1,
+      currentChunkIndex: 0,
+      progressPercent: 50,
+      errorMessage: undefined
+    });
+    this.playChunk(0, this.activeRequestId);
   }
 
   public retry() {
@@ -1231,15 +1267,28 @@ export class VieNeuTTSController {
 
         const utter = new SpeechSynthesisUtterance(text);
         this.activeUtterance = utter; // Lưu tham chiếu ngăn chặn Garbage Collection của Chromium
-        utter.rate = this.state.playbackSpeed || 1.0;
         utter.lang = 'vi-VN';
 
         const voices = window.speechSynthesis.getVoices();
-        const viVoice = voices.find(v => v.lang.startsWith('vi') || /vietnam/i.test(v.name));
-        if (viVoice) utter.voice = viVoice;
+        const viVoices = voices.filter(v => v.lang.startsWith('vi') || /vietnam/i.test(v.name));
+        
+        const canonical = resolveVieNeuVoice(this.state.selectedVoice);
+        const isMale = canonical.gender === 'male';
+        const mod = getCharacterVoiceModulation(canonical.id);
 
-        const isMale = /minh|anh_khoi|dung|tuyen|binh|vinh|son|tri|adam/i.test(this.state.selectedVoice);
-        utter.pitch = isMale ? 0.9 : 1.1;
+        let chosenVoice: SpeechSynthesisVoice | undefined;
+        if (isMale) {
+          chosenVoice = viVoices.find(v => /nam|male|minh|an\b/i.test(v.name));
+        } else {
+          chosenVoice = viVoices.find(v => /nu|nữ|female|hoaimy|my|mai|linh/i.test(v.name));
+        }
+        if (!chosenVoice && viVoices.length > 0) {
+          chosenVoice = viVoices[0];
+        }
+        if (chosenVoice) utter.voice = chosenVoice;
+
+        utter.pitch = mod.pitch;
+        utter.rate = (this.state.playbackSpeed || 1.0) * mod.rateMultiplier;
 
         utter.onstart = () => {
           if (this.isPaused || reqId !== this.activeRequestId) return;
@@ -1323,6 +1372,16 @@ export class VieNeuTTSController {
       return;
     }
 
+    // Nếu trình duyệt có giọng tiếng Việt hệ thống, ưu tiên phát SpeechSynthesis trực tiếp với âm sắc đặc trưng từng mẫu giọng
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const voices = window.speechSynthesis.getVoices();
+      const hasVnVoice = voices.some(v => v.lang.startsWith('vi') || /vietnam/i.test(v.name));
+      if (hasVnVoice) {
+        this.playFallbackSpeechSynthesis(index, reqId);
+        return;
+      }
+    }
+
     this.updateState({
       status: 'playing',
       currentChunkIndex: index,
@@ -1346,21 +1405,29 @@ export class VieNeuTTSController {
       if (hasVnVoice) {
         this.playFallbackSpeechSynthesis(index, reqId);
       } else {
-        // Nếu không có giọng tiếng Việt trong hệ thống (như Chrome trên Windows), tự động thử lại với audio stream
-        if (this.chunkRetryCount < this.maxChunkRetries) {
-          this.chunkRetryCount++;
-          setTimeout(() => {
-            if (!this.isPaused && reqId === this.activeRequestId) {
-              this.playChunk(index, reqId);
-            }
-          }, 800);
-        } else {
-          this.updateState({
-            status: 'error',
-            errorMessage: 'Không thể tải âm thanh từ máy chủ giọng đọc. Vui lòng bấm Thử lại.',
-            isFallback: false
-          });
-        }
+        // Fallback âm thanh đám mây để người dùng luôn nghe thấy tiếng đọc 100%
+        try {
+          if (!this.audio) {
+            this.audio = new Audio();
+          }
+          const cleanText = (chunkText || '').trim();
+          if (cleanText) {
+            const fallbackUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText.slice(0, 180))}&tl=vi&client=tw-ob`;
+            this.audio.src = fallbackUrl;
+            this.audio.playbackRate = this.state.playbackSpeed || 1.0;
+            this.audio.onended = () => {
+              if (this.isPaused || reqId !== this.activeRequestId) return;
+              this.playChunk(index + 1, reqId);
+            };
+            this.audio.onerror = () => {
+              this.playFallbackSpeechSynthesis(index, reqId);
+            };
+            const p = this.audio.play();
+            if (p) p.catch(() => this.playFallbackSpeechSynthesis(index, reqId));
+            return;
+          }
+        } catch {}
+        this.playFallbackSpeechSynthesis(index, reqId);
       }
     };
 

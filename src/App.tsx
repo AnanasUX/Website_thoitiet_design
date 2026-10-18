@@ -1862,12 +1862,12 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                         </div>
 
                         {/* Chọn giọng đọc 3 miền & tốc độ */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <select
                             value={vieNeuVoice}
                             onChange={(e) => handleVoiceChange(e.target.value)}
                             aria-label="Chọn giọng đọc AI 3 miền"
-                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden max-w-[190px] truncate"
+                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden max-w-[170px] truncate"
                           >
                             <optgroup label="Miền Bắc (Hà Nội)">
                               {backendVoicesList.filter(v => v.region === 'north').map(v => (
@@ -1886,11 +1886,24 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                             </optgroup>
                           </select>
 
+                          <button
+                            type="button"
+                            onClick={() => controllerRef.current?.previewVoice(vieNeuVoice)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-bold text-[11px] border border-red-200 transition-all cursor-pointer shrink-0 active:scale-95 shadow-2xs"
+                            title="Nghe thử mẫu phát âm của giọng đọc AI đang chọn"
+                          >
+                            <svg className="size-3 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                            </svg>
+                            <span>Nghe thử mẫu</span>
+                          </button>
+
                           <select
                             value={vieNeuSpeed}
                             onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
                             aria-label="Điều chỉnh tốc độ phát"
-                            className="bg-white border border-slate-200 text-slate-700 py-1 px-2 rounded-lg text-[11px] font-medium outline-hidden"
+                            className="bg-white border border-slate-200 text-slate-700 py-1 px-1.5 rounded-lg text-[11px] font-medium outline-hidden"
                           >
                             <option value="0.75">0.75x</option>
                             <option value="1.0">1.0x (Chuẩn)</option>
@@ -1907,9 +1920,17 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                           <span>Động cơ: <strong className="text-slate-700">VieNeu-TTS Neural Audio</strong></span>
                         </div>
-                        <span className="text-slate-500 font-medium bg-white/70 px-2 py-0.5 rounded border border-slate-200/50">
-                          {vieNeuVoice.includes('nam') || ['minh_quan', 'minh_duc', 'anh_khoi', 'manh_dung', 'pham_tuyen', 'thanh_binh', 'xuan_vinh', 'quang_son', 'minh_triet', 'adam', 'thai_son', 'duc_tri'].includes(vieNeuVoice) ? '🎙️ Giọng Nam (Trầm ấm)' : '🎙️ Giọng Nữ (Phát thanh viên)'}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-slate-600 font-semibold bg-white px-2 py-0.5 rounded border border-slate-200/60 shadow-2xs">
+                            {(() => {
+                              const currentVoiceObj = backendVoicesList.find(v => v.id === vieNeuVoice);
+                              const regionName = currentVoiceObj?.region === 'north' ? 'Miền Bắc' : (currentVoiceObj?.region === 'central' ? 'Miền Trung' : 'Miền Nam');
+                              const genderName = currentVoiceObj?.gender === 'male' ? 'Nam' : 'Nữ';
+                              const charName = currentVoiceObj?.character === 'news' ? 'Báo chí' : (currentVoiceObj?.character === 'storytelling' ? 'Kể chuyện' : 'Tự nhiên');
+                              return `🎙️ ${regionName} • ${genderName} • ${charName}`;
+                            })()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3623,10 +3644,88 @@ function toSlug(str: string) {
 
 const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
 
+export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: any) {
+  if (!accessToken || !userInfo) return userInfo;
+  try {
+    const chRes = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails,statistics&mine=true', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (chRes.ok) {
+      const chData = await chRes.json();
+      if (chData.items && chData.items.length > 0) {
+        userInfo.youtubeChannel = chData.items[0];
+      } else {
+        userInfo.youtubeChannel = {
+          id: 'mine',
+          snippet: {
+            title: userInfo.name || 'Kênh YouTube của tôi',
+            description: `Tài khoản Google liên kết: ${userInfo.email}`,
+            customUrl: userInfo.email ? `@${userInfo.email.split('@')[0]}` : '@user',
+            thumbnails: {
+              default: { url: userInfo.picture || '' },
+              medium: { url: userInfo.picture || '' },
+              high: { url: userInfo.picture || '' }
+            }
+          },
+          statistics: {
+            subscriberCount: '0',
+            videoCount: '0',
+            viewCount: '0'
+          }
+        };
+      }
+    } else if (chRes.status === 403 || chRes.status === 401) {
+      userInfo.youtubeNeedsAuth = true;
+    }
+  } catch (err) {
+    console.warn('[YouTube API] Không thể lấy kênh của tài khoản:', err);
+  }
+
+  try {
+    const subRes = await fetch('https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (subRes.ok) {
+      const subData = await subRes.json();
+      if (subData.items && Array.isArray(subData.items)) {
+        userInfo.youtubeSubscriptions = subData.items;
+      }
+    } else if (subRes.status === 403 || subRes.status === 401) {
+      userInfo.youtubeNeedsAuth = true;
+    }
+  } catch (err) {
+    console.warn('[YouTube API] Không thể lấy danh sách kênh đã đăng ký:', err);
+  }
+
+  if (!userInfo.youtubeChannel && userInfo.email) {
+    userInfo.youtubeChannel = {
+      id: 'mine',
+      snippet: {
+        title: userInfo.name || 'Tài khoản YouTube của tôi',
+        description: `Tài khoản Google liên kết: ${userInfo.email}`,
+        customUrl: userInfo.email ? `@${userInfo.email.split('@')[0]}` : '@user',
+        thumbnails: {
+          default: { url: userInfo.picture || '' },
+          medium: { url: userInfo.picture || '' },
+          high: { url: userInfo.picture || '' }
+        }
+      },
+      statistics: {
+        subscriberCount: '0',
+        videoCount: '0',
+        viewCount: '0'
+      }
+    };
+  }
+
+  return userInfo;
+}
+
 export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string) {
   const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
-    const redirectUri = window.location.origin + basePath;
-  const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
+  const redirectUri = window.location.origin + basePath;
+  // Bổ sung quyền đọc thông tin kênh YouTube và danh sách kênh đã đăng ký của tài khoản Gmail
+  const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
   let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
   if (loginHint) {
     authUrl += `&login_hint=${encodeURIComponent(loginHint)}`;
@@ -3649,6 +3748,10 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string)
         }).then(r => r.json());
 
         userInfo._access_token = accessToken;
+
+        // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản
+        await fetchAndAttachYouTubeData(accessToken, userInfo);
+
         const authStr = JSON.stringify(userInfo);
         localStorage.setItem('user_auth', authStr);
         document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
@@ -3746,11 +3849,28 @@ function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () =>
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[400]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-[#e3e7ef] py-2 z-[500] flex flex-col overflow-hidden">
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e3e7ef] py-2 z-[500] flex flex-col overflow-hidden">
             <div className="px-4 py-2 border-b border-[#e3e7ef] flex flex-col mb-1">
               <span className="text-[13px] font-semibold text-[#182033] line-clamp-1">{userRole.name}</span>
               <span className="text-[11px] text-[#5f687b] line-clamp-1">{userRole.email}</span>
             </div>
+            {userRole.youtubeChannel && (
+              <div className="px-4 py-2 border-b border-[#e3e7ef] bg-red-50/60 flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 text-red-600 font-bold text-[11px]">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                  <span>Kênh YouTube:</span>
+                </div>
+                <span className="text-[12px] font-semibold text-slate-800 line-clamp-1">
+                  {userRole.youtubeChannel.snippet?.title || userRole.name}
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  {userRole.youtubeChannel.snippet?.customUrl || ''} 
+                  {userRole.youtubeSubscriptions?.length ? ` • ${userRole.youtubeSubscriptions.length} kênh theo dõi` : ''}
+                </span>
+              </div>
+            )}
             {isUserAdminQA(userRole) && (
               <a 
                 href={getDashboardUrl()} 
@@ -3993,8 +4113,10 @@ export default function App() {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
           .then(r => r.json())
-          .then(userInfo => {
+          .then(async userInfo => {
             userInfo._access_token = accessToken;
+            // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản
+            await fetchAndAttachYouTubeData(accessToken, userInfo);
             const authStr = JSON.stringify(userInfo);
             localStorage.setItem('user_auth', authStr);
             document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
@@ -4022,16 +4144,27 @@ export default function App() {
     }
   };
 
-  
-  
+  // Tự động đồng bộ thông tin kênh YouTube nếu người dùng đã đăng nhập và có token
+  useEffect(() => {
+    if (userRole && userRole._access_token && (!userRole.youtubeChannel || !userRole.youtubeSubscriptions)) {
+      const token = userRole._access_token;
+      const copy = { ...userRole };
+      fetchAndAttachYouTubeData(token, copy).then((synced) => {
+        if (synced.youtubeChannel || (synced.youtubeSubscriptions && synced.youtubeSubscriptions.length > 0)) {
+          setUserRole(synced);
+          localStorage.setItem('user_auth', JSON.stringify(synced));
+        }
+      });
+    }
+  }, [userRole]);
   
   // Check for expired token on load or silently refresh using top-level redirect
   useEffect(() => {
     if (userRole && userRole.email && !userRole._access_token) {
       if (!sessionStorage.getItem('google_silent_failed')) {
         const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
-    const redirectUri = window.location.origin + basePath;
-        const scope = 'openid email profile https://www.googleapis.com/auth/calendar.readonly';
+        const redirectUri = window.location.origin + basePath;
+        const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
         window.location.replace(authUrl);
       }

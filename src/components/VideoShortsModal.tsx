@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { YOUTUBE_NEWS_DATABASE, cleanVideoTitle } from './YouTubeBroadcastPlayer';
+import { fetchAndAttachYouTubeData } from '../App';
 
 export interface ShortItem {
   id: string;
@@ -2060,41 +2061,77 @@ export function VideoShortsModal({
 }: VideoShortsModalProps) {
   // ── NHẬN DIỆN TÀI KHOẢN GMAIL / GOOGLE NGƯỜI DÙNG ──
   const activeUser = useMemo(() => {
+    let authObj: any = null;
     if (userRole && userRole.email) {
+      authObj = userRole;
+    } else {
+      try {
+        const stored = localStorage.getItem('user_auth');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.email) authObj = parsed;
+        }
+      } catch {}
+    }
+    if (authObj) {
       return {
-        name: userRole.name || 'Người dùng Google',
-        email: userRole.email,
-        picture: userRole.picture || null,
-        isLoggedIn: true
+        name: authObj.name || 'Người dùng Google',
+        email: authObj.email,
+        picture: authObj.picture || null,
+        isLoggedIn: true,
+        youtubeChannel: authObj.youtubeChannel || null,
+        youtubeSubscriptions: Array.isArray(authObj.youtubeSubscriptions) ? authObj.youtubeSubscriptions : [],
+        youtubeNeedsAuth: Boolean(authObj.youtubeNeedsAuth),
+        accessToken: authObj._access_token || null
       };
     }
-    try {
-      const stored = localStorage.getItem('user_auth');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.email) {
-          return {
-            name: parsed.name || 'Người dùng Google',
-            email: parsed.email,
-            picture: parsed.picture || null,
-            isLoggedIn: true
-          };
-        }
-      }
-    } catch {}
     return {
       name: 'Khách',
       email: '',
       picture: null,
-      isLoggedIn: false
+      isLoggedIn: false,
+      youtubeChannel: null,
+      youtubeSubscriptions: [],
+      youtubeNeedsAuth: false,
+      accessToken: null
     };
   }, [userRole]);
+
+  // Trạng thái kênh YouTube và danh sách kênh đã đăng ký của tài khoản
+  const [syncedYtChannel, setSyncedYtChannel] = useState<any>(activeUser.youtubeChannel);
+  const [syncedYtSubs, setSyncedYtSubs] = useState<any[]>(activeUser.youtubeSubscriptions);
+  const [isSyncingYt, setIsSyncingYt] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (activeUser.youtubeChannel) setSyncedYtChannel(activeUser.youtubeChannel);
+    if (activeUser.youtubeSubscriptions) setSyncedYtSubs(activeUser.youtubeSubscriptions);
+  }, [activeUser]);
+
+  const handleSyncYouTube = async () => {
+    if (!activeUser.accessToken) {
+      if (onLogin) onLogin();
+      return;
+    }
+    setIsSyncingYt(true);
+    try {
+      const copy = userRole ? { ...userRole } : { email: activeUser.email, name: activeUser.name };
+      const res = await fetchAndAttachYouTubeData(activeUser.accessToken, copy);
+      if (res.youtubeChannel) setSyncedYtChannel(res.youtubeChannel);
+      if (res.youtubeSubscriptions) setSyncedYtSubs(res.youtubeSubscriptions);
+      localStorage.setItem('user_auth', JSON.stringify(res));
+      setShowToast('Đồng bộ kênh YouTube thành công!');
+    } catch {
+      setShowToast('Lỗi khi đồng bộ YouTube. Vui lòng đăng nhập lại.');
+    } finally {
+      setIsSyncingYt(false);
+    }
+  };
 
   // ── TV CHANNEL & MEDIA TAB STATES ──
   // Mặc định kênh nổi bật VTV24 là chủ đạo khi người dùng mở giao diện
   const [selectedChannelId, setSelectedChannelId] = useState<string>('vtv24');
   const [showChannelMenu, setShowChannelMenu] = useState<boolean>(false);
-  const [mediaTab, setMediaTab] = useState<'all' | 'video' | 'short'>('all');
+  const [mediaTab, setMediaTab] = useState<'all' | 'video' | 'short' | 'subscribed'>('all');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
 
   // Danh sách video đa kênh
@@ -2538,7 +2575,7 @@ export function VideoShortsModal({
   };
 
   // Chọn định dạng
-  const handleSelectMediaTab = (tab: 'all' | 'video' | 'short') => {
+  const handleSelectMediaTab = (tab: 'all' | 'video' | 'short' | 'subscribed') => {
     setMediaTab(tab);
     setCurrentIndex(0);
     if (tab === 'video' && typeof window !== 'undefined' && window.innerWidth >= 1024) {
@@ -2546,7 +2583,13 @@ export function VideoShortsModal({
     } else if (tab === 'short') {
       setIsLandscape(false);
     }
-    const label = tab === 'all' ? 'Tất cả video & Shorts' : (tab === 'video' ? 'Video dài trên kênh (16:9 Toàn cảnh)' : 'Video Shorts ngắn (9:16 Dọc)');
+    const label = tab === 'all' 
+      ? 'Tất cả video & Shorts' 
+      : (tab === 'video' 
+          ? 'Video dài trên kênh (16:9 Toàn cảnh)' 
+          : (tab === 'short' 
+              ? 'Video Shorts ngắn (9:16 Dọc)' 
+              : 'Kênh YouTube đã đăng ký'));
     setShowToast(`⚡ Chế độ: ${label}`);
     setTimeout(() => setShowToast(null), 2000);
   };
@@ -3199,6 +3242,30 @@ export function VideoShortsModal({
                 </button>
               )}
 
+              {/* Nút xem Kênh YouTube liên kết */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowChannelMenu(true);
+                  if (syncedYtSubs.length > 0) {
+                    handleSelectMediaTab('subscribed');
+                  }
+                  resetInactivityTimer();
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border cursor-pointer active:scale-95 transition-all text-[11px] font-bold shadow-md shrink-0 bg-red-600/90 hover:bg-red-600 text-white border-red-400"
+                title={activeUser.isLoggedIn ? `Kênh YouTube: ${syncedYtChannel?.snippet?.title || activeUser.name}` : 'Kết nối Kênh YouTube'}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span className="max-w-[100px] truncate">
+                  {activeUser.isLoggedIn ? (syncedYtChannel?.snippet?.customUrl || syncedYtChannel?.snippet?.title || activeUser.name) : 'YouTube'}
+                </span>
+                {syncedYtSubs.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[9.5px] font-mono">{syncedYtSubs.length}</span>
+                )}
+              </button>
+
               {/* Nút bật Smart TV Guide (chỉ hiện trên màn hình ngang desktop) */}
               {isLandscape && (
                 <button
@@ -3782,6 +3849,80 @@ export function VideoShortsModal({
               </button>
             </div>
 
+            {/* Thẻ Tài khoản YouTube liên kết */}
+            <div className="mx-3 sm:mx-5 mt-3 p-3 rounded-2xl bg-gradient-to-r from-red-950/60 via-neutral-900/80 to-neutral-900/60 border border-red-500/30 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-red-600/30 border border-red-400/40 shrink-0 flex items-center justify-center text-white">
+                  {syncedYtChannel?.snippet?.thumbnails?.default?.url || activeUser.picture ? (
+                    <img 
+                      src={syncedYtChannel?.snippet?.thumbnails?.default?.url || activeUser.picture} 
+                      alt="YouTube Channel" 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-[13px] sm:text-[14px] text-white truncate">
+                      {activeUser.isLoggedIn 
+                        ? (syncedYtChannel?.snippet?.title || activeUser.name) 
+                        : 'Chưa kết nối tài khoản YouTube'}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-red-600/40 text-red-300 border border-red-500/30">
+                      {activeUser.isLoggedIn ? 'TÀI KHOẢN CỦA BẠN' : 'KHÁCH'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-400 truncate">
+                    {activeUser.isLoggedIn ? (
+                      <>
+                        <span>{syncedYtChannel?.snippet?.customUrl || `@${activeUser.email.split('@')[0]}`}</span>
+                        {syncedYtSubs.length > 0 && <span> • <strong>{syncedYtSubs.length}</strong> kênh đã theo dõi</span>}
+                      </>
+                    ) : (
+                      'Đăng nhập Gmail để xem kênh của bạn & các kênh đăng ký'
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {activeUser.isLoggedIn ? (
+                  <>
+                    <button
+                      onClick={() => handleSelectMediaTab('subscribed')}
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all border ${
+                        mediaTab === 'subscribed'
+                          ? 'bg-red-600 text-white border-red-400 shadow-md shadow-red-600/30'
+                          : 'bg-white/10 hover:bg-white/15 text-neutral-200 border-white/20'
+                      }`}
+                    >
+                      Kênh Đã Đăng Ký ({syncedYtSubs.length})
+                    </button>
+                    <button
+                      onClick={handleSyncYouTube}
+                      disabled={isSyncingYt}
+                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 cursor-pointer transition-all flex items-center gap-1 active:scale-95"
+                      title="Đồng bộ lại kênh YouTube từ Gmail"
+                    >
+                      <span className={isSyncingYt ? 'animate-spin' : ''}>🔄</span>
+                      <span>{isSyncingYt ? 'Đang tải...' : 'Đồng bộ'}</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleSyncYouTube}
+                    className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md border border-red-400 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                  >
+                    <span>▶ Đăng nhập YouTube</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Phân Tab Định Dạng: Tất cả | Video Kênh | Shorts */}
             <div className="flex items-center gap-2 p-3 sm:px-5 bg-white/[0.02] border-b border-white/10 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 shrink-0 mr-1 flex items-center gap-1">
@@ -3829,10 +3970,104 @@ export function VideoShortsModal({
                   ({channelStatsMap[selectedChannelId]?.shorts || 0})
                 </span>
               </button>
+
+              <button
+                onClick={() => handleSelectMediaTab('subscribed')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                  mediaTab === 'subscribed'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
+                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                }`}
+              >
+                <span>🔴 Kênh Đã Đăng Ký</span>
+                <span className="text-[10px] opacity-80 font-mono">
+                  ({syncedYtSubs.length})
+                </span>
+              </button>
             </div>
 
-            {/* Grid Thẻ Kênh: ĐỒNG NHẤT CHIỀU CAO MIN-HEIGHT VÀ CĂN CHỈNH THẲNG HÀNG 100% */}
-            <div className="flex-1 overflow-y-auto p-2.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB KÊNH ĐÃ ĐĂNG KÝ THÌ HIỆN DANH SÁCH KÊNH YOUTUBE */}
+            {mediaTab === 'subscribed' ? (
+              <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                {syncedYtSubs.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {syncedYtSubs.map((sub: any, sIdx: number) => {
+                      const snippet = sub.snippet || {};
+                      const thumb = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
+                      const title = snippet.title || 'Kênh YouTube';
+                      const desc = snippet.description || 'Kênh đã đăng ký trên tài khoản YouTube của bạn';
+                      const channelId = snippet.resourceId?.channelId || '';
+                      const channelUrl = channelId ? `https://www.youtube.com/channel/${channelId}` : '#';
+
+                      return (
+                        <div
+                          key={sub.id || sIdx}
+                          className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/40 transition-all group"
+                        >
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-neutral-800 shrink-0 border border-white/20">
+                            {thumb ? (
+                              <img src={thumb} alt={title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-red-600 font-bold text-white text-lg">
+                                {title[0]?.toUpperCase() || 'Y'}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-white group-hover:text-red-400 truncate">
+                              {title}
+                            </h4>
+                            <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
+                              {desc}
+                            </p>
+                            <a
+                              href={channelUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 font-medium mt-1"
+                            >
+                              <span>Xem kênh trên YouTube</span>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
+                              </svg>
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 px-4 flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-3">
+                      📺
+                    </div>
+                    <h4 className="font-bold text-lg text-white mb-1">
+                      {activeUser.isLoggedIn ? 'Chưa tìm thấy kênh đăng ký' : 'Chưa kết nối tài khoản Google/YouTube'}
+                    </h4>
+                    <p className="text-sm text-neutral-400 max-w-md mb-4">
+                      {activeUser.isLoggedIn 
+                        ? 'Tài khoản của bạn chưa đăng ký kênh YouTube nào, hoặc cần cấp quyền truy cập danh sách kênh đăng ký.'
+                        : 'Vui lòng đăng nhập bằng Gmail để hệ thống tự động đồng bộ kênh YouTube và danh sách kênh yêu thích của bạn.'}
+                    </p>
+                    <button
+                      onClick={handleSyncYouTube}
+                      disabled={isSyncingYt}
+                      className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-red-600/30 active:scale-95 transition-all"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                      <span>{isSyncingYt ? 'Đang đồng bộ...' : (activeUser.isLoggedIn ? 'Đồng bộ Kênh YouTube' : 'Đăng nhập Google/YouTube')}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Grid Thẻ Kênh: ĐỒNG NHẤT CHIỀU CAO MIN-HEIGHT VÀ CĂN CHỈNH THẲNG HÀNG 100% */
+              <div className="flex-1 overflow-y-auto p-2.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {TV_CHANNELS.map((ch) => {
                 const isActive = selectedChannelId === ch.id;
                 const stats = channelStatsMap[ch.id] || { total: 0, videos: 0, shorts: 0 };
@@ -3915,6 +4150,7 @@ export function VideoShortsModal({
                 );
               })}
             </div>
+            )}
 
             {/* Footer EPG */}
             <div className="p-3 sm:px-5 sm:py-3.5 bg-black/60 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-400">
