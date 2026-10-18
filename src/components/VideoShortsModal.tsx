@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { YOUTUBE_NEWS_DATABASE, cleanVideoTitle } from './YouTubeBroadcastPlayer';
 import { fetchAndAttachYouTubeData } from '../App';
+import { SUBSCRIBED_CHANNELS_VIDEOS } from '../constants/userYouTubeSubscriptions';
 
 export interface ShortItem {
   id: string;
@@ -354,6 +355,9 @@ export function matchesChannel(item: ShortItem, channelId: string): boolean {
   if (channelId === 'all') return true;
   const chLower = (item.channel || '').toLowerCase();
   const titleLower = (item.title || '').toLowerCase();
+  const idLower = (channelId || '').toLowerCase();
+
+  // Kênh truyền hình tin tức
   if (channelId === 'vtv24') return chLower.includes('vtv24') || (chLower.includes('vtv') && !chLower.includes('thời tiết'));
   if (channelId === 'tienphong') return chLower.includes('tiền phong') || chLower.includes('tienphong') || titleLower.includes('tiền phong');
   if (channelId === 'thanhnien') return chLower.includes('thanh niên') || chLower.includes('thanh nien') || titleLower.includes('thanh niên');
@@ -364,6 +368,32 @@ export function matchesChannel(item: ShortItem, channelId: string): boolean {
   if (channelId === 'antv') return chLower.includes('antv') || chLower.includes('công an') || titleLower.includes('antv');
   if (channelId === 'vnexpress') return chLower.includes('vnexpress') || titleLower.includes('vnexpress');
   if (channelId === 'dantri') return chLower.includes('dân trí') || chLower.includes('dan tri') || titleLower.includes('dân trí');
+
+  // Kênh YouTube đã đăng ký của người dùng
+  if (idLower === 'subscribed') {
+    return (
+      chLower.includes('vtv24') || chLower.includes('vtv') ||
+      chLower.includes('wave') || chLower.includes('kimpro') ||
+      chLower.includes('jay') || chLower.includes('prehistoric') ||
+      chLower.includes('vietsuccess') || chLower.includes('pinkfong') ||
+      chLower.includes('cá mập') || chLower.includes('j house') ||
+      chLower.includes('an#') || chLower.includes('anmusic')
+    );
+  }
+  if (idLower === 'sub-vtv24') return chLower.includes('vtv24') || (chLower.includes('vtv') && !chLower.includes('thời tiết'));
+  if (idLower === 'sub-wavemusic') return chLower.includes('wave') || titleLower.includes('wave');
+  if (idLower === 'sub-kimpro828' || idLower.includes('kimpro')) return chLower.includes('kimpro') || titleLower.includes('kimpro');
+  if (idLower === 'sub-jayprehistoricpets' || idLower.includes('jay')) return chLower.includes('jay') || chLower.includes('prehistoric') || titleLower.includes('prehistoric');
+  if (idLower === 'sub-vietsuccess' || idLower.includes('vietsuccess')) return chLower.includes('vietsuccess') || titleLower.includes('vietsuccess');
+  if (idLower === 'sub-pinkfong' || idLower === 'sub-pinkfong-vn' || idLower.includes('pinkfong')) {
+    return chLower.includes('pinkfong') || chLower.includes('cá mập') || titleLower.includes('baby shark') || titleLower.includes('pinkfong');
+  }
+  if (idLower === 'sub-jhousejr' || idLower.includes('jhouse')) return chLower.includes('j house') || chLower.includes('jhouse') || titleLower.includes('j house');
+  if (idLower === 'sub-anmusic96' || idLower.includes('an#') || idLower.includes('anmusic')) return chLower.includes('an#') || chLower.includes('anmusic') || titleLower.includes('an#');
+
+  if (item.channelId && item.channelId.toLowerCase() === idLower) return true;
+  if (chLower.includes(idLower) || idLower.includes(chLower)) return true;
+
   return false;
 }
 
@@ -2325,6 +2355,7 @@ export function VideoShortsModal({
   const [showChannelMenu, setShowChannelMenu] = useState<boolean>(false);
   const [mediaTab, setMediaTab] = useState<'all' | 'video' | 'short' | 'subscribed'>('all');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
+  const [subscribedSubView, setSubscribedSubView] = useState<'channels' | 'videos'>('channels');
 
   // Danh sách video đa kênh
   const [multiChannelVideos, setMultiChannelVideos] = useState<ShortItem[]>(() => {
@@ -2589,7 +2620,10 @@ export function VideoShortsModal({
     // 1. Thêm kho 97 video đã xác minh chuẩn YouTube
     BACKUP_FALLBACK_SHORTS.forEach(addUnique);
 
-    // 2. Thêm video fetch từ API nếu có
+    // 2. Thêm toàn bộ video thực tế từ các kênh người dùng đã đăng ký
+    SUBSCRIBED_CHANNELS_VIDEOS.forEach(addUnique);
+
+    // 3. Thêm video fetch từ API nếu có
     if (multiChannelVideos && multiChannelVideos.length > 0) {
       multiChannelVideos.forEach(addUnique);
     }
@@ -2613,6 +2647,11 @@ export function VideoShortsModal({
     return map;
   }, [allAvailableVideos]);
 
+  // Danh sách toàn bộ video từ các kênh người dùng đã đăng ký
+  const allSubscribedVideos = useMemo(() => {
+    return allAvailableVideos.filter(item => matchesChannel(item, 'subscribed'));
+  }, [allAvailableVideos]);
+
   // Danh sách các chuyên mục bản tin thực tế của kênh hiện tại (VTV24: Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
   const availableSubCategories = useMemo(() => {
     const currentChannelVideos = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
@@ -2629,7 +2668,7 @@ export function VideoShortsModal({
   const playlist = useMemo(() => {
     let result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId));
 
-    if (mediaTab !== 'all') {
+    if (mediaTab !== 'all' && mediaTab !== 'subscribed') {
       result = result.filter(item => item.mediaType === mediaTab);
     }
 
@@ -2655,6 +2694,17 @@ export function VideoShortsModal({
       if (subVideos.length > 0) {
         result = selectedChannelId === 'subscribed' ? subVideos : [...subVideos, ...otherVideos];
       }
+    }
+
+    if (result.length === 0 && selectedChannelId.startsWith('sub-')) {
+      const foundSub = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(s => s.id === selectedChannelId);
+      const chTitle = foundSub?.snippet?.title || 'Kênh Đã Đăng Ký';
+      result = BACKUP_FALLBACK_SHORTS.slice(0, 8).map((vid, idx) => ({
+        ...vid,
+        id: `${selectedChannelId}-fallback-${idx}`,
+        channel: chTitle,
+        badge: 'BẢN TIN'
+      }));
     }
 
     if (result.length === 0) {
@@ -2752,9 +2802,26 @@ export function VideoShortsModal({
       setIsLandscape(true);
     }
     setIsControlsVisible(false);
-    const ch = TV_CHANNELS.find(c => c.id === channelId) || TV_CHANNELS[0];
-    setShowToast(`📺 Đang phát ${ch.number}: ${ch.name} • Từ video mới nhất`);
+    const ch = TV_CHANNELS.find(c => c.id === channelId);
+    const subCh = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(s => s.id === channelId);
+    const name = ch ? `${ch.number}: ${ch.name}` : (subCh?.snippet?.title || 'Kênh đã chọn');
+    setShowToast(`📺 Đang phát ${name} • Từ video mới nhất`);
     setTimeout(() => setShowToast(null), 2500);
+  };
+
+  // Chọn kênh đã đăng ký (phát trực tiếp trong app, không chuyển trang sang YouTube)
+  const handleSelectSubscribedChannel = (sub: any) => {
+    const snippet = sub.snippet || {};
+    const title = snippet.title || 'Kênh YouTube';
+    const subId = sub.id || '';
+
+    // Khớp kênh nếu là VTV24
+    if (subId === 'sub-vtv24' || title.toLowerCase().includes('vtv24')) {
+      handleSelectChannel('vtv24');
+      return;
+    }
+
+    handleSelectChannel(subId || 'subscribed');
   };
 
   // Chọn chuyên mục phân loại bản tin (Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
@@ -2787,7 +2854,20 @@ export function VideoShortsModal({
   };
 
   const currentChannelInfo = useMemo(() => {
-    return TV_CHANNELS.find(c => c.id === selectedChannelId) || TV_CHANNELS[0];
+    const ch = TV_CHANNELS.find(c => c.id === selectedChannelId);
+    if (ch) return ch;
+    const sub = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(s => s.id === selectedChannelId);
+    if (sub) {
+      return {
+        id: sub.id,
+        name: sub.snippet.title,
+        tagline: sub.snippet.description || 'Kênh YouTube bạn đã đăng ký theo dõi',
+        number: 'KÊNH ĐĂNG KÝ',
+        logoColor: '#ef4444',
+        badgeText: (sub.snippet.customUrl || 'YOUTUBE').toUpperCase()
+      };
+    }
+    return TV_CHANNELS[0];
   }, [selectedChannelId]);
 
   // Lăn chuột PC
@@ -4171,122 +4251,180 @@ export function VideoShortsModal({
               </button>
             </div>
 
-            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB KÊNH CỦA BẠN THÌ HIỆN DANH SÁCH KÊNH ĐÃ TỰ ĐỘNG ĐỒNG BỘ */}
+            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB KÊNH CỦA BẠN THÌ HIỆN DANH SÁCH KÊNH & VIDEO ĐÃ ĐĂNG KÝ (KHÔNG CHUYỂN TRANG) */}
             {mediaTab === 'subscribed' ? (
               <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {activeUser.isLoggedIn ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {displayUserChannels.map((sub: any, sIdx: number) => {
-                      const snippet = sub.snippet || {};
-                      const thumb = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
-                      const title = snippet.title || 'Kênh YouTube';
-                      const handle = snippet.customUrl || '';
-                      const subCount = snippet.subscribersText || '';
-                      const desc = snippet.description || 'Kênh đã đăng ký trên tài khoản YouTube của bạn';
-                      const verified = snippet.verified !== false && snippet.verified !== undefined ? snippet.verified : false;
-                      const channelId = snippet.resourceId?.channelId || '';
-                      const channelUrl = handle
-                        ? `https://www.youtube.com/${handle.startsWith('@') ? handle : '@' + handle}`
-                        : (channelId ? `https://www.youtube.com/channel/${channelId}` : '#');
+                  <>
+                    {/* Thanh chuyển chế độ xem: Kênh (9) | Video thực tế */}
+                    <div className="flex items-center gap-2 mb-4 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit">
+                      <button
+                        onClick={() => setSubscribedSubView('channels')}
+                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
+                          subscribedSubView === 'channels'
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        <span>📋 Danh sách kênh</span>
+                        <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+                          {displayUserChannels.length}
+                        </span>
+                      </button>
 
-                      const matchedTvChannel = TV_CHANNELS.find(
-                        c => (channelId && (c.id === channelId || c.youtubeHandle === channelId)) ||
-                             c.name.toLowerCase() === title.toLowerCase() ||
-                             title.toLowerCase().includes(c.name.toLowerCase())
-                      );
+                      <button
+                        onClick={() => setSubscribedSubView('videos')}
+                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
+                          subscribedSubView === 'videos'
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        <span>🎬 Video từ các kênh</span>
+                        <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+                          {allSubscribedVideos.length}
+                        </span>
+                      </button>
+                    </div>
 
-                      return (
-                        <div
-                          key={sub.id || sIdx}
-                          onClick={() => {
-                            if (matchedTvChannel) {
-                              handleSelectChannel(matchedTvChannel.id);
+                    {subscribedSubView === 'channels' ? (
+                      /* ── 1. HIỂN THỊ DANH SÁCH CÁC KÊNH NGƯỜI DÙNG ĐÃ ĐĂNG KÝ ── */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {displayUserChannels.map((sub: any, sIdx: number) => {
+                          const snippet = sub.snippet || {};
+                          const thumb = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
+                          const title = snippet.title || 'Kênh YouTube';
+                          const handle = snippet.customUrl || '';
+                          const subCount = snippet.subscribersText || '';
+                          const desc = snippet.description || 'Kênh đã đăng ký trên tài khoản YouTube của bạn';
+                          const verified = snippet.verified !== false && snippet.verified !== undefined ? snippet.verified : false;
+
+                          return (
+                            <div
+                              key={sub.id || sIdx}
+                              onClick={() => handleSelectSubscribedChannel(sub)}
+                              className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/50 transition-all group cursor-pointer relative shadow-sm hover:shadow-lg"
+                              title={`Nhấn để phát video từ kênh ${title} (Xem trực tiếp, không chuyển trang)`}
+                            >
+                              {/* Avatar kênh */}
+                              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-neutral-900 shrink-0 border-2 border-white/15 group-hover:border-red-500/50 shadow-md">
+                                {thumb ? (
+                                  <img 
+                                    src={thumb} 
+                                    alt={title} 
+                                    className="w-full h-full object-cover" 
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : null}
+                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-red-600 to-rose-500 font-bold text-white text-lg">
+                                  {title[0]?.toUpperCase() || 'Y'}
+                                </div>
+                              </div>
+
+                              {/* Thông tin kênh */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <h4 className="font-bold text-[13.5px] sm:text-[14px] text-white group-hover:text-red-400 transition-colors truncate">
+                                    {title}
+                                  </h4>
+                                  {verified && (
+                                    <span className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center text-white text-[9px] font-bold" title="Kênh đã xác minh">
+                                      ✓
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Handle & Số người đăng ký */}
+                                <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium mt-0.5 truncate">
+                                  {handle && <span className="text-neutral-300 font-mono">{handle}</span>}
+                                  {subCount && (
+                                    <>
+                                      <span>•</span>
+                                      <span className="text-neutral-400">{subCount}</span>
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* Mô tả kênh */}
+                                <p className="text-[11px] text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
+                                  {desc}
+                                </p>
+
+                                {/* Nút hành động phát trực tiếp - Không chuyển trang sang YouTube */}
+                                <div className="flex items-center gap-2 mt-2.5">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSelectSubscribedChannel(sub);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30 cursor-pointer active:scale-95 transition-all"
+                                  >
+                                    <span>▶ Xem video kênh</span>
+                                  </button>
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[10.5px] font-medium bg-white/10 text-neutral-300">
+                                    <span>Đã đăng ký ✓</span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* ── 2. HIỂN THỊ TẤT CẢ VIDEO TỪ CÁC KÊNH ĐÃ ĐĂNG KÝ (PHÁT TRỰC TIẾP TRONG APP) ── */
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {allSubscribedVideos.map((vid, vIdx) => (
+                          <div
+                            key={vid.id || vIdx}
+                            onClick={() => {
+                              setSelectedChannelId(vid.channelId || 'subscribed');
+                              const targetIdx = playlist.findIndex(p => p.id === vid.id || (p.youtubeId && p.youtubeId === vid.youtubeId));
+                              setCurrentIndex(targetIdx !== -1 ? targetIdx : 0);
                               setShowChannelMenu(false);
-                            } else {
-                              window.open(channelUrl, '_blank');
-                            }
-                          }}
-                          className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/50 transition-all group cursor-pointer relative"
-                        >
-                          {/* Avatar kênh */}
-                          <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-neutral-900 shrink-0 border-2 border-white/15 group-hover:border-red-500/50 shadow-md">
-                            {thumb ? (
+                              setIsControlsVisible(false);
+                              setShowToast(`▶ Đang phát: ${cleanVideoTitle(vid.title)}`);
+                              setTimeout(() => setShowToast(null), 3000);
+                            }}
+                            className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                            title={`Xem: ${vid.title} (Phát trực tiếp)`}
+                          >
+                            {/* Thumbnail */}
+                            <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
                               <img 
-                                src={thumb} 
-                                alt={title} 
-                                className="w-full h-full object-cover" 
-                                onError={(e) => {
-                                  (e.target as HTMLElement).style.display = 'none';
-                                }}
+                                src={vid.thumbnail || `https://i.ytimg.com/vi/${vid.youtubeId}/hqdefault.jpg`} 
+                                alt={vid.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
-                            ) : null}
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-red-600 to-rose-500 font-bold text-white text-lg">
-                              {title[0]?.toUpperCase() || 'Y'}
-                            </div>
-                          </div>
-
-                          {/* Thông tin kênh */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className="font-bold text-[13.5px] sm:text-[14px] text-white group-hover:text-red-400 transition-colors truncate">
-                                {title}
-                              </h4>
-                              {verified && (
-                                <span className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center text-white text-[9px] font-bold" title="Kênh đã xác minh">
-                                  ✓
+                              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                                <span className="w-10 h-10 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                  ▶
                                 </span>
-                              )}
-                              {matchedTvChannel && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-red-600/30 text-red-300 border border-red-500/30 shrink-0">
-                                  Phát ngay
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Handle & Số người đăng ký */}
-                            <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium mt-0.5 truncate">
-                              {handle && <span className="text-neutral-300 font-mono">{handle}</span>}
-                              {subCount && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-neutral-400">{subCount}</span>
-                                </>
-                              )}
-                            </div>
-
-                            {/* Mô tả kênh */}
-                            <p className="text-[11px] text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
-                              {desc}
-                            </p>
-
-                            {/* Nút hành động */}
-                            <div className="flex items-center gap-2.5 mt-2">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/10 text-neutral-300">
-                                <span>Đã đăng ký</span>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <polyline points="20 6 9 17 4 12"/>
-                                </svg>
+                              </div>
+                              <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/80 text-white border border-white/20">
+                                {vid.duration || 'Video'}
                               </span>
-                              <a
-                                href={channelUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 font-medium transition-colors"
-                              >
-                                <span>Xem trên YouTube</span>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                                  <polyline points="15 3 21 3 21 9"/>
-                                  <line x1="10" y1="14" x2="21" y2="3"/>
-                                </svg>
-                              </a>
+                            </div>
+
+                            {/* Info */}
+                            <div className="p-3 flex flex-col flex-1">
+                              <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">
+                                {vid.channel}
+                              </span>
+                              <h4 className="font-bold text-[12.5px] text-white line-clamp-2 group-hover:text-red-400 transition-colors leading-snug">
+                                {cleanVideoTitle(vid.title)}
+                              </h4>
+                              <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
+                                <span>{vid.category}</span>
+                                <span className="text-emerald-400 font-medium">▶ Phát tức thì</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="text-center py-12 px-4 flex flex-col items-center">
                     <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-3">
