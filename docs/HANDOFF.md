@@ -2,31 +2,16 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.23.0`
-- **Commit gần nhất Frontend**: `51d871e` (`fix(sync-news): hoan tat phuc hoi logic day bai tin tuc telegram va dong bo sang website`)
-- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `3e1a19a` (`fix(scheduler): dinh danh ro rang mui gio Asia/Ho_Chi_Minh cho BackgroundScheduler`)
+- **Phiên bản**: `1.24.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `872efec` (`feat: real YouTube account scan, screen wake lock & activity-aware smart reload`)
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `6e3657b` (`fix(backend): hoan thien trich xuat paragraph voi tham so desc va chuan hoa vieneu v3 turbo`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
-  + ✅ **Đồng bộ hóa 100% Tiến độ Telegram & Google Sheets**: Đã hợp nhất module quét tiến độ Drive `quet_tat_ca_tien_do_drive()` làm nguồn chân lý duy nhất (Single Source of Truth), sửa lỗi các file chưa có thư mục gốc/chưa làm bị đánh dấu nhầm "Hoàn thành" trên Sheets. Dữ liệu trên Google Sheets tab `TIENGVIET` (dòng 74–84) đã được cập nhật chuẩn xác thành "Chưa làm" đồng bộ tuyệt đối với báo cáo Telegram `/baocao`.
+  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
-  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram (`python -m unittest discover tests -v`)**: 18/18 tests PASS (100% OK).
-  + ✅ **Kiểm thử tương tác sâu và bộ quét lỗi giao diện trực quan (`scripts/test-visual-fullsystem.mjs`)**:
-    1. *Thao tác cuộn sâu Desktop*: Vuốt cuộn y > 1500px, kích hoạt nút `ScrollToTop` và cuộn mượt về đỉnh (`scrollY = 0`).
-    2. *Click bài viết chi tiết*: Mở modal bài viết, cuộn nội dung, kích hoạt Web Speech API TTS tiếng Việt ("Đang đọc..."), xem bài liên quan, thoát modal qua phím `Escape`.
-    3. *Shorts Player & Tiện ích*: Điều khiển 16:9 Cinema, phím tắt `Space` (Play/Pause), `M` (Mute/Unmute), Dark Mode toggle, chuyển đổi lịch âm dương.
-    4. *Bố cục Tablet (768px) & Cử chỉ vuốt chạm Mobile (375px)*: Thẩm định công thái học, không đè nút, cuộn mượt mà.
-    5. *Bộ quét lỗi trực quan tự động (Visual Defect Scanner)*:
-       - 0 lỗi tràn viền ngang (Horizontal Overflow: `scrollWidth <= clientWidth` trên Desktop, Tablet, Mobile).
-       - 0 ảnh hỏng (100% thẻ `<img>` có `naturalWidth > 0`).
-       - Vùng chạm ngón tay đạt chuẩn công thái học ($\ge 40\text{px}$), 0 xung đột z-index.
-  + ✅ **Động Cơ Điều Phối Lỗi Tự Động Antigravity Copilot Pro (`mrkun28@gmail.com`)**:
-    - Nhận diện tài khoản quản trị Pro `mrkun28@gmail.com`.
-    - Khi có lỗi kiểm thử (`problems > 0`), hệ thống tự động phát âm báo, mở modal điều phối `#copilotModal`, đóng gói chỉ thị chuẩn `AI_PROJECT_PROTOCOL.md` vào `localStorage.antigravity_active_task` để Antigravity AI tự động thực hiện.
-    - Nút `[🧪 Thử Nghiệm Báo Lỗi]` cho phép mô phỏng thử nghiệm lỗi và khôi phục lại trạng thái PASS 100%.
-  + ✅ **Kiểm thử 7 kịch bản trải nghiệm người dùng thực tế (`scripts/test-ux-flows.mjs`)**: 21/21 assertions UX đạt chuẩn.
-  + ✅ **Kiểm thử logic chuyên sâu 22 luồng thông tin, bảo mật API, hầm mã hóa, video báo chí & VieNeu-TTS v3 Turbo AI (`src/utils/logicFlows.ts`, `src/utils/securityShield.ts`, `src/utils/cryptoVault.ts`, `src/utils/articleVideoEngine.ts`, `src/utils/vieneuTTS.ts` & `scripts/test-logic-flows.mjs`)**: 368/368 assertions logic passed (100% PASS).
-  + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`scripts/test_vieneu_backend.py`)**: 43/43 assertions passed (100% PASS).
-  + ✅ **Kiểm thử trực tiếp in-browser QA Dashboard (`npm run test:dashboard`)**: 47/47 PASS (100% ĐẠT, 0 FAIL) kết hợp kiểm chứng luồng giải mã RAM hầm mã hóa, video báo chí, VieNeu-TTS v3 Turbo AI và Auto-Dispatch của Antigravity Copilot.
-  + ✅ **Kết quả kiểm thử toàn diện**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL).
+  + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
+  + ✅ **Kiểm thử logic chuyên sâu 23 luồng hệ thống (`npm run test:logic`)**: 383/383 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).
+  + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop và Mobile.
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
 - **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
 
