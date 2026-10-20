@@ -330,10 +330,10 @@ export function runAllLogicFlowTests() {
   assert(freshList[2].title === "Tin 3 ngày trước", "Bài 3 ngày trước xếp thứ ba");
 
   // 3.8 formatArticleDate (Timezone-resilient check)
-  const formattedToday = formatArticleDate("Thu, 15 Oct 2026 10:30:00 +07:00", nowFixed);
-  assert(formattedToday.includes("Hôm nay"), "Format ngày hôm nay");
-  const formattedYesterday = formatArticleDate("Wed, 14 Oct 2026 15:45:00 +07:00", nowFixed);
-  assert(formattedYesterday.includes("Hôm qua"), "Format ngày hôm qua");
+  const formattedArticleToday = formatArticleDate("Thu, 15 Oct 2026 10:30:00 +07:00", nowFixed);
+  assert(formattedArticleToday.includes("Hôm nay"), "Format ngày hôm nay");
+  const formattedArticleYesterday = formatArticleDate("Wed, 14 Oct 2026 15:45:00 +07:00", nowFixed);
+  assert(formattedArticleYesterday.includes("Hôm qua"), "Format ngày hôm qua");
 
   console.log(`    ${colors.green}✓ Luồng Tin Tức: Đạt 28/28 kiểm tra thuật toán khử trùng, độ tươi mới & định dạng ngày giờ${colors.reset}`);
 

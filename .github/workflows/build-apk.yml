@@ -57,7 +57,17 @@ jobs:
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee apk-build.log
+
+      - name: Save build log to branch on failure
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B debug/apk-build-logs
+          git add -f android/apk-build.log || true
+          git commit -m "ci: debug apk build output" || true
+          git push -f origin debug/apk-build-logs || true
 
       - name: Rename APK
         run: |
