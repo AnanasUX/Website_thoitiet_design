@@ -153,7 +153,7 @@ export async function runAllUXFlowTests(page) {
       await page.waitForTimeout(600);
 
       const shortsModalOpen = await page.evaluate(() => {
-        const shortsModal = document.querySelector('.fixed.inset-0.z-\\[200\\].bg-black, [role="dialog"], .fixed.inset-0.z-\\[120\\], .fixed.inset-0.z-\\[130\\], .fixed.inset-0.z-\\[150\\], .fixed.inset-0.z-\\[200\\]');
+        const shortsModal = document.querySelector('[data-testid="video-shorts-modal"], .fixed.inset-0.z-\\[200\\].bg-black, [role="dialog"], .fixed.inset-0.z-\\[120\\], .fixed.inset-0.z-\\[130\\], .fixed.inset-0.z-\\[150\\], .fixed.inset-0.z-\\[200\\]');
         return Boolean(shortsModal);
       });
       assertUX('UX-02.2: Trình phát Shorts mở với nền mờ rạp chiếu chuyên nghiệp', shortsModalOpen, 'Shorts modal đã mở và phủ backdrop');

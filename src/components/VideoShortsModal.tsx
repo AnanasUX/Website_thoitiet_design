@@ -1976,7 +1976,7 @@ async function fetchAggregatedNewsShorts(): Promise<ShortItem[]> {
     if (cached) {
       const parsed = JSON.parse(cached);
       if (Date.now() - parsed.timestamp < CACHE_TTL_MS && Array.isArray(parsed.items) && parsed.items.length > 0) {
-        return parsed.items;
+        return parsed.items.filter((item: any) => !isMockVideo(item) && item?.youtubeId !== 'tFkZ_9pL1uM');
       }
     }
   } catch {}
@@ -2393,8 +2393,8 @@ export function VideoShortsModal({
       syncedYtSubs.filter((c: any) => !isMockChannel(c)).forEach(addChannel);
     }
 
-    // 3. Nếu chưa đăng nhập tài khoản thực tế (khách vãng lai) và chưa có kênh nào, hiển thị danh mục kênh chính thống chuẩn mực Việt Nam
-    if (!activeUser.isLoggedIn && list.length === 0) {
+    // 3. Nếu danh sách kênh rỗng (chưa có kênh riêng), tự động hiển thị danh mục kênh chính thống chuẩn mực Việt Nam
+    if (list.length === 0) {
       DEFAULT_OFFICIAL_CHANNELS.forEach(ch => {
         addChannel({
           ...ch,
@@ -2497,10 +2497,12 @@ export function VideoShortsModal({
       const cached = localStorage.getItem(MULTI_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed.items) && parsed.items.length > 0) return parsed.items;
+        if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+          return parsed.items.filter((item: any) => !isMockVideo(item) && item?.youtubeId !== 'tFkZ_9pL1uM');
+        }
       }
     } catch {}
-    return BACKUP_FALLBACK_SHORTS;
+    return BACKUP_FALLBACK_SHORTS.filter(v => !isMockVideo(v) && v.youtubeId !== 'tFkZ_9pL1uM');
   });
 
   // Yêu cầu bắt buộc: Mặc định mở tiếng lên không tắt tiếng khi truy cập
@@ -2797,7 +2799,7 @@ export function VideoShortsModal({
     const seen = new Set<string>();
 
     const addUnique = (item: ShortItem) => {
-      if (!item || isMockVideo(item)) return;
+      if (!item || isMockVideo(item) || item.youtubeId === 'tFkZ_9pL1uM') return;
       const key = item.youtubeId || item.id;
       if (key && !seen.has(key)) {
         seen.add(key);
@@ -2861,20 +2863,22 @@ export function VideoShortsModal({
   const playlist = useMemo(() => {
     // 0. Nếu đang ở tab Lịch sử xem (Watch History): Trả về danh sách video người dùng đã xem trước đó để sử dụng liền mạch
     if (mediaTab === 'history') {
-      const historyVideos: ShortItem[] = watchHistory.map((h, idx) => ({
-        id: h.id || `hist-${idx}`,
-        youtubeId: h.youtubeId,
-        title: h.title,
-        channel: h.channel,
-        badge: 'ĐÃ XEM',
-        category: 'Lịch sử xem',
-        subCategory: 'Đã xem gần đây',
-        duration: h.duration || 'Shorts',
-        mediaType: h.mediaType || 'short',
-        thumbnail: h.thumbnail,
-        publishedAt: h.watchedAt || new Date().toISOString(),
-        liked: false
-      }));
+      const historyVideos: ShortItem[] = watchHistory
+        .filter(h => !isMockVideo(h) && h.youtubeId !== 'tFkZ_9pL1uM')
+        .map((h, idx) => ({
+          id: h.id || `hist-${idx}`,
+          youtubeId: h.youtubeId,
+          title: h.title,
+          channel: h.channel,
+          badge: 'ĐÃ XEM',
+          category: 'Lịch sử xem',
+          subCategory: 'Đã xem gần đây',
+          duration: h.duration || 'Shorts',
+          mediaType: h.mediaType || 'short',
+          thumbnail: h.thumbnail,
+          publishedAt: h.watchedAt || new Date().toISOString(),
+          liked: false
+        }));
       if (historyVideos.length > 0) return historyVideos;
     }
 
@@ -2911,7 +2915,7 @@ export function VideoShortsModal({
     if (result.length === 0 && selectedChannelId.startsWith('sub-')) {
       const foundSub = displayUserChannels.find((s: any) => s.id === selectedChannelId || s.snippet?.resourceId?.channelId === selectedChannelId);
       const chTitle = foundSub?.snippet?.title || 'Kênh Đã Đăng Ký';
-      result = BACKUP_FALLBACK_SHORTS.filter(v => !isMockVideo(v)).slice(0, 8).map((vid, idx) => ({
+      result = BACKUP_FALLBACK_SHORTS.filter(v => !isMockVideo(v) && v.youtubeId !== 'tFkZ_9pL1uM').slice(0, 8).map((vid, idx) => ({
         ...vid,
         id: `${selectedChannelId}-fallback-${idx}`,
         channel: chTitle,
@@ -2920,16 +2924,18 @@ export function VideoShortsModal({
     }
 
     if (result.length === 0) {
-      result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId, displayUserChannels) && !isMockVideo(item));
+      result = allAvailableVideos.filter(item => matchesChannel(item, selectedChannelId, displayUserChannels) && !isMockVideo(item) && item.youtubeId !== 'tFkZ_9pL1uM');
     }
 
-    const cleanResult = result.filter(item => !isMockVideo(item));
-    return cleanResult.length > 0 ? cleanResult : BACKUP_FALLBACK_SHORTS.filter(v => !isMockVideo(v));
+    const cleanResult = result.filter(item => !isMockVideo(item) && item.youtubeId !== 'tFkZ_9pL1uM');
+    return cleanResult.length > 0 ? cleanResult : BACKUP_FALLBACK_SHORTS.filter(v => !isMockVideo(v) && v.youtubeId !== 'tFkZ_9pL1uM');
   }, [allAvailableVideos, selectedChannelId, mediaTab, activeUser.isLoggedIn, followedMap, displayUserChannels, watchHistory]);
 
-  const validFallback = BACKUP_FALLBACK_SHORTS.filter(v => !isMockVideo(v))[0];
-  const currentShort = (!isMockVideo(playlist[currentIndex]) ? playlist[currentIndex] : null) || 
-                       playlist.find(p => !isMockVideo(p)) || 
+  const validFallback = BACKUP_FALLBACK_SHORTS.find(v => !isMockVideo(v) && v.youtubeId !== 'tFkZ_9pL1uM') || BACKUP_FALLBACK_SHORTS[0];
+  const candidateShort = playlist[currentIndex];
+  const isCandidateValid = candidateShort && !isMockVideo(candidateShort) && candidateShort.youtubeId !== 'tFkZ_9pL1uM';
+  const currentShort = (isCandidateValid ? candidateShort : null) || 
+                       playlist.find(p => !isMockVideo(p) && p.youtubeId !== 'tFkZ_9pL1uM') || 
                        validFallback;
 
   // ── TỰ ĐỘNG GHI NHẬN LỊCH SỬ XEM VIDEO (WATCH HISTORY) ──
@@ -2962,17 +2968,45 @@ export function VideoShortsModal({
     return () => clearTimeout(timer);
   }, [currentShort?.id, isOpen, userStorageKey]);
 
-  // Reset về video mới nhất khi mở modal Shorts
+  // Reset về video mới nhất khi mở modal Shorts & Dọn sạch triệt để mọi rác mock data trong storage
   useEffect(() => {
     if (isOpen) {
-      setCurrentIndex(0);
       setVideoErrorState(false);
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (
+            k.startsWith('weather_user_channels_') ||
+            k.startsWith('weather_app_subscribed_channels_') ||
+            k.startsWith('weather_watch_history_') ||
+            k === 'weather_history' ||
+            k === MULTI_CACHE_KEY
+          ) {
+            const raw = localStorage.getItem(k);
+            if (raw && (raw.includes('An#') || raw.includes('tFkZ_9pL1uM') || raw.toLowerCase().includes('acoustic') || raw.toLowerCase().includes('wavemusic') || raw.toLowerCase().includes('kimpro') || raw.toLowerCase().includes('pinkfong'))) {
+              try {
+                const p = JSON.parse(raw);
+                if (Array.isArray(p)) {
+                  const clean = p.filter((item: any) => !isMockChannel(item) && !isMockVideo(item) && item?.youtubeId !== 'tFkZ_9pL1uM');
+                  localStorage.setItem(k, JSON.stringify(clean));
+                } else if (p && p.items && Array.isArray(p.items)) {
+                  p.items = p.items.filter((item: any) => !isMockVideo(item) && item?.youtubeId !== 'tFkZ_9pL1uM');
+                  localStorage.setItem(k, JSON.stringify(p));
+                }
+              } catch {
+                localStorage.removeItem(k);
+              }
+            }
+          }
+        }
+      } catch {}
     }
   }, [isOpen]);
 
   // Tự động bỏ qua và chuyển về VTV24 nếu video đang chọn là video mock cũ còn sót lại trong cache
   useEffect(() => {
-    if (currentShort && isMockVideo(currentShort)) {
+    if (currentShort && (isMockVideo(currentShort) || currentShort.youtubeId === 'tFkZ_9pL1uM')) {
       setSelectedChannelId('vtv24');
       setCurrentIndex(0);
       try {
@@ -3770,16 +3804,21 @@ export function VideoShortsModal({
               : 'translate-y-0 opacity-100 scale-100'
           }`}
         >
-          {currentShort.youtubeId ? (
-            <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto notranslate" translate="no">
-              <iframe
-                ref={iframeRef}
-                key={currentShort.youtubeId}
-                src={`https://www.youtube.com/embed/${currentShort.youtubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&fs=0&disablekb=1&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
-                referrerPolicy="strict-origin-when-cross-origin"
-                title={cleanVideoTitle(currentShort.title)}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"
+          {(() => {
+            const isInvalidOrMock = !currentShort.youtubeId || currentShort.youtubeId === 'tFkZ_9pL1uM' || isMockVideo(currentShort);
+            const safeYoutubeId = isInvalidOrMock ? '0A7wBfE8mKY' : currentShort.youtubeId;
+            const safeTitle = isInvalidOrMock ? 'Bản tin VTV24 Thời sự trực tiếp' : cleanVideoTitle(currentShort.title);
+
+            return safeYoutubeId ? (
+              <div className="w-full h-full absolute inset-0 bg-black overflow-hidden pointer-events-auto notranslate" translate="no">
+                <iframe
+                  ref={iframeRef}
+                  key={safeYoutubeId}
+                  src={`https://www.youtube.com/embed/${safeYoutubeId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3&fs=0&disablekb=1&hl=vi&origin=${encodeURIComponent(window.location.origin)}`}
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  title={safeTitle}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  className="w-full h-full border-0 absolute inset-0 z-0 bg-black pointer-events-auto"
                 onLoad={(e) => {
                   const ifr = e.target as HTMLIFrameElement;
                   try {
@@ -3816,7 +3855,8 @@ export function VideoShortsModal({
               muted={isMuted}
               className="w-full h-full object-cover absolute inset-0 cursor-pointer"
             />
-          )}
+          );
+          })()}
         </div>
 
         {/* ── LỚP BẮT TƯƠNG TÁC (CHỐNG CHUYỂN HƯỚNG RA YOUTUBE) ── */}
@@ -4133,6 +4173,39 @@ export function VideoShortsModal({
                     </span>
                     <span>{ch.name}</span>
                     {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping shrink-0"></span>}
+                  </button>
+                );
+              })}
+
+              {/* Kênh Đã Đăng Ký Của Người Dùng trên thanh 16:9 Cinema */}
+              {displayUserChannels.map((sub: any) => {
+                const title = sub.snippet?.title || 'Kênh đã đăng ký';
+                const avatar = sub.snippet?.thumbnails?.default?.url || sub.snippet?.thumbnails?.medium?.url;
+                const subId = sub.snippet?.resourceId?.channelId || sub.id || title;
+                const isActive = selectedChannelId === subId || selectedChannelId === sub.id || selectedChannelId === title;
+                return (
+                  <button
+                    key={sub.id || subId}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectSubscribedChannel(sub);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap backdrop-blur-md transition-all border cursor-pointer active:scale-95 shadow-md shrink-0 ${
+                      isActive 
+                        ? 'bg-red-600 text-white border-red-400 shadow-[0_0_12px_rgba(239,68,68,0.5)]' 
+                        : 'bg-red-950/60 hover:bg-red-900/80 text-white/90 border-red-500/30'
+                    }`}
+                    title={`Phát kênh đã đăng ký: ${title}`}
+                  >
+                    {avatar ? (
+                      <img src={avatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <span className="w-3.5 h-3.5 rounded-full bg-red-500 text-white flex items-center justify-center text-[8px] font-bold shrink-0">
+                        {title.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="truncate max-w-[120px]">{title}</span>
+                    <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-red-600 text-white font-black">SUB</span>
                   </button>
                 );
               })}
@@ -4487,6 +4560,36 @@ export function VideoShortsModal({
                   >
                     <span className="font-mono text-[9px] opacity-80">{ch.number}</span>
                     <span>{ch.name}</span>
+                  </button>
+                );
+              })}
+
+              {/* Kênh Đã Đăng Ký Của Bạn trong Drawer */}
+              {displayUserChannels.map((sub: any) => {
+                const title = sub.snippet?.title || 'Kênh đã đăng ký';
+                const avatar = sub.snippet?.thumbnails?.default?.url || sub.snippet?.thumbnails?.medium?.url;
+                const subId = sub.snippet?.resourceId?.channelId || sub.id || title;
+                const isActive = selectedChannelId === subId || selectedChannelId === sub.id || selectedChannelId === title;
+                return (
+                  <button
+                    key={sub.id || subId}
+                    onClick={() => handleSelectSubscribedChannel(sub)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
+                      isActive 
+                        ? 'bg-red-600 text-white border-red-400 shadow-sm' 
+                        : 'bg-red-950/40 hover:bg-red-900/60 text-red-200 border-red-500/30'
+                    }`}
+                    title={`Phát video từ kênh: ${title}`}
+                  >
+                    {avatar ? (
+                      <img src={avatar} alt="" className="w-3.5 h-3.5 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <span className="w-3.5 h-3.5 rounded-full bg-red-600 text-white flex items-center justify-center text-[8px] font-bold shrink-0">
+                        {title.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="truncate max-w-[100px]">{title}</span>
+                    <span className="text-[8px] font-mono px-1 py-0.2 rounded bg-red-500/40 text-white">SUB</span>
                   </button>
                 );
               })}

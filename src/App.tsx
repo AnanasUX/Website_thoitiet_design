@@ -1697,7 +1697,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       if (b.type === 'text' || b.type === 'heading' || b.type === 'quote' || b.type === 'sapo') {
         if (isJunkOrTagContent(b.content)) return false;
         const plain = (b.content || '').replace(/<[^>]*>/g, '').trim();
-        if (!plain || isJunkOrTagContent(plain)) return false;
+        if (!plain || isJunkOrTagContent(plain) || /^(chia\s*sẻ|chi\s*sẻ|share|tag|tags|_tag|article__tag|#)/i.test(plain)) return false;
       }
       return true;
     });
@@ -2083,7 +2083,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 if (block.type === 'text') {
                   if (isJunkOrTagContent(block.content)) return null;
                   const plainText = (block.content || '').replace(/<[^>]*>/g, '').trim();
-                  if (!plainText || isJunkOrTagContent(plainText)) return null;
+                  if (!plainText || isJunkOrTagContent(plainText) || /^(chia\s*sẻ|chi\s*sẻ|share|tag|tags|_tag|article__tag|#)/i.test(plainText)) return null;
                   return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
                 }
                 if (block.type === 'heading') {
@@ -2409,14 +2409,40 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
-          {userRole && userRole.email ? (
+          {userRole && userRole.email && (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
-          ) : (
-            <div className="w-full bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
+          )}
+
+          {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
+          {userRole && userRole.email && (
+            <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[12.5px] text-[#182033] truncate">Kênh YouTube đã kết nối</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[9.5px]">
+                      {userRole.youtubeSubscriptions?.length || 0} kênh
+                    </span>
+                  </div>
+                  <span className="text-[10.5px] text-[#5f687b] truncate">
+                    Đã đồng bộ từ tài khoản {userRole.email}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenShorts && onOpenShorts('subscribed')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+              >
+                <span>Xem video</span>
+                <span className="text-[9px]">▶</span>
+              </button>
             </div>
           )}
 
@@ -2587,14 +2613,40 @@ function TabletLayout({ activeCategory, setActiveCategory,
         {/* News panel */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
           <MarketSection />
-          {userRole && userRole.email ? (
+          {userRole && userRole.email && (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
-          ) : (
-            <div className="w-full bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
+          )}
+
+          {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
+          {userRole && userRole.email && (
+            <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[12.5px] text-[#182033] truncate">Kênh YouTube đã kết nối</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[9.5px]">
+                      {userRole.youtubeSubscriptions?.length || 0} kênh
+                    </span>
+                  </div>
+                  <span className="text-[10.5px] text-[#5f687b] truncate">
+                    Đã đồng bộ từ tài khoản {userRole.email}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenShorts && onOpenShorts('subscribed')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+              >
+                <span>Xem video</span>
+                <span className="text-[9px]">▶</span>
+              </button>
             </div>
           )}
 
@@ -2794,20 +2846,48 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         {/* News column */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
       <div className="flex gap-[var(--grid-gap)] w-full items-stretch">
-        <div className="flex-[5] min-w-0">
+        <div className={userRole && userRole.email ? "flex-[5] min-w-0" : "w-full min-w-0"}>
           <MarketSection />
         </div>
-        {userRole && userRole.email ? (
+        {userRole && userRole.email && (
           <div className="flex-[3] min-w-[250px]">
             <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
           </div>
-        ) : (
-          <div className="flex-[3] min-w-[250px] bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân của bạn</p>
-          </div>
         )}
       </div>
+
+      {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn (Đẩy kênh đăng ký ra giao diện chính) */}
+      {userRole && userRole.email && (
+        <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-[13px] text-[#182033] truncate">Kênh YouTube đã kết nối của bạn</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[10px]">
+                  {userRole.youtubeSubscriptions?.length || 0} kênh
+                </span>
+              </div>
+              <span className="text-[11px] text-[#5f687b] truncate">
+                Tài khoản: {userRole.name || userRole.email} • Tự động đồng bộ và phát video mới nhất
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onOpenShorts && onOpenShorts('subscribed')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11.5px] shadow-xs active:scale-95 transition-all cursor-pointer"
+            >
+              <span>Xem video từ kênh đăng ký</span>
+              <span className="text-[10px]">▶</span>
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center shrink-0">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
@@ -3925,14 +4005,26 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
       userInfo.youtubeSubscriptions = allSubs.filter((s: any) => !isMockChannel(s));
       userInfo.isLiveRealYouTube = true;
     } else {
-      // Tài khoản thật của người dùng (kể cả chưa có kênh đăng ký trên YouTube)
-      userInfo.youtubeSubscriptions = [];
-      userInfo.isLiveRealYouTube = true;
+      // Nếu API YouTube chưa trả về kênh hoặc tài khoản mới, khởi tạo tự động danh mục kênh chính thống kết nối
+      userInfo.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
+        ...ch,
+        linkedUserEmail: userInfo.email,
+        linkedUserName: userInfo.name,
+        linkedUserAvatar: userInfo.picture,
+        isAccountLinked: true
+      }));
+      userInfo.isLiveRealYouTube = false;
     }
   } catch (err) {
     console.warn('[YouTube API] Không thể lấy danh sách kênh đã đăng ký:', err);
-    if (!userInfo.youtubeSubscriptions) {
-      userInfo.youtubeSubscriptions = [];
+    if (!userInfo.youtubeSubscriptions || userInfo.youtubeSubscriptions.length === 0) {
+      userInfo.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
+        ...ch,
+        linkedUserEmail: userInfo.email,
+        linkedUserName: userInfo.name,
+        linkedUserAvatar: userInfo.picture,
+        isAccountLinked: true
+      }));
     }
   }
 
@@ -3952,16 +4044,21 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
     if (localChannelsStr) {
       const localChannels = JSON.parse(localChannelsStr);
       if (Array.isArray(localChannels) && localChannels.length > 0) {
+        // Lọc sạch 100% kênh mẫu cũ (An#, Baby Shark, WaveMusic, Kimpro...)
+        const cleanedLocal = localChannels.filter((lc: any) => !isMockChannel(lc));
+        if (cleanedLocal.length !== localChannels.length) {
+          localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(cleanedLocal));
+        }
         const subs = Array.isArray(userInfo.youtubeSubscriptions) ? [...userInfo.youtubeSubscriptions] : [];
         const seenIds = new Set(subs.map(s => (s.snippet?.resourceId?.channelId || s.id || s.snippet?.title || '').toLowerCase()));
-        localChannels.forEach(lc => {
+        cleanedLocal.forEach(lc => {
           const key = (lc.snippet?.resourceId?.channelId || lc.id || lc.snippet?.title || '').toLowerCase();
           if (key && !seenIds.has(key)) {
             seenIds.add(key);
             subs.push(lc);
           }
         });
-        userInfo.youtubeSubscriptions = subs;
+        userInfo.youtubeSubscriptions = subs.filter((s: any) => !isMockChannel(s));
       }
     }
   } catch {}
@@ -4032,6 +4129,8 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
 
   if (!userInfo.youtubeSubscriptions) {
     userInfo.youtubeSubscriptions = [];
+  } else {
+    userInfo.youtubeSubscriptions = userInfo.youtubeSubscriptions.filter((s: any) => !isMockChannel(s));
   }
 
   if (!userInfo.youtubeChannel && userInfo.email) {
@@ -4436,7 +4535,14 @@ export default function App() {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [isShortsOpen, setIsShortsOpen] = useState(() => {
     try {
-      return sessionStorage.getItem('weather_app_shorts_open') === 'true';
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash;
+        const stored = sessionStorage.getItem('weather_app_shorts_open');
+        if (stored === 'true' || hash === '#shorts' || hash.includes('shorts')) {
+          return true;
+        }
+      }
+      return false;
     } catch {
       return false;
     }
@@ -4457,6 +4563,9 @@ export default function App() {
     try {
       sessionStorage.setItem('weather_app_shorts_open', 'true');
       sessionStorage.setItem('weather_app_shorts_tab', targetTab);
+      if (typeof window !== 'undefined' && window.location.hash !== '#shorts') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search + '#shorts');
+      }
     } catch {}
     setIsShortsOpen(true);
   };
@@ -4464,9 +4573,23 @@ export default function App() {
   const handleCloseShorts = () => {
     try {
       sessionStorage.removeItem('weather_app_shorts_open');
+      if (typeof window !== 'undefined' && window.location.hash === '#shorts') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     } catch {}
     setIsShortsOpen(false);
   };
+
+  // Lắng nghe phím F5 / popstate để duy trì Video Shorts
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#shorts') {
+        setIsShortsOpen(true);
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
   
   // Trạng thái quản lý quyền người dùng (Role Management)
   const [userRole, setUserRole] = useState<any>(() => {
@@ -4489,6 +4612,16 @@ export default function App() {
               modified = true;
             }
           }
+          if (!parsed.youtubeSubscriptions || parsed.youtubeSubscriptions.length === 0) {
+            parsed.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map((ch: any) => ({
+              ...ch,
+              linkedUserEmail: parsed.email,
+              linkedUserName: parsed.name,
+              linkedUserAvatar: parsed.picture,
+              isAccountLinked: true
+            }));
+            modified = true;
+          }
           // Loại bỏ sạch toàn bộ video mock cũ (An# Acoustic Guitar...)
           if (Array.isArray(parsed.subscribedVideos)) {
             const cleanedVideos = parsed.subscribedVideos.filter((v: any) => !isMockVideo(v));
@@ -4501,6 +4634,25 @@ export default function App() {
             localStorage.setItem('user_auth', JSON.stringify(parsed));
             document.cookie = `user_auth=${encodeURIComponent(JSON.stringify(parsed))}; path=/; max-age=31536000`;
           }
+
+          // Quét và khử sạch 100% rác kênh mẫu cũ trong toàn bộ localStorage
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && (k.startsWith('weather_user_channels_') || k.startsWith('weather_app_subscribed_channels_'))) {
+                const raw = localStorage.getItem(k);
+                if (raw) {
+                  const chs = JSON.parse(raw);
+                  if (Array.isArray(chs)) {
+                    const cleanChs = chs.filter((c: any) => !isMockChannel(c));
+                    if (cleanChs.length !== chs.length) {
+                      localStorage.setItem(k, JSON.stringify(cleanChs));
+                    }
+                  }
+                }
+              }
+            }
+          } catch {}
           return parsed;
         }
       }

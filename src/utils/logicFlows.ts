@@ -439,25 +439,28 @@ export function isJunkOrTagContent(text: string): boolean {
   const t = decoded.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
   if (!t) return true;
 
-  // 1. Toàn bộ Hashtag: bắt đầu bằng # (kể cả có dấu cách như #Quốc hội, #cò mồi, #trục lợi, #đấu giá tài sản, #Luật Đấu giá tài sản)
+  // 1. Toàn bộ Hashtag: bắt đầu bằng # hoặc chuỗi chứa các hashtag chính trị, pháp luật, đời sống
   if (t.startsWith('#')) return true;
   if (/^#[\s\S]+/u.test(t)) return true;
   if (t.includes('#')) {
-    // Nếu chuỗi chứa hashtag và sau khi bỏ hashtag không còn nội dung bài viết đáng kể (> 25 ký tự)
+    // Nếu chuỗi chứa hashtag (#Quốc hội, #cò mồi, #trục lợi, #đấu giá tài sản, #Luật Đấu giá tài sản...)
     const withoutTags = t.replace(/#[\p{L}\d\s_\-]+/gu, '').replace(/[,;.\-]/g, '').trim();
     if (!withoutTags || withoutTags.length < 25) return true;
   }
+  // Bổ sung nhận diện danh sách từ khóa thẻ bài viết đơn lẻ
+  if (/^(quốc hội|cò mồi|trục lợi|đấu giá tài sản|luật đấu giá tài sản|tin nóng|thời sự)$/i.test(t)) return true;
 
   const lower = t.toLowerCase();
 
   // 2. Chia sẻ / Chi sẻ qua các kênh mạng xã hội:
   if (lower === 'chia sẻ' || lower === 'chi sẻ' || lower === 'share' || lower === 'chia se' || lower === 'chi se') return true;
   if (/^(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se|share)\b/i.test(lower)) return true;
-  if (/^(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se|share)\s*(qua|lên|với|tới|bài viết|liên kết|ngay|trên)?\s*(facebook|twitter|x|email|zalo|messenger|threads|linkedin|copy|link|tin nhắn)?/i.test(lower)) return true;
+  if (/^(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se|share)\s*(qua|lên|với|tới|bài viết|liên kết|ngay|trên|:)?/i.test(lower)) return true;
   if (/(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se)\s+(qua|lên|bài|với|trên)\s+(facebook|twitter|email|zalo|messenger|threads|linkedin|mạng xã hội)/i.test(lower)) return true;
   if (/(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se)\s+qua\s+(facebook|twitter|email|zalo)/i.test(lower)) return true;
   if (/chia\s*sẻ\s+qua/i.test(lower)) return true;
   if (/chi\s*sẻ\s+qua/i.test(lower)) return true;
+  if (/^(facebook|twitter|zalo|email|copy link|sao chép liên kết)$/i.test(lower)) return true;
 
   // 3. Thẻ tags & Chủ đề:
   if (/^(thẻ|từ khóa|tags?|chủ đề|nhãn|chuyên mục)\s*[:\-]/i.test(lower)) return true;
@@ -553,7 +556,8 @@ export function isMockChannel(channel: any): boolean {
   
   const mockKeywords = [
     'wavemusic', 'wave music', 'kimpro', '김프로', 'jay prehistoric', 'jaypets',
-    'vietsuccess', 'baby shark', 'pinkfong', 'cá mập con', 'j house', 'jhouse', 'an#', 'anmusic'
+    'vietsuccess', 'baby shark', 'pinkfong', 'cá mập con', 'j house', 'jhouse', 'an#', 'anmusic',
+    'acoustic guitar', 'an acoustic', 'an music', 'uc_anmusic96'
   ];
   
   return mockKeywords.some(kw => 
@@ -579,7 +583,8 @@ export function isMockVideo(item: any): boolean {
     'wavemusic', 'wave music', 'kimpro', '김프로', 'jay prehistoric', 'jaypets',
     'vietsuccess', 'baby shark', 'pinkfong', 'cá mập con', 'j house', 'jhouse', 
     'an#', 'anmusic', 'acoustic guitar', 'tfkz_9pl1um', 'xqzsoesa55w', '60ithlz5wea',
-    'fkopy74weus', '2vv-bfvoq4g', '7u_cm_8n5te'
+    'fkopy74weus', '2vv-bfvoq4g', '7u_cm_8n5te', 'an acoustic', 'giai điệu nhẹ nhàng',
+    'thư giãn buổi tối', 'an_music', 'uc_anmusic96'
   ];
 
   return mockKeywords.some(kw => 
