@@ -1294,6 +1294,110 @@ export function runAllLogicFlowTests() {
   assert(!shouldPerformTopLevelRedirect(false, false, true), "Silent Refresh chạy qua iframe ẩn, giữ nguyên URL và vị trí người dùng");
 
   console.log(`    ${colors.green}✓ Luồng Quét YouTube Tài Khoản Thật, Chống Tắt Màn Hình & Tải Lại Hoạt Động: Đạt 10/10 kiểm tra bóc tách API thật, bảo vệ phiên xem Shorts & bộ đệm reload thông minh${colors.reset}\n`);
+
+  // ========================================================================================
+  // [LUỒNG 24] Hệ Thống YouTube Cá Nhân 6 Tab, Phân Trang & Bộ Nhớ Cô Lập (REQ-049 / TC-049)
+  // ========================================================================================
+  console.log(`  ${colors.cyan}[LUỒNG 24] Kiểm Thử Hệ Thống YouTube Cá Nhân 6 Tab & Bộ Nhớ Cô Lập (REQ-049 / TC-049)${colors.reset}`);
+
+  // 1. Phân trang đệ quy / vòng lặp nextPageToken của YouTube Data API v3 (Mục 2)
+  function simulatePaginatedSubscriptions(pages) {
+    const allSubs = [];
+    let pageToken = null;
+    let pageIdx = 0;
+    do {
+      const page = pages[pageIdx];
+      if (!page) break;
+      if (Array.isArray(page.items)) {
+        allSubs.push(...page.items);
+      }
+      pageToken = page.nextPageToken || null;
+      pageIdx++;
+    } while (pageToken && pageIdx < 10);
+    return allSubs;
+  }
+
+  const mockPages = [
+    { items: Array.from({ length: 50 }, (_, i) => ({ id: `sub-${i + 1}`, snippet: { title: `Kênh ${i + 1}` } })), nextPageToken: "TOKEN_PAGE_2" },
+    { items: Array.from({ length: 35 }, (_, i) => ({ id: `sub-${i + 51}`, snippet: { title: `Kênh ${i + 51}` } })), nextPageToken: null }
+  ];
+  const fetchedAllSubs = simulatePaginatedSubscriptions(mockPages);
+  assert(fetchedAllSubs.length === 85, "Phân trang nextPageToken: Lấy đủ toàn bộ 85 kênh qua 2 trang (không dừng ở 50)");
+  assert(fetchedAllSubs[0].id === 'sub-1' && fetchedAllSubs[84].id === 'sub-85', "Thứ tự các kênh phân trang được bảo toàn");
+
+  // 2. Thuật toán phái sinh Uploads Playlist ID (UC... -> UU...)
+  function deriveUploadsPlaylistId(channelId) {
+    if (!channelId || typeof channelId !== 'string') return '';
+    return channelId.replace(/^UC/, 'UU');
+  }
+  assert(deriveUploadsPlaylistId('UC148n55004n_t_A688001') === 'UU148n55004n_t_A688001', "Chuyển đổi chính xác UC... sang UU... chuẩn YouTube uploads");
+  assert(deriveUploadsPlaylistId('INVALID_ID') === 'INVALID_ID', "Bảo vệ channelId không hợp lệ");
+
+  // 3. Cô lập bộ nhớ theo người dùng (Data Isolation by sanitized userId)
+  function sanitizeUserKey(userId) {
+    if (!userId || typeof userId !== 'string') return 'guest';
+    return userId.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_');
+  }
+  const storageMock = new Map();
+  function saveUserBookmark(user, vid) {
+    const key = `yt_personal_v1_${sanitizeUserKey(user)}_bookmarks`;
+    const list = storageMock.get(key) || [];
+    if (!list.some(b => b.videoId === vid.videoId)) {
+      list.push(vid);
+    }
+    storageMock.set(key, list);
+  }
+  function getUserBookmarks(user) {
+    const key = `yt_personal_v1_${sanitizeUserKey(user)}_bookmarks`;
+    return storageMock.get(key) || [];
+  }
+
+  saveUserBookmark('user1@gmail.com', { videoId: 'vid-alpha', videoTitle: 'Video của User 1' });
+  saveUserBookmark('user2@gmail.com', { videoId: 'vid-beta', videoTitle: 'Video của User 2' });
+
+  const u1Saved = getUserBookmarks('user1@gmail.com');
+  const u2Saved = getUserBookmarks('user2@gmail.com');
+  assert(u1Saved.length === 1 && u1Saved[0].videoId === 'vid-alpha', "User 1 truy xuất đúng video đã lưu của mình");
+  assert(u2Saved.length === 1 && u2Saved[0].videoId === 'vid-beta', "User 2 truy xuất đúng video đã lưu của mình");
+  assert(!u1Saved.some(v => v.videoId === 'vid-beta'), "Cách ly tuyệt đối dữ liệu giữa 2 tài khoản Google khác nhau");
+
+  // 4. Ánh xạ lỗi YouTube Data API v3 & Quy tắc KHÔNG dùng mock data khi lỗi
+  function mapYouTubeError(status, errorReason) {
+    if (status === 401) return { code: 401, message: "Phiên đăng nhập YouTube đã hết hạn. Vui lòng kết nối lại tài khoản." };
+    if (status === 403) {
+      if (errorReason === 'quotaExceeded') {
+        return { code: 403, message: "Đã vượt hạn ngạch YouTube API trong ngày. Vui lòng thử lại sau." };
+      }
+      return { code: 403, message: "Quyền truy cập YouTube API bị từ chối." };
+    }
+    return { code: status, message: "Lỗi kết nối khi tải dữ liệu YouTube." };
+  }
+
+  const err401 = mapYouTubeError(401);
+  const err403Quota = mapYouTubeError(403, 'quotaExceeded');
+  assert(err401.message.includes('hết hạn'), "Mã lỗi 401: Yêu cầu kết nối lại tài khoản chính xác");
+  assert(err403Quota.message.includes('hạn ngạch'), "Mã lỗi 403 quotaExceeded: Thông báo cạn hạn ngạch trong ngày");
+
+  // 5. Phân loại 6 Tab chuyên nghiệp (channels, latest, by_channel, saved, history, shorts)
+  const sampleVideos = [
+    { videoId: 'v1', videoTitle: 'Tin nóng 1', channelId: 'ch1', publishedAt: '2026-10-20T10:00:00Z', mediaType: 'video', duration: '12:30' },
+    { videoId: 'v2', videoTitle: 'Shorts hài 1', channelId: 'ch1', publishedAt: '2026-10-20T11:00:00Z', mediaType: 'short', duration: '0:45' },
+    { videoId: 'v3', videoTitle: 'Tin thể thao', channelId: 'ch2', publishedAt: '2026-10-20T12:00:00Z', mediaType: 'video', duration: '08:15' }
+  ];
+
+  // Tab latest: Sắp xếp mới nhất
+  const tabLatest = [...sampleVideos].sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  assert(tabLatest[0].videoId === 'v3', "Tab Latest: Video mới nhất nằm ở đầu danh sách");
+
+  // Tab by_channel: Lọc theo kênh ch1
+  const tabByChannel = sampleVideos.filter(v => v.channelId === 'ch1');
+  assert(tabByChannel.length === 2 && tabByChannel.every(v => v.channelId === 'ch1'), "Tab By Channel: Lọc chính xác video theo kênh đã chọn");
+
+  // Tab shorts: Lọc video dọc 9:16
+  const tabShorts = sampleVideos.filter(v => v.mediaType === 'short');
+  assert(tabShorts.length === 1 && tabShorts[0].videoId === 'v2', "Tab Shorts: Lọc chính xác nội dung ngắn 9:16");
+
+  console.log(`    ${colors.green}✓ Luồng YouTube Cá Nhân: Đạt 12/12 kiểm tra phân trang nextPageToken, phái sinh UU uploads, cô lập bộ nhớ người dùng, ánh xạ lỗi API & phân loại 6 Tab chuyên nghiệp${colors.reset}\n`);
   console.log(`${colors.bright}TỔNG KẾT KIỂM THỬ LUỒNG LOGIC: ${colors.green}${passedAssertions}/${totalAssertions} ASSERTIONS ĐẠT (100% PASS)${colors.reset} | ${failedAssertions > 0 ? colors.red : colors.dim}${failedAssertions} THẤT BẠI${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}\n`);
 

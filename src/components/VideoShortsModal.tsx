@@ -2,6 +2,32 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { YOUTUBE_NEWS_DATABASE, cleanVideoTitle } from './YouTubeBroadcastPlayer';
 import { fetchAndAttachYouTubeData } from '../App';
 import { SUBSCRIBED_CHANNELS_VIDEOS } from '../constants/userYouTubeSubscriptions';
+import {
+  fetchUserSubscriptions,
+  fetchLatestVideosFromSubscriptions,
+  fetchVideosFromPlaylist,
+  getChannelUploadsPlaylistId,
+  revokeGoogleToken,
+  YouTubeSubscribedChannel,
+  YouTubeVideoItem,
+  YouTubeApiError
+} from '../services/youtubeApi';
+import {
+  getSavedSubscriptions,
+  saveSubscriptions,
+  getCachedVideos,
+  saveCachedVideos,
+  getBookmarkedVideos,
+  toggleBookmarkVideo,
+  isVideoBookmarked,
+  getWatchHistory,
+  recordWatchHistory,
+  clearWatchHistory,
+  getSyncMeta,
+  saveSyncMeta,
+  clearAllUserData,
+  YouTubeSyncMeta
+} from '../services/youtubeStorage';
 
 export interface ShortItem {
   id: string;
@@ -2315,14 +2341,15 @@ export function VideoShortsModal({
 
   // Danh sách kênh hiển thị cho người dùng (quét và đồng bộ chính xác toàn bộ kênh đã đăng ký từ tài khoản thật)
   const displayUserChannels = useMemo(() => {
-    if (syncedYtSubs && syncedYtSubs.length > 0) {
-      // Quét và hiển thị chính xác danh sách kênh thực tế từ tài khoản Google của người dùng
+    if (activeUser.isLoggedIn) {
+      // Khi đã đăng nhập, luôn trả về dữ liệu kênh thực tế từ API / bộ nhớ, tuyệt đối không dùng dữ liệu mẫu giả
+      if (!syncedYtSubs || syncedYtSubs.length === 0) return [];
       return syncedYtSubs.map((sub: any) => {
         const title = sub.snippet?.title || '';
         const customUrl = sub.snippet?.customUrl || '';
         const chId = sub.snippet?.resourceId?.channelId || sub.id || '';
         
-        // Tìm thông tin bổ trợ (vector SVG avatar, verified badge) nếu trùng với bộ kênh nổi tiếng
+        // Tìm thông tin bổ trợ nếu trùng với bộ kênh nổi tiếng
         const known = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT.find(k => 
           k.snippet.title.toLowerCase() === title.toLowerCase() ||
           (customUrl && k.snippet.customUrl?.toLowerCase() === customUrl.toLowerCase()) ||
@@ -2345,28 +2372,120 @@ export function VideoShortsModal({
         return sub;
       });
     }
-    // Nếu chưa đăng nhập hoặc offline, sử dụng snapshot để trải nghiệm demo
+    // Nếu chưa đăng nhập (khách vãng lai xem demo), sử dụng snapshot để trải nghiệm demo
     return USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
-  }, [syncedYtSubs]);
+  }, [syncedYtSubs, activeUser.isLoggedIn]);
 
+  // ── LƯU TRỮ CÁCH LY THEO NGƯỜI DÙNG CHO VIDEO CÁ NHÂN, BOOKMARKS & HISTORY ──
+  const [personalVideos, setPersonalVideos] = useState<YouTubeVideoItem[]>(() => {
+    return getCachedVideos(activeUser.email);
+  });
+  const [bookmarkedVideos, setBookmarkedVideos] = useState<YouTubeVideoItem[]>(() => {
+    return getBookmarkedVideos(activeUser.email);
+  });
+  const [watchHistory, setWatchHistory] = useState<YouTubeVideoItem[]>(() => {
+    return getWatchHistory(activeUser.email);
+  });
+  const [syncMeta, setSyncMeta] = useState<YouTubeSyncMeta | null>(() => {
+    return getSyncMeta(activeUser.email);
+  });
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  // Tab duyệt nội dung chuyên nghiệp theo Mục 4 & Mục 6:
+  // 'channels' (Kênh đã đăng ký) | 'latest' (Video mới nhất) | 'by_channel' (Video theo kênh) | 'saved' (Video đã lưu) | 'history' (Đã xem gần đây) | 'shorts' (Shorts ngắn)
+  const [activeCatalogTab, setActiveCatalogTab] = useState<'channels' | 'latest' | 'by_channel' | 'saved' | 'history' | 'shorts'>('channels');
+  const [channelSearchQuery, setChannelSearchQuery] = useState<string>('');
+  const [selectedSubChannelFilter, setSelectedSubChannelFilter] = useState<string>('all');
+
+  // Cập nhật dữ liệu lưu trữ khi activeUser.email thay đổi
+  useEffect(() => {
+    if (activeUser.email) {
+      setPersonalVideos(getCachedVideos(activeUser.email));
+      setBookmarkedVideos(getBookmarkedVideos(activeUser.email));
+      setWatchHistory(getWatchHistory(activeUser.email));
+      setSyncMeta(getSyncMeta(activeUser.email));
+    }
+  }, [activeUser.email]);
+
+  // Đồng bộ danh sách kênh và video thực tế từ YouTube Data API v3
   const handleSyncYouTube = async () => {
     if (!activeUser.accessToken) {
       if (onLogin) onLogin();
       return;
     }
     setIsSyncingYt(true);
+    setSyncError(null);
     try {
+      // 1. Quét toàn bộ kênh đã đăng ký (part=snippet,contentDetails, mine=true, maxResults=50, phân trang nextPageToken)
+      const realSubs = await fetchUserSubscriptions(activeUser.accessToken, activeUser.email);
+      setSyncedYtSubs(realSubs);
+      saveSubscriptions(activeUser.email, realSubs);
+
+      // 2. Tự động lấy video mới nhất từ các kênh đăng ký qua playlist tải lên uploads (UU...)
+      const fetchedVideos = await fetchLatestVideosFromSubscriptions(activeUser.accessToken, realSubs, 10, 6);
+      if (fetchedVideos.length > 0) {
+        setPersonalVideos(fetchedVideos);
+        saveCachedVideos(activeUser.email, fetchedVideos);
+      }
+
+      const meta: YouTubeSyncMeta = {
+        lastSyncedAt: new Date().toISOString(),
+        channelCount: realSubs.length,
+        videoCount: fetchedVideos.length,
+        status: 'success',
+        linkedAccount: activeUser.email
+      };
+      setSyncMeta(meta);
+      saveSyncMeta(activeUser.email, meta);
+
+      // Đồng bộ thông tin vào user_auth
       const copy = userRole ? { ...userRole } : { email: activeUser.email, name: activeUser.name };
-      const res = await fetchAndAttachYouTubeData(activeUser.accessToken, copy);
-      if (res.youtubeChannel) setSyncedYtChannel(res.youtubeChannel);
-      if (res.youtubeSubscriptions) setSyncedYtSubs(res.youtubeSubscriptions);
-      localStorage.setItem('user_auth', JSON.stringify(res));
-      setShowToast('Đã tự động làm mới thông tin kênh YouTube!');
-    } catch {
-      setShowToast('Lỗi khi đồng bộ YouTube. Vui lòng đăng nhập lại.');
+      copy.youtubeSubscriptions = realSubs;
+      copy.subscribedVideos = fetchedVideos;
+      localStorage.setItem('user_auth', JSON.stringify(copy));
+
+      setShowToast(`✓ Đã đồng bộ thành công ${realSubs.length} kênh và ${fetchedVideos.length} video mới nhất!`);
+    } catch (err: any) {
+      console.error('[YouTube Sync]', err);
+      const msg = err.message || 'Lỗi khi đồng bộ dữ liệu YouTube';
+      setSyncError(msg);
+      saveSyncMeta(activeUser.email, {
+        lastSyncedAt: new Date().toISOString(),
+        channelCount: syncedYtSubs.length,
+        videoCount: personalVideos.length,
+        status: 'error',
+        errorMessage: msg,
+        linkedAccount: activeUser.email
+      });
+      setShowToast(msg);
     } finally {
       setIsSyncingYt(false);
     }
+  };
+
+  // Ngắt kết nối và thu hồi quyền OAuth của tài khoản Google/YouTube
+  const handleDisconnectYouTube = async () => {
+    if (activeUser.accessToken) {
+      await revokeGoogleToken(activeUser.accessToken);
+    }
+    clearAllUserData(activeUser.email);
+    setSyncedYtSubs([]);
+    setSyncedYtChannel(null);
+    setPersonalVideos([]);
+    setBookmarkedVideos([]);
+    setWatchHistory([]);
+    setSyncMeta(null);
+    setSyncError(null);
+
+    if (userRole) {
+      const updated = { ...userRole };
+      delete updated._access_token;
+      delete updated.youtubeSubscriptions;
+      delete updated.subscribedVideos;
+      delete updated.youtubeChannel;
+      localStorage.setItem('user_auth', JSON.stringify(updated));
+    }
+    setShowToast('Đã ngắt kết nối tài khoản YouTube thành công');
   };
 
   // ── TV CHANNEL & MEDIA TAB STATES ──
@@ -2685,13 +2804,34 @@ export function VideoShortsModal({
       userRole.subscribedVideos.forEach(addUnique);
     }
 
-    // 4. Thêm video fetch từ API nếu có
+    // 4. Thêm video cá nhân từ YouTube Data API v3 (personalVideos)
+    if (personalVideos && personalVideos.length > 0) {
+      personalVideos.forEach(vid => {
+        addUnique({
+          id: `yt-real-${vid.videoId}`,
+          youtubeId: vid.videoId,
+          title: vid.videoTitle,
+          channel: vid.channelTitle,
+          channelId: vid.channelId,
+          badge: 'ĐÃ ĐĂNG KÝ',
+          category: 'Kênh của bạn',
+          subCategory: vid.channelTitle,
+          duration: vid.duration || 'Video',
+          mediaType: vid.mediaType || 'video',
+          thumbnail: vid.videoThumbnail,
+          publishedAt: vid.publishedAt,
+          likes: 120
+        });
+      });
+    }
+
+    // 5. Thêm video fetch từ API nếu có
     if (multiChannelVideos && multiChannelVideos.length > 0) {
       multiChannelVideos.forEach(addUnique);
     }
 
     return list;
-  }, [multiChannelVideos, userRole?.subscribedVideos]);
+  }, [multiChannelVideos, userRole?.subscribedVideos, personalVideos]);
 
   // Thống kê số lượng video & shorts theo kênh TV
   const channelStatsMap = useMemo(() => {
@@ -2713,6 +2853,70 @@ export function VideoShortsModal({
   const allSubscribedVideos = useMemo(() => {
     return allAvailableVideos.filter(item => matchesChannel(item, 'subscribed'));
   }, [allAvailableVideos]);
+
+  // Bộ lọc tìm kiếm kênh đăng ký (Mục 2)
+  const filteredDisplayChannels = useMemo(() => {
+    if (!channelSearchQuery.trim()) return displayUserChannels;
+    const q = channelSearchQuery.toLowerCase().trim();
+    return displayUserChannels.filter((sub: any) => {
+      const title = sub.snippet?.title || '';
+      const customUrl = sub.snippet?.customUrl || '';
+      const desc = sub.snippet?.description || '';
+      return title.toLowerCase().includes(q) || customUrl.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+    });
+  }, [displayUserChannels, channelSearchQuery]);
+
+  // Danh sách video Mới nhất từ các kênh đăng ký (Mục 3 - latest)
+  const latestVideosList = useMemo(() => {
+    const base: YouTubeVideoItem[] = personalVideos.length > 0 
+      ? personalVideos 
+      : allSubscribedVideos.map((s: ShortItem) => ({
+          channelId: s.channelId || '',
+          videoId: s.youtubeId || s.id,
+          videoTitle: s.title,
+          videoDescription: '',
+          videoThumbnail: s.thumbnail || `https://i.ytimg.com/vi/${s.youtubeId || s.id}/hqdefault.jpg`,
+          publishedAt: s.publishedAt || new Date().toISOString(),
+          channelTitle: s.channel,
+          duration: s.duration || 'Video',
+          mediaType: s.mediaType || 'video'
+        }));
+    if (!channelSearchQuery.trim()) return base;
+    const q = channelSearchQuery.toLowerCase().trim();
+    return base.filter(v => v.videoTitle.toLowerCase().includes(q) || v.channelTitle.toLowerCase().includes(q));
+  }, [personalVideos, allSubscribedVideos, channelSearchQuery]);
+
+  // Danh sách video theo từng kênh đã chọn (Mục 3 - by_channel)
+  const byChannelVideosList = useMemo(() => {
+    if (selectedSubChannelFilter === 'all') return latestVideosList;
+    return latestVideosList.filter(v => 
+      v.channelId === selectedSubChannelFilter || 
+      v.channelTitle.toLowerCase().includes(selectedSubChannelFilter.toLowerCase()) ||
+      selectedSubChannelFilter.toLowerCase().includes(v.channelTitle.toLowerCase())
+    );
+  }, [latestVideosList, selectedSubChannelFilter]);
+
+  // Danh sách video đã lưu / Bookmarks (Mục 3 & 5 - saved)
+  const savedVideosList = useMemo(() => {
+    if (!channelSearchQuery.trim()) return bookmarkedVideos;
+    const q = channelSearchQuery.toLowerCase().trim();
+    return bookmarkedVideos.filter(v => v.videoTitle.toLowerCase().includes(q) || v.channelTitle.toLowerCase().includes(q));
+  }, [bookmarkedVideos, channelSearchQuery]);
+
+  // Danh sách video đã xem gần đây / Watch History (Mục 3 & 5 - history)
+  const historyVideosList = useMemo(() => {
+    if (!channelSearchQuery.trim()) return watchHistory;
+    const q = channelSearchQuery.toLowerCase().trim();
+    return watchHistory.filter(v => v.videoTitle.toLowerCase().includes(q) || v.channelTitle.toLowerCase().includes(q));
+  }, [watchHistory, channelSearchQuery]);
+
+  // Danh sách Shorts ngắn 9:16 (Mục 3 - shorts)
+  const shortsVideosList = useMemo(() => {
+    const all = latestVideosList.filter(v => v.mediaType === 'short' || (v.duration && (v.duration.includes('0:') || v.duration.includes('1:0'))));
+    if (!channelSearchQuery.trim()) return all;
+    const q = channelSearchQuery.toLowerCase().trim();
+    return all.filter(v => v.videoTitle.toLowerCase().includes(q) || v.channelTitle.toLowerCase().includes(q));
+  }, [latestVideosList, channelSearchQuery]);
 
   // Danh sách các chuyên mục bản tin thực tế của kênh hiện tại (VTV24: Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
   const availableSubCategories = useMemo(() => {
@@ -2886,6 +3090,88 @@ export function VideoShortsModal({
     }
 
     handleSelectChannel(chId || subId || title);
+  };
+
+  // Lưu / Bỏ lưu video (Bookmarks)
+  const handleToggleBookmark = (e: React.MouseEvent, vid: YouTubeVideoItem | ShortItem) => {
+    e.stopPropagation();
+    const vId = (vid as any).videoId || (vid as any).youtubeId;
+    if (!vId) return;
+
+    const videoItem: YouTubeVideoItem = {
+      channelId: vid.channelId || '',
+      videoId: vId,
+      videoTitle: (vid as any).videoTitle || vid.title,
+      videoDescription: (vid as any).videoDescription || '',
+      videoThumbnail: (vid as any).videoThumbnail || vid.thumbnail || `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`,
+      publishedAt: vid.publishedAt || new Date().toISOString(),
+      channelTitle: (vid as any).channelTitle || vid.channel,
+      duration: vid.duration || 'Video',
+      mediaType: vid.mediaType || 'video'
+    };
+
+    const isNowSaved = toggleBookmarkVideo(activeUser.email, videoItem);
+    setBookmarkedVideos(getBookmarkedVideos(activeUser.email));
+    setShowToast(isNowSaved ? '🔖 Đã lưu video vào mục Đã lưu!' : 'Đã xóa video khỏi mục Đã lưu');
+    setTimeout(() => setShowToast(null), 2000);
+  };
+
+  // Phát video trực tiếp từ Card và tự động ghi nhận lịch sử xem
+  const handleSelectVideoItem = (vid: YouTubeVideoItem | ShortItem) => {
+    const vId = (vid as any).videoId || (vid as any).youtubeId;
+    if (!vId) return;
+
+    const videoItem: YouTubeVideoItem = {
+      channelId: vid.channelId || '',
+      videoId: vId,
+      videoTitle: (vid as any).videoTitle || vid.title,
+      videoDescription: (vid as any).videoDescription || '',
+      videoThumbnail: (vid as any).videoThumbnail || vid.thumbnail || `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`,
+      publishedAt: vid.publishedAt || new Date().toISOString(),
+      channelTitle: (vid as any).channelTitle || vid.channel,
+      duration: vid.duration || 'Video',
+      mediaType: vid.mediaType || 'video'
+    };
+
+    // Tự động ghi vào lịch sử xem
+    recordWatchHistory(activeUser.email, videoItem);
+    setWatchHistory(getWatchHistory(activeUser.email));
+
+    const targetIdx = playlist.findIndex(p => (p.youtubeId && p.youtubeId === vId) || p.id === vId || p.id === `yt-real-${vId}`);
+    if (targetIdx !== -1) {
+      setCurrentIndex(targetIdx);
+    } else {
+      const shortItem: ShortItem = {
+        id: `yt-real-${vId}`,
+        youtubeId: vId,
+        title: videoItem.videoTitle,
+        channel: videoItem.channelTitle,
+        channelId: videoItem.channelId,
+        badge: 'ĐÃ ĐĂNG KÝ',
+        category: 'Kênh của bạn',
+        subCategory: videoItem.channelTitle,
+        duration: videoItem.duration,
+        mediaType: videoItem.mediaType || 'video',
+        thumbnail: videoItem.videoThumbnail,
+        publishedAt: videoItem.publishedAt,
+        likes: 120
+      };
+      setMultiChannelVideos(prev => [shortItem, ...prev]);
+      setCurrentIndex(0);
+    }
+
+    setShowChannelMenu(false);
+    setIsControlsVisible(false);
+    setShowToast(`▶ Đang phát: ${cleanVideoTitle(videoItem.videoTitle)}`);
+    setTimeout(() => setShowToast(null), 2500);
+  };
+
+  // Xóa toàn bộ lịch sử xem
+  const handleClearHistory = () => {
+    clearWatchHistory(activeUser.email);
+    setWatchHistory([]);
+    setShowToast('Đã xóa toàn bộ lịch sử xem video');
+    setTimeout(() => setShowToast(null), 2000);
   };
 
   // Chọn chuyên mục phân loại bản tin (Tin nóng 10 phút, Tổng hợp tin tức, Thế giới toàn cảnh, Tin tức thời sự...)
@@ -3336,13 +3622,15 @@ export function VideoShortsModal({
         </div>
       </div>
 
-      {/* ── Khung Video Chính (Tách biệt hoàn toàn trải nghiệm Mobile vs Tablet vs PC) ── */}
-      <div 
-        className={`relative bg-black overflow-hidden flex flex-col justify-between shrink-0 transition-all duration-300 ${
-          isLandscape || isFullscreen
-            ? 'w-full h-full max-w-full max-h-[100dvh] rounded-none border-none shadow-none'
-            : 'w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none border-none sm:w-[390px] md:w-[420px] sm:h-[92vh] sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl sm:border sm:border-white/20 sm:shadow-[0_0_80px_rgba(0,0,0,0.95)]'
-        }`}
+      {/* ── Khung Video & Thanh Video Liên Quan Desktop 16:9 ── */}
+      <div className={`w-full h-full max-w-full max-h-[100dvh] flex items-center justify-center overflow-hidden ${isLandscape ? 'flex-row' : ''}`}>
+        {/* Khung Video Chính (Tách biệt hoàn toàn trải nghiệm Mobile vs Tablet vs PC) */}
+        <div 
+          className={`relative bg-black overflow-hidden flex flex-col justify-between shrink-0 transition-all duration-300 ${
+            isLandscape || isFullscreen
+              ? 'flex-1 w-full h-full max-w-full max-h-[100dvh] rounded-none border-none shadow-none'
+              : 'w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none border-none sm:w-[390px] md:w-[420px] sm:h-[92vh] sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl sm:border sm:border-white/20 sm:shadow-[0_0_80px_rgba(0,0,0,0.95)]'
+          }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
@@ -3456,6 +3744,23 @@ export function VideoShortsModal({
                 <span>TV</span>
               </span>
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0 hidden sm:inline-block"></span>
+
+              {/* Nút Quay Lại Danh Mục Kênh / Video (Back to Catalog) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowChannelMenu(true);
+                  handleSelectMediaTab('subscribed');
+                  resetInactivityTimer();
+                }}
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full bg-red-600/90 hover:bg-red-600 active:scale-95 border border-red-400 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold transition-all shadow-md shrink-0 cursor-pointer"
+                title="Quay lại danh mục kênh và video đã đăng ký"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                <span>← Danh mục</span>
+              </button>
 
               {/* Nút Chọn Kênh TV EPG (Tối ưu độ rộng trên mobile để không tràn hàng) */}
               <button
@@ -3811,6 +4116,31 @@ export function VideoShortsModal({
               List
             </span>
           </div>
+
+          {/* Bookmark 🔖 Button */}
+          <div className="flex flex-col items-center gap-0.5 shrink-0 select-none">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleBookmark(e, currentShort);
+                resetInactivityTimer();
+              }}
+              style={{ borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
+              className={`w-9 h-9 sm:w-10 sm:h-10 aspect-square shrink-0 rounded-full flex items-center justify-center backdrop-blur-md border shadow-lg cursor-pointer active:scale-90 transition-all ${
+                bookmarkedVideos.some(b => b.videoId === (currentShort.youtubeId || currentShort.id))
+                  ? 'bg-amber-500 text-white border-amber-400 shadow-amber-500/50'
+                  : 'bg-black/50 hover:bg-black/70 text-white border-white/20'
+              }`}
+              title={bookmarkedVideos.some(b => b.videoId === (currentShort.youtubeId || currentShort.id)) ? 'Bỏ lưu video' : 'Lưu video (Bookmarks)'}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill={bookmarkedVideos.some(b => b.videoId === (currentShort.youtubeId || currentShort.id)) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" className="shrink-0 block m-auto sm:w-[17px] sm:h-[17px]">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
+            <span className="text-[9px] sm:text-[10px] font-bold text-white drop-shadow">
+              Lưu
+            </span>
+          </div>
         </div>
 
         {/* ── BOTTOM VIDEO OVERLAY: KÊNH, TIÊU ĐỀ, HASHTAGS & TÀI KHOẢN ── */}
@@ -3910,6 +4240,76 @@ export function VideoShortsModal({
             </span>
           </div>
         </div>
+      </div>
+
+        {/* ── BẢNG VIDEO LIÊN QUAN TỪ CÁC KÊNH ĐÃ ĐĂNG KÝ (HIỂN THỊ CẠNH BÊN TRÊN DESKTOP 16:9) ── */}
+        {isLandscape && !isFullscreen && (
+          <div className="hidden xl:flex flex-col w-[340px] 2xl:w-[380px] h-full bg-[#0d0d12]/95 border-l border-white/10 z-30 p-3.5 shrink-0 overflow-hidden text-white backdrop-blur-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <h4 className="font-bold text-[13.5px] text-white">Video Kênh Đã Đăng Ký</h4>
+              </div>
+              <span className="text-[11px] font-mono text-neutral-400 bg-white/10 px-2 py-0.5 rounded-full">
+                {latestVideosList.length} clip
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-2.5 flex flex-col gap-2 pr-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {latestVideosList.length === 0 ? (
+                <div className="text-center py-10 text-neutral-400 text-xs">
+                  Chưa có video từ các kênh đã đăng ký.
+                </div>
+              ) : (
+                latestVideosList.map((vid, idx) => {
+                  const isPlaying = (currentShort.youtubeId === vid.videoId) || (currentShort.id === vid.videoId) || (currentShort.id === `yt-real-${vid.videoId}`);
+                  return (
+                    <div
+                      key={`${vid.videoId}-${idx}`}
+                      onClick={() => handleSelectVideoItem(vid)}
+                      className={`flex items-start gap-2.5 p-2 rounded-xl cursor-pointer transition-all border group ${
+                        isPlaying 
+                          ? 'bg-red-600/25 border-red-500 ring-1 ring-red-500/40' 
+                          : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/5'
+                      }`}
+                    >
+                      <div className="w-24 h-15 rounded-lg bg-black relative overflow-hidden shrink-0 border border-white/10">
+                        <img 
+                          src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
+                          alt="" 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                        />
+                        <span className="absolute bottom-1 right-1 px-1 py-0.2 rounded bg-black/85 text-[8px] font-mono text-white font-bold">
+                          {vid.duration || 'Video'}
+                        </span>
+                        {isPlaying && (
+                          <div className="absolute inset-0 bg-red-600/40 flex items-center justify-center">
+                            <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <h5 className={`text-[11.5px] font-semibold line-clamp-2 leading-snug group-hover:text-red-400 transition-colors ${isPlaying ? 'text-white font-bold' : 'text-neutral-200'}`}>
+                          {cleanVideoTitle(vid.videoTitle)}
+                        </h5>
+                        <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-1">
+                          <span className="truncate">{vid.channelTitle}</span>
+                          <button
+                            onClick={(e) => handleToggleBookmark(e, vid)}
+                            className="text-neutral-400 hover:text-amber-400 p-0.5 rounded cursor-pointer"
+                            title="Lưu video"
+                          >
+                            {bookmarkedVideos.some(b => b.videoId === vid.videoId) ? '🔖' : '☆'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── ON-VIDEO PLAYLIST DRAWER (DANH SÁCH PHÁT NỔI: BOTTOM SHEET TRÊN MOBILE, SIDE PANEL TRÊN DESKTOP) ── */}
@@ -4186,9 +4586,9 @@ export function VideoShortsModal({
             </div>
 
             {/* Thẻ Tài khoản YouTube liên kết */}
-            <div className="mx-3 sm:mx-5 mt-3 p-3 rounded-2xl bg-gradient-to-r from-red-950/60 via-neutral-900/80 to-neutral-900/60 border border-red-500/30 flex items-center justify-between gap-3 flex-wrap">
+            <div className="mx-3 sm:mx-5 mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-red-950/60 via-neutral-900/80 to-neutral-900/60 border border-red-500/30 flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-red-600/30 border border-red-400/40 shrink-0 flex items-center justify-center text-white">
+                <div className="w-11 h-11 rounded-full overflow-hidden bg-red-600/30 border border-red-400/40 shrink-0 flex items-center justify-center text-white shadow-md">
                   {syncedYtChannel?.snippet?.thumbnails?.default?.url || activeUser.picture ? (
                     <img 
                       src={syncedYtChannel?.snippet?.thumbnails?.default?.url || activeUser.picture} 
@@ -4196,51 +4596,66 @@ export function VideoShortsModal({
                       className="w-full h-full object-cover" 
                     />
                   ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                     </svg>
                   )}
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-[13px] sm:text-[14px] text-white truncate">
+                    <span className="font-bold text-[13.5px] sm:text-[14.5px] text-white truncate">
                       {activeUser.isLoggedIn 
                         ? (syncedYtChannel?.snippet?.title || activeUser.name) 
                         : 'Chưa kết nối tài khoản YouTube'}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-red-600/40 text-red-300 border border-red-500/30">
+                    <span className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${
+                      activeUser.isLoggedIn ? 'bg-red-600/30 text-red-300 border-red-500/30' : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                    }`}>
                       {activeUser.isLoggedIn ? 'TÀI KHOẢN CỦA BẠN' : 'KHÁCH'}
                     </span>
+                    {syncMeta?.status === 'success' && (
+                      <span className="px-2 py-0.5 rounded text-[9.5px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        ĐÃ ĐỒNG BỘ ({syncMeta.channelCount} kênh)
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[11px] text-neutral-400 truncate">
+                  <p className="text-[11px] text-neutral-400 truncate mt-0.5">
                     {activeUser.isLoggedIn ? (
                       <>
-                        <span>{syncedYtChannel?.snippet?.customUrl || `@${activeUser.email.split('@')[0]}`}</span>
-                        <span> • <strong>{displayUserChannels.length}</strong> kênh đã tự động kết nối</span>
+                        <span className="text-neutral-300 font-mono">{activeUser.email}</span>
+                        {syncMeta?.lastSyncedAt && (
+                          <span className="text-neutral-400 ml-1.5 hidden sm:inline">
+                            • Cập nhật: {new Date(syncMeta.lastSyncedAt).toLocaleTimeString('vi-VN')} {new Date(syncMeta.lastSyncedAt).toLocaleDateString('vi-VN')}
+                          </span>
+                        )}
                       </>
                     ) : (
-                      'Đăng nhập Gmail để xem kênh của bạn & các kênh đăng ký'
+                      'Kết nối Google để quét kênh thực tế và xem video mà không rời khỏi website'
                     )}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 {activeUser.isLoggedIn ? (
                   <>
-                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span>Đã tự động đồng bộ tài khoản</span>
-                    </span>
                     <button
-                      onClick={() => handleSelectMediaTab('subscribed')}
-                      className={`px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all border ${
-                        mediaTab === 'subscribed'
-                          ? 'bg-red-600 text-white border-red-400 shadow-md shadow-red-600/30'
-                          : 'bg-white/10 hover:bg-white/15 text-neutral-200 border-white/20'
-                      }`}
+                      onClick={handleSyncYouTube}
+                      disabled={isSyncingYt}
+                      className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white shadow-md border border-red-400 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                      title="Đồng bộ lại toàn bộ kênh đăng ký và video từ YouTube Data API v3"
                     >
-                      Kênh Của Bạn ({displayUserChannels.length})
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={isSyncingYt ? "animate-spin" : ""}>
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                      </svg>
+                      <span>{isSyncingYt ? 'Đang đồng bộ...' : 'Làm mới kênh'}</span>
+                    </button>
+                    <button
+                      onClick={handleDisconnectYouTube}
+                      className="px-3 py-1.5 rounded-xl text-[11px] font-medium bg-white/10 hover:bg-red-600/30 hover:text-red-300 text-neutral-300 border border-white/15 cursor-pointer active:scale-95 transition-all"
+                      title="Ngắt kết nối tài khoản Google và thu hồi token"
+                    >
+                      Ngắt kết nối
                     </button>
                   </>
                 ) : (
@@ -4248,272 +4663,579 @@ export function VideoShortsModal({
                     onClick={() => {
                       if (onLogin) onLogin();
                     }}
-                    className="px-3.5 py-1.5 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md border border-red-400 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl text-[12px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md border border-red-400 cursor-pointer active:scale-95 transition-all flex items-center gap-2"
                   >
-                    <span>▶ Đăng nhập Google</span>
+                    <span>▶ Kết nối Google / YouTube</span>
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Phân Tab Định Dạng: Tất cả | Video Kênh | Shorts */}
+            {/* Banner thông báo lỗi nếu API gặp sự cố (Không dùng dữ liệu giả khi API lỗi) */}
+            {syncError && (
+              <div className="mx-3 sm:mx-5 mt-2 p-2.5 rounded-xl bg-red-950/60 border border-red-500/40 flex items-center justify-between gap-2 text-xs text-red-200">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-red-400 text-sm">⚠️</span>
+                  <span className="truncate">{syncError}</span>
+                </div>
+                <button
+                  onClick={handleSyncYouTube}
+                  className="px-2.5 py-1 rounded-lg bg-red-600 text-white font-bold text-[10.5px] shrink-0 hover:bg-red-500 cursor-pointer active:scale-95"
+                >
+                  Thử lại
+                </button>
+              </div>
+            )}
+
+            {/* Phân Tab Định Dạng: Smart TV EPG | Kênh Của Bạn (YouTube Cá Nhân) */}
             <div className="flex items-center gap-2 p-3 sm:px-5 bg-white/[0.02] border-b border-white/10 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 shrink-0 mr-1 flex items-center gap-1">
-                <span>Phân loại:</span>
+                <span>Danh mục:</span>
               </span>
 
               <button
                 onClick={() => handleSelectMediaTab('all')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
-                  mediaTab === 'all'
-                    ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
+                  mediaTab !== 'subscribed'
+                    ? 'bg-neutral-800 text-white shadow-md border border-neutral-700'
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                <span>📺 Tất cả</span>
+                <span>📺 Truyền hình Smart TV</span>
                 <span className="text-[10px] opacity-80 font-mono">
-                  ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleSelectMediaTab('video')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
-                  mediaTab === 'video'
-                    ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
-                }`}
-              >
-                <span>🎬 Video trên kênh (16:9)</span>
-                <span className="text-[10px] opacity-80 font-mono">
-                  ({channelStatsMap[selectedChannelId]?.videos || 0})
-                </span>
-              </button>
-
-              <button
-                onClick={() => handleSelectMediaTab('short')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
-                  mediaTab === 'short'
-                    ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
-                }`}
-              >
-                <span>⚡ Shorts ngắn (9:16)</span>
-                <span className="text-[10px] opacity-80 font-mono">
-                  ({channelStatsMap[selectedChannelId]?.shorts || 0})
+                  ({TV_CHANNELS.length} kênh)
                 </span>
               </button>
 
               <button
                 onClick={() => handleSelectMediaTab('subscribed')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                   mediaTab === 'subscribed'
                     ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
                     : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
                 }`}
               >
-                <span>🔴 Kênh Của Bạn</span>
+                <span>🔴 YouTube Cá Nhân</span>
                 <span className="text-[10px] opacity-80 font-mono">
-                  ({displayUserChannels.length})
+                  ({displayUserChannels.length} kênh)
                 </span>
               </button>
             </div>
 
-            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB KÊNH CỦA BẠN THÌ HIỆN DANH SÁCH KÊNH & VIDEO ĐÃ ĐĂNG KÝ (KHÔNG CHUYỂN TRANG) */}
+            {/* VÙNG NỘI DUNG: NẾU CHỌN TAB YOUTUBE CÁ NHÂN -> HIỂN THỊ ĐỦ 6 TAB DUYỆT NỘI DUNG CHUYÊN NGHIỆP */}
             {mediaTab === 'subscribed' ? (
-              <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] flex flex-col gap-3 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {activeUser.isLoggedIn ? (
                   <>
-                    {/* Thanh chuyển chế độ xem: Kênh (9) | Video thực tế */}
-                    <div className="flex items-center gap-2 mb-4 bg-white/5 p-1 rounded-2xl border border-white/10 w-fit">
+                    {/* ── 6 DEDICATED TABS NAVIGATION (MỤC 4 & MỤC 6) ── */}
+                    <div className="flex items-center gap-1.5 bg-white/[0.04] p-1.5 rounded-2xl border border-white/10 overflow-x-auto shrink-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                       <button
-                        onClick={() => setSubscribedSubView('channels')}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
-                          subscribedSubView === 'channels'
+                        onClick={() => setActiveCatalogTab('channels')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                          activeCatalogTab === 'channels'
                             ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
                         }`}
                       >
-                        <span>📋 Danh sách kênh</span>
-                        <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+                        <span>📋 Kênh đã đăng ký</span>
+                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
                           {displayUserChannels.length}
                         </span>
                       </button>
 
                       <button
-                        onClick={() => setSubscribedSubView('videos')}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold cursor-pointer transition-all ${
-                          subscribedSubView === 'videos'
+                        onClick={() => setActiveCatalogTab('latest')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                          activeCatalogTab === 'latest'
                             ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
                         }`}
                       >
-                        <span>🎬 Video từ các kênh</span>
-                        <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
-                          {allSubscribedVideos.length}
+                        <span>⚡ Video mới nhất</span>
+                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                          {latestVideosList.length}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveCatalogTab('by_channel')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                          activeCatalogTab === 'by_channel'
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <span>📺 Theo từng kênh</span>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveCatalogTab('saved')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                          activeCatalogTab === 'saved'
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <span>🔖 Đã lưu</span>
+                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                          {savedVideosList.length}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveCatalogTab('history')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                          activeCatalogTab === 'history'
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <span>🕒 Lịch sử xem</span>
+                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                          {historyVideosList.length}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveCatalogTab('shorts')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                          activeCatalogTab === 'shorts'
+                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <span>📱 Shorts</span>
+                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                          {shortsVideosList.length}
                         </span>
                       </button>
                     </div>
 
-                    {subscribedSubView === 'channels' ? (
-                      /* ── 1. HIỂN THỊ DANH SÁCH CÁC KÊNH NGƯỜI DÙNG ĐÃ ĐĂNG KÝ ── */
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {displayUserChannels.map((sub: any, sIdx: number) => {
-                          const snippet = sub.snippet || {};
-                          const thumb = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
-                          const title = snippet.title || 'Kênh YouTube';
-                          const handle = snippet.customUrl || '';
-                          const subCount = snippet.subscribersText || '';
-                          const desc = snippet.description || 'Kênh đã đăng ký trên tài khoản YouTube của bạn';
-                          const verified = snippet.verified !== false && snippet.verified !== undefined ? snippet.verified : false;
+                    {/* Ô TÌM KIẾM CHUNG (MỤC 2 & MỤC 4) */}
+                    <div className="relative w-full">
+                      <input
+                        type="text"
+                        value={channelSearchQuery}
+                        onChange={(e) => setChannelSearchQuery(e.target.value)}
+                        placeholder="🔍 Tìm kiếm kênh hoặc video trong tài khoản của bạn..."
+                        className="w-full px-3.5 py-2 pl-9 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-red-500 transition-colors"
+                      />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="absolute left-3 top-2.5 text-neutral-400">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      </svg>
+                      {channelSearchQuery && (
+                        <button
+                          onClick={() => setChannelSearchQuery('')}
+                          className="absolute right-3 top-2 text-neutral-400 hover:text-white text-xs"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
 
-                          return (
-                            <div
-                              key={sub.id || sIdx}
-                              onClick={() => handleSelectSubscribedChannel(sub)}
-                              className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/50 transition-all group cursor-pointer relative shadow-sm hover:shadow-lg"
-                              title={`Nhấn để phát video từ kênh ${title} (Xem trực tiếp, không chuyển trang)`}
-                            >
-                              {/* Avatar kênh */}
-                              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-neutral-900 shrink-0 border-2 border-white/15 group-hover:border-red-500/50 shadow-md">
-                                {thumb ? (
+                    {/* ── TAB 1: KÊNH ĐÃ ĐĂNG KÝ (CHANNELS) ── */}
+                    {activeCatalogTab === 'channels' && (
+                      <div className="flex flex-col gap-3">
+                        {isSyncingYt ? (
+                          <div className="py-12 flex flex-col items-center justify-center gap-2 text-neutral-400 text-sm">
+                            <div className="w-8 h-8 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+                            <span>Đang đồng bộ toàn bộ danh sách kênh từ YouTube Data API v3...</span>
+                          </div>
+                        ) : filteredDisplayChannels.length === 0 ? (
+                          <div className="text-center py-12 px-4 flex flex-col items-center">
+                            <span className="text-3xl mb-2">📋</span>
+                            <h4 className="font-bold text-white text-sm mb-1">
+                              {channelSearchQuery ? 'Không tìm thấy kênh phù hợp với tìm kiếm' : 'Chưa có kênh đăng ký nào'}
+                            </h4>
+                            <p className="text-xs text-neutral-400 max-w-sm mb-3">
+                              {channelSearchQuery ? 'Hãy thử tìm kiếm với từ khóa khác.' : 'Tài khoản Google của bạn chưa đăng ký kênh YouTube nào hoặc chưa được đồng bộ.'}
+                            </p>
+                            {!channelSearchQuery && (
+                              <button
+                                onClick={handleSyncYouTube}
+                                className="px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
+                              >
+                                Đồng bộ lại ngay
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {filteredDisplayChannels.map((sub: any, sIdx: number) => {
+                              const snippet = sub.snippet || {};
+                              const thumb = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
+                              const title = snippet.title || 'Kênh YouTube';
+                              const handle = snippet.customUrl || '';
+                              const subCount = snippet.subscribersText || '';
+                              const desc = snippet.description || 'Kênh đã đăng ký trên tài khoản YouTube của bạn';
+                              const verified = snippet.verified !== false && snippet.verified !== undefined ? snippet.verified : false;
+
+                              return (
+                                <div
+                                  key={sub.id || sIdx}
+                                  onClick={() => handleSelectSubscribedChannel(sub)}
+                                  className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/50 transition-all group cursor-pointer relative shadow-sm hover:shadow-lg"
+                                  title={`Xem video kênh ${title} (Phát trực tiếp)`}
+                                >
+                                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-neutral-900 shrink-0 border-2 border-white/15 group-hover:border-red-500/50 shadow-md">
+                                    {thumb ? (
+                                      <img 
+                                        src={thumb} 
+                                        alt={title} 
+                                        className="w-full h-full object-cover" 
+                                        onError={(e) => {
+                                          (e.target as HTMLElement).style.display = 'none';
+                                        }}
+                                      />
+                                    ) : null}
+                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-red-600 to-rose-500 font-bold text-white text-lg">
+                                      {title[0]?.toUpperCase() || 'Y'}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <h4 className="font-bold text-[13.5px] sm:text-[14px] text-white group-hover:text-red-400 transition-colors truncate">
+                                        {title}
+                                      </h4>
+                                      {verified && (
+                                        <span className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center text-white text-[9px] font-bold" title="Kênh đã xác minh">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium mt-0.5 truncate">
+                                      {handle && <span className="text-neutral-300 font-mono">{handle}</span>}
+                                      {subCount && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="text-neutral-400">{subCount}</span>
+                                        </>
+                                      )}
+                                    </div>
+
+                                    <p className="text-[11px] text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
+                                      {desc}
+                                    </p>
+
+                                    <div className="flex items-center gap-2 mt-2.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSelectSubscribedChannel(sub);
+                                        }}
+                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30 cursor-pointer active:scale-95 transition-all"
+                                      >
+                                        <span>▶ Xem video kênh</span>
+                                      </button>
+                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[10.5px] font-medium bg-white/10 text-neutral-300">
+                                        <span>Đã đăng ký ✓</span>
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── TAB 2: VIDEO MỚI NHẤT (LATEST) ── */}
+                    {activeCatalogTab === 'latest' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {latestVideosList.length === 0 ? (
+                          <div className="col-span-full text-center py-12 text-neutral-400 text-xs">
+                            Không có video nào phù hợp với bộ lọc.
+                          </div>
+                        ) : (
+                          latestVideosList.map((vid, vIdx) => {
+                            const isSaved = bookmarkedVideos.some(b => b.videoId === vid.videoId);
+                            return (
+                              <div
+                                key={vid.videoId || vIdx}
+                                onClick={() => handleSelectVideoItem(vid)}
+                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                                title={`Xem: ${vid.videoTitle} (Phát trực tiếp)`}
+                              >
+                                <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
                                   <img 
-                                    src={thumb} 
-                                    alt={title} 
-                                    className="w-full h-full object-cover" 
-                                    onError={(e) => {
-                                      (e.target as HTMLElement).style.display = 'none';
-                                    }}
+                                    src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
+                                    alt={vid.videoTitle}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   />
-                                ) : null}
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-red-600 to-rose-500 font-bold text-white text-lg">
-                                  {title[0]?.toUpperCase() || 'Y'}
+                                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                                    <span className="w-10 h-10 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                      ▶
+                                    </span>
+                                  </div>
+                                  <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/80 text-white border border-white/20">
+                                    {vid.duration || 'Video'}
+                                  </span>
+                                  {/* Quick Bookmark Button trên thẻ */}
+                                  <button
+                                    onClick={(e) => handleToggleBookmark(e, vid)}
+                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 hover:bg-black text-white text-xs border border-white/20"
+                                    title={isSaved ? 'Bỏ lưu' : 'Lưu video'}
+                                  >
+                                    {isSaved ? '🔖' : '☆'}
+                                  </button>
+                                </div>
+
+                                <div className="p-3 flex flex-col flex-1">
+                                  <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">
+                                    {vid.channelTitle}
+                                  </span>
+                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 group-hover:text-red-400 transition-colors leading-snug">
+                                    {cleanVideoTitle(vid.videoTitle)}
+                                  </h4>
+                                  <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
+                                    <span>{vid.publishedAt ? new Date(vid.publishedAt).toLocaleDateString('vi-VN') : 'Mới'}</span>
+                                    <span className="text-emerald-400 font-medium">▶ Phát tức thì</span>
+                                  </div>
                                 </div>
                               </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
 
-                              {/* Thông tin kênh */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <h4 className="font-bold text-[13.5px] sm:text-[14px] text-white group-hover:text-red-400 transition-colors truncate">
-                                    {title}
-                                  </h4>
-                                  {verified && (
-                                    <span className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center text-white text-[9px] font-bold" title="Kênh đã xác minh">
-                                      ✓
-                                    </span>
-                                  )}
-                                </div>
+                    {/* ── TAB 3: THEO TỪNG KÊNH (BY_CHANNEL) ── */}
+                    {activeCatalogTab === 'by_channel' && (
+                      <div className="flex flex-col gap-3">
+                        {/* Dải Channel Chips */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                          <button
+                            onClick={() => setSelectedSubChannelFilter('all')}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all border ${
+                              selectedSubChannelFilter === 'all'
+                                ? 'bg-red-600 text-white border-red-400 shadow-md'
+                                : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                            }`}
+                          >
+                            Tất cả ({latestVideosList.length})
+                          </button>
+                          {displayUserChannels.map((c: any, cIdx: number) => {
+                            const name = c.snippet?.title || 'Kênh';
+                            const chId = c.snippet?.resourceId?.channelId || c.id || name;
+                            const isActive = selectedSubChannelFilter === chId || selectedSubChannelFilter === name;
+                            return (
+                              <button
+                                key={chId || cIdx}
+                                onClick={() => setSelectedSubChannelFilter(chId)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all border ${
+                                  isActive
+                                    ? 'bg-red-600 text-white border-red-400 shadow-md'
+                                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                                }`}
+                              >
+                                <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                                <span className="max-w-[130px] truncate">{name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                                {/* Handle & Số người đăng ký */}
-                                <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium mt-0.5 truncate">
-                                  {handle && <span className="text-neutral-300 font-mono">{handle}</span>}
-                                  {subCount && (
-                                    <>
-                                      <span>•</span>
-                                      <span className="text-neutral-400">{subCount}</span>
-                                    </>
-                                  )}
-                                </div>
-
-                                {/* Mô tả kênh */}
-                                <p className="text-[11px] text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
-                                  {desc}
-                                </p>
-
-                                {/* Nút hành động phát trực tiếp - Không chuyển trang sang YouTube */}
-                                <div className="flex items-center gap-2 mt-2.5">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSelectSubscribedChannel(sub);
-                                    }}
-                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30 cursor-pointer active:scale-95 transition-all"
-                                  >
-                                    <span>▶ Xem video kênh</span>
-                                  </button>
-                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[10.5px] font-medium bg-white/10 text-neutral-300">
-                                    <span>Đã đăng ký ✓</span>
+                        {/* Video Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {byChannelVideosList.length === 0 ? (
+                            <div className="col-span-full text-center py-10 text-neutral-400 text-xs">
+                              Không có video nào từ kênh đã chọn.
+                            </div>
+                          ) : (
+                            byChannelVideosList.map((vid, vIdx) => (
+                              <div
+                                key={vid.videoId || vIdx}
+                                onClick={() => handleSelectVideoItem(vid)}
+                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                              >
+                                <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
+                                  <img 
+                                    src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
+                                    alt={vid.videoTitle}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                  <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/80 text-white border border-white/20">
+                                    {vid.duration || 'Video'}
                                   </span>
                                 </div>
+                                <div className="p-3 flex flex-col flex-1">
+                                  <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">{vid.channelTitle}</span>
+                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 leading-snug">{cleanVideoTitle(vid.videoTitle)}</h4>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            ))
+                          )}
+                        </div>
                       </div>
-                    ) : (
-                      /* ── 2. HIỂN THỊ TẤT CẢ VIDEO TỪ CÁC KÊNH ĐÃ ĐĂNG KÝ (PHÁT TRỰC TIẾP TRONG APP) ── */
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {allSubscribedVideos.map((vid, vIdx) => (
-                          <div
-                            key={vid.id || vIdx}
-                            onClick={() => {
-                              setSelectedChannelId(vid.channelId || 'subscribed');
-                              const targetIdx = playlist.findIndex(p => p.id === vid.id || (p.youtubeId && p.youtubeId === vid.youtubeId));
-                              setCurrentIndex(targetIdx !== -1 ? targetIdx : 0);
-                              setShowChannelMenu(false);
-                              setIsControlsVisible(false);
-                              setShowToast(`▶ Đang phát: ${cleanVideoTitle(vid.title)}`);
-                              setTimeout(() => setShowToast(null), 3000);
-                            }}
-                            className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
-                            title={`Xem: ${vid.title} (Phát trực tiếp)`}
-                          >
-                            {/* Thumbnail */}
-                            <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
-                              <img 
-                                src={vid.thumbnail || `https://i.ytimg.com/vi/${vid.youtubeId}/hqdefault.jpg`} 
-                                alt={vid.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors flex items-center justify-center">
-                                <span className="w-10 h-10 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                                  ▶
-                                </span>
-                              </div>
-                              <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/80 text-white border border-white/20">
-                                {vid.duration || 'Video'}
-                              </span>
-                            </div>
+                    )}
 
-                            {/* Info */}
-                            <div className="p-3 flex flex-col flex-1">
-                              <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">
-                                {vid.channel}
-                              </span>
-                              <h4 className="font-bold text-[12.5px] text-white line-clamp-2 group-hover:text-red-400 transition-colors leading-snug">
-                                {cleanVideoTitle(vid.title)}
-                              </h4>
-                              <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
-                                <span>{vid.category}</span>
-                                <span className="text-emerald-400 font-medium">▶ Phát tức thì</span>
+                    {/* ── TAB 4: VIDEO ĐÃ LƯU (SAVED / BOOKMARKS) ── */}
+                    {activeCatalogTab === 'saved' && (
+                      <div className="flex flex-col gap-3">
+                        {savedVideosList.length === 0 ? (
+                          <div className="text-center py-14 px-4 flex flex-col items-center">
+                            <span className="text-4xl mb-2">🔖</span>
+                            <h4 className="font-bold text-white text-sm mb-1">Chưa có video nào được lưu</h4>
+                            <p className="text-xs text-neutral-400 max-w-sm">
+                              Nhấn biểu tượng Lưu 🔖 trên trình phát video hoặc các thẻ video để lưu xem lại bất cứ khi nào!
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {savedVideosList.map((vid, vIdx) => (
+                              <div
+                                key={vid.videoId || vIdx}
+                                onClick={() => handleSelectVideoItem(vid)}
+                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-amber-500/30 hover:border-amber-400 transition-all cursor-pointer flex flex-col shadow-md"
+                              >
+                                <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
+                                  <img 
+                                    src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
+                                    alt={vid.videoTitle}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                  <button
+                                    onClick={(e) => handleToggleBookmark(e, vid)}
+                                    className="absolute top-2 right-2 p-1.5 rounded-full bg-amber-500 text-white text-xs border border-amber-400 shadow-md"
+                                    title="Xóa khỏi danh sách lưu"
+                                  >
+                                    🔖
+                                  </button>
+                                  <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/80 text-white">
+                                    {vid.duration || 'Video'}
+                                  </span>
+                                </div>
+                                <div className="p-3 flex flex-col flex-1">
+                                  <span className="text-[10.5px] font-bold text-amber-400 truncate mb-1">{vid.channelTitle}</span>
+                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 leading-snug">{cleanVideoTitle(vid.videoTitle)}</h4>
+                                  <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
+                                    <span className="text-amber-300">Đã lưu trong mục yêu thích</span>
+                                    <span className="text-emerald-400 font-medium">▶ Phát</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── TAB 5: ĐÃ XEM GẦN ĐÂY (HISTORY) ── */}
+                    {activeCatalogTab === 'history' && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                          <span className="text-xs text-neutral-400">
+                            Lịch sử xem gần đây ({historyVideosList.length} video)
+                          </span>
+                          {watchHistory.length > 0 && (
+                            <button
+                              onClick={handleClearHistory}
+                              className="px-3 py-1 rounded-lg text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            >
+                              🗑️ Xóa toàn bộ lịch sử
+                            </button>
+                          )}
+                        </div>
+
+                        {historyVideosList.length === 0 ? (
+                          <div className="text-center py-14 px-4 flex flex-col items-center">
+                            <span className="text-4xl mb-2">🕒</span>
+                            <h4 className="font-bold text-white text-sm mb-1">Chưa có lịch sử xem video</h4>
+                            <p className="text-xs text-neutral-400 max-w-sm">
+                              Khi bạn phát bất kỳ clip nào, thông tin video sẽ được tự động lưu vào đây để bạn dễ dàng xem lại.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                            {historyVideosList.map((vid, vIdx) => (
+                              <div
+                                key={vid.videoId || vIdx}
+                                onClick={() => handleSelectVideoItem(vid)}
+                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                              >
+                                <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
+                                  <img 
+                                    src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
+                                    alt={vid.videoTitle}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                  <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-black/80 text-white">
+                                    {vid.duration || 'Video'}
+                                  </span>
+                                </div>
+                                <div className="p-3 flex flex-col flex-1">
+                                  <span className="text-[10.5px] font-bold text-neutral-400 truncate mb-1">{vid.channelTitle}</span>
+                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 leading-snug">{cleanVideoTitle(vid.videoTitle)}</h4>
+                                  <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
+                                    <span>{vid.watchedAt ? `Đã xem: ${new Date(vid.watchedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Gần đây'}</span>
+                                    <span className="text-emerald-400 font-medium">▶ Xem lại</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── TAB 6: SHORTS NGẮN (9:16) ── */}
+                    {activeCatalogTab === 'shorts' && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {shortsVideosList.length === 0 ? (
+                          <div className="col-span-full text-center py-10 text-neutral-400 text-xs">
+                            Không tìm thấy video Shorts nào.
+                          </div>
+                        ) : (
+                          shortsVideosList.map((vid, vIdx) => (
+                            <div
+                              key={vid.videoId || vIdx}
+                              onClick={() => handleSelectVideoItem(vid)}
+                              className="group relative rounded-2xl overflow-hidden bg-neutral-900 aspect-[9/16] border border-white/10 hover:border-pink-500/60 transition-all cursor-pointer flex flex-col shadow-md"
+                            >
+                              <img 
+                                src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
+                                alt={vid.videoTitle}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-2.5">
+                                <span className="text-[9px] font-black uppercase text-pink-400 mb-0.5">⚡ Shorts</span>
+                                <h5 className="text-[11px] font-bold text-white line-clamp-2 leading-tight">
+                                  {cleanVideoTitle(vid.videoTitle)}
+                                </h5>
+                                <span className="text-[9.5px] text-neutral-400 truncate mt-1">{vid.channelTitle}</span>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))
+                        )}
                       </div>
                     )}
                   </>
                 ) : (
+                  /* Giao diện khi người dùng chưa đăng nhập Google */
                   <div className="text-center py-12 px-4 flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-3">
+                    <div className="w-16 h-16 rounded-full bg-red-600/10 border border-red-500/30 flex items-center justify-center text-3xl mb-3 shadow-lg">
                       📺
                     </div>
                     <h4 className="font-bold text-lg text-white mb-1">
-                      Chưa kết nối tài khoản Google
+                      Kết Nối Tài Khoản Google & YouTube Cá Nhân
                     </h4>
-                    <p className="text-sm text-neutral-400 max-w-md mb-4">
-                      Vui lòng đăng nhập bằng Gmail ở bên ngoài để hệ thống tự động đồng bộ kênh và nội dung yêu thích của bạn.
+                    <p className="text-sm text-neutral-400 max-w-md mb-4 leading-relaxed">
+                      Đăng nhập để tự động đồng bộ tất cả kênh bạn đã đăng ký trên YouTube, xem video mới nhất, lưu video yêu thích và xem lịch sử trực tiếp trên trang web mà không bị chuyển hướng.
                     </p>
                     <button
                       onClick={() => {
                         if (onLogin) onLogin();
                       }}
-                      className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-red-600/30 active:scale-95 transition-all"
+                      className="px-6 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-sm flex items-center gap-2 cursor-pointer shadow-lg shadow-red-600/30 active:scale-95 transition-all"
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                       </svg>
-                      <span>Đăng nhập Google</span>
+                      <span>Kết Nối Google / YouTube Ngay</span>
                     </button>
                   </div>
                 )}
