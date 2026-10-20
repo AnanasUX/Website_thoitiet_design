@@ -55,7 +55,11 @@ async function runDashboardTest() {
     try {
       browser = await chromium.launch({ channel: 'chrome', headless: true });
     } catch {
-      browser = await chromium.launch({ channel: 'msedge', headless: true });
+      try {
+        browser = await chromium.launch({ channel: 'msedge', headless: true });
+      } catch {
+        browser = await chromium.launch({ headless: true });
+      }
     }
 
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });

@@ -257,11 +257,15 @@ async function runLiveTests() {
   let browser;
 
   try {
-    // Launch Chrome with graceful fallback to msedge
+    // Launch Chrome with graceful fallback to msedge or bundled chromium
     try {
       browser = await chromium.launch({ channel: 'chrome', headless: true });
     } catch {
-      browser = await chromium.launch({ channel: 'msedge', headless: true });
+      try {
+        browser = await chromium.launch({ channel: 'msedge', headless: true });
+      } catch {
+        browser = await chromium.launch({ headless: true });
+      }
     }
 
     const context = await browser.newContext({

@@ -1,6 +1,7 @@
 const { defineConfig, devices } = require("@playwright/test");
 
-const baseURL = process.env.QA_BASE_URL || "http://127.0.0.1:4173";
+const rawBaseUrl = process.env.QA_BASE_URL ? process.env.QA_BASE_URL.trim() : "";
+const baseURL = rawBaseUrl || "http://127.0.0.1:4173";
 
 module.exports = defineConfig({
   testDir: "./tests",
@@ -18,7 +19,13 @@ module.exports = defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    ignoreHTTPSErrors: false
+    ignoreHTTPSErrors: true
+  },
+  webServer: rawBaseUrl ? undefined : {
+    command: "npx vite preview --port 4173 --host 127.0.0.1",
+    port: 4173,
+    reuseExistingServer: !process.env.CI,
+    timeout: 60000
   },
   projects: [
     { name: "desktop-chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
