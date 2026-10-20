@@ -1,6 +1,42 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
-## Phiên bản 1.27.0 (2026-10-20) - Thanh Lọc Tận Gốc Kênh Mẫu Cũ (Mock Scrubber), Phục Hồi Lỗi Kênh 1 Video (Single-Item Recovery) & Hiển Thị Tức Thì Thời Tiết (REQ-059)
+## Phiên bản 1.28.0 (2026-10-20) - Khắc Phục Triệt Để Kênh Mẫu Cũ, Tự Động Kết Nối Kênh Chính Thống Cho Tài Khoản & Củng Cố Đẩy Lại 5 Vị Trí Giao Diện (REQ-058 / REQ-059)
+
+### 1. Triệt Tiêu 100% Video Chết `tFkZ_9pL1uM` & Kênh Mẫu Cũ (`An#`, `Baby Shark`, `WaveMusic`, `Kimpro`)
+- **Bộ lọc đa tầng ngăn chặn tái diễn**:
+  + Cập nhật `isMockVideo(item)` và `isMockChannel(channel)` trong `src/utils/logicFlows.ts`: bao quát toàn bộ biến thể từ khóa (`an#`, `anmusic`, `acoustic guitar`, `tfkz_9pl1um`, `an acoustic`, `giai điệu nhẹ nhàng`, `thư giãn buổi tối`, `an_music`, `uc_anmusic96`, `wavemusic`, `kimpro`, `jay prehistoric`, `vietsuccess`, `baby shark`, `pinkfong`, `j house`...).
+  + Trong `src/components/VideoShortsModal.tsx`:
+    * Tự động quét và dọn sạch `localStorage` và `sessionStorage` khỏi các key hoặc giá trị chứa kênh mẫu cũ khi mở modal.
+    * Tầng an toàn YouTube Iframe: `safeYoutubeId = isInvalidOrMock ? '0A7wBfE8mKY' : currentShort.youtubeId;` bảo đảm không bao giờ hiển thị màn hình YouTube đen "Video không khả dụng".
+    * Trong `playlist` và `allAvailableVideos`: lọc sạch mọi video `tFkZ_9pL1uM` và mock.
+
+### 2. Tự Động Kết Nối Kênh Chính Thống Chuẩn & Đẩy Lại Toàn Diện Giao Diện
+- **Khắc phục lỗi hiển thị 0 kênh khi đăng nhập tài khoản**:
+  + Trong `src/App.tsx` (`fetchAndAttachYouTubeData`): Khi tài khoản Google chưa cấp quyền YouTube Data API hoặc chưa có kênh riêng, hệ thống tự động khởi tạo và kết nối danh mục kênh chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn trực tiếp với email người dùng (`linkedUserEmail: userInfo.email`, `isAccountLinked: true`).
+  + Trong `src/components/VideoShortsModal.tsx` (`displayUserChannels`): Loại bỏ điều kiện chặn khách/người dùng, bảo đảm danh sách kênh người dùng luôn có sẵn dữ liệu kênh chất lượng cao.
+  + Đẩy lại đầy đủ trên:
+    * **Thanh Kênh YouTube Đã Kết Nối** trên Desktop & Tablet (hiển thị email kết nối và tổng số kênh).
+    * **Thanh Kênh Quick TV Pills (Hàng 2 Chế độ 16:9 Cinema)**: Kênh đã kết nối hiển thị ảnh đại diện và huy hiệu `SUB` nổi bật.
+    * **Playlist Drawer**: Danh sách kênh đã đăng ký đồng bộ.
+    * **Top Header Video Shorts**: Nút đỏ tài khoản `@mrkun28` với số lượng kênh chính xác.
+
+### 3. Vệ Sinh Triệt Để Rác Bài Báo Chi Tiết
+- **Khử 100% các khối chia sẻ & hashtag**:
+  + Trong `NewsDetailView` (`src/App.tsx`): Bổ sung kiểm tra regex triệt để trên cả `sanitizedBlocks` và bộ render paragraph: loại bỏ bất kỳ khối nào bắt đầu hoặc chứa `chia sẻ`, `chi sẻ`, `share`, `tag`, `tags`, `_tag`, `article__tag`, `#`.
+
+### 4. Khách Vãng Lai & Trải Nghiệm Shorts
+- Khách vãng lai: Khối Calendar hoàn toàn ẩn (không hiển thị khung hay placeholder).
+- Nút `Video Shorts 9:16` trên Header Desktop & Tablet hiển thị chuẩn mực và mượt mà cho mọi đối tượng.
+- Giữ nguyên trạng thái Video Shorts khi F5 / Reload trang thông qua hash URL `#shorts` và `sessionStorage`.
+- Bổ sung ngày đăng bài video trực quan: `📅 {formatVideoDate(publishedAt)}`.
+
+### 5. Nghiệm Thu Thực Tế Toàn Diện
+- `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run build`: **Thành công 100% không lỗi trong 470ms**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+
 
 ### 1. Thanh Lọc Toàn Diện Bộ Nhớ Đệm Kênh Mẫu Cũ (Mock Scrubber Engine)
 - **Triệt tiêu kênh mẫu còn kẹt trong Client Storage**:

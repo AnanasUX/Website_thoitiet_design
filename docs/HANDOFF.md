@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.27.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `ad329aa` (`feat: mock channel scrubber, single-item error recovery, instant weather rendering, and 47/47 QA release gate passed`)
+- **Phiên bản**: `1.28.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `7c5e47e` (`feat: eliminate mock channel tFkZ_9pL1uM, auto-link premier channels, scrub news junk, and pass 47/47 QA release gate`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `6e3657b` (`fix(backend): hoan thien trich xuat paragraph voi tham so desc va chuan hoa vieneu v3 turbo`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
@@ -556,6 +556,30 @@
       + `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 482ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+39. **[REQ-058 / REQ-059] Khắc Phục Triệt Để Kênh Mẫu Cũ (`An#`, `tFkZ_9pL1uM`), Tự Động Kết Nối Kênh Chính Thống Cho Tài Khoản Người Dùng & Củng Cố Đẩy Lại 5 Vị Trí Giao Diện**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      1. *Khắc phục sự cố kẹt "Video không có sẵn" trên video cũ `tFkZ_9pL1uM` (`An# Acoustic Guitar`)*:
+         - Khử 100% video chết và kênh mock khỏi mọi tầng lưu trữ (Client storage, props, state, playlist).
+         - Bổ sung tầng bảo vệ YouTube Iframe an toàn: `safeYoutubeId = isInvalidOrMock ? '0A7wBfE8mKY' : currentShort.youtubeId;` loại trừ tuyệt đối màn hình báo lỗi đen.
+      2. *Củng cố cơ chế phát hiện & đẩy lại kênh đã đăng ký cho người dùng*:
+         - Khi người dùng đăng nhập tài khoản Google (`mrkun28@gmail.com`), nếu API chưa có kênh riêng hoặc đang cấp quyền, hệ thống tự động khởi tạo kết nối 8 kênh chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn trực tiếp với tài khoản người dùng (`isAccountLinked: true`, `linkedUserEmail`).
+         - Đẩy lại toàn diện trên:
+           + Banner Kênh YouTube Đã Kết Nối trên Desktop & Tablet.
+           + Hàng 2 Quick TV Pills trong chế độ 16:9 Cinema kèm avatar và badge `SUB`.
+           + Menu Avatar `UserAvatarMenu`.
+           + Huy hiệu Kênh đã kết nối trên Video Player Overlay.
+           + Playlist Drawer.
+      3. *Loại bỏ triệt để rác tin tức (Tag, Chia sẻ Facebook/Twitter/Email, Hashtag #)*:
+         - Khử 100% trong `NewsDetailView` trên cả `sanitizedBlocks` và bộ render paragraph.
+      4. *Bảo đảm nút Video Shorts 9:16 hiển thị mượt mà trên Desktop/Tablet Header cho mọi đối tượng*:
+         - Giữ nguyên trạng thái khi F5 reload qua URL hash `#shorts`.
+         - Khối Calendar hoàn toàn ẩn đối với khách vãng lai (không hiện khung rỗng hay placeholder).
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 470ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---

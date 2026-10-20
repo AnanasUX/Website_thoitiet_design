@@ -483,3 +483,14 @@
      + **Bộ quét đa tầng `isMockVideo` & `isMockChannel`**: Quét sâu và xóa bỏ 100% video và kênh mẫu cũ khỏi `localStorage.user_auth` (tự động làm sạch ngay khi load app), `weather_user_channels_*`, `weather_app_subscribed_channels_*`, `weather_watch_history_*` và `sessionStorage`.
      + **Cơ chế phá vỡ vòng lặp lỗi phát (Single-Item Playlist Auto-Recovery)**: Trong `handlePlayerError`, khi phát hiện video lỗi và `playlist.length <= 1`, hệ thống lập tức tự động chuyển kênh sang `'vtv24'` và reset index về 0, chuyển sang kênh truyền hình chính thống hoạt động 100%.
      + **Hiển thị tức thì không gián đoạn khối thời tiết**: Thay đổi điều kiện trong `WeatherSection` thành `if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;`. Do `DEFAULT_WEATHER_DATA` luôn có sẵn, các chỉ số sức khỏe (Nhiệt độ, PM2.5, Độ ẩm, Gió) luôn hiện diện tức thì mà không bị gián đoạn hay chớp nháy skeleton.
+
+
+9. **Tự Động Kết Nối Kênh Chính Thống Cho Tài Khoản Người Dùng, Tầng Bảo Vệ YouTube Iframe An Toàn & Khử Triệt Để Rác Bài Báo (REQ-058 / REQ-059)**:
+   - *Bối cảnh & Vấn đề*:
+     + Khi người dùng đăng nhập tài khoản Google (`mrkun28@gmail.com`), nếu quyền YouTube Data API chưa được cấp hoặc tài khoản chưa có kênh đăng ký riêng trên YouTube, danh sách kênh trả về 0 kênh dẫn đến các vị trí đẩy kênh hiển thị trống hoặc rỗng.
+     + Đồng thời, một số trình duyệt của người dùng vẫn lưu video chết `tFkZ_9pL1uM` (`An# Acoustic Guitar`) dẫn đến màn hình YouTube đen "Video không khả dụng".
+   - *Giải pháp kiến trúc & Triển khai*:
+     + **Tự động gắn kết kênh chính thống cho tài khoản**: Trong `fetchAndAttachYouTubeData` và `userRole` initial load, nếu danh sách kênh rỗng, tự động liên kết 8 kênh chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn mã `linkedUserEmail: userInfo.email` và `isAccountLinked: true`.
+     + **Tầng an toàn YouTube Iframe (Zero Black Screen Fallback)**: `safeYoutubeId = isInvalidOrMock ? '0A7wBfE8mKY' : currentShort.youtubeId;` bảo đảm iframe YouTube luôn phát video hoạt động 100%, không bao giờ xuất hiện màn hình báo lỗi.
+     + **Khử triệt để rác bài báo chi tiết**: Kiểm tra regex trên cả `sanitizedBlocks` và bộ render paragraph: triệt tiêu 100% các dòng chia sẻ qua mạng xã hội (`chia sẻ`, `chi sẻ`, `share`), thẻ tag (`tag`, `_tag`, `article__tag`) và các hashtag liên quan.
+     + **Duy trì nút Video Shorts 9:16 cho mọi đối tượng & Ẩn hoàn toàn Calendar cho khách vãng lai**: Nút Video Shorts 9:16 mở cho cả khách và người dùng; Calendar chỉ xuất hiện khi đã đăng nhập Google. Trạng thái Shorts được bảo toàn qua F5 bằng `#shorts` URL hash.
