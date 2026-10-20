@@ -19,4 +19,11 @@ jobs:
       - run: npm install
       - run: npm run qa:registry
       - run: npm run qa:dashboard
-      - run: npm run test:logic
+      - name: Run logic tests
+        run: node scripts/test-logic-flows.mjs > logic-test.log 2>&1 || (cat logic-test.log && exit 1)
+      - name: Upload logic test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logic-test-log
+          path: logic-test.log
