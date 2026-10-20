@@ -16,8 +16,8 @@ import './index.css'
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
-// ĐÃ ĐIỀN GOOGLE CLIENT ID THẬT TỪ ẢNH CHỤP
-const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
+// GOOGLE CLIENT ID MỚI CHO TÊN MIỀN ANX.IO.VN
+const GOOGLE_CLIENT_ID = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) || '808045911964-g69d5qp5ou2te9vm173p3o0qnlaqrbfu.apps.googleusercontent.com';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

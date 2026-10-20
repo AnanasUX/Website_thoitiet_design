@@ -3934,7 +3934,7 @@ function toSlug(str: string) {
 }
 
 
-const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) || '808045911964-g69d5qp5ou2te9vm173p3o0qnlaqrbfu.apps.googleusercontent.com';
 
 export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: any) {
   if (!accessToken || !userInfo) return userInfo;
