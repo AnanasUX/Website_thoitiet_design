@@ -33,3 +33,8 @@ __pycache__/
 *.py[cod]
 public/audio_cache/*
 !public/audio_cache/.gitkeep
+
+# Playwright Test Outputs
+playwright-report/
+test-results/
+qa-results.json

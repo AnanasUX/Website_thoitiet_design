@@ -4179,15 +4179,13 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
   const isCustomDomain = window.location.hostname === 'anx.io.vn' || !window.location.pathname.includes('/Website_thoitiet_design');
   const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
   const redirectUri = window.location.origin + basePath;
-  // Bổ sung quyền đọc thông tin kênh YouTube và danh sách kênh đã đăng ký của tài khoản Gmail
-  const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
+  // Standard OAuth 2.0 OpenID scopes cho phép mọi tài khoản Google đăng nhập ngay lập tức không bị rào cản
+  const scope = 'openid email profile';
   let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
-  if (forceConsent) {
-    authUrl += `&prompt=consent%20select_account`;
-  } else if (loginHint) {
-    authUrl += `&login_hint=${encodeURIComponent(loginHint)}&prompt=consent%20select_account`;
+  if (loginHint) {
+    authUrl += `&login_hint=${encodeURIComponent(loginHint)}&prompt=select_account`;
   } else {
-    authUrl += `&prompt=consent%20select_account`;
+    authUrl += `&prompt=select_account`;
   }
 
   const w = 500, h = 600;
@@ -4780,8 +4778,8 @@ export default function App() {
         } catch {}
       }
 
-      // 4. Tự động đóng cửa sổ popup đăng nhập
-      const isPopup = window.opener || window.name === 'google-login' || (window.innerWidth <= 650 && window.innerHeight <= 750);
+      // 4. Tự động đóng cửa sổ popup đăng nhập (chỉ khi có opener hoặc đúng tên google-login, không nhầm mobile)
+      const isPopup = Boolean(window.opener || window.name === 'google-login');
       if (isPopup) {
         try { window.close(); } catch {}
         return;
