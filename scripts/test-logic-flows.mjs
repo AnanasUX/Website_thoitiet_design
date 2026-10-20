@@ -103,7 +103,7 @@ import {
   VieNeuTTSController,
   getVieNeuTTSV3TurboSpecs,
   buildVieNeuOpenAISpeechPayload
-} from '../src/utils/logicFlows.ts';
+} from '../src/utils/logicFlows.js';
 
 const rootDir = process.cwd();
 const modalPath = path.join(rootDir, 'src', 'components', 'VideoShortsModal.tsx');
