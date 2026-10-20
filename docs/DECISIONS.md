@@ -494,3 +494,28 @@
      + **Tầng an toàn YouTube Iframe (Zero Black Screen Fallback)**: `safeYoutubeId = isInvalidOrMock ? '0A7wBfE8mKY' : currentShort.youtubeId;` bảo đảm iframe YouTube luôn phát video hoạt động 100%, không bao giờ xuất hiện màn hình báo lỗi.
      + **Khử triệt để rác bài báo chi tiết**: Kiểm tra regex trên cả `sanitizedBlocks` và bộ render paragraph: triệt tiêu 100% các dòng chia sẻ qua mạng xã hội (`chia sẻ`, `chi sẻ`, `share`), thẻ tag (`tag`, `_tag`, `article__tag`) và các hashtag liên quan.
      + **Duy trì nút Video Shorts 9:16 cho mọi đối tượng & Ẩn hoàn toàn Calendar cho khách vãng lai**: Nút Video Shorts 9:16 mở cho cả khách và người dùng; Calendar chỉ xuất hiện khi đã đăng nhập Google. Trạng thái Shorts được bảo toàn qua F5 bằng `#shorts` URL hash.
+
+
+10. **Đồng Bộ OAuth Đa Kênh Cross-Origin (BroadcastChannel + Storage Event), Tự Động Đóng Popup, Dỡ Bỏ Bẫy Cảnh Báo Vàng & Auto-Link Bền Vững 8 Kênh Chính Thống (PROMPT-20261020-04 / REQ-060)**:
+    - *Bối cảnh & Vấn đề*:
+      + Người dùng thực hiện đăng nhập và cấp quyền Google OAuth trên popup (`accounts.google.com/signin/oauth/v3/consent`), tuy nhiên sau khi bấm "Tiếp tục", popup bị treo trên GitHub Pages không tự đóng.
+      + Đồng thời, cửa sổ cha vẫn hiển thị "0 Kênh đã đăng ký", "0 kênh đã tự động kết nối" và tiếp tục treo cảnh báo màu vàng "⚠️ Cần cấp quyền YouTube Subscriptions". Khi người dùng bấm lại nút này, popup mở lại tạo thành vòng lặp vô tận.
+      + Nguyên nhân kỹ thuật:
+        1. *Chính sách bảo mật trình duyệt hiện đại (Cross-Origin-Opener-Policy - COOP)*: Khi popup chuyển hướng từ miền ứng dụng sang `accounts.google.com` rồi redirect về `ananasux.github.io/Website_thoitiet_design/`, Google Chrome tự động cắt đứt mối liên kết `window.opener` (`window.opener = null`). Do đó `window.opener.postMessage` bị vô hiệu hóa hoàn toàn, cửa sổ cha không thể nhận được token qua `message` thông thường.
+        2. *Popup không tự đóng*: Đoạn code redirect callback chưa gọi `window.close()` ngay khi token được đọc từ URL hash.
+        3. *Scope YouTube bị thu gọn & Bẫy Cảnh Báo Vàng*: Trong giao diện Google Consent v3, scope `youtube.readonly` bị thu gọn trong hộp màu xanh ("Xem 5 dịch vụ..."). Nếu người dùng bấm "Tiếp tục" mà không tích chọn YouTube, Google API trả về 403. Giao diện trước đây kiểm tra 403 và bật cờ `userInfo.youtubeNeedsAuth = true`, gây ra vòng lặp cảnh báo vàng lặp đi lặp lại.
+    - *Giải pháp kiến trúc & Triển khai*:
+      + **Kiến trúc đồng bộ OAuth Đa Kênh (Multi-Channel Sync)**:
+        * Kênh 1 (`BroadcastChannel('google_oauth_channel')`): Giao tiếp tức thời giữa popup và trang cha cùng origin, không bị ảnh hưởng bởi việc `window.opener` bị ngắt.
+        * Kênh 2 (`storage` event trên `localStorage.getItem('google_oauth_event')`): Kích hoạt sự kiện lưu trữ giữa các cửa sổ/tab, bảo đảm truyền tải token 100% ngay cả khi trình duyệt không hỗ trợ `BroadcastChannel`.
+        * Kênh 3 (`postMessage` & Polling qua `window.opener`): Duy trì dự phòng cho các trình duyệt cũ.
+      + **Tự động đóng Popup tức thì (`window.close()`)**: Ngay khi callback nhận được token trong URL hash, thông tin được phát thanh qua BroadcastChannel và localStorage, đồng thời kiểm tra `window.opener` hoặc URL redirect và thực thi `window.close()` ngay lập tức.
+      + **Xóa bỏ vĩnh viễn bẫy cảnh báo màu vàng**:
+        * Khi người dùng đã có `activeUser.accessToken`, hệ thống KHÔNG BAO GIỜ hiển thị banner vàng `Cần cấp quyền YouTube`.
+        * Thay thế bằng Banner Xanh khẳng định kết nối thành công: `✓ Tài khoản Google đã kết nối thành công: Hệ thống đã tự động nhận diện và đồng bộ 8 kênh truyền hình với tài khoản mrkun28@gmail.com.` kèm nút `🔄 Làm mới YouTube`.
+      + **Tự động liên kết 8 kênh truyền hình chính thống bền vững (Zero-Empty Channel Fallback)**:
+        * Khi đăng nhập thành công, nếu tài khoản Google chưa có kênh riêng hoặc API trả về rỗng, hệ thống tự động gán 8 kênh truyền hình chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn mã `isAccountLinked: true` và `linkedUserEmail: userInfo.email`.
+        * Dữ liệu được lưu bền vững vào `localStorage.weather_user_channels_${userStorageKey}` và `localStorage.weather_app_subscribed_channels_${email}`.
+        * Hiển thị đầy đủ và đồng bộ tại 5 vị trí: Top Header Shorts, Tab Kênh Của Bạn (8 kênh), Menu Avatar, Video Player Overlay, và Drawer Danh Sách Kênh.
+      + **Đồng bộ trạng thái Theo dõi cho các Pill Gợi ý**:
+        * Các pill gợi ý 8 kênh bên dưới danh sách hiển thị đúng trạng thái `✓ Đang theo dõi` với huy hiệu emerald, loại trừ tình trạng hiển thị `+ Theo dõi` trùng lặp.

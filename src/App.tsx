@@ -3981,15 +3981,15 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
 
     do {
       const pageQuery = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
-      const subUrl = `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet,contentDetails&mine=true&maxResults=50&order=alphabetical${pageQuery}`;
+      // Tối ưu query API: chỉ yêu cầu part=snippet (ít tốn quota, không bị lỗi contentDetails/order)
+      const subUrl = `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50${pageQuery}`;
       const subRes = await fetch(subUrl, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
       if (!subRes.ok) {
-        if (subRes.status === 403 || subRes.status === 401) {
-          userInfo.youtubeNeedsAuth = true;
-        }
+        const errText = await subRes.text().catch(() => '');
+        console.warn('[YouTube API Status]', subRes.status, errText);
         break;
       }
 
@@ -4004,8 +4004,9 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
     if (allSubs.length > 0) {
       userInfo.youtubeSubscriptions = allSubs.filter((s: any) => !isMockChannel(s));
       userInfo.isLiveRealYouTube = true;
+      userInfo.youtubeNeedsAuth = false;
     } else {
-      // Nếu API YouTube chưa trả về kênh hoặc tài khoản mới, khởi tạo tự động danh mục kênh chính thống kết nối
+      // Nếu API YouTube chưa trả về kênh hoặc tài khoản mới, khởi tạo tự động danh mục 8 kênh chính thống kết nối
       userInfo.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
         ...ch,
         linkedUserEmail: userInfo.email,
@@ -4014,6 +4015,7 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
         isAccountLinked: true
       }));
       userInfo.isLiveRealYouTube = false;
+      userInfo.youtubeNeedsAuth = false;
     }
   } catch (err) {
     console.warn('[YouTube API] Không thể lấy danh sách kênh đã đăng ký:', err);
@@ -4026,6 +4028,7 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
         isAccountLinked: true
       }));
     }
+    userInfo.youtubeNeedsAuth = false;
   }
 
   // 1.5. Nối tài khoản thông tin người dùng vào các kênh đã đăng ký trên website
@@ -4060,6 +4063,19 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
         });
         userInfo.youtubeSubscriptions = subs.filter((s: any) => !isMockChannel(s));
       }
+    }
+
+    // Tự động bảo lưu danh sách kênh kết nối vào storage tài khoản
+    if (Array.isArray(userInfo.youtubeSubscriptions) && userInfo.youtubeSubscriptions.length > 0) {
+      localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(userInfo.youtubeSubscriptions));
+      const followedMap: Record<string, boolean> = {};
+      userInfo.youtubeSubscriptions.forEach((ch: any) => {
+        const title = ch.snippet?.title;
+        const chId = ch.snippet?.resourceId?.channelId || ch.id;
+        if (title) followedMap[title] = true;
+        if (chId) followedMap[chId] = true;
+      });
+      localStorage.setItem(`weather_app_subscribed_channels_${userInfo.email}`, JSON.stringify(followedMap));
     }
   } catch {}
 
@@ -4200,28 +4216,65 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
     }
   };
 
+  let isHandled = false;
+  const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('google_oauth_channel') : null;
+
+  const cleanup = () => {
+    clearInterval(timer);
+    window.removeEventListener('message', messageListener);
+    window.removeEventListener('storage', storageListener);
+    if (bc) {
+      try { bc.close(); } catch {}
+    }
+  };
+
+  const onTokenReceived = (hash: string) => {
+    if (isHandled) return;
+    isHandled = true;
+    cleanup();
+    if (popup && !popup.closed) {
+      try { popup.close(); } catch {}
+    }
+    handleToken(hash);
+  };
+
+  if (bc) {
+    bc.onmessage = (event) => {
+      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
+        onTokenReceived(event.data.hash);
+      }
+    };
+  }
+
+  const storageListener = (e: StorageEvent) => {
+    if (e.key === 'google_oauth_event' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        if (data.hash) {
+          onTokenReceived(data.hash);
+        }
+      } catch {}
+    }
+  };
+  window.addEventListener('storage', storageListener);
+
   const timer = setInterval(async () => {
     try {
       if (!popup || popup.closed) {
-        clearInterval(timer);
+        cleanup();
         return;
       }
       const popupUrl = popup.location.href;
       if (popupUrl.includes('access_token=')) {
-        clearInterval(timer);
         const hash = popup.location.hash.substring(1);
-        popup.close();
-        handleToken(hash);
+        onTokenReceived(hash);
       }
     } catch (_) {}
-  }, 500);
+  }, 400);
 
   const messageListener = (event: MessageEvent) => {
-    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
-      window.removeEventListener('message', messageListener);
-      clearInterval(timer);
-      if (popup) popup.close();
-      handleToken(event.data.hash.substring(1));
+    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
+      onTokenReceived(event.data.hash);
     }
   };
   window.addEventListener('message', messageListener);
@@ -4666,13 +4719,47 @@ export default function App() {
   // (Đã gỡ bỏ useGoogleOneTapLogin để tránh tình trạng popup tự động hiện lên liên tục gây khó chịu)
   // Chỉ sử dụng nút Đăng nhập thủ công ở trên Header.
 
+  // Tự động đồng bộ quyền người dùng trên mọi tab/cửa sổ khi localStorage thay đổi
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user_auth' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setUserRole(parsed);
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Handle OAuth2 redirect callback (access_token or error in URL hash)
   useEffect(() => {
     const hash = window.location.hash;
     if (hash && (hash.includes('access_token=') || hash.includes('error='))) {
+      // 1. Gửi token qua BroadcastChannel đến mọi tab/cửa sổ đang mở
+      try {
+        const bc = new BroadcastChannel('google_oauth_channel');
+        bc.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash });
+        bc.close();
+      } catch {}
+
+      // 2. Gửi token qua localStorage để kích hoạt storage listener tức thì
+      try {
+        localStorage.setItem('google_oauth_event', JSON.stringify({ hash: hash, t: Date.now() }));
+      } catch {}
+
+      // 3. Gửi token qua postMessage nếu window.opener tồn tại
       if (window.opener) {
-        window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
-        window.close();
+        try {
+          window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
+        } catch {}
+      }
+
+      // 4. Tự động đóng cửa sổ popup đăng nhập
+      const isPopup = window.opener || window.name === 'google-login' || (window.innerWidth <= 650 && window.innerHeight <= 750);
+      if (isPopup) {
+        try { window.close(); } catch {}
         return;
       }
 

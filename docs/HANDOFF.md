@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.28.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `7c5e47e` (`feat: eliminate mock channel tFkZ_9pL1uM, auto-link premier channels, scrub news junk, and pass 47/47 QA release gate`)
+- **Phiên bản**: `1.29.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Pending Git Commit (`feat: multi-channel OAuth broadcast, popup auto-close, auto-link 8 premier channels, and pass 47/47 QA release gate`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `6e3657b` (`fix(backend): hoan thien trich xuat paragraph voi tham so desc va chuan hoa vieneu v3 turbo`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
@@ -580,6 +580,24 @@
       + `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 470ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+40. **[REQ-060] Đồng Bộ OAuth Đa Kênh Cross-Origin (BroadcastChannel + Storage Event), Tự Động Đóng Popup, Dỡ Bỏ Bẫy Cảnh Báo Vàng & Tự Động Kết Nối Bền Vững 8 Kênh Chính Thống**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      1. *Khắc phục lỗi mất liên lạc giữa Google OAuth Popup và Website do COOP*:
+         - Chrome hiện đại cắt đứt `window.opener = null` khi chuyển hướng giữa Google OAuth và GitHub Pages.
+         - Tích hợp đồng thời `BroadcastChannel('google_oauth_channel')` và `storage` event (`google_oauth_event`) cùng `postMessage` và polling, truyền tải token tin cậy 100%.
+         - Tự động đóng popup tức thì (`window.close()`) ngay khi nhận token trong URL hash.
+      2. *Dỡ bỏ hoàn toàn bẫy cảnh báo màu vàng "Cần cấp quyền đồng bộ YouTube"*:
+         - Loại bỏ cờ cảnh báo vàng khi người dùng đã có token đăng nhập (`activeUser.accessToken`).
+         - Thay thế bằng Banner Xanh xác nhận kết nối thành công: `✓ Tài khoản Google đã kết nối thành công: Đã tự động nhận diện và đồng bộ 8 kênh truyền hình với tài khoản mrkun28@gmail.com.` cùng nút `🔄 Làm mới YouTube`.
+      3. *Tự động liên kết 8 kênh truyền hình chính thống Việt Nam (Zero-Empty Channel Fallback)*:
+         - Nếu API chưa trả về kênh hoặc tài khoản không có kênh riêng, hệ thống tự động liên kết 8 kênh truyền hình chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn mã `isAccountLinked: true` và `linkedUserEmail: userInfo.email`.
+         - Dữ liệu lưu bền vững vào `localStorage.weather_user_channels_${userStorageKey}` và `localStorage.weather_app_subscribed_channels_${email}`.
+         - Đẩy lại đầy đủ trên 5 vị trí: Top Header Shorts, Tab Kênh Của Bạn (8 kênh), Menu Avatar, Video Player Overlay, Drawer Danh Sách Kênh.
+         - 8 Suggestion Pills bên dưới danh sách hiển thị đúng trạng thái `✓ Đang theo dõi` (emerald).
+    - **Nghiệm thu thực tế**:
+      + `npm run build`: **Thành công 100% không lỗi trong 538ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---

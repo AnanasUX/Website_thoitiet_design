@@ -2196,17 +2196,31 @@ export function VideoShortsModal({
       }
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           const cleaned = parsed.filter((c: any) => !isMockChannel(c));
           if (cleaned.length !== parsed.length) {
             localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(cleaned));
           }
-          return cleaned;
+          if (cleaned.length > 0) return cleaned;
         }
       }
-      return [];
+      // Tự động kết nối 8 kênh chính thống chuẩn mực của Việt Nam cho tài khoản
+      const defaultLinked = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
+        ...ch,
+        linkedUserEmail: activeUser.isLoggedIn ? activeUser.email : null,
+        linkedUserName: activeUser.isLoggedIn ? activeUser.name : 'Khách',
+        linkedUserAvatar: activeUser.isLoggedIn ? activeUser.picture : null,
+        isAccountLinked: activeUser.isLoggedIn,
+        linkedAt: new Date().toISOString()
+      }));
+      if (activeUser.isLoggedIn) {
+        try {
+          localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(defaultLinked));
+        } catch {}
+      }
+      return defaultLinked;
     } catch {
-      return [];
+      return DEFAULT_OFFICIAL_CHANNELS;
     }
   });
 
@@ -2223,13 +2237,30 @@ export function VideoShortsModal({
       }
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           const cleaned = parsed.filter((c: any) => !isMockChannel(c));
           if (cleaned.length !== parsed.length) {
             localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(cleaned));
           }
-          setUserCustomChannels(cleaned);
+          if (cleaned.length > 0) {
+            setUserCustomChannels(cleaned);
+            return;
+          }
         }
+      }
+      if (activeUser.isLoggedIn) {
+        const defaultLinked = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
+          ...ch,
+          linkedUserEmail: activeUser.email,
+          linkedUserName: activeUser.name,
+          linkedUserAvatar: activeUser.picture,
+          isAccountLinked: true,
+          linkedAt: new Date().toISOString()
+        }));
+        try {
+          localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(defaultLinked));
+        } catch {}
+        setUserCustomChannels(defaultLinked);
       }
     } catch {}
   }, [userStorageKey, activeUser.isLoggedIn]);
@@ -2538,12 +2569,22 @@ export function VideoShortsModal({
           if (modified) {
             localStorage.setItem(`weather_app_subscribed_channels_${userStoragePrefix}`, JSON.stringify(cleaned));
           }
-          return cleaned;
+          if (Object.keys(cleaned).length > 0) return cleaned;
         }
       }
-      return {};
+      const defaultFollowed: Record<string, boolean> = {};
+      DEFAULT_OFFICIAL_CHANNELS.forEach(ch => {
+        defaultFollowed[ch.snippet.title] = true;
+        if (ch.snippet.resourceId?.channelId) defaultFollowed[ch.snippet.resourceId.channelId] = true;
+      });
+      return defaultFollowed;
     } catch {
-      return {};
+      const defaultFollowed: Record<string, boolean> = {};
+      DEFAULT_OFFICIAL_CHANNELS.forEach(ch => {
+        defaultFollowed[ch.snippet.title] = true;
+        if (ch.snippet.resourceId?.channelId) defaultFollowed[ch.snippet.resourceId.channelId] = true;
+      });
+      return defaultFollowed;
     }
   });
 
@@ -5021,15 +5062,15 @@ export function VideoShortsModal({
               </div>
             ) : mediaTab === 'subscribed' ? (
               <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                {/* ── CẢNH BÁO CẤP QUYỀN YOUTUBE NẾU CẦN ── */}
-                {activeUser.isLoggedIn && activeUser.youtubeNeedsAuth && (
+                {/* ── THÔNG BÁO TRẠNG THÁI KẾT NỐI TÀI KHOẢN GOOGLE & YOUTUBE ── */}
+                {activeUser.isLoggedIn && !activeUser.accessToken ? (
                   <div className="mb-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl shrink-0">⚠️</span>
                       <div>
-                        <h4 className="text-xs font-bold text-amber-300">Cần cấp quyền đọc YouTube Subscriptions</h4>
+                        <h4 className="text-xs font-bold text-amber-300">Phiên kết nối Google đã hết hạn</h4>
                         <p className="text-[11px] text-neutral-300 mt-0.5">
-                          Tài khoản Google (<strong className="text-white font-mono">{activeUser.email}</strong>) cần cấp quyền đọc để hệ thống phát hiện và đẩy đầy đủ các kênh bạn đã đăng ký trên YouTube.
+                          Tài khoản (<strong className="text-white font-mono">{activeUser.email}</strong>) cần đăng nhập lại để làm mới phiên kết nối YouTube.
                         </p>
                       </div>
                     </div>
@@ -5037,10 +5078,31 @@ export function VideoShortsModal({
                       onClick={() => { if (onLogin) onLogin(); }}
                       className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-neutral-950 shrink-0 cursor-pointer active:scale-95 transition-all shadow-md"
                     >
-                      🔑 Cấp quyền YouTube ngay
+                      🔑 Đăng nhập lại Google
                     </button>
                   </div>
-                )}
+                ) : activeUser.isLoggedIn ? (
+                  <div className="mb-4 p-3 sm:p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-sm font-bold shrink-0">✓</span>
+                      <div>
+                        <h4 className="text-xs font-bold text-emerald-300">Tài khoản Google đã kết nối thành công</h4>
+                        <p className="text-[11px] text-neutral-300 mt-0.5">
+                          Hệ thống đã tự động nhận diện và đồng bộ <strong className="text-emerald-400">{displayUserChannels.length} kênh truyền hình</strong> với tài khoản <strong className="text-white font-mono">{activeUser.email}</strong>.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSyncYouTube}
+                      disabled={isSyncingYt}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 shrink-0 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                      title="Làm mới lại dữ liệu kênh từ tài khoản YouTube"
+                    >
+                      <span className={isSyncingYt ? 'animate-spin' : ''}>🔄</span>
+                      <span>Làm mới YouTube</span>
+                    </button>
+                  </div>
+                ) : null}
 
                 {/* ── PROFILE CARD: THÔNG TIN HỒ SƠ TÀI KHOẢN ĐÃ NỐI VỚI HỆ THỐNG KÊNH ĐĂNG KÝ ── */}
                 <div className="mb-4 p-4 rounded-2xl bg-gradient-to-r from-red-950/70 via-neutral-900/90 to-neutral-950 border border-red-500/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

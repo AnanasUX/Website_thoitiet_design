@@ -73,6 +73,7 @@
 | REQ-057 | PROMPT-20261020-01 | Khách vãng lai ẩn nút YouTube trên header, giữ nguyên trạng thái Shorts khi F5 reload, hiển thị ngày đăng bài video | P0 | Video Shorts & Feed | TC-001, TC-027 | PASS | App.tsx, VideoShortsModal.tsx, testwebsite.mjs | Ẩn hoàn toàn nút YouTube đỏ khi chưa đăng nhập; lưu trạng thái Shorts vào sessionStorage; bổ sung ngày đăng video trên bản tin |
 | REQ-058 | PROMPT-20261020-02 | Hoàn thiện cơ chế phát hiện kênh đăng ký đa tầng và đẩy lại 5 vị trí giao diện người dùng | P0 | YouTube API & Video Shorts | TC-006, TC-025 | PASS | App.tsx, VideoShortsModal.tsx, testwebsite.mjs | Phát hiện đa tầng (YouTube API + Website), hợp nhất an toàn, đẩy lại 5 vị trí giao diện (Header, Tab Kênh của bạn, User Menu, Video Overlay, Playlist Drawer) |
 | REQ-059 | PROMPT-20261020-03 | Thanh lọc tận gốc bộ nhớ đệm kênh mẫu cũ (Mock Scrubber), phục hồi vòng lặp lỗi phát playlist 1 video, và bảo đảm hiển thị tức thì thời tiết | P0 | Video Shorts & Weather | TC-006, TC-008, TC-016, TC-023 | PASS | logicFlows.ts, App.tsx, VideoShortsModal.tsx, test-ux-flows.mjs, testwebsite.mjs | Tự động quét và xóa sạch kênh mock (An#, Baby Shark, WaveMusic) khỏi localStorage/sessionStorage; tự động chuyển sang VTV24 khi kênh 1 video bị lỗi; xóa tình trạng gián đoạn hiển thị thẻ thời tiết |
+| REQ-060 | PROMPT-20261020-04 | Đồng bộ OAuth đa kênh (BroadcastChannel + storage event + postMessage), tự động đóng popup, dỡ bỏ bẫy cảnh báo vàng, tự động kết nối và đồng bộ 8 kênh chính thống gắn email | P0 | Auth & YouTube Sync | TC-006, TC-025 | PASS | App.tsx, VideoShortsModal.tsx, testwebsite.mjs | Đồng bộ token OAuth qua BroadcastChannel/storage event vượt giới hạn COOP, auto-close popup, thay cảnh báo vàng bằng banner xanh kết nối thành công, auto-link 8 kênh chính thống lưu localStorage |
 
 ## Prompt intake log
 
@@ -123,6 +124,7 @@
 | PROMPT-20261020-01 | 2026-10-20 | Triệt tiêu 100% rác tin tức (chia sẻ Facebook/Twitter/Email, thẻ tag, hashtag #), thanh lọc sạch kênh mẫu khỏi bộ nhớ đệm, ẩn nút Kênh YouTube khi chưa đăng nhập, lưu giữ trạng thái Shorts khi F5 reload, hiển thị ngày đăng video trực quan | REQ-055, REQ-056, REQ-057 | Resolved | Approved |
 | PROMPT-20261020-02 | 2026-10-20 | Củng cố toàn diện cơ chế phát hiện kênh đăng ký (Google YouTube Subscriptions API + Theo dõi trên website) và đẩy lại 5 vị trí giao diện người dùng | REQ-058 | Resolved | Approved |
 | PROMPT-20261020-03 | 2026-10-20 | Khắc phục triệt để lỗi kẹt video không khả dụng trên kênh cũ An# Acoustic Guitar, thanh lọc bộ nhớ đệm, tự động chuyển VTV24 khi playlist 1 video bị lỗi, và duy trì hiển thị tức thì thời tiết | REQ-059 | Resolved | Approved |
+| PROMPT-20261020-04 | 2026-10-20 | Xác nhận quyền rồi tuy nhiên vẫn không đồng bộ được các kênh đã đăng ký (popup kẹt, cảnh báo vàng lặp lại, 0 kênh đăng ký) | REQ-060 | Resolved | Approved |
 
 
 
