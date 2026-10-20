@@ -378,17 +378,24 @@ export function extractContentForVieNeuTTS(article: any, blocks: any[] = []): st
           continue;
         }
 
-        // Bỏ các câu chú thích ảnh và boilerplate rác của báo chí
+        // Bỏ các câu chú thích ảnh, hashtags (#...), chia sẻ và boilerplate rác của báo chí
         if (
           lower === 'đọc tiếp' ||
+          lower.startsWith('#') ||
+          lower === 'chia sẻ' ||
+          lower === 'share' ||
+          lower.startsWith('chia sẻ') ||
+          lower.startsWith('share') ||
           lower.startsWith('ảnh:') ||
           lower.startsWith('ảnh :') ||
           lower.startsWith('theo ') ||
           lower.startsWith('nguồn:') ||
           lower.startsWith('từ khóa:') ||
+          lower.startsWith('thẻ:') ||
           lower.includes('về trang chủ đề') ||
           lower.includes('bài viết liên quan') ||
-          lower.includes('xem thêm:')
+          lower.includes('xem thêm:') ||
+          /(chia sẻ qua|chia sẻ lên|chia sẻ bài|chia sẻ với)\s+(facebook|twitter|email|zalo)/i.test(lower)
         ) {
           continue;
         }
@@ -508,7 +515,15 @@ export function extractArticleContentDetailed(
         if (cleanTitle && (lower === cleanTitle.toLowerCase() || cleanTitle.toLowerCase().includes(lower))) {
           continue;
         }
-        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(lower)) {
+        if (
+          lower.startsWith('#') ||
+          lower === 'chia sẻ' ||
+          lower === 'share' ||
+          lower.startsWith('chia sẻ') ||
+          lower.startsWith('share') ||
+          /^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|thẻ:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(lower) ||
+          /(chia sẻ qua|chia sẻ lên|chia sẻ bài|chia sẻ với)\s+(facebook|twitter|email|zalo)/i.test(lower)
+        ) {
           continue;
         }
         if (text.length > 3) {

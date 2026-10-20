@@ -412,3 +412,74 @@
 
 
 
+
+
+### QUYẾT ĐỊNH KIẾN TRÚC MỚI NHẤT (PROMPT-20261019-01 / REQ-055)
+2. **Lọc Sạch Rác Tin Tức, Thẻ Tag & Nút Chia Sẻ (Sanitization & Junk Elimination)**:
+   - Tự động nhận diện và loại bỏ triệt để các chuỗi chia sẻ: `"Chia sẻ"`, `"Chia sẻ qua Facebook"`, `"Chia sẻ qua Twitter"`, `"Chia sẻ qua Email"`.
+   - Loại bỏ toàn bộ các phần tử DOM có class/id/href chứa `article__tag`, `_tag`, `tag` hoặc văn bản bắt đầu bằng `#` (`#Quốc hội`, `#cò mồi`, `#trục lợi`, `#đấu giá tài sản`, v.v.).
+   - Ngăn chặn hoàn toàn các khối rác này xuất hiện trong DOM chi tiết bài viết và loại bỏ khỏi văn bản đưa vào động cơ tổng hợp giọng đọc VieNeu-TTS v3 Turbo.
+3. **Phân Hệ Video Shorts Kênh Thực Tế, Lịch Sử Xem (Watch History) & Video Mới Nhất**:
+   - Thay thế các mock kênh cũ (Baby Shark, WaveMusic) bằng 8 kênh báo chí và truyền hình chính thống Việt Nam (`VTV24`, `Báo Tiền Phong`, `Báo Tuổi Trẻ`, `VTC NOW`, `Báo Lao Động`, `VTV Thời Tiết`, `ANTV`, `VnExpress TV`).
+   - Lưu trữ bền vững `userCustomChannels` và `watchHistory` (tối đa 50 video) vào `localStorage` phân tách theo tài khoản người dùng (`userStorageKey`).
+   - Tích hợp tab `🕒 Đã xem ({watchHistory.length})` và tab `🔴 Kênh của bạn ({displayUserChannels.length})` trên cả top bar lọc (desktop), Channel Menu modal, và Playlist Drawer.
+   - Tự động đặt lại `setCurrentIndex(0)` khi mở Shorts, chuyển kênh hoặc chuyển tab để luôn nạp video mới nhất, sắp xếp playlist theo `publishedAt` giảm dần.
+4. **Tối Ưu Hiển Thị Tức Thì Bài Báo (Instant-Render News Feed)**:
+   - Thay đổi điều kiện hiển thị skeleton: Chỉ hiển thị `NewsSkeleton` khi thực sự không có bài viết nào (`newsFeed.length === 0`), đảm bảo `DEFAULT_NEWS_FEED` được hiển thị ngay frame đầu tiên, loại bỏ độ trễ 10s của geolocation/crawling.
+
+### QUYẾT ĐỊNH KIẾN TRÚC MỚI NHẤT (PROMPT-20261019-02 / REQ-056)
+5. **Tích Hợp & Nối Hồ Sơ Tài Khoản Người Dùng Vào Kênh YouTube Đã Đăng Ký (Connected Account Identity Integration)**:
+   - *Bối cảnh & Vấn đề*:
+     + Trước đây, thao tác "+ Đăng ký" hoặc "Theo dõi" trong `VideoShortsModal.tsx` chỉ lưu cục bộ vào map boolean `weather_app_subscribed_channels` mà không đồng bộ ngược lại hồ sơ người dùng (`userRole`, `user_auth` trong localStorage và cookie).
+     + Khi người dùng xem danh sách kênh đã đăng ký, hệ thống không gắn kèm thông tin tài khoản đăng nhập (tên, email, ảnh avatar), khiến người dùng cảm giác danh sách kênh bị tách biệt khỏi tài khoản đã đăng ký của mình.
+   - *Giải pháp kiến trúc đồng bộ hai chiều (Bidirectional Account Sync)*:
+     + **Đóng dấu danh tính (Identity Stamping)**: Mọi kênh đăng ký và kênh tùy chỉnh trong `displayUserChannels` đều được gắn thêm các trường danh tính: `linkedUserEmail: activeUser.email`, `linkedUserName: activeUser.name`, `linkedUserAvatar: activeUser.picture`, `isAccountLinked: activeUser.isLoggedIn`, và `linkedAt: ISOString`.
+     + **Đồng bộ hóa tức thì (`syncUserSubscriptionsToAuth`)**: Mọi thao tác Thêm kênh, Bỏ theo dõi, hoặc bấm nút "+ Đăng ký / Đang theo dõi" trên video đều tự động cập nhật lại `userCustomChannels`, đồng bộ vào `localStorage.getItem('user_auth')`, cập nhật cookie và kích hoạt callback `onUpdateUser(authObj)` về `App.tsx` để cập nhật `setUserRole`.
+     + **Menu Tài khoản liên kết trong `UserAvatarMenu`**: Bổ sung nút "🔴 Kênh của bạn & Đã đăng ký ({count})" và card "Kênh YouTube đã liên kết" hiển thị trực tiếp email tài khoản và số lượng kênh đã nối; khi click sẽ mở thẳng modal Video Shorts tại tab `subscribed`.
+     + **Hồ Sơ Tài Khoản Nổi Bật (Connected Account Profile Card)**: Trong tab `mediaTab === 'subscribed'`, hiển thị một Profile Card sang trọng ở đầu danh sách gồm avatar người dùng, trạng thái trực tuyến, email, tên, số lượng kênh đã nối, số video khả dụng và nút làm mới YouTube.
+     + **Thẻ Kênh & Video Overlay Cá Nhân Hóa**: Mỗi thẻ kênh hiển thị huy hiệu `Tài khoản: {linkedUserEmail}`; thanh overlay dưới chân video đang phát hiển thị nhãn `Kênh đã nối • {activeUser.email}` khi người dùng đang theo dõi kênh đó.
+
+
+### QUYẾT ĐỊNH KIẾN TRÚC MỚI NHẤT (PROMPT-20261020-02 / REQ-058)
+7. **Củng Cố Toàn Diện Cơ Chế Phát Hiện Kênh Đăng Ký & Đẩy Lại Giao Diện 5 Vị Trí (Multi-Tier Channel Detection & 5-Point Push-Back Architecture)**:
+   - *Bối cảnh & Vấn đề*:
+     + Người dùng phản hồi: *"Về các kênh tôi đăng ký hệ thống có phát hiện và đẩy lại đâu"*.
+     + Cần làm rõ và củng cố toàn bộ luồng kỹ thuật: hệ thống phát hiện kênh từ những nguồn nào (detection) và hiển thị lại ở những vị trí nào trên giao diện (push-back).
+     + Khi người dùng đăng nhập tài khoản Google có thể xảy ra trường hợp token chưa cấp quyền scope `youtube.readonly` (Google OAuth trả về 403 / `youtubeNeedsAuth: true`), hoặc tài khoản chưa có kênh YouTube công khai dẫn đến danh sách rỗng, hoặc kênh theo dõi ở chế độ khách (guest) bị mất khi chuyển sang đăng nhập tài khoản.
+   - *Giải pháp kiến trúc*:
+     + **Cơ chế Phát hiện Đa Tầng (Multi-Tier Detection Pipeline)**:
+       * *Tầng 1 (Google YouTube API thực tế)*: Gọi `https://www.googleapis.com/youtube/v3/subscriptions?mine=true` qua token OAuth. Cập nhật `doGoogleLogin` luôn kích hoạt `prompt=consent%20select_account` để buộc Google hiển thị hộp thoại cấp quyền đọc YouTube Subscriptions & Calendar, tránh việc âm thầm bỏ qua quyền.
+       * *Tầng 2 (Kênh theo dõi trên website)*: Khi người dùng bấm `+ Theo dõi` trên video hoặc `+ Thêm kênh theo dõi`, kênh được ghi nhận kèm danh tính tài khoản (`linkedUserEmail`, `linkedUserName`, `isAccountLinked: true`, `linkedAt`), lưu bền vững vào `localStorage.weather_user_channels_${userStorageKey}`.
+       * *Di chuyển dữ liệu (Guest-to-Account Auto-Migration)*: Tự động chuyển toàn bộ kênh theo dõi và lịch sử xem từ `guest` sang tài khoản người dùng ngay khi đăng nhập thành công.
+       * *Hợp nhất bảo toàn (`Safe Merge`)*: `syncUserSubscriptionsToAuth` hợp nhất cả kênh người dùng theo dõi và kênh YouTube API thành một danh sách duy nhất không trùng lặp (`mergedList`), đồng bộ vào `localStorage.user_auth`, cookie và cập nhật `setUserRole`.
+       * *Re-sync Hook thông minh*: Tự động quét lại kênh khi người dùng có token nhưng danh sách kênh rỗng hoặc chưa được kiểm tra.
+     + **Kiến trúc Đẩy lại Giao diện 5 Vị trí (5-Point Push-Back Interface)**:
+       * *Vị trí 1*: Nút đỏ YouTube trên Header Video Shorts (Hiển thị Handle + Badge số lượng kênh `{displayUserChannels.length}`).
+       * *Vị trí 2*: Tab `🔴 Kênh Của Bạn` trong Video Shorts (Thẻ Profile Card kết nối + Lưới kênh theo dõi + Banner hướng dẫn cấp quyền `youtubeNeedsAuth` + Trạng thái rỗng thông minh kèm 1-click theo dõi nhanh).
+       * *Vị trí 3*: Menu Avatar Người Dùng (`UserAvatarMenu`) ở góc trên bên phải website (Card Kênh YouTube đã liên kết + Mục `🔴 Kênh của bạn & Đã đăng ký ({count})`).
+       * *Vị trí 4*: Thanh Overlay dưới chân video đang phát (Huy hiệu `Kênh đã nối • {email}` nhấp nháy + Nút `Đã theo dõi ✓`).
+       * *Vị trí 5*: Playlist Drawer bên hông (Nút tab `🔴 Kênh của bạn ({count})` phát nhanh video kênh).
+   - *Bối cảnh & Vấn đề*:
+     + Trình duyệt người dùng còn lưu đệm 9 kênh mock cũ (`WaveMusic`, `Kimpro`, `VIETSUCCESS`, `Baby Shark`, `Pinkfong`, `J House`, `An#`...) trong `localStorage.weather_user_channels_mrkun28_gmail_com`. Khi mở modal Shorts, hệ thống đã nạp từ cache hiển thị lại các kênh này.
+     + Nút Kênh YouTube trên header Video Shorts hiển thị ngay cả với khách vãng lai chưa đăng nhập.
+     + Khi người dùng reload trang (F5) khi đang xem Shorts, hệ thống bị thoát về trang chủ làm gián đoạn trải nghiệm xem.
+     + Chi tiết video thiếu ngày giờ đăng bài khiến người dùng khó phân biệt video mới hay cũ.
+     + Thân bài viết chi tiết vẫn sót lại các cụm từ chia sẻ ("Chia sẻ", "Chia sẻ qua Facebook/Twitter/Email") và hashtag (`#Quốc hội`, `#cò mồi`, `#trục lợi`...).
+   - *Giải pháp kiến trúc & Triển khai*:
+     + **Bộ lọc khử mock channels chủ động (`isMockChannel`)**: Nhận diện toàn diện các từ khóa kênh mẫu cũ (`wavemusic`, `kimpro`, `vietsuccess`, `baby shark`, `pinkfong`, `jay prehistoric`, `j house`, `an#`, `anmusic`). Khi khởi tạo state và `useEffect`, tự động lọc sạch và ghi đè lại `localStorage` để dọn sạch hoàn toàn bộ nhớ đệm cũ.
+     + **Điều kiện hiển thị nút Kênh YouTube**: Bọc nút bằng `{activeUser.isLoggedIn && ( ... )}` để ẩn hoàn toàn khi khách chưa đăng nhập.
+     + **Lưu giữ trạng thái F5 / Reload qua sessionStorage**: `isShortsOpen` và `shortsInitialTab` được lưu trữ trong `sessionStorage` (`weather_app_shorts_open`, `weather_app_shorts_tab`), tự động mở lại Video Shorts ngay tab đang xem khi người dùng reload trang.
+     + **Định dạng & Hiển thị ngày đăng video (`formatVideoDate`)**: Hiển thị badge ngày đăng video trực quan ("Hôm nay, 14:30", "Hôm qua, 09:15", "DD/MM/YYYY") trên overlay chân video, Playlist Drawer và lưới video đã đăng ký.
+     + **Khử triệt để rác tin tức**: `isJunkOrTagContent` và `isTagOrShareElement` loại bỏ 100% thẻ `article__tag`, `_tag`, `tag`, `share`, `social`, các cụm từ chia sẻ và toàn bộ hashtag `#...`.
+
+
+8. **Thanh Lọc Tận Gốc Bộ Nhớ Đệm Kênh Mẫu Cũ (Mock Scrubber), Phá Vỡ Vòng Lặp Lỗi Kênh 1 Video & Duy Trì Hiển Thị Thời Tiết Tức Thì (PROMPT-20261020-03 / REQ-059)**:
+   - *Bối cảnh & Vấn đề*:
+     + Trong ảnh chụp thực tế của người dùng, giao diện Video Shorts bị kẹt cứng ở kênh `@An#` với video `An# Acoustic Guitar & Giai điệu nhẹ nhàng...` (`youtubeId: 'tFkZ_9pL1uM'`) cùng thông báo `Video không khả dụng` và vòng quay `Đang chuyển sang clip tiếp theo...`.
+     + Bộ đếm góc dưới báo `1 / 1` và nút header báo `@mrkun28 9`.
+     + Nguyên nhân: Client browser còn lưu snapshot mảng 9 kênh mẫu cũ trong `localStorage.user_auth.youtubeSubscriptions` và `subscribedVideos`. Khi YouTube báo lỗi 100/101/150 trên video đơn (`length === 1`), `handlePlayerError` gọi `(0 + 1) % 1 = 0` dẫn đến tiếp tục tải lại chính video đó, gây kẹt vô tận.
+     + Đồng thời, khi `apiStatus === 'loading'` trong quá trình fetch dữ liệu nền, `WeatherSection` cũ trả về skeleton che mất toàn bộ chỉ số PM2.5, Độ ẩm, Gió.
+   - *Giải pháp kiến trúc & Triển khai*:
+     + **Bộ quét đa tầng `isMockVideo` & `isMockChannel`**: Quét sâu và xóa bỏ 100% video và kênh mẫu cũ khỏi `localStorage.user_auth` (tự động làm sạch ngay khi load app), `weather_user_channels_*`, `weather_app_subscribed_channels_*`, `weather_watch_history_*` và `sessionStorage`.
+     + **Cơ chế phá vỡ vòng lặp lỗi phát (Single-Item Playlist Auto-Recovery)**: Trong `handlePlayerError`, khi phát hiện video lỗi và `playlist.length <= 1`, hệ thống lập tức tự động chuyển kênh sang `'vtv24'` và reset index về 0, chuyển sang kênh truyền hình chính thống hoạt động 100%.
+     + **Hiển thị tức thì không gián đoạn khối thời tiết**: Thay đổi điều kiện trong `WeatherSection` thành `if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;`. Do `DEFAULT_WEATHER_DATA` luôn có sẵn, các chỉ số sức khỏe (Nhiệt độ, PM2.5, Độ ẩm, Gió) luôn hiện diện tức thì mà không bị gián đoạn hay chớp nháy skeleton.

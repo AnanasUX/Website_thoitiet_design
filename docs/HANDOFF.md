@@ -2,14 +2,14 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.24.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `872efec` (`feat: real YouTube account scan, screen wake lock & activity-aware smart reload`)
+- **Phiên bản**: `1.26.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `e91ad7a` (`feat: purge mock channels, hide YT header for guests, persist F5 shorts, video published date, and sanitize article tags/hashtags`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `6e3657b` (`fix(backend): hoan thien trich xuat paragraph voi tham so desc va chuan hoa vieneu v3 turbo`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
-  + ✅ **Kiểm thử logic chuyên sâu 23 luồng hệ thống (`npm run test:logic`)**: 383/383 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 23 luồng hệ thống (`npm run test:logic`)**: 411/411 assertions logic passed (100% PASS).
   + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).
   + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop và Mobile.
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
@@ -410,6 +410,152 @@
       + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run test:logic`: **371/371 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 2.69s**.
+34. **[REQ-055 / PROMPT-20261019-01] Loại Bỏ Triệt Để Rác Tin Tức, Tag & Nút Chia Sẻ; Nâng Cấp Video Shorts Với Kênh Thực Tế, Lịch Sử Xem (Watch History) & Video Mới Nhất**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      1. *Rác tin tức, Tag và nút Chia sẻ trong trang chi tiết bài báo*:
+         - Xuất hiện các khối rác: `<p ...>Chia sẻ</p>`, `Chia sẻ qua Facebook`, `Chia sẻ qua Twitter`, `Chia sẻ qua Email`, và các hashtag `#Quốc hội`, `#cò mồi`, `#trục lợi`, `#đấu giá tài sản`, `#Luật Đấu giá tài sản`.
+         - Khi trang nguồn có class/id/href chứa `article__tag`, `_tag`, `tag` hoặc văn bản bắt đầu bằng `#`, cần loại bỏ hoàn toàn khỏi DOM và VieNeu-TTS.
+      2. *Phân hệ Video Shorts*:
+         - Kênh người dùng: Danh sách kênh trước đây có các mock Baby Shark / WaveMusic; cần lấy đúng các kênh thực tế người dùng theo dõi và hỗ trợ kênh đăng ký chính thống Việt Nam.
+         - Lịch sử xem (Watch History): Hiển thị thông tin video người dùng đã xem trước đó để sử dụng liền mạch.
+         - Video mới nhất: Đảm bảo khi mới truy cập vào các kênh luôn xem video mới nhất, không lỗi layout, sắp xếp theo thời gian xuất bản.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Loại bỏ rác tin tức, Tag & Nút chia sẻ*:
+         - Cập nhật `src/utils/logicFlows.ts`: Bổ sung `isJunkOrTagContent(text)` và `isTagOrShareElement(el)`. Nhận diện và loại bỏ triệt để các chuỗi chia sẻ, hashtag `#...`, thẻ có class/id chứa `article__tag`, `_tag`, `tag`. Tích hợp trực tiếp vào `isBoilerplate`.
+         - Cập nhật `src/utils/vieneuTTS.ts`: Áp dụng bộ lọc `cleanParagraphForVieNeuTTS` loại bỏ các đoạn văn rác chia sẻ và hashtag khỏi văn bản tổng hợp giọng đọc VieNeu-TTS v3 Turbo.
+         - Cập nhật `src/App.tsx`: Áp dụng `isTagOrShareElement` trong `parseHTMLToBlocks`, `buildArticleFallbackBlocks`, `buildFallbackBlocks`, `scrapeViaProxy`, và bộ lọc render `NewsDetailView`.
+         - Cập nhật `quan-ly-tien-phong/main.py`: Bổ sung `BOILERPLATE_SKIP_PHRASES`, thẻ decompose của BeautifulSoup cho tag và share, chặn `#` trong paragraph, heading, blockquote.
+      2. *Video Shorts: Kênh thực tế, Lịch sử xem & Video mới nhất*:
+         - Cập nhật `src/constants/userYouTubeSubscriptions.ts`: Thay thế danh sách mock cũ bằng 8 kênh báo chí và truyền hình chính thống Việt Nam (`VTV24`, `Báo Tiền Phong`, `Báo Tuổi Trẻ`, `VTC NOW`, `Báo Lao Động`, `VTV Thời Tiết`, `ANTV`, `VnExpress TV`).
+         - Cập nhật `src/components/VideoShortsModal.tsx`:
+           * Lưu trữ bền vững `userCustomChannels` và `watchHistory` (tối đa 50 video) vào `localStorage` phân tách theo tài khoản người dùng (`userStorageKey`).
+           * Tích hợp tab `🕒 Đã xem ({watchHistory.length})` và tab `🔴 Kênh của bạn ({displayUserChannels.length})` trên cả top bar lọc (desktop), Channel Menu modal, và Playlist Drawer.
+           * Gắn huy hiệu `✓ Đã xem` trực quan trên thumbnail danh sách video đã xem.
+           * Tự động đặt lại `setCurrentIndex(0)` khi mở Shorts, chuyển kênh hoặc chuyển tab để luôn nạp video mới nhất.
+           * Sắp xếp playlist theo `publishedAt` giảm dần.
+      3. *Tối ưu Instant-Render News Feed*:
+         - Thay đổi điều kiện hiển thị skeleton: Chỉ hiển thị `NewsSkeleton` khi thực sự không có bài viết nào (`newsFeed.length === 0`), đảm bảo `DEFAULT_NEWS_FEED` được hiển thị ngay frame đầu tiên, loại bỏ độ trễ 10s của geolocation/crawling.
+         - Bổ sung `data-testid="news-card"` cho cả Mobile và Tablet layout.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **383/383 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + Backend Python tests (`quan-ly-tien-phong/tests/test_system_integrity.py`): **20/20 unit tests PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 500ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+35. **[REQ-056 / PROMPT-20261019-02] Tích Hợp Nối Tài Khoản Thông Tin Người Dùng Vào Kênh YouTube Đã Đăng Ký**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      + Người dùng phản hồi: *"2. Vẫn chưa tích hợp việc nối tài khoản thông tin người dùng vào tài khoản đã đăng ký"*.
+      + Trước đây, thao tác "+ Đăng ký" hoặc "Theo dõi" trong `VideoShortsModal.tsx` chỉ lưu cục bộ vào map boolean `weather_app_subscribed_channels` mà không đồng bộ ngược lại hồ sơ tài khoản người dùng (`userRole`, `user_auth` trong localStorage và cookie).
+      + Giao diện danh sách kênh đã đăng ký chưa hiển thị thông tin hồ sơ tài khoản đang kết nối (tên, email, avatar, trạng thái trực tuyến), thiếu tính cá nhân hóa.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Đồng bộ hai chiều dữ liệu tài khoản (`syncUserSubscriptionsToAuth`)*:
+         - Khi người dùng đăng ký / hủy đăng ký / thêm kênh / xóa kênh trong `VideoShortsModal.tsx`, danh sách kênh tự động cập nhật vào `userCustomChannels`, lưu vào `localStorage.getItem('user_auth')`, cập nhật cookie và kích hoạt callback `onUpdateUser(authObj)` về `App.tsx` để cập nhật `setUserRole`.
+         - Mỗi kênh trong `displayUserChannels` đều được gắn thêm các trường danh tính người dùng: `linkedUserEmail`, `linkedUserName`, `linkedUserAvatar`, `isAccountLinked: true`, và `linkedAt: ISOString`.
+      2. *Kết nối sâu từ Menu Người Dùng (`UserAvatarMenu` trong `App.tsx`)*:
+         - Bổ sung mục "🔴 Kênh của bạn & Đã đăng ký ({count})" và khối "Kênh YouTube đã liên kết: {email}" hiển thị trực tiếp số lượng kênh đã nối.
+         - Khi nhấn vào, hệ thống tự động mở modal `VideoShortsModal` trực tiếp tại tab `subscribed` thông qua tham số `onOpenShorts('subscribed')` và `initialTab`.
+      3. *Hồ sơ tài khoản nổi bật (Connected Account Profile Card)*:
+         - Trong tab `mediaTab === 'subscribed'`, hiển thị một Profile Card sang trọng ở đầu danh sách gồm avatar người dùng, trạng thái trực tuyến (online badge xanh lá), họ tên, email, nhãn "✓ Đã liên kết tài khoản", tổng số kênh đã đăng ký, tổng số video khả dụng và nút làm mới YouTube.
+         - Mỗi thẻ kênh hiển thị huy hiệu `Tài khoản: {linkedUserEmail}`.
+      4. *Huy hiệu kết nối trên Video Overlay*:
+         - Khi phát video của một kênh người dùng đang theo dõi, thanh overlay chân video hiển thị nhãn nổi bật `Kênh đã nối • {activeUser.email}` kèm chấm xanh/đỏ nhấp nháy animate-pulse.
+         - Nút "+ Theo dõi" trên video overlay tự động đồng bộ hai chiều với hồ sơ tài khoản.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **383/383 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 1.76s**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+36. **[REQ-055, REQ-056, REQ-057 / PROMPT-20261020-01] Thanh Lọc Triệt Để Mock Channels, Ẩn Nút YouTube Header Cho Khách, Lưu Trạng Thái F5 Reload, Bổ Sung Ngày Đăng Video & Triệt Tiêu Toàn Bộ Rác Tin Tức / Hashtag**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      1. *Rác tin tức, Tag và nút Chia sẻ trong trang chi tiết bài báo*:
+         - Loại bỏ các thẻ rác: `<p class="text-[17px] leading-relaxed font-sans">Chia sẻ</p>`, `Chia sẻ qua Facebook/Twitter/Email`, và các hashtag `#Quốc hội`, `#cò mồi`, `#trục lợi`, `#đấu giá tài sản`, `#Luật Đấu giá tài sản`.
+         - Khi trang nguồn có thẻ `article__tag`, `_tag`, `tag` hoặc có cụm từ "Chia sẻ" / "Chi sẻ" qua các kênh thì loại bỏ hoàn toàn không hiển thị ra.
+      2. *Phân hệ Video Shorts*:
+         - Kênh người dùng: Lấy đúng danh sách kênh thực tế của người dùng đã đăng ký; tuyệt đối không lấy thông tin mẫu (mock subscriptions snapshot).
+         - Lịch sử xem (Watch History): Hiển thị thông tin video người dùng đã xem trước đó để sử dụng liền mạch.
+         - Video mới nhất: Đảm bảo video ở trên các kênh khi mới truy cập vào luôn là video mới nhất, sắp xếp giảm dần theo thời gian xuất bản.
+         - Đăng nhập Google: Tự động tải Calendar và Video Shorts thực tế của tài khoản.
+         - Khách vãng lai: Khi bên ngoài chưa đăng nhập thì Calendar không hiện lịch (logic chuẩn cũ) và ẩn hoàn toàn nút Kênh YouTube đỏ trên Header Video Shorts (`<button ... title="Kênh YouTube: ...">`).
+         - F5 Reload: Khi người dùng F5 reload lại trang thì hệ thống vẫn giữ nguyên tại Video Shorts đúng tab và video đang xem.
+         - Bản tin: Ở phần Video Shorts trong bản tin, bổ sung thêm ngày đăng bài video trực quan để người dùng nhận biết video cũ hay mới.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Triệt tiêu toàn bộ rác tin tức, Tag & Nút chia sẻ*:
+         - `src/utils/logicFlows.ts`: Nâng cấp `isJunkOrTagContent(text)` nhận diện và loại bỏ triệt để các chuỗi chia sẻ ("Chia sẻ", "Chi sẻ", "Chia sẻ qua Facebook/Twitter/Email/Zalo..."), hashtag có dấu cách (`#Luật Đấu giá tài sản`, `#cò mồi`, `#đấu giá tài sản`, `#Quốc hội`), các thẻ `tag`, `_tag`, `article__tag`.
+         - `src/utils/logicFlows.ts`: `isTagOrShareElement(el)` kiểm tra thẻ, class, id, rel, href và text bên trong, loại trừ ngay từ tầng phân tích DOM.
+         - `src/App.tsx`: Pre-clean triệt để mọi phần tử con trong `mainContent`, `tempDoc.body`, `sanitizedBlocks` và `cleanFullContent`. Loại bỏ 100% block rác trước khi render `dangerouslySetInnerHTML`.
+         - `quan-ly-tien-phong/main.py`: Bổ sung `BOILERPLATE_SKIP_PHRASES` (`chia sẻ`, `chi sẻ`, `chia sẻ qua`, `chi sẻ qua`, `thẻ:`, `tags:`...), thêm BeautifulSoup decompose cho `article__tag`, `_tag`, `tag`, `share`, `chia-se`, và loại bỏ các đoạn văn bản bắt đầu bằng `#` hoặc chứa `#` rác.
+      2. *Video Shorts: Kênh thực tế, Lịch sử xem, Video mới nhất & Ẩn nút YouTube cho khách*:
+         - `src/components/VideoShortsModal.tsx`:
+           * Bọc nút Kênh YouTube đỏ trên Header bằng `{Boolean(userRole && userRole.email && activeUser.isLoggedIn) && ( ... )}` -> Khách chưa đăng nhập không thấy nút này trong DOM.
+           * Khi đăng xuất hoặc chưa đăng nhập: tự động reset `syncedYtChannel` về `null` và `syncedYtSubs` về `[]`.
+           * `displayUserChannels`: Khi người dùng đã đăng nhập Google, chỉ hiển thị kênh thực tế từ YouTube API (`syncedYtSubs`) và kênh tự thêm (`userCustomChannels`), tuyệt đối không chèn `DEFAULT_OFFICIAL_CHANNELS` mẫu.
+           * Thay thế toàn bộ fallback `USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT` bằng `displayUserChannels`.
+           * `mediaTab === 'history'`: Hiển thị tab `🕒 Đã xem ({watchHistory.length})` với giao diện lưới thẻ video trực quan gồm thumbnail, nút phát, thời lượng, huy hiệu `✓ Đã xem` và nút xóa lịch sử. Cho phép phát trực tiếp các video đã xem.
+           * Tự động đặt lại `setCurrentIndex(0)` khi chuyển kênh hoặc chuyển tab để luôn nạp video mới nhất.
+           * F5 Reload: Lưu và phục hồi toàn diện `weather_app_shorts_open`, `weather_app_shorts_tab`, `weather_app_shorts_channel`, `weather_app_shorts_index` từ `sessionStorage`.
+      3. *Bổ sung ngày đăng video trên bản tin (News Feed)*:
+         - `DesktopLayout`: Thêm `featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time` trên bài nổi bật, thêm `({formatArticleDate(pubDate)})` trên huy hiệu Video/Shorts, và thêm `📅 {formatArticleDate(item.pubDate)}` trong metadata dải thẻ tin.
+         - `TabletLayout`: Bổ sung huy hiệu `({formatArticleDate(pubDate)})` trên ảnh video và `📅 {formatArticleDate(pubDate)}` trong thông tin tác giả.
+         - `MobileLayout`: Bổ sung `• 📅 {formatArticleDate(item.pubDate)}` trong dòng nguồn tin và `({formatArticleDate(pubDate)})` trong huy hiệu Video/Shorts.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + Backend Python tests (`quan-ly-tien-phong/tests/test_system_integrity.py`): **20/20 unit tests PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 485ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+37. **[REQ-058 / PROMPT-20261020-02] Hoàn Thiện Toàn Diện Cơ Chế Phát Hiện Kênh Đăng Ký & Đẩy Lại Giao Diện 5 Vị Trí**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      + Người dùng hỏi: *"Về các kênh tôi đăng ký hệ thống có phát hiện và đẩy lại đâu"*.
+      + Khi người dùng đăng nhập tài khoản Google thực tế hoặc theo dõi các kênh trên hệ thống, cần làm rõ và củng cố toàn bộ luồng phát hiện (detection) và đẩy lại giao diện (push-back).
+      + Tránh tình trạng rỗng kênh khi Google OAuth token thiếu quyền scope `youtube.readonly` (HTTP 403), tránh mất kênh đã theo dõi khi chuyển từ chế độ khách sang đăng nhập.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Cơ chế Phát Hiện Đa Tầng (Multi-Tier Detection)*:
+         - **Tầng 1 (Google YouTube API thật)**: Quét danh sách kênh người dùng đã subscribe trên YouTube qua `https://www.googleapis.com/youtube/v3/subscriptions?mine=true`. Cập nhật `doGoogleLogin` luôn yêu cầu `prompt=consent%20select_account` để Google bắt buộc hiển thị màn hình cấp quyền đọc Subscriptions & Calendar.
+         - **Tầng 2 (Theo dõi trực tiếp trên website)**: Khi bấm `[+ Theo dõi]` ở video overlay, bấm `[+ Thêm kênh theo dõi]` hoặc chọn nhanh kênh uy tín, hệ thống gắn kèm thông tin tài khoản (`linkedUserEmail`, `linkedUserName`, `isAccountLinked: true`, `linkedAt`), lưu bền vững vào `localStorage.weather_user_channels_${userStorageKey}`.
+         - **Tự động di chuyển (Migrate) từ Guest sang Tài khoản**: Khi người dùng đăng nhập, hệ thống tự động kiểm tra và chuyển toàn bộ kênh đã theo dõi và lịch sử xem từ guest sang tài khoản người dùng, xóa cache guest để chống mất dữ liệu.
+         - **Hợp nhất bảo toàn (Safe Merge)**: `syncUserSubscriptionsToAuth` gộp kênh người dùng tự theo dõi với kênh quét từ YouTube API thành một danh sách hợp nhất `mergedList`, cập nhật `user_auth`, cookie và kích hoạt `onUpdateUser(authObj)`.
+         - **Khắc phục Re-sync Hook**: `App.tsx` tự động kiểm tra và re-sync nếu tài khoản có token nhưng danh sách kênh rỗng hoặc chưa kiểm tra.
+      2. *Đẩy Lại Toàn Diện 5 Vị Trí Giao Diện*:
+         - **Vị trí 1 (Nút YouTube đỏ trên Header Video Shorts)**: Hiển thị handle tài khoản (`@mrkun28` hoặc `@username`) và badge số lượng kênh thực tế (`{displayUserChannels.length}`). Click mở ngay tab Kênh của bạn.
+         - **Vị trí 2 (Tab 🔴 Kênh Của Bạn)**: Hiển thị Thẻ Profile Card tài khoản kết nối (Avatar, Email, Tên, Trạng thái online, Tổng số kênh, Nút đồng bộ YouTube), Lưới danh sách kênh đã theo dõi, Banner hướng dẫn cấp quyền YouTube nếu cần, và Trạng thái rỗng thông minh kèm nút 1-click theo dõi nhanh.
+         - **Vị trí 3 (Menu Avatar Người Dùng `UserAvatarMenu`)**: Khối Kênh YouTube đã liên kết và nút `🔴 Kênh của bạn & Đã đăng ký ({count})` dẫn trực tiếp vào Video Shorts.
+         - **Vị trí 4 (Thanh Overlay chân video)**: Huy hiệu `Kênh đã nối • {email}` nhấp nháy animate-pulse và nút `Đã theo dõi ✓`.
+         - **Vị trí 5 (Playlist Drawer)**: Nút tab `🔴 Kênh của bạn ({count})` nằm ngay cạnh tab Shorts ngắn và Đã xem.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + Python system integrity: **PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 1.81s**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+38. **[REQ-059 / PROMPT-20261020-03] Thanh Lọc Tận Gốc Bộ Nhớ Đệm Kênh Mẫu Cũ (Mock Channel Scrubber), Phá Vỡ Vòng Lặp Lỗi Phát Video Kênh 1 Video (Single-Item Error Recovery) & Bảo Đảm Hiển Thị Tức Thì Thời Tiết (Instant Weather Ergonomics)**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      1. *Khắc phục sự cố kẹt "Video không khả dụng" & vòng lặp vô tận trên kênh `@An#`*:
+         - Người dùng phản hồi kèm ảnh chụp màn hình bị dừng ở kênh `@An#` với video `An# Acoustic Guitar` (`youtubeId: 'tFkZ_9pL1uM'`) hiển thị `Video không khả dụng` và `Đang chuyển sang clip tiếp theo...` kèm vòng xoay loading vô tận.
+         - Thẻ đếm góc dưới báo `1 / 1` và nút Header đỏ hiển thị `@mrkun28 9`.
+      2. *Nguyên nhân gốc rễ (Root Cause)*:
+         - Dù trong mã nguồn mới đã xóa kênh mock `An#`, `Pinkfong`, `WaveMusic`, `Kimpro`..., nhưng trong `localStorage.user_auth` của trình duyệt người dùng vẫn còn lưu mảng `youtubeSubscriptions` (9 kênh mock) và `subscribedVideos` (chứa `tFkZ_9pL1uM`).
+         - Khi mở lại Shorts, `sessionStorage.weather_app_shorts_channel` hoặc `followedMap` khớp vào kênh `An#` chỉ có duy nhất 1 video (`playlist.length === 1`).
+         - Khi video bị YouTube báo lỗi (100/101/150), hàm `handlePlayerError` gọi `handleNextShort()`, với công thức `(0 + 1) % 1 = 0` dẫn đến tiếp tục tải lại chính video chết đó, tạo ra bẫy lặp vô tận (Infinite Error Loop).
+      3. *Khối thời tiết bị gián đoạn (Weather Skeleton Flashing)*:
+         - Khi `apiStatus === 'loading'`, `WeatherSection` cũ trả về `<WeatherSectionSkeleton />` làm ẩn toàn bộ các chỉ số sức khỏe (PM2.5, Gió, Độ ẩm) khi đang cập nhật dữ liệu ngầm.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Bộ quét và thanh lọc bộ nhớ đệm đa tầng (Multi-Layer Mock Scrubber)*:
+         - `src/utils/logicFlows.ts`: Xây dựng hàm `isMockVideo(item)` kiểm tra từ khóa (`wavemusic`, `kimpro`, `jay prehistoric`, `vietsuccess`, `baby shark`, `pinkfong`, `j house`, `an#`, `anmusic`, `acoustic guitar`, `tfkz_9pl1um`...) kết hợp cùng `isMockChannel(channel)`.
+         - `src/App.tsx`: Khởi tạo `userRole` tự động lọc sạch `localStorage.user_auth`: loại bỏ 100% kênh mock khỏi `youtubeSubscriptions` và video mock khỏi `subscribedVideos`. Trong `fetchAndAttachYouTubeData` lọc sạch dữ liệu API.
+         - `src/components/VideoShortsModal.tsx`: Thanh lọc trực tiếp trên `activeUser.youtubeSubscriptions`, `watchHistory`, `followedMap`, `selectedChannelId` (tự động fallback về `'vtv24'` nếu kênh đã lưu là mock), `allAvailableVideos`, và `playlist`.
+      2. *Phá vỡ vòng lặp lỗi phát video đơn (Single-Item Playlist Recovery)*:
+         - Trong `handlePlayerError`: Nếu phát hiện lỗi phát trên playlist chỉ có 1 video (`playlist.length <= 1`), hệ thống lập tức tự động đổi kênh `selectedChannelId` sang `'vtv24'` và reset `currentIndex = 0`, hoàn toàn thoát khỏi vòng lặp lỗi.
+         - Hook tự động bỏ qua (Auto-skip hook): Nếu `currentShort && isMockVideo(currentShort)`, ngay lập tức reset về kênh an toàn `'vtv24'`.
+      3. *Hiển thị tức thì thời tiết không che giấu dữ liệu (Instant Weather Ergonomics)*:
+         - Điều chỉnh `WeatherSection` trong `App.tsx`: `if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;`. Do `DEFAULT_WEATHER_DATA` luôn có sẵn, thời tiết luôn hiển thị đầy đủ tức thì (Nhiệt độ, PM2.5, Độ ẩm, Gió, Tầm nhìn) mà không bị gián đoạn.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 482ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---
@@ -418,6 +564,7 @@
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
 2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.
 3. Bất kỳ tác nhân nào làm việc trên repository đều phải chạy `npm run testwebsite` trước khi tạo commit hoặc bàn giao.
+
 
 
 

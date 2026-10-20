@@ -1,5 +1,31 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.27.0 (2026-10-20) - Thanh Lọc Tận Gốc Kênh Mẫu Cũ (Mock Scrubber), Phục Hồi Lỗi Kênh 1 Video (Single-Item Recovery) & Hiển Thị Tức Thì Thời Tiết (REQ-059)
+
+### 1. Thanh Lọc Toàn Diện Bộ Nhớ Đệm Kênh Mẫu Cũ (Mock Scrubber Engine)
+- **Triệt tiêu kênh mẫu còn kẹt trong Client Storage**:
+  + Bổ sung và xuất hàm `isMockVideo(item)` kiểm tra toàn bộ danh mục từ khóa kênh mẫu cũ (`wavemusic`, `kimpro`, `jay prehistoric`, `vietsuccess`, `baby shark`, `pinkfong`, `j house`, `an#`, `anmusic`, `acoustic guitar`, `tfkz_9pl1um`...) kết hợp cùng `isMockChannel(channel)`.
+  + Tự động quét và dọn sạch `localStorage.user_auth`: loại bỏ 100% kênh mock khỏi mảng `youtubeSubscriptions` và video mock khỏi `subscribedVideos`.
+  + Tự động làm sạch `localStorage` cho các key `weather_user_channels_*`, `weather_app_subscribed_channels_*`, `weather_watch_history_*` và `sessionStorage.weather_app_shorts_channel`.
+  + Khắc phục sự cố Header YouTube button hiển thị `@mrkun28 9` (do 9 kênh mock cũ được lưu trong cache).
+
+### 2. Tự Phục Hồi Lỗi Video Đơn & Phá Vỡ Vòng Lặp Vô Tận (Single-Item Recovery)
+- **Cơ chế phục hồi lỗi chuyển kênh tức thời**:
+  + Khi video YouTube trả về mã lỗi 100/101/150 trên playlist chỉ có 1 video (`playlist.length <= 1`), hàm `handlePlayerError` tự động chuyển `selectedChannelId` sang kênh an toàn `'vtv24'` và đặt lại `currentIndex = 0`, phá vỡ hoàn toàn bẫy lặp vô tận `Video không khả dụng`.
+  + Hook tự động kiểm tra `isMockVideo(currentShort)` ngay khi load, tự động đưa người dùng về kênh thời sự chính thống VTV24.
+
+### 3. Tối Ưu Trải Nghiệm Khối Thời Tiết (Instant Weather Ergonomics)
+- **Không bao giờ che giấu chỉ số sức khỏe bằng skeleton rỗng**:
+  + Tinh chỉnh điều kiện trong `WeatherSection`: `if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;`.
+  + Do `DEFAULT_WEATHER_DATA` luôn có sẵn ngay từ frame đầu tiên, các chỉ số quan trọng (Nhiệt độ, Bụi PM2.5, Độ ẩm, Gió, Tầm nhìn) luôn hiện diện tức thì và ổn định, loại trừ hiện tượng chớp nháy skeleton khi ứng dụng cập nhật nền.
+
+### 4. Nghiệm Thu Thực Tế
+- `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run build`: **Thành công 100% không lỗi (dist/ đầy đủ)**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+
 ## Phiên bản 1.23.0 (2026-10-16) - Khôi Phục & Kiểm Thử Toàn Diện 100% Logic Hệ Thống Bot Telegram & Đồng Bộ Dữ Liệu Hai Chiều (PROMPT-20261016-05 / REQ-048)
 
 ### 1. Khôi Phục & Chuẩn Hóa Toàn Diện Logic Bot Telegram (`quan-ly-tien-phong`)
