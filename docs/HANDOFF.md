@@ -3,7 +3,7 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.29.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Pending Git Commit (`feat: multi-channel OAuth broadcast, popup auto-close, auto-link 8 premier channels, and pass 47/47 QA release gate`)
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `3398666` (`feat: multi-channel OAuth broadcast, popup auto-close, auto-link 8 premier channels, and pass 47/47 QA release gate`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `6e3657b` (`fix(backend): hoan thien trich xuat paragraph voi tham so desc va chuan hoa vieneu v3 turbo`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
