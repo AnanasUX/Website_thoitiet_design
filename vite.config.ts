@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
   const emitSourcemaps = mode === 'development'
 
   const isAppBuild = process.env.BUILD_TARGET === 'app'
-  const appBase = isAppBuild ? './' : (process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/Website_thoitiet_design/')
+  const appBase = isAppBuild ? './' : (process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/')
   const outDir = isAppBuild ? 'dist-app' : 'dist'
 
   return {

@@ -4557,7 +4557,7 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
                 <p>Nếu bạn có bất kỳ câu hỏi nào về chính sách bảo mật này, vui lòng liên hệ:</p>
                 <div className="bg-[#f8fafc] border border-[#e3e7ef] rounded-xl p-4 flex flex-col gap-1">
                   <p className="font-semibold text-[#182033]">Anx. — Nhà phát triển</p>
-                  <p>Website: <a href="https://ananasux.github.io/Website_thoitiet_design" className="text-[#3a7bd5] underline">ananasux.github.io/Website_thoitiet_design</a></p>
+                  <p>Website: <a href="https://anx.io.vn" className="text-[#3a7bd5] underline">anx.io.vn</a></p>
                   <p>GitHub: <a href="https://github.com/AnanasUX" className="text-[#3a7bd5] underline" target="_blank" rel="noopener">github.com/AnanasUX</a></p>
                 </div>
               </div>
@@ -4875,13 +4875,15 @@ export default function App() {
     setSelectedArticle(enriched);
     if (enriched) {
       const slug = toSlug(enriched.author || enriched.title || 'bai-viet');
-      window.history.pushState({ articleSlug: slug }, '', `/Website_thoitiet_design/chi-tiet-${slug}`);
+      const prefix = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design' : '';
+      window.history.pushState({ articleSlug: slug }, '', `${prefix}/chi-tiet-${slug}`);
     }
   };
 
   const closeArticle = () => {
     setSelectedArticle(null);
-    window.history.pushState({}, '', `/Website_thoitiet_design/`);
+    const prefix = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+    window.history.pushState({}, '', prefix);
   };
 
   // Handle browser back/forward buttons
