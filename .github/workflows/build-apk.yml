@@ -37,7 +37,9 @@ jobs:
           BUILD_TARGET: 'app'
 
       - name: Sync with Capacitor Android
-        run: npx cap sync android
+        run: |
+          chmod +x android/gradlew
+          npx cap sync android
 
       - name: Build Android Debug APK
         working-directory: android
