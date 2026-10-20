@@ -5,6 +5,8 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+permissions: write-all
+
 jobs:
   registry:
     runs-on: ubuntu-latest
@@ -21,9 +23,12 @@ jobs:
       - run: npm run qa:dashboard
       - name: Run logic tests
         run: node scripts/test-logic-flows.mjs > logic-test.log 2>&1 || (cat logic-test.log && exit 1)
-      - name: Upload logic test log
+      - name: Save debug log to branch
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: logic-test-log
-          path: logic-test.log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B debug/ci-logs
+          git add -f logic-test.log || true
+          git commit -m "ci: debug logic test output" || true
+          git push -f origin debug/ci-logs || true
