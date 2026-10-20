@@ -3934,7 +3934,9 @@ function toSlug(str: string) {
 }
 
 
-const GOOGLE_CLIENT_ID = '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = (typeof window !== 'undefined' && window.location.hostname === 'anx.io.vn')
+  ? '808045911964-g69d5qp5ou2te9vm173p3o0qnlaqrbfu.apps.googleusercontent.com'
+  : '808045911964-1s7hoh6jv3mo3ks3d0qt0d1bhfp19htj.apps.googleusercontent.com';
 
 export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: any) {
   if (!accessToken || !userInfo) return userInfo;
@@ -4174,7 +4176,8 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
 }
 
 export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string, forceConsent?: boolean) {
-  const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+  const isCustomDomain = window.location.hostname === 'anx.io.vn' || !window.location.pathname.includes('/Website_thoitiet_design');
+  const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
   const redirectUri = window.location.origin + basePath;
   // Bổ sung quyền đọc thông tin kênh YouTube và danh sách kênh đã đăng ký của tài khoản Gmail
   const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
@@ -4192,26 +4195,38 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
   const top = window.screenY + (window.outerHeight - h) / 2;
   const popup = window.open(authUrl, 'google-login', `width=${w},height=${h},left=${left},top=${top}`);
 
-  const handleToken = async (hash: string) => {
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get('access_token');
+  const handleToken = async (rawHash: string) => {
+    const cleanHash = (rawHash || '').replace(/^[#?]/, '');
+    const params = new URLSearchParams(cleanHash);
+    let accessToken = params.get('access_token');
+    if (!accessToken && rawHash.includes('access_token=')) {
+      const match = rawHash.match(/access_token=([^&]+)/);
+      if (match) accessToken = decodeURIComponent(match[1]);
+    }
+
     if (accessToken) {
       try {
         const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` },
         }).then(r => r.json());
 
-        userInfo._access_token = accessToken;
+        if (userInfo && (userInfo.email || userInfo.sub)) {
+          userInfo._access_token = accessToken;
 
-        // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản
-        await fetchAndAttachYouTubeData(accessToken, userInfo);
+          // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản một cách an toàn
+          try {
+            await fetchAndAttachYouTubeData(accessToken, userInfo);
+          } catch (ytErr) {
+            console.warn('[YouTube API Sync Warning]:', ytErr);
+          }
 
-        const authStr = JSON.stringify(userInfo);
-        localStorage.setItem('user_auth', authStr);
-        document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-        onSuccess(userInfo);
+          const authStr = JSON.stringify(userInfo);
+          localStorage.setItem('user_auth', authStr);
+          document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+          onSuccess(userInfo);
+        }
       } catch (err) {
-        console.error(err);
+        console.error('[Google OAuth UserInfo Error]:', err);
       }
     }
   };
@@ -4240,8 +4255,8 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
 
   if (bc) {
     bc.onmessage = (event) => {
-      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
-        onTokenReceived(event.data.hash);
+      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && (event.data.hash || event.data.accessToken)) {
+        onTokenReceived(event.data.hash || `access_token=${event.data.accessToken}`);
       }
     };
   }
@@ -4250,15 +4265,15 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
     if (e.key === 'google_oauth_event' && e.newValue) {
       try {
         const data = JSON.parse(e.newValue);
-        if (data.hash) {
-          onTokenReceived(data.hash);
+        if (data.hash || data.accessToken) {
+          onTokenReceived(data.hash || `access_token=${data.accessToken}`);
         }
       } catch {}
     }
   };
   window.addEventListener('storage', storageListener);
 
-  const timer = setInterval(async () => {
+  const timer = setInterval(() => {
     try {
       if (!popup || popup.closed) {
         cleanup();
@@ -4270,11 +4285,11 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
         onTokenReceived(hash);
       }
     } catch (_) {}
-  }, 400);
+  }, 350);
 
   const messageListener = (event: MessageEvent) => {
-    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
-      onTokenReceived(event.data.hash);
+    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && (event.data.hash || event.data.accessToken)) {
+      onTokenReceived(event.data.hash || `access_token=${event.data.accessToken}`);
     }
   };
   window.addEventListener('message', messageListener);
@@ -4735,24 +4750,33 @@ export default function App() {
 
   // Handle OAuth2 redirect callback (access_token or error in URL hash)
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && (hash.includes('access_token=') || hash.includes('error='))) {
+    const rawHash = window.location.hash;
+    if (rawHash && (rawHash.includes('access_token=') || rawHash.includes('error='))) {
+      const cleanHash = rawHash.replace(/^[#?]/, '');
+      const params = new URLSearchParams(cleanHash);
+      const error = params.get('error');
+      let accessToken = params.get('access_token');
+      if (!accessToken && rawHash.includes('access_token=')) {
+        const match = rawHash.match(/access_token=([^&]+)/);
+        if (match) accessToken = decodeURIComponent(match[1]);
+      }
+
       // 1. Gửi token qua BroadcastChannel đến mọi tab/cửa sổ đang mở
       try {
         const bc = new BroadcastChannel('google_oauth_channel');
-        bc.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash });
+        bc.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: cleanHash, accessToken });
         bc.close();
       } catch {}
 
       // 2. Gửi token qua localStorage để kích hoạt storage listener tức thì
       try {
-        localStorage.setItem('google_oauth_event', JSON.stringify({ hash: hash, t: Date.now() }));
+        localStorage.setItem('google_oauth_event', JSON.stringify({ hash: cleanHash, accessToken, t: Date.now() }));
       } catch {}
 
       // 3. Gửi token qua postMessage nếu window.opener tồn tại
       if (window.opener) {
         try {
-          window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
+          window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: cleanHash, accessToken }, '*');
         } catch {}
       }
 
@@ -4763,16 +4787,12 @@ export default function App() {
         return;
       }
 
-      const params = new URLSearchParams(hash.substring(1));
-      const error = params.get('error');
-      const accessToken = params.get('access_token');
-      
-      // Clean URL hash immediately
+      // Clean URL hash immediately khi không phải là popup
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
       if (error) {
-         sessionStorage.setItem('google_silent_failed', '1');
-         return;
+        sessionStorage.setItem('google_silent_failed', '1');
+        return;
       }
 
       if (accessToken) {
@@ -4782,15 +4802,20 @@ export default function App() {
         })
           .then(r => r.json())
           .then(async userInfo => {
-            userInfo._access_token = accessToken;
-            // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản
-            await fetchAndAttachYouTubeData(accessToken, userInfo);
-            const authStr = JSON.stringify(userInfo);
-            localStorage.setItem('user_auth', authStr);
-            document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
-            setUserRole(userInfo);
+            if (userInfo && (userInfo.email || userInfo.sub)) {
+              userInfo._access_token = accessToken;
+              try {
+                await fetchAndAttachYouTubeData(accessToken, userInfo);
+              } catch (ytErr) {
+                console.warn('[YouTube API Sync Warning]:', ytErr);
+              }
+              const authStr = JSON.stringify(userInfo);
+              localStorage.setItem('user_auth', authStr);
+              document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+              setUserRole(userInfo);
+            }
           })
-          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
+          .catch(err => console.error('[Google OAuth UserInfo Error]:', err));
       }
     }
   }, []);
@@ -4830,7 +4855,8 @@ export default function App() {
     if (userRole && userRole.email && !userRole._access_token) {
       if (sessionStorage.getItem('google_silent_failed')) return;
 
-      const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+      const isCustomDomain = window.location.hostname === 'anx.io.vn' || !window.location.pathname.includes('/Website_thoitiet_design');
+      const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
       const redirectUri = window.location.origin + basePath;
       const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
@@ -4875,13 +4901,15 @@ export default function App() {
     setSelectedArticle(enriched);
     if (enriched) {
       const slug = toSlug(enriched.author || enriched.title || 'bai-viet');
-      window.history.pushState({ articleSlug: slug }, '', `/Website_thoitiet_design/chi-tiet-${slug}`);
+      const prefix = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design' : '';
+      window.history.pushState({ articleSlug: slug }, '', `${prefix}/chi-tiet-${slug}`);
     }
   };
 
   const closeArticle = () => {
     setSelectedArticle(null);
-    window.history.pushState({}, '', `/Website_thoitiet_design/`);
+    const prefix = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
+    window.history.pushState({}, '', prefix);
   };
 
   // Handle browser back/forward buttons
