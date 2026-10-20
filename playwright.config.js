@@ -1,9 +1,9 @@
-const { defineConfig, devices } = require("@playwright/test");
+import { defineConfig, devices } from "@playwright/test";
 
 const rawBaseUrl = process.env.QA_BASE_URL ? process.env.QA_BASE_URL.trim() : "";
 const baseURL = rawBaseUrl || "http://127.0.0.1:4173";
 
-module.exports = defineConfig({
+export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),

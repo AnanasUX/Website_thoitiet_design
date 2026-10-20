@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
 
   const isAppBuild = process.env.BUILD_TARGET === 'app'
   const appBase = isAppBuild ? './' : (process.env.FIGMA_PUBLIC_URL ? `${process.env.FIGMA_PUBLIC_URL}/` : '/')
-  const outDir = isAppBuild ? 'dist-app' : 'dist'
+  const outDir = 'dist'
 
   return {
     base: appBase,

@@ -1,4 +1,6 @@
-const { test, expect } = require("@playwright/test");
+import { test, expect } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
 
 test("TC-SITE-001: target page loads", async ({ page }) => {
   const response = await page.goto("/", { waitUntil: "domcontentloaded" });
@@ -77,8 +79,6 @@ test("TC-SITE-005: document has no horizontal overflow", async ({ page }) => {
 });
 
 test("QA metadata: requirement registry and test cases are present", async () => {
-  const fs = require("node:fs");
-  const path = require("node:path");
   const requirements = JSON.parse(fs.readFileSync(path.join(process.cwd(), "qa/requirements.json"), "utf8"));
   const cases = JSON.parse(fs.readFileSync(path.join(process.cwd(), "qa/test-cases.json"), "utf8"));
   const ids = new Set(cases.testCases.map(tc => tc.id));
