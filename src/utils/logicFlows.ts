@@ -407,16 +407,203 @@ export function formatArticleDate(
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
+/**
+ * Định dạng ngày giờ xuất bản video trực quan cho Video Shorts.
+ * Ví dụ: "Hôm nay, 14:30", "Hôm qua, 09:15", "13/10/2026"
+ */
+export function formatVideoDate(
+  dateStr: string | null | undefined,
+  refTime: number = Date.now()
+): string {
+  if (!dateStr) return '';
+  return formatArticleDate(dateStr, refTime);
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LUỒNG 4: NEWS FULL-TEXT PARSER & AVATAR GUARD FLOW
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Kiểm tra chuỗi văn bản là thẻ tag hoặc nút chia sẻ mạng xã hội để loại bỏ triệt để.
+ * Ví dụ: "Chia sẻ", "Chi sẻ", "Chia sẻ qua Facebook", "Chia sẻ qua Twitter", "Chia sẻ qua Email", "#Quốc hội", "#cò mồi", "#trục lợi", "#đấu giá tài sản", "#Luật Đấu giá tài sản", v.v.
+ */
+export function isJunkOrTagContent(text: string): boolean {
+  if (!text) return true;
+  // Giải mã các thực thể HTML phổ biến nếu có
+  const decoded = text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#35;/gi, '#')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"');
+  const t = decoded.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  if (!t) return true;
+
+  // 1. Toàn bộ Hashtag: bắt đầu bằng # hoặc chuỗi chứa các hashtag chính trị, pháp luật, đời sống
+  if (t.startsWith('#')) return true;
+  if (/^#[\s\S]+/u.test(t)) return true;
+  if (t.includes('#')) {
+    // Nếu chuỗi chứa hashtag (#Quốc hội, #cò mồi, #trục lợi, #đấu giá tài sản, #Luật Đấu giá tài sản...)
+    const withoutTags = t.replace(/#[\p{L}\d\s_\-]+/gu, '').replace(/[,;.\-]/g, '').trim();
+    if (!withoutTags || withoutTags.length < 25) return true;
+  }
+  // Bổ sung nhận diện danh sách từ khóa thẻ bài viết đơn lẻ
+  if (/^(quốc hội|cò mồi|trục lợi|đấu giá tài sản|luật đấu giá tài sản|tin nóng|thời sự)$/i.test(t)) return true;
+
+  const lower = t.toLowerCase();
+
+  // 2. Chia sẻ / Chi sẻ qua các kênh mạng xã hội:
+  if (lower === 'chia sẻ' || lower === 'chi sẻ' || lower === 'share' || lower === 'chia se' || lower === 'chi se') return true;
+  if (/^(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se|share)\b/i.test(lower)) return true;
+  if (/^(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se|share)\s*(qua|lên|với|tới|bài viết|liên kết|ngay|trên|:)?/i.test(lower)) return true;
+  if (/(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se)\s+(qua|lên|bài|với|trên)\s+(facebook|twitter|email|zalo|messenger|threads|linkedin|mạng xã hội)/i.test(lower)) return true;
+  if (/(chia\s*sẻ|chi\s*sẻ|chia\s*se|chi\s*se)\s+qua\s+(facebook|twitter|email|zalo)/i.test(lower)) return true;
+  if (/chia\s*sẻ\s+qua/i.test(lower)) return true;
+  if (/chi\s*sẻ\s+qua/i.test(lower)) return true;
+  if (/^(facebook|twitter|zalo|email|copy link|sao chép liên kết)$/i.test(lower)) return true;
+
+  // 3. Thẻ tags & Chủ đề:
+  if (/^(thẻ|từ khóa|tags?|chủ đề|nhãn|chuyên mục)\s*[:\-]/i.test(lower)) return true;
+  if (/^(tag|tags|_tag|article__tag)\b/i.test(lower)) return true;
+
+  return false;
+}
+
+/**
+ * Kiểm tra phần tử DOM là thẻ tag hoặc thanh chia sẻ mạng xã hội.
+ * Nếu phát hiện trên trang chính có thẻ "article__tag" hoặc có "_tag"; "tag" thì không lấy.
+ * Nếu phát hiện có "Chia sẻ" / "Chi sẻ" qua các kênh thì cũng loại bỏ không hiển thị ra.
+ */
+export function isTagOrShareElement(el: any): boolean {
+  if (!el) return false;
+  const tag = String(el.tagName || '').toLowerCase();
+  if (tag === 'tag' || tag === 'tags' || tag === 'article-tag') return true;
+
+  const cls = (typeof el.className === 'string' ? el.className : (el.classList ? Array.from(el.classList).join(' ') : '')).toLowerCase();
+  const id = String(el.id || '').toLowerCase();
+  const href = String(el.getAttribute ? (el.getAttribute('href') || '') : (el.href || '')).toLowerCase();
+  const rel = String(el.getAttribute ? (el.getAttribute('rel') || '') : (el.rel || '')).toLowerCase();
+
+  // 1. Kiểm tra phần tử cha (ancestor) có thuộc khối tag hoặc share không
+  try {
+    if (el.closest) {
+      const parentTag = el.closest(`
+        [class*="article__tag"], [class*="_tag"], [class*="tag"], [id*="tag"],
+        [class*="share"], [id*="share"], [class*="social"], [id*="social"],
+        [class*="chia-se"], [class*="chiase"], [class*="chi-se"], [id*="chia-se"], [id*="chiase"]
+      `);
+      if (parentTag) return true;
+    }
+  } catch {}
+
+  // 2. Yêu cầu: "Nếu phát hiện trên trang chính có thẻ 'article__tag' hoặc có '_tag'; 'tag' thì không lấy"
+  if (
+    cls.includes('article__tag') ||
+    cls.includes('_tag') ||
+    cls.includes('tag') ||
+    id.includes('article__tag') ||
+    id.includes('_tag') ||
+    id.includes('tag') ||
+    rel === 'tag' ||
+    href.includes('/tag/') ||
+    href.includes('/tags/') ||
+    href.includes('/tu-khoa/') ||
+    href.includes('_tag') ||
+    href.includes('article__tag')
+  ) {
+    return true;
+  }
+
+  // 3. Yêu cầu: "Nếu phát hiện có 'Chia sẻ' qua các kênh thì cũng loại bỏ không hiển thị ra"
+  if (
+    cls.includes('share') ||
+    cls.includes('chia-se') ||
+    cls.includes('chiase') ||
+    cls.includes('chi-se') ||
+    cls.includes('social') ||
+    id.includes('share') ||
+    id.includes('chia-se') ||
+    id.includes('chiase') ||
+    id.includes('chi-se') ||
+    id.includes('social') ||
+    href.includes('facebook.com/sharer') ||
+    href.includes('twitter.com/intent/tweet') ||
+    href.includes('zalo.me/share') ||
+    href.startsWith('mailto:?subject=')
+  ) {
+    return true;
+  }
+
+  // 4. Kiểm tra trực tiếp nội dung văn bản bên trong phần tử
+  const text = (el.textContent || '').trim();
+  if (text && isJunkOrTagContent(text)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Kiểm tra xem một kênh YouTube có phải là kênh mẫu / mock cũ cần loại bỏ triệt để hay không.
+ * Các kênh mẫu cũ: WaveMusic, Kimpro, Jay Prehistoric Pets, Pinkfong, Baby Shark, J House, An#...
+ */
+export function isMockChannel(channel: any): boolean {
+  if (!channel) return false;
+  const title = (channel?.snippet?.title || channel?.title || channel?.name || '').toLowerCase();
+  const customUrl = (channel?.snippet?.customUrl || channel?.customUrl || '').toLowerCase();
+  const id = String(channel?.id || channel?.snippet?.resourceId?.channelId || '').toLowerCase();
+  const desc = (channel?.snippet?.description || channel?.description || '').toLowerCase();
+  
+  const mockKeywords = [
+    'wavemusic', 'wave music', 'kimpro', '김프로', 'jay prehistoric', 'jaypets',
+    'vietsuccess', 'baby shark', 'pinkfong', 'cá mập con', 'j house', 'jhouse', 'an#', 'anmusic',
+    'acoustic guitar', 'an acoustic', 'an music', 'uc_anmusic96'
+  ];
+  
+  return mockKeywords.some(kw => 
+    title.includes(kw) || customUrl.includes(kw) || id.includes(kw) || desc.includes(kw)
+  );
+}
+
+/**
+ * Kiểm tra xem một video YouTube có phải là video mẫu / mock cũ (ví dụ: An# Acoustic Guitar, Baby Shark, WaveMusic...)
+ * cần loại bỏ triệt để khỏi hệ thống hay không.
+ */
+export function isMockVideo(item: any): boolean {
+  if (!item) return false;
+  const channel = String(item.channel || item.channelTitle || '').toLowerCase();
+  const title = String(item.title || '').toLowerCase();
+  const id = String(item.id || '').toLowerCase();
+  const youtubeId = String(item.youtubeId || '').toLowerCase();
+  const channelId = String(item.channelId || '').toLowerCase();
+  const category = String(item.category || '').toLowerCase();
+  const subCategory = String(item.subCategory || '').toLowerCase();
+
+  const mockKeywords = [
+    'wavemusic', 'wave music', 'kimpro', '김프로', 'jay prehistoric', 'jaypets',
+    'vietsuccess', 'baby shark', 'pinkfong', 'cá mập con', 'j house', 'jhouse', 
+    'an#', 'anmusic', 'acoustic guitar', 'tfkz_9pl1um', 'xqzsoesa55w', '60ithlz5wea',
+    'fkopy74weus', '2vv-bfvoq4g', '7u_cm_8n5te', 'an acoustic', 'giai điệu nhẹ nhàng',
+    'thư giãn buổi tối', 'an_music', 'uc_anmusic96'
+  ];
+
+  return mockKeywords.some(kw => 
+    channel.includes(kw) || 
+    title.includes(kw) || 
+    id.includes(kw) || 
+    youtubeId.includes(kw) || 
+    channelId.includes(kw) ||
+    category.includes(kw) ||
+    subCategory.includes(kw)
+  );
+}
+
+/**
  * Kiểm tra chuỗi văn bản rác hoặc banner quảng cáo để loại bỏ khỏi thân bài.
  */
 export function isBoilerplate(text: string): boolean {
   if (!text) return true;
+  if (isJunkOrTagContent(text)) return true;
   const t = text.toLowerCase().trim();
   if (t.length === 0) return true;
   if (

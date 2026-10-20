@@ -1,22 +1,38 @@
-// ── Hình ảnh đại diện vector chất lượng cao cho danh sách kênh YouTube của người dùng ──
+// ── Hình ảnh đại diện vector SVG chất lượng cao cho danh sách kênh YouTube chính thống ──
 export const VTV24_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23dc2626"/><circle cx="50" cy="50" r="44" fill="%23b91c1c"/><text x="50" y="38" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="20" letter-spacing="1">VTV</text><text x="50" y="74" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="38">24</text></svg>`;
-export const AN_MUSIC_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23f59e0b"/><circle cx="50" cy="50" r="44" fill="%23fbbf24"/><text x="50" y="44" text-anchor="middle" font-size="34">🎧</text><text x="50" y="78" text-anchor="middle" fill="%2378350f" font-family="Arial,sans-serif" font-weight="900" font-size="22">An#</text></svg>`;
-export const WAVE_MUSIC_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%2318181b"/><circle cx="50" cy="50" r="45" fill="%2309090b" stroke="%233f3f46" stroke-width="2"/><path d="M22 50 Q30 25 38 50 T54 50 T70 50 T86 50" fill="none" stroke="%2338bdf8" stroke-width="4" stroke-linecap="round"/><text x="50" y="76" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="12" letter-spacing="2">WAVE</text></svg>`;
-export const KIMPRO_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%230f172a"/><circle cx="50" cy="50" r="44" fill="%231e293b"/><text x="50" y="44" text-anchor="middle" font-size="30">🎬</text><text x="50" y="66" text-anchor="middle" fill="%23facc15" font-family="Arial,sans-serif" font-weight="900" font-size="14">김프로</text><text x="50" y="82" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="800" font-size="11" letter-spacing="1">KIMPRO</text></svg>`;
-export const JAY_PETS_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%2314532d"/><circle cx="50" cy="50" r="44" fill="%23166534"/><text x="50" y="46" text-anchor="middle" font-size="34">🐍</text><text x="50" y="74" text-anchor="middle" fill="%23bbf7d0" font-family="Arial,sans-serif" font-weight="900" font-size="13">JAY PREHISTORIC</text><text x="50" y="86" text-anchor="middle" fill="%23fef08a" font-family="Arial,sans-serif" font-weight="800" font-size="10">PETS TV</text></svg>`;
-export const VIETSUCCESS_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%231e1b4b"/><circle cx="50" cy="50" r="44" fill="%23312e81"/><path d="M30 35 L45 70 L55 50 L65 70 L75 35" fill="none" stroke="%23818cf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="50" y="86" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="10" letter-spacing="1">VIETSUCCESS</text></svg>`;
-export const PINKFONG_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23db2777"/><circle cx="50" cy="50" r="44" fill="%23f472b6"/><text x="50" y="46" text-anchor="middle" font-size="34">🦊</text><text x="50" y="72" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="15">PINKFONG</text><text x="50" y="85" text-anchor="middle" fill="%23fef08a" font-family="Arial,sans-serif" font-weight="800" font-size="10">Baby Shark</text></svg>`;
-export const JHOUSE_JR_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%230284c7"/><circle cx="50" cy="50" r="44" fill="%2338bdf8"/><text x="50" y="46" text-anchor="middle" font-size="34">🏠</text><text x="50" y="72" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="16">J HOUSE</text><text x="50" y="85" text-anchor="middle" fill="%23fef08a" font-family="Arial,sans-serif" font-weight="800" font-size="11">jr.</text></svg>`;
-export const PINKFONG_VN_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23e11d48"/><circle cx="50" cy="50" r="44" fill="%23f43f5e"/><text x="50" y="44" text-anchor="middle" font-size="32">🦈</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="12">PINKFONG</text><text x="50" y="82" text-anchor="middle" fill="%23fef08a" font-family="Arial,sans-serif" font-weight="800" font-size="10">Cá Mập Con</text></svg>`;
 
-// ── Toàn bộ 9 kênh YouTube thực tế tài khoản người dùng đã đăng ký (đồng bộ chính xác từ YouTube) ──
-export const USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT = [
+export const TIENPHONG_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%230284c7"/><circle cx="50" cy="50" r="44" fill="%230369a1"/><text x="50" y="44" text-anchor="middle" font-size="28">📰</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="13">TIỀN PHONG</text><text x="50" y="82" text-anchor="middle" fill="%23bae6fd" font-family="Arial,sans-serif" font-weight="800" font-size="10">ONLINE TV</text></svg>`;
+
+export const TUOITRE_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23b91c1c"/><circle cx="50" cy="50" r="44" fill="%23991b1b"/><text x="50" y="42" text-anchor="middle" font-size="28">🗞️</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="14">TUỔI TRẺ</text><text x="50" y="82" text-anchor="middle" fill="%23fecaca" font-family="Arial,sans-serif" font-weight="800" font-size="10">TRUYỀN HÌNH</text></svg>`;
+
+export const THANHNIEN_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%231d4ed8"/><circle cx="50" cy="50" r="44" fill="%231e40af"/><text x="50" y="42" text-anchor="middle" font-size="28">📢</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="13">THANH NIÊN</text><text x="50" y="82" text-anchor="middle" fill="%23bfdbfe" font-family="Arial,sans-serif" font-weight="800" font-size="10">THỜI SỰ TV</text></svg>`;
+
+export const VNEXPRESS_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%230f766e"/><circle cx="50" cy="50" r="44" fill="%23115e59"/><text x="50" y="42" text-anchor="middle" font-size="28">⚡</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="12">VNEXPRESS</text><text x="50" y="82" text-anchor="middle" fill="%2399f6e4" font-family="Arial,sans-serif" font-weight="800" font-size="10">VIDEO 24H</text></svg>`;
+
+export const DANTRI_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23b45309"/><circle cx="50" cy="50" r="44" fill="%2392400e"/><text x="50" y="42" text-anchor="middle" font-size="28">🏛️</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="14">DÂN TRÍ</text><text x="50" y="82" text-anchor="middle" fill="%23fde68a" font-family="Arial,sans-serif" font-weight="800" font-size="10">TRUYỀN HÌNH</text></svg>`;
+
+export const VTCNOW_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23ea580c"/><circle cx="50" cy="50" r="44" fill="%23c2410c"/><text x="50" y="42" text-anchor="middle" font-size="28">📡</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="15">VTC NOW</text><text x="50" y="82" text-anchor="middle" fill="%23fed7aa" font-family="Arial,sans-serif" font-weight="800" font-size="10">SỐ 24/7</text></svg>`;
+
+export const LAODONG_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23047857"/><circle cx="50" cy="50" r="44" fill="%23065f46"/><text x="50" y="42" text-anchor="middle" font-size="28">💼</text><text x="50" y="68" text-anchor="middle" fill="white" font-family="Arial,sans-serif" font-weight="900" font-size="13">LAO ĐỘNG</text><text x="50" y="82" text-anchor="middle" fill="%23a7f3d0" font-family="Arial,sans-serif" font-weight="800" font-size="10">BÁO ĐIỆN TỬ</text></svg>`;
+
+// Giữ các biến avatar cũ để tránh phá vỡ import legacy
+export const AN_MUSIC_AVATAR = TIENPHONG_AVATAR;
+export const WAVE_MUSIC_AVATAR = TUOITRE_AVATAR;
+export const KIMPRO_AVATAR = THANHNIEN_AVATAR;
+export const JAY_PETS_AVATAR = VNEXPRESS_AVATAR;
+export const VIETSUCCESS_AVATAR = DANTRI_AVATAR;
+export const PINKFONG_AVATAR = VTCNOW_AVATAR;
+export const JHOUSE_JR_AVATAR = LAODONG_AVATAR;
+export const PINKFONG_VN_AVATAR = VTV24_AVATAR;
+
+// ── Danh sách các kênh YouTube chính thống chuẩn mực (Không dùng kênh thiếu nhi/nước ngoài làm mặc định) ──
+export const DEFAULT_OFFICIAL_CHANNELS = [
   {
     id: 'sub-vtv24',
     snippet: {
       title: 'VTV24',
       customUrl: '@vtv24',
-      description: 'Kênh YouTube chính thức của Ban Thời sự - Đài Truyền hình Việt Nam Đồng hành cùng VTV24 tại: Fanpage chính thức: fb.com/tintucvtv24 Chuyên trang Tài Chính: fb.com/vtvindex Zalo : zalo.me/1571891271885013875',
+      description: 'Kênh YouTube chính thức của Ban Thời sự - Đài Truyền hình Việt Nam. Chuyển động 24h & Thời sự nóng.',
       subscribersText: '7,01 Tr người đăng ký',
       verified: true,
       resourceId: { channelId: 'UCabsTV34JwALXKGMqHpvUiA' },
@@ -27,296 +43,265 @@ export const USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT = [
     }
   },
   {
-    id: 'sub-anmusic96',
+    id: 'sub-tienphong',
     snippet: {
-      title: 'An#',
-      customUrl: '@anmusic96',
-      description: 'Kênh âm nhạc sáng tạo An# (@anmusic96)',
-      subscribersText: '5 người đăng ký',
-      verified: false,
-      resourceId: { channelId: 'UC_anmusic96' },
-      thumbnails: {
-        medium: { url: AN_MUSIC_AVATAR },
-        default: { url: AN_MUSIC_AVATAR }
-      }
-    }
-  },
-  {
-    id: 'sub-wavemusic',
-    snippet: {
-      title: 'WaveMusic',
-      customUrl: '@wavemusic',
-      description: 'Your Home For The Best Pop & Electronic Music With Lyrics! All new videos will be a 4k lyric video with closed captions (CC) and have lyrics in the description. This channel is dedicated to pop electronic, chill pop, melodic',
-      subscribersText: '4,68 Tr người đăng ký',
+      title: 'Báo Tiền Phong',
+      customUrl: '@tienphong',
+      description: 'Kênh thông tin thời sự, phóng sự điều tra, pháp luật của Báo Tiền Phong điện tử.',
+      subscribersText: '1,25 Tr người đăng ký',
       verified: true,
-      resourceId: { channelId: 'UCbuK8Gbdvi5P0E6D-R5UqgA' },
+      resourceId: { channelId: 'UC01aVq6gGvUe6F2Q6H_tPmg' },
       thumbnails: {
-        medium: { url: WAVE_MUSIC_AVATAR },
-        default: { url: WAVE_MUSIC_AVATAR }
+        medium: { url: TIENPHONG_AVATAR },
+        default: { url: TIENPHONG_AVATAR }
       }
     }
   },
   {
-    id: 'sub-kimpro828',
+    id: 'sub-tuoitre',
     snippet: {
-      title: '김프로KIMPRO',
-      customUrl: '@kimpro828',
-      description: '문의 : kimpro@soon-ent.co.kr ▲ 허가 없이 영상 사용 금지 ▲',
-      subscribersText: '135 Tr người đăng ký',
+      title: 'Báo Tuổi Trẻ',
+      customUrl: '@baotuoitre',
+      description: 'Kênh truyền hình Tuổi Trẻ - Tin tức thời sự trong nước và quốc tế 24h.',
+      subscribersText: '4,52 Tr người đăng ký',
       verified: true,
-      resourceId: { channelId: 'UC8q5Wq9mY2QxY2k0y5s1u1w' },
+      resourceId: { channelId: 'UCteGrHMrnQwx7Scx--7nyoA' },
       thumbnails: {
-        medium: { url: KIMPRO_AVATAR },
-        default: { url: KIMPRO_AVATAR }
+        medium: { url: TUOITRE_AVATAR },
+        default: { url: TUOITRE_AVATAR }
       }
     }
   },
   {
-    id: 'sub-jayprehistoricpets',
+    id: 'sub-thanhnien',
     snippet: {
-      title: 'Jay Prehistoric Pets',
-      customUrl: '@JayPrehistoricPetsTV',
-      description: 'Hi, I\'m Jay Brewer—reptile lover and animal enthusiast! 🐍 Follow me for epic adventures and a behind-the-scenes look at the coolest creatures on the planet. 🌎 When I\'m not traveling the world ✈️, you\'ll find me at The',
-      subscribersText: '8,23 Tr người đăng ký',
-      verified: false,
-      resourceId: { channelId: 'UCJayPrehistoricPetsTV' },
-      thumbnails: {
-        medium: { url: JAY_PETS_AVATAR },
-        default: { url: JAY_PETS_AVATAR }
-      }
-    }
-  },
-  {
-    id: 'sub-vietsuccess',
-    snippet: {
-      title: 'VIETSUCCESS',
-      customUrl: '@VIETSUCCESS',
-      description: 'Vietsuccess là cộng đồng tri thức và nền tảng nội dung hàng đầu, giúp người đi làm tại Việt Nam phát triển toàn diện cả về mặt cá nhân và sự nghiệp. Với sứ mệnh mang đến những kiến thức chọn lọc và thực tế, Vietsuccess',
-      subscribersText: '555 N người đăng ký',
+      title: 'Báo Thanh Niên',
+      customUrl: '@baothanhnien',
+      description: 'Kênh YouTube chính thức của Báo Thanh Niên - Tin tức nhanh, đa chiều.',
+      subscribersText: '5,89 Tr người đăng ký',
       verified: true,
-      resourceId: { channelId: 'UCVIETSUCCESS' },
+      resourceId: { channelId: 'UCIW9cGgoRuGJnky3K3tbzNg' },
       thumbnails: {
-        medium: { url: VIETSUCCESS_AVATAR },
-        default: { url: VIETSUCCESS_AVATAR }
+        medium: { url: THANHNIEN_AVATAR },
+        default: { url: THANHNIEN_AVATAR }
       }
     }
   },
   {
-    id: 'sub-pinkfong',
+    id: 'sub-vnexpress',
     snippet: {
-      title: 'Baby Shark - Pinkfong Kids\' Songs & Stories',
-      customUrl: '@Pinkfong',
-      description: 'Welcome to Pinkfong\'s official YouTube channel. Meet Pinkfong\'s fun, educational videos that captured the hearts of millions of children around the world. Subscribe to Pinkfong Baby Shark\'s channel for kids\' favorite',
-      subscribersText: '85,3 Tr người đăng ký',
+      title: 'VnExpress TV',
+      customUrl: '@vnexpress',
+      description: 'VnExpress TV - Kênh video tin tức hàng ngày của Báo điện tử VnExpress.',
+      subscribersText: '3,12 Tr người đăng ký',
       verified: true,
-      resourceId: { channelId: 'UCPinkfong' },
+      resourceId: { channelId: 'UCYpMOQ12RdAFqV_3V7rMEzA' },
       thumbnails: {
-        medium: { url: PINKFONG_AVATAR },
-        default: { url: PINKFONG_AVATAR }
+        medium: { url: VNEXPRESS_AVATAR },
+        default: { url: VNEXPRESS_AVATAR }
       }
     }
   },
   {
-    id: 'sub-jhousejr',
+    id: 'sub-dantri',
     snippet: {
-      title: 'J House jr.',
-      customUrl: '@jhousejr',
-      description: 'Come play with us! We started sharing our family adventures on J House Vlogs in 2014. Now we are having fun making videos for kids and families here on J House Jr. We are Kendra and Jeremy, and our kids are Isaac, Elise,',
-      subscribersText: '36,3 Tr người đăng ký',
+      title: 'Báo Dân Trí',
+      customUrl: '@baodantri',
+      description: 'Truyền hình Dân Trí - Kênh tin tức chính thức của Báo Điện tử Dân trí.',
+      subscribersText: '1,88 Tr người đăng ký',
       verified: true,
-      resourceId: { channelId: 'UCjhousejr' },
+      resourceId: { channelId: 'UCl1gPAj1KTUjmCbk_3nHjWA' },
       thumbnails: {
-        medium: { url: JHOUSE_JR_AVATAR },
-        default: { url: JHOUSE_JR_AVATAR }
+        medium: { url: DANTRI_AVATAR },
+        default: { url: DANTRI_AVATAR }
       }
     }
   },
   {
-    id: 'sub-pinkfong-vn',
+    id: 'sub-vtcnow',
     snippet: {
-      title: 'Pinkfong! Cá mập con - Nhạc thiếu nhi',
-      customUrl: '@Pinkfong_TiengViet',
-      description: 'Chào mừng bạn đến với kênh YouTube chính thức của Pinkfong Bé Cá Mập Tiếng Việt! Những bài hát thiếu nhi vui nhộn, giáo dục bổ ích dành cho bé.',
-      subscribersText: '3,94 Tr người đăng ký',
+      title: 'VTC NOW',
+      customUrl: '@vtcnow',
+      description: 'Đài Truyền hình Kỹ thuật số VTC - Kênh tin tức thời sự 24/7.',
+      subscribersText: '4,21 Tr người đăng ký',
       verified: true,
-      resourceId: { channelId: 'UCPinkfong_TiengViet' },
+      resourceId: { channelId: 'UCxI0jUuG4e2xP_7E4m5hXvw' },
       thumbnails: {
-        medium: { url: PINKFONG_VN_AVATAR },
-        default: { url: PINKFONG_VN_AVATAR }
+        medium: { url: VTCNOW_AVATAR },
+        default: { url: VTCNOW_AVATAR }
+      }
+    }
+  },
+  {
+    id: 'sub-laodong',
+    snippet: {
+      title: 'Báo Lao Động',
+      customUrl: '@baolaodong',
+      description: 'Báo Lao Động TV - Cơ quan ngôn luận của Tổng Liên đoàn Lao động Việt Nam.',
+      subscribersText: '1,05 Tr người đăng ký',
+      verified: true,
+      resourceId: { channelId: 'UCFN0IoARjOAgx-OWr-JBIHg' },
+      thumbnails: {
+        medium: { url: LAODONG_AVATAR },
+        default: { url: LAODONG_AVATAR }
       }
     }
   }
 ];
 
-// ── Danh sách video YouTube thực tế từ các kênh người dùng đã đăng ký (phát trực tiếp trong app, không chuyển trang) ──
+// Snapshot kênh chuẩn cho hệ thống
+export const USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT = DEFAULT_OFFICIAL_CHANNELS;
+
+// ── Danh sách video YouTube thực tế từ các kênh chính thống (phát trực tiếp trong app, không chuyển trang) ──
 export const SUBSCRIBED_CHANNELS_VIDEOS = [
-  // ── Baby Shark / Pinkfong ──
+  // ── VTV24 ──
   {
-    id: 'sub-pinkfong-1',
-    youtubeId: 'XqZsoesa55w',
-    title: 'Baby Shark Dance | Sing and Dance | Animal Songs | PINKFONG Songs for Children',
-    channel: 'Baby Shark - Pinkfong Kids\' Songs & Stories',
-    channelId: 'UCPinkfong',
-    badge: 'PINKFONG',
-    category: 'Âm nhạc',
-    subCategory: 'Bài hát thiếu nhi',
-    duration: '02:16',
-    thumbnail: 'https://i.ytimg.com/vi/XqZsoesa55w/hqdefault.jpg',
-    likes: 42000000,
-    commentsCount: 0,
-    sharesCount: 1500000,
+    id: 'sub-vtv24-1',
+    youtubeId: '0A7wBfE8mKY',
+    title: 'Thế giới toàn cảnh 14/10: Cơ sở dầu mỏ của Houthi ở gần thủ đô Sanaa của Yemen bị không kích | VTV24',
+    channel: 'VTV24',
+    channelId: 'UCabsTV34JwALXKGMqHpvUiA',
+    badge: 'VTV THỜI SỰ',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: 'Bản tin',
+    thumbnail: 'https://i.ytimg.com/vi/0A7wBfE8mKY/hqdefault.jpg',
+    likes: 3000,
+    commentsCount: 150,
+    sharesCount: 70,
     mediaType: 'video',
     aspectRatio: '16:9',
     publishedAt: '2026-10-18T12:00:00.000Z'
   },
   {
-    id: 'sub-pinkfong-vn-1',
-    youtubeId: 'XqZsoesa55w',
-    title: 'Cá Mập Con Baby Shark Tiếng Việt | Nhạc Thiếu Nhi Vui Nhộn | Pinkfong Bé Cá Mập',
-    channel: 'Pinkfong! Cá mập con - Nhạc thiếu nhi',
-    channelId: 'UCPinkfong_TiengViet',
-    badge: 'CÁ MẬP CON',
-    category: 'Âm nhạc',
-    subCategory: 'Bài hát tiếng Việt',
-    duration: '02:16',
-    thumbnail: 'https://i.ytimg.com/vi/XqZsoesa55w/hqdefault.jpg',
-    likes: 8500000,
-    commentsCount: 0,
-    sharesCount: 350000,
-    mediaType: 'video',
-    aspectRatio: '16:9',
-    publishedAt: '2026-10-18T11:00:00.000Z'
-  },
-  // ── WaveMusic ──
-  {
-    id: 'sub-wavemusic-1',
-    youtubeId: '60ItHLz5WEA',
-    title: 'Alan Walker - Faded (Lyrics) | WaveMusic Chill Electronic Hits',
-    channel: 'WaveMusic',
-    channelId: 'UCbuK8Gbdvi5P0E6D-R5UqgA',
-    badge: 'WAVEMUSIC',
-    category: 'Âm nhạc',
-    subCategory: 'Electronic & Pop',
-    duration: '03:32',
-    thumbnail: 'https://i.ytimg.com/vi/60ItHLz5WEA/hqdefault.jpg',
-    likes: 3800000,
-    commentsCount: 92000,
-    sharesCount: 88000,
-    mediaType: 'video',
-    aspectRatio: '16:9',
-    publishedAt: '2026-10-17T15:00:00.000Z'
-  },
-  {
-    id: 'sub-wavemusic-2',
-    youtubeId: 'fKopy74weus',
-    title: 'Alan Walker - Fade [NCS Release] | WaveMusic Lyric Video',
-    channel: 'WaveMusic',
-    channelId: 'UCbuK8Gbdvi5P0E6D-R5UqgA',
-    badge: 'WAVEMUSIC',
-    category: 'Âm nhạc',
-    subCategory: 'Electronic & Pop',
-    duration: '04:20',
-    thumbnail: 'https://i.ytimg.com/vi/fKopy74weus/hqdefault.jpg',
-    likes: 2900000,
-    commentsCount: 65000,
-    sharesCount: 71000,
-    mediaType: 'video',
-    aspectRatio: '16:9',
-    publishedAt: '2026-10-16T12:00:00.000Z'
-  },
-  // ── VIETSUCCESS ──
-  {
-    id: 'sub-vietsuccess-1',
-    youtubeId: '2Vv-BfVoq4g',
-    title: 'VIETSUCCESS: Bí quyết phát triển bản thân và định vị sự nghiệp cho người trẻ',
-    channel: 'VIETSUCCESS',
-    channelId: 'UCVIETSUCCESS',
-    badge: 'VIETSUCCESS',
-    category: 'Tri thức & Sự nghiệp',
-    subCategory: 'Phỏng vấn chuyên sâu',
-    duration: '18:45',
-    thumbnail: 'https://i.ytimg.com/vi/2Vv-BfVoq4g/hqdefault.jpg',
-    likes: 25400,
-    commentsCount: 890,
-    sharesCount: 520,
-    mediaType: 'video',
-    aspectRatio: '16:9',
-    publishedAt: '2026-10-17T08:00:00.000Z'
-  },
-  // ── 김프로KIMPRO ──
-  {
-    id: 'sub-kimpro-1',
+    id: 'sub-vtv24-2',
     youtubeId: 'Ktz_TtU3emo',
-    title: 'KIMPRO Hài Hước: Khoảnh khắc triệu view vui nhộn cùng gia đình',
-    channel: '김프로KIMPRO',
-    channelId: 'UC8q5Wq9mY2QxY2k0y5s1u1w',
-    badge: 'KIMPRO',
-    category: 'Hài hước & Đời sống',
+    title: 'VNeID sẽ có thêm loạt tiện ích giao thông | Cụm tin | VTV24',
+    channel: 'VTV24',
+    channelId: 'UCabsTV34JwALXKGMqHpvUiA',
+    badge: 'VTV THỜI SỰ',
+    category: 'Thời sự 24h',
     subCategory: 'Shorts ngắn',
     duration: 'Shorts',
     thumbnail: 'https://i.ytimg.com/vi/Ktz_TtU3emo/hqdefault.jpg',
-    likes: 890000,
-    commentsCount: 15400,
-    sharesCount: 12000,
+    likes: 3541,
+    commentsCount: 197,
+    sharesCount: 93,
     mediaType: 'short',
     aspectRatio: '9:16',
-    publishedAt: '2026-10-18T06:00:00.000Z'
+    publishedAt: '2026-10-18T10:00:00.000Z'
   },
-  // ── Jay Prehistoric Pets ──
+  // ── Báo Tiền Phong ──
   {
-    id: 'sub-jaypets-1',
-    youtubeId: '0A7wBfE8mKY',
-    title: 'Jay Brewer: Chăm sóc và cho trăn khổng lồ ăn tại Prehistoric Pets!',
-    channel: 'Jay Prehistoric Pets',
-    channelId: 'UCJayPrehistoricPetsTV',
-    badge: 'JAY PETS',
-    category: 'Khám phá thiên nhiên',
-    subCategory: 'Động vật kỳ thú',
-    duration: '12:30',
-    thumbnail: 'https://i.ytimg.com/vi/0A7wBfE8mKY/hqdefault.jpg',
-    likes: 340000,
-    commentsCount: 4200,
-    sharesCount: 3100,
+    id: 'sub-tienphong-1',
+    youtubeId: 'TCxTBaAOoWg',
+    title: 'Toàn cảnh mưa lũ cả nước, miền Trung ‘vỡ òa’ đón tin vui, ô nhiễm không khí đe dọa miền Bắc | Tiền Phong TV',
+    channel: 'Báo Tiền Phong',
+    channelId: 'UC01aVq6gGvUe6F2Q6H_tPmg',
+    badge: 'TIỀN PHONG TV',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: 'Bản tin',
+    thumbnail: 'https://i.ytimg.com/vi/TCxTBaAOoWg/hqdefault.jpg',
+    likes: 3200,
+    commentsCount: 160,
+    sharesCount: 75,
     mediaType: 'video',
     aspectRatio: '16:9',
-    publishedAt: '2026-10-17T11:00:00.000Z'
+    publishedAt: '2026-10-18T09:30:00.000Z'
   },
-  // ── J House jr. ──
   {
-    id: 'sub-jhouse-1',
-    youtubeId: '7u_cM_8N5tE',
-    title: 'J House Jr: Thử thách vui nhộn ngày cuối tuần cùng các bạn nhỏ!',
-    channel: 'J House jr.',
-    channelId: 'UCjhousejr',
-    badge: 'J HOUSE',
-    category: 'Gia đình & Thiếu nhi',
-    subCategory: 'Trò chơi gia đình',
-    duration: '15:10',
-    thumbnail: 'https://i.ytimg.com/vi/7u_cM_8N5tE/hqdefault.jpg',
-    likes: 180000,
-    commentsCount: 3100,
-    sharesCount: 2200,
+    id: 'sub-tienphong-2',
+    youtubeId: 'OQzP3GqvFRw',
+    title: 'Toàn cảnh 14/10: Từ vụ ‘Già làng Tây Nguyên’, lột mặt nạ các Idol mạng lợi dụng niềm tin | Tiền Phong TV',
+    channel: 'Báo Tiền Phong',
+    channelId: 'UC01aVq6gGvUe6F2Q6H_tPmg',
+    badge: 'TIỀN PHONG TV',
+    category: 'Thời sự 24h',
+    subCategory: 'Shorts ngắn',
+    duration: 'Shorts',
+    thumbnail: 'https://i.ytimg.com/vi/OQzP3GqvFRw/hqdefault.jpg',
+    likes: 3541,
+    commentsCount: 197,
+    sharesCount: 93,
+    mediaType: 'short',
+    aspectRatio: '9:16',
+    publishedAt: '2026-10-18T08:00:00.000Z'
+  },
+  // ── Báo Tuổi Trẻ ──
+  {
+    id: 'sub-tuoitre-1',
+    youtubeId: 'ehcmLZEtLaE',
+    title: 'Thời tiết và tin tức đời sống 24h | Báo Tuổi Trẻ Truyền Hình',
+    channel: 'Báo Tuổi Trẻ',
+    channelId: 'UCteGrHMrnQwx7Scx--7nyoA',
+    badge: 'TUỔI TRẺ TV',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: 'Bản tin',
+    thumbnail: 'https://i.ytimg.com/vi/ehcmLZEtLaE/hqdefault.jpg',
+    likes: 4100,
+    commentsCount: 220,
+    sharesCount: 110,
     mediaType: 'video',
     aspectRatio: '16:9',
-    publishedAt: '2026-10-16T16:00:00.000Z'
+    publishedAt: '2026-10-18T07:15:00.000Z'
   },
-  // ── An# ──
+  // ── Báo Thanh Niên ──
   {
-    id: 'sub-anmusic-1',
-    youtubeId: 'tFkZ_9pL1uM',
-    title: 'An# Acoustic Guitar & Giai điệu nhẹ nhàng thư giãn buổi tối',
-    channel: 'An#',
-    channelId: 'UC_anmusic96',
-    badge: 'AN# MUSIC',
-    category: 'Âm nhạc',
-    subCategory: 'Acoustic Chill',
-    duration: '04:15',
-    thumbnail: 'https://i.ytimg.com/vi/tFkZ_9pL1uM/hqdefault.jpg',
-    likes: 950,
-    commentsCount: 65,
-    sharesCount: 45,
+    id: 'sub-thanhnien-1',
+    youtubeId: '6bfwopT5zUA',
+    title: 'Bản tin nóng thời sự xã hội & Pháp luật 24h | Báo Thanh Niên',
+    channel: 'Báo Thanh Niên',
+    channelId: 'UCIW9cGgoRuGJnky3K3tbzNg',
+    badge: 'THANH NIÊN',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: 'Bản tin',
+    thumbnail: 'https://i.ytimg.com/vi/6bfwopT5zUA/hqdefault.jpg',
+    likes: 6246,
+    commentsCount: 432,
+    sharesCount: 208,
     mediaType: 'video',
     aspectRatio: '16:9',
+    publishedAt: '2026-10-18T06:30:00.000Z'
+  },
+  // ── VTC NOW ──
+  {
+    id: 'sub-vtcnow-1',
+    youtubeId: 'BywNaNPfvik',
+    title: 'Bản tin thời sự số VTC NOW: Cập nhật diễn biến thời sự trong nước và quốc tế',
+    channel: 'VTC NOW',
+    channelId: 'UCxI0jUuG4e2xP_7E4m5hXvw',
+    badge: 'VTC NOW',
+    category: 'Thời sự 24h',
+    subCategory: 'Shorts ngắn',
+    duration: 'Shorts',
+    thumbnail: 'https://i.ytimg.com/vi/BywNaNPfvik/hqdefault.jpg',
+    likes: 6787,
+    commentsCount: 479,
+    sharesCount: 231,
+    mediaType: 'short',
+    aspectRatio: '9:16',
     publishedAt: '2026-10-18T05:00:00.000Z'
+  },
+  // ── VnExpress TV ──
+  {
+    id: 'sub-vnexpress-1',
+    youtubeId: 'BroH-g3y8Qc',
+    title: 'Chuyển đổi số, công nghệ và phát triển kinh tế xã hội | VnExpress TV',
+    channel: 'VnExpress TV',
+    channelId: 'UCYpMOQ12RdAFqV_3V7rMEzA',
+    badge: 'VNEXPRESS',
+    category: 'Thời sự 24h',
+    subCategory: 'Tổng hợp tin tức hàng ngày',
+    duration: 'Bản tin',
+    thumbnail: 'https://i.ytimg.com/vi/BroH-g3y8Qc/hqdefault.jpg',
+    likes: 7328,
+    commentsCount: 526,
+    sharesCount: 254,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+    publishedAt: '2026-10-18T04:00:00.000Z'
   }
 ];

@@ -27,6 +27,10 @@ import {
   filterAndSortFreshNews,
   formatArticleDate,
   isBoilerplate,
+  isJunkOrTagContent,
+  isTagOrShareElement,
+  isMockChannel,
+  isMockVideo,
   isAuthorAvatar,
   validateYouTubeId,
   matchesChannel,
@@ -445,7 +449,7 @@ function WeatherSection({
   const showFlood = liveOverrides ? (liveOverrides.floodItems != null && liveOverrides.floodItems.length > 0) : baseTheme.showFlood;
   const showRouteAdvisory = liveOverrides ? (liveOverrides.routeItems != null && liveOverrides.routeItems.length > 0) : baseTheme.showRouteAdvisory;
 
-  if (isLoading) return <WeatherSectionSkeleton />;
+  if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;
 
   return (
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
@@ -689,10 +693,110 @@ function MobileCategoryMenu({ activeCategory, setActiveCategory }: { activeCateg
 
 const articleContentCache = new Map<string, any[]>();
 
+export function buildArticleFallbackBlocks(article: any): any[] {
+  if (!article) return [];
+  const fallbackBlocks: any[] = [];
+  const title = article.author || article.title || "Tin tức";
+  fallbackBlocks.push({ type: 'title', content: title });
+
+  // Luôn luôn tạo khối Tác giả (Byline Bar) chuẩn báo chính thống & Nút Nghe đọc TTS (REQ-012, REQ-047)
+  fallbackBlocks.push({
+    type: 'author',
+    name: article.src || article.source || "Ban biên tập",
+    avatar: article.logo || "",
+    date: article.pubDate || "Vừa xong"
+  });
+
+  if (article.videoSrc) {
+    fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: title });
+  } else if (article.img) {
+    fallbackBlocks.push({ type: 'image', src: article.img, caption: title, isMainArticleImage: true });
+  }
+
+  // Khôi phục và bóc tách toàn diện nội dung bài viết từ description / content / body
+  const rawHtml = article.content || article.description || article.desc || article.summary || article.body || "";
+  if (rawHtml) {
+    if (/<(p|div|img|h[2-4]|blockquote)[^>]*>/i.test(rawHtml)) {
+      try {
+        const parser = new DOMParser();
+        const tempDoc = parser.parseFromString(rawHtml, 'text/html');
+        // Pre-clean triệt để mọi phần tử tag, share, hashtag trong tempDoc
+        tempDoc.body.querySelectorAll('*').forEach(el => {
+          if (isTagOrShareElement(el)) el.remove();
+          const txt = el.textContent?.trim();
+          if (txt && isJunkOrTagContent(txt)) el.remove();
+        });
+        const nodes = tempDoc.body.querySelectorAll('p, img, h2, h3, h4, blockquote');
+        if (nodes.length > 0) {
+          nodes.forEach(n => {
+            if (isTagOrShareElement(n as Element)) return;
+            const tn = n.tagName.toLowerCase();
+            if (tn === 'img') {
+              const s = n.getAttribute('src') || n.getAttribute('data-src');
+              if (s && !s.startsWith('data:') && !s.includes('1x1')) {
+                fallbackBlocks.push({ type: 'image', src: getProxyImageUrl(s), caption: n.getAttribute('alt') || title });
+              }
+            } else if (tn.startsWith('h')) {
+              const hText = n.textContent?.trim();
+              if (hText && !isJunkOrTagContent(hText)) fallbackBlocks.push({ type: 'heading', content: hText, tag: tn });
+            } else if (tn === 'blockquote') {
+              const qText = n.textContent?.trim();
+              if (qText && !isJunkOrTagContent(qText)) fallbackBlocks.push({ type: 'quote', content: qText });
+            } else {
+              const pText = n.textContent?.trim();
+              if (pText && !isJunkOrTagContent(pText) && pText !== title && !title.includes(pText)) {
+                fallbackBlocks.push({ type: 'text', content: pText, tag: 'p' });
+              }
+            }
+          });
+        }
+      } catch (_e) {}
+    }
+  }
+
+  // Nếu chưa có đoạn văn bản nào được thêm từ HTML:
+  if (!fallbackBlocks.some(b => b.type === 'text' || b.type === 'heading')) {
+    let cleanText = (article.body || article.description || article.desc || article.summary || "")
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (cleanText) {
+      if (cleanText.toLowerCase().startsWith(title.toLowerCase())) {
+        cleanText = cleanText.slice(title.length).replace(/^[\s:\-\–—]+/, '').trim();
+      }
+      const sentences = cleanText.split(/(?<=[.?!])\s+/).filter(Boolean);
+      if (sentences.length > 2) {
+        for (let i = 0; i < sentences.length; i += 2) {
+          const para = sentences.slice(i, i + 2).join(' ');
+          if (para && !isJunkOrTagContent(para)) fallbackBlocks.push({ type: 'text', content: para, tag: 'p' });
+        }
+      } else if (!isJunkOrTagContent(cleanText)) {
+        fallbackBlocks.push({ type: 'text', content: cleanText, tag: 'p' });
+      }
+    } else {
+      fallbackBlocks.push({
+        type: 'text',
+        content: "Nội dung đang được cập nhật từ hệ thống phóng viên hiện trường...",
+        tag: 'p'
+      });
+    }
+  }
+
+  return fallbackBlocks;
+}
+
 function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { article: any, allNews: any[], onClose: () => void, onSelectRelated: (item: any) => void }) {
   const [fullContent, setFullContent] = useState<string>('RICH_RENDER');
   const [isLoadingFull, setIsLoadingFull] = useState(false);
-  const [contentBlocks, setContentBlocks] = useState<any[]>(article.contentBlocks || []);
+  const [contentBlocks, setContentBlocks] = useState<any[]>(() => {
+    if (article.contentBlocks && article.contentBlocks.length > 0) return article.contentBlocks;
+    const cleanLink = (article.link || '').replace(/<\!\[CDATA\[/g, '').replace(/\]\]>/g, '').trim();
+    if (cleanLink && articleContentCache.has(cleanLink)) {
+      return articleContentCache.get(cleanLink)!;
+    }
+    return buildArticleFallbackBlocks(article);
+  });
   // ── Phân hệ AI VieNeu-TTS Audio Player Thống Nhất 1 Luồng Duy Nhất (REQ-047 / TC-047) ──
   const controllerRef = useRef<VieNeuTTSController | null>(null);
   const [playerState, setPlayerState] = useState<VieNeuPlayerState>({
@@ -993,7 +1097,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         sapoText = sapoEl.textContent?.trim() || '';
       }
 
-      // Pre-cleaning selector loại bỏ rác, quảng cáo, script và các khối tác giả để KHÔNG bị parse thành ảnh hay đoạn văn trong thân bài
+      // Pre-cleaning selector loại bỏ rác, quảng cáo, script, thẻ tags, các khối chia sẻ và khối tác giả để KHÔNG bị parse vào thân bài
       doc.querySelectorAll(`
         script, style, nav, footer, header, .ads, .ad, .advertisement, .qc, .banner, .banner-ads,
         ins.adsbygoogle, .google-auto-placed, [class*="ad-"], [id*="ad-"], [class*="banner"],
@@ -1003,7 +1107,13 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         [data-content-name="article-author"], [data-content-piece*="author"],
         a[rel="author"], a[href*="/tac-gia/"], .author-avatar, .article-author, .dt-author,
         .box-author, .details__author, .article__author,
-        [data-module="article-audio-new"], [data-module="article-audio"], time
+        [data-module="article-audio-new"], [data-module="article-audio"], time,
+        [class*="article__tag"], [class*="_tag"], [class*="-tag"], [class*="tag-"], [class*="tag"], .tag, .tags, [id*="tag"],
+        [class*="share"], [id*="share"], [class*="social"], [id*="social"],
+        [class*="chia-se"], [class*="chiase"], [class*="chi-se"], [id*="chia-se"], [id*="chiase"],
+        .box-tag, .article-tag, .detail__tag, .news-tag, .tag-item, .topic-tag, .keywords,
+        a[href*="/tag/"], a[href*="/tags/"], a[href*="/tu-khoa/"], a[href*="_tag"], a[href*="tag"], a[rel="tag"],
+        a[href*="facebook.com/sharer"], a[href*="twitter.com/intent/tweet"], a[href*="zalo.me/share"], a[href^="mailto:?subject="]
       `).forEach(el => el.remove());
 
       const contentSelectors = [
@@ -1045,6 +1155,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       
       if (!mainContent) mainContent = doc.body;
 
+      // Loại bỏ triệt để mọi phần tử con trong mainContent là thẻ tag hoặc thanh chia sẻ
+      if (mainContent) {
+        mainContent.querySelectorAll('*').forEach(el => {
+          if (isTagOrShareElement(el)) {
+            el.remove();
+          } else {
+            const txt = el.textContent?.trim();
+            if (txt && isJunkOrTagContent(txt)) {
+              el.remove();
+            }
+          }
+        });
+      }
+
       // Hàm khử sạch inline styles làm nhảy kích thước font chữ và đảm bảo dùng font hệ thống
       const sanitizeInnerHtml = (rawHtml: string) => {
         return rawHtml
@@ -1057,11 +1181,14 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
       const norm = (s: string) => (s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
       const isBoilerplate = (text: string) => {
+        if (!text) return true;
+        if (isJunkOrTagContent(text)) return true;
         const t = (text || '').toLowerCase().trim();
         if (!t) return true;
         if (t === 'đọc tiếp về trang chủ đề' || t.includes('về trang chủ đề') || t === 'trở lại chủ đề' || t === 'đọc tiếp') return true;
-        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(t)) return true;
+        if (/^(đọc tiếp|về trang chủ đề|trở lại chủ đề|chủ đề:|từ khóa:|thẻ:|xem thêm|tin liên quan|bài viết liên quan|nguồn:)/i.test(t)) return true;
         if (/^theo\s+(nguồn|dân trí|tiền phong|vnexpress|thanh niên|tuổi trẻ|vtv|lao động|báo)/i.test(t)) return true;
+        if (/^(chia sẻ|bình luận|chia sẻ qua|zalo|copy link|tải app|quảng cáo)/i.test(t)) return true;
         if (/BEGIN COMPONENT|END COMPONENT/i.test(t)) return true;
         return false;
       };
@@ -1071,7 +1198,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         if (!node) return;
         if (node.nodeType === Node.TEXT_NODE) {
           const text = node.textContent?.trim();
-          if (text) blocks.push({ type: 'text', content: text, tag: 'p' });
+          if (text && !isJunkOrTagContent(text)) blocks.push({ type: 'text', content: text, tag: 'p' });
           return;
         }
         if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -1080,6 +1207,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
 
         if (tag === 'script' || tag === 'style' || el.style.display === 'none') return;
         if (el.classList?.contains('link-source-wrapper') || el.classList?.contains('link-source-detail')) return;
+        if (isTagOrShareElement(el)) return;
 
         const getBestImgSrc = (imgEl: Element | null) => {
           if (!imgEl) return '';
@@ -1254,12 +1382,16 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
         }
 
         if (tag === 'p' || tag.startsWith('h') || tag === 'blockquote') {
+          if (isTagOrShareElement(el)) return;
           const imgs = el.querySelectorAll('img, video');
           if (imgs.length > 0) {
             Array.from(el.childNodes).forEach(processNode);
           } else {
             const cleanHtml = sanitizeInnerHtml(el.innerHTML.trim());
             const textContent = el.textContent?.trim();
+            if (isJunkOrTagContent(textContent) || isJunkOrTagContent(cleanHtml)) {
+              return; // BỎ QUA triệt để các thẻ hashtags (#...) và nút chia sẻ ("Chia sẻ qua Facebook"...)
+            }
             if (textContent && authorName && textContent.toLowerCase() === authorName.toLowerCase()) {
               return; // BỎ QUA tên tác giả bị lọt lại dưới dạng đoạn văn đơn độc
             }
@@ -1312,7 +1444,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       const cleanedBlocks = blocks.filter(b => {
         if (b.type === 'image' || b.type === 'video') return true;
         const text = norm(b.content || '');
-        return !isBoilerplate(text);
+        return !isBoilerplate(text) && !isJunkOrTagContent(text);
       });
 
       const resBlocks: any[] = [];
@@ -1343,89 +1475,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     };
 
     const buildFallbackBlocks = () => {
-      const fallbackBlocks: any[] = [];
-      const title = article.author || article.title || "Tin tức";
-      fallbackBlocks.push({ type: 'title', content: title });
-
-      fallbackBlocks.push({
-        type: 'author',
-        name: article.src || article.source || "Ban biên tập",
-        avatar: article.logo || "",
-        date: article.pubDate || "Vừa xong"
-      });
-
-      if (article.videoSrc) {
-        fallbackBlocks.push({ type: 'video', src: article.videoSrc, poster: article.img, caption: title });
-      } else if (article.img) {
-        fallbackBlocks.push({ type: 'image', src: article.img, caption: title, isMainArticleImage: true });
-      }
-
-      // Khôi phục và bóc tách toàn diện nội dung bài viết từ description / content / body
-      const rawHtml = article.content || article.description || article.desc || article.summary || article.body || "";
-      if (rawHtml) {
-        // Kiểm tra xem có chứa các thẻ HTML như <p>, <img>, <h3> hay không
-        if (/<(p|div|img|h[2-4]|blockquote)[^>]*>/i.test(rawHtml)) {
-          try {
-            const parser = new DOMParser();
-            const tempDoc = parser.parseFromString(rawHtml, 'text/html');
-            const nodes = tempDoc.body.querySelectorAll('p, img, h2, h3, h4, blockquote');
-            if (nodes.length > 0) {
-              nodes.forEach(n => {
-                const tn = n.tagName.toLowerCase();
-                if (tn === 'img') {
-                  const s = n.getAttribute('src') || n.getAttribute('data-src');
-                  if (s && !s.startsWith('data:') && !s.includes('1x1')) {
-                    fallbackBlocks.push({ type: 'image', src: getProxyImageUrl(s), caption: n.getAttribute('alt') || title });
-                  }
-                } else if (tn.startsWith('h')) {
-                  const hText = n.textContent?.trim();
-                  if (hText) fallbackBlocks.push({ type: 'heading', content: hText, tag: tn });
-                } else if (tn === 'blockquote') {
-                  const qText = n.textContent?.trim();
-                  if (qText) fallbackBlocks.push({ type: 'quote', content: qText });
-                } else {
-                  const pText = n.textContent?.trim();
-                  if (pText && pText !== title && !title.includes(pText)) {
-                    fallbackBlocks.push({ type: 'text', content: pText, tag: 'p' });
-                  }
-                }
-              });
-            }
-          } catch (_e) {}
-        }
-      }
-
-      // Nếu chưa có đoạn văn bản nào được thêm từ HTML:
-      if (!fallbackBlocks.some(b => b.type === 'text' || b.type === 'heading')) {
-        let cleanText = (article.body || article.description || article.desc || article.summary || "")
-          .replace(/<[^>]*>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        if (cleanText) {
-          if (cleanText.toLowerCase().startsWith(title.toLowerCase())) {
-            cleanText = cleanText.slice(title.length).replace(/^[\s:\-\–—]+/, '').trim();
-          }
-          const sentences = cleanText.split(/(?<=[.?!])\s+/).filter(Boolean);
-          if (sentences.length > 2) {
-            for (let i = 0; i < sentences.length; i += 2) {
-              const para = sentences.slice(i, i + 2).join(' ');
-              if (para) fallbackBlocks.push({ type: 'text', content: para, tag: 'p' });
-            }
-          } else {
-            fallbackBlocks.push({ type: 'text', content: cleanText, tag: 'p' });
-          }
-        } else {
-          fallbackBlocks.push({ type: 'text', content: `Bản tin được cập nhật và tổng hợp từ nguồn báo chí chính thống ${article.src || 'Thời sự 24h'}.`, tag: 'p' });
-        }
-      }
-
-      fallbackBlocks.push({
-        type: 'quote',
-        content: `Nguồn phát hành: ${article.src || 'Báo điện tử'}. Bấm nút "Đọc bài viết gốc" bên dưới để xem toàn văn trực tiếp tại nguồn phát hành.`
-      });
-
-      return fallbackBlocks;
+      return buildArticleFallbackBlocks(article);
     };
 
     const scrapeViaProxy = async (articleUrl: string) => {
@@ -1455,20 +1505,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
             if (data && Array.isArray(data.paragraphs) && data.paragraphs.length > 0) {
               const blocks: any[] = [];
               if (data.title) blocks.push({ type: 'title', content: data.title });
-              if (data.author || data.published_at || data.published_time) {
-                blocks.push({
-                  type: 'author',
-                  name: data.author || article.author || 'Tòa soạn',
-                  date: data.published_at || data.published_time || ''
-                });
-              }
+              // Luôn luôn tạo khối Tác giả (Byline Bar) chuẩn báo chính thống & Nút Nghe đọc TTS (REQ-012, REQ-047)
+              blocks.push({
+                type: 'author',
+                name: data.author || article.src || article.source || article.author || 'Ban biên tập',
+                avatar: article.logo || '',
+                date: data.published_at || data.published_time || article.pubDate || 'Vừa xong'
+              });
               if (data.summary || data.sapo) {
                 blocks.push({ type: 'sapo', content: data.summary || data.sapo });
               }
               let imgIdx = 0;
               const imgs = Array.isArray(data.images) ? data.images : [];
               data.paragraphs.forEach((p: string, pIdx: number) => {
-                if (p !== data.summary && p !== data.sapo && p !== data.title) {
+                if (p && !isJunkOrTagContent(p) && p !== data.summary && p !== data.sapo && p !== data.title) {
                   blocks.push({ type: 'text', content: p, tag: 'p' });
                 }
                 if ((pIdx + 1) % 3 === 0 && imgIdx < imgs.length) {
@@ -1551,8 +1601,50 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
     }
 
     if (article.fullContent && article.fullContent.paragraphs && article.fullContent.paragraphs.length > 0) {
-      const html = renderContent(article.fullContent);
-      if (html) { setFullContent(html); setIsLoadingFull(false); return; }
+      const fcBlocks: any[] = [];
+      const title = article.author || article.title || "Tin tức";
+      fcBlocks.push({ type: 'title', content: title });
+      fcBlocks.push({
+        type: 'author',
+        name: article.src || article.source || "Ban biên tập",
+        avatar: article.logo || "",
+        date: article.pubDate || "Vừa xong"
+      });
+      if (article.fullContent.headings) {
+        article.fullContent.headings.forEach((h: string) => {
+          if (h && !isJunkOrTagContent(h)) fcBlocks.push({ type: 'heading', content: h, tag: 'h2' });
+        });
+      }
+      let imgIdx = 0;
+      article.fullContent.paragraphs.forEach((p: string, i: number) => {
+        if (p && !isJunkOrTagContent(p)) fcBlocks.push({ type: 'text', content: p, tag: 'p' });
+        if ((i + 1) % 3 === 0 && imgIdx < (article.fullContent.images?.length || 0)) {
+          const rawSrc = article.fullContent.images[imgIdx];
+          if (rawSrc && !/avatar|tac-gia|tac_gia|author/i.test(rawSrc)) {
+            fcBlocks.push({
+              type: 'image',
+              src: getProxyImageUrl(rawSrc),
+              caption: article.fullContent.captions?.[imgIdx] || ''
+            });
+          }
+          imgIdx++;
+        }
+      });
+      while (imgIdx < (article.fullContent.images?.length || 0)) {
+        const rawSrc = article.fullContent.images[imgIdx];
+        if (rawSrc && !/avatar|tac-gia|tac_gia|author/i.test(rawSrc)) {
+          fcBlocks.push({
+            type: 'image',
+            src: getProxyImageUrl(rawSrc),
+            caption: article.fullContent.captions?.[imgIdx] || ''
+          });
+        }
+        imgIdx++;
+      }
+      setContentBlocks(fcBlocks);
+      setFullContent("RICH_RENDER");
+      setIsLoadingFull(false);
+      return;
     }
 
     // 2. Hiển thị ngay lập tức (0ms optimistic render) với ảnh đại diện & mô tả đã có
@@ -1565,6 +1657,20 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       setIsLoadingFull(true);
       scrapeViaProxy(cleanLink).then(blocks => {
         if (blocks && blocks.some((b: any) => b.type !== 'title')) {
+          if (!blocks.some((b: any) => b.type === 'author')) {
+            const titleIdx = blocks.findIndex((b: any) => b.type === 'title');
+            const authorBlock = {
+              type: 'author',
+              name: article.src || article.source || article.author || 'Ban biên tập',
+              avatar: article.logo || '',
+              date: article.pubDate || 'Vừa xong'
+            };
+            if (titleIdx !== -1) {
+              blocks.splice(titleIdx + 1, 0, authorBlock);
+            } else {
+              blocks.unshift(authorBlock);
+            }
+          }
           setContentBlocks(blocks);
           articleContentCache.set(cleanLink, blocks);
         }
@@ -1582,6 +1688,36 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
       detailContainerRef.current.scrollTop = 0;
     }
   }, [article.link]);
+
+  // Bộ lọc tối thượng loại bỏ 100% rác chia sẻ, thẻ tag và hashtag trong trang chi tiết bài viết
+  const sanitizedBlocks = useMemo(() => {
+    if (!Array.isArray(contentBlocks)) return [];
+    return contentBlocks.filter((b: any) => {
+      if (!b) return false;
+      if (b.type === 'text' || b.type === 'heading' || b.type === 'quote' || b.type === 'sapo') {
+        if (isJunkOrTagContent(b.content)) return false;
+        const plain = (b.content || '').replace(/<[^>]*>/g, '').trim();
+        if (!plain || isJunkOrTagContent(plain) || /^(chia\s*sẻ|chi\s*sẻ|share|tag|tags|_tag|article__tag|#)/i.test(plain)) return false;
+      }
+      return true;
+    });
+  }, [contentBlocks]);
+
+  const cleanFullContent = useMemo(() => {
+    if (!fullContent || fullContent === "ERROR" || fullContent === "RICH_RENDER") return "";
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(fullContent, 'text/html');
+      doc.querySelectorAll('*').forEach(el => {
+        if (isTagOrShareElement(el)) el.remove();
+        const txt = el.textContent?.trim();
+        if (txt && isJunkOrTagContent(txt)) el.remove();
+      });
+      return doc.body.innerHTML;
+    } catch {
+      return fullContent;
+    }
+  }, [fullContent]);
 
   return (
     <div ref={detailContainerRef} data-testid="news-detail-modal" className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col items-center">
@@ -1611,7 +1747,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
               <p className="text-[#475569] text-[16px] font-bold mb-2">Không thể tự động bóc tách bài viết</p>
               <p className="text-[#64748b] text-[14px]">Trang báo gốc đã cấu hình chặn hệ thống tự động. Vui lòng nhấn nút <b>"Xem bài viết gốc"</b> bên dưới để đọc nhé.</p>
             </div>
-          ) : contentBlocks && contentBlocks.length > 0 ? (
+          ) : sanitizedBlocks && sanitizedBlocks.length > 0 ? (
             <div 
               className="mt-2 flex flex-col gap-4"
               onClick={(e) => {
@@ -1630,7 +1766,7 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                 }
               }}
             >
-              {contentBlocks.map((block: any, idx: number) => {
+              {sanitizedBlocks.map((block: any, idx: number) => {
                 if (block.type === 'title') return <h1 key={idx} className="font-bold text-[#182033] text-[24px] md:text-[28px] leading-[1.3] font-sans">{block.content}</h1>;
                 if (block.type === 'author') {
                   return (
@@ -1944,8 +2080,14 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                     </div>
                   );
                 }
-                if (block.type === 'text') return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
+                if (block.type === 'text') {
+                  if (isJunkOrTagContent(block.content)) return null;
+                  const plainText = (block.content || '').replace(/<[^>]*>/g, '').trim();
+                  if (!plainText || isJunkOrTagContent(plainText) || /^(chia\s*sẻ|chi\s*sẻ|share|tag|tags|_tag|article__tag|#)/i.test(plainText)) return null;
+                  return <p key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="text-[17px] leading-relaxed font-sans" />;
+                }
                 if (block.type === 'heading') {
+                  if (isJunkOrTagContent(block.content)) return null;
                   if (block.tag === 'h2') {
                     return <h2 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="font-sans text-[20px] md:text-[22px] font-bold text-[#182033] mt-5 mb-2.5 leading-snug" />;
                   }
@@ -1954,7 +2096,10 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
                   }
                   return <h4 key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="font-sans text-[16px] md:text-[17px] font-semibold text-[#182033] mt-3.5 mb-1.5 leading-snug" />;
                 }
-                if (block.type === 'quote') return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
+                if (block.type === 'quote') {
+                  if (isJunkOrTagContent(block.content)) return null;
+                  return <blockquote key={idx} dangerouslySetInnerHTML={{ __html: block.content }} className="pl-4 border-l-4 border-[#0055D4] italic my-4" />;
+                }
                 if (block.type === 'related-link') {
                   return (
                     <div
@@ -2106,7 +2251,38 @@ function NewsDetailView({ article, allNews, onClose, onSelectRelated }: { articl
              })}
            </div>
         ) : (
-           <div className="mt-6 text-[17px] leading-relaxed font-sans detail-html-content" dangerouslySetInnerHTML={{ __html: fullContent }} />
+           <div className="mt-2 flex flex-col gap-4">
+             <div className="flex items-center justify-between py-2.5 my-1 border-b border-gray-100 w-full text-slate-600">
+               <div className="flex items-center gap-2.5 min-w-0">
+                 <div className="w-8 h-8 rounded-full bg-red-50 text-red-600 border border-red-200 flex items-center justify-center font-bold text-xs shrink-0 aspect-square">
+                   {(article.src || 'BBT').charAt(0).toUpperCase()}
+                 </div>
+                 <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                   <span className="font-semibold text-[15px] text-[#182033] truncate">
+                     {article.src || article.source || 'Ban biên tập'}
+                   </span>
+                   <span className="text-[13px] text-gray-400 shrink-0">
+                     • {formatArticleDate(article.pubDate || 'Vừa xong')}
+                   </span>
+                 </div>
+               </div>
+               <div 
+                 data-testid="article-tts-btn"
+                 onClick={handleToggleAudio}
+                 role="button"
+                 tabIndex={0}
+                 title={isSpeaking ? (isSpeechPaused ? "Tiếp tục đọc" : "Tạm dừng đọc") : "Nghe đọc bản tin"}
+                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer"
+               >
+                 <svg className="w-3.5 h-3.5 text-red-600" viewBox="0 0 24 24" fill="currentColor">
+                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                   <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                 </svg>
+                 <span>Nghe đọc</span>
+               </div>
+             </div>
+             <div className="text-[17px] leading-relaxed font-sans detail-html-content" dangerouslySetInnerHTML={{ __html: cleanFullContent }} />
+           </div>
         )}
 
 
@@ -2216,7 +2392,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <QADashboardHeaderButton userRole={userRole} />
 
           {userRole && userRole.picture ? (
-            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
+            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} onOpenSubscriptions={() => onOpenShorts && onOpenShorts('subscribed')} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
           )}
@@ -2233,14 +2409,40 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <MarketSection />
-          {userRole && userRole.email ? (
+          {userRole && userRole.email && (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
-          ) : (
-            <div className="w-full bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
+          )}
+
+          {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
+          {userRole && userRole.email && (
+            <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[12.5px] text-[#182033] truncate">Kênh YouTube đã kết nối</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[9.5px]">
+                      {userRole.youtubeSubscriptions?.length || 0} kênh
+                    </span>
+                  </div>
+                  <span className="text-[10.5px] text-[#5f687b] truncate">
+                    Đã đồng bộ từ tài khoản {userRole.email}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenShorts && onOpenShorts('subscribed')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+              >
+                <span>Xem video</span>
+                <span className="text-[9px]">▶</span>
+              </button>
             </div>
           )}
 
@@ -2273,14 +2475,17 @@ function MobileLayout({ activeCategory, setActiveCategory,
             <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
           </div>
 
-          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
+          {((isFetchingCategory || isLoading) && newsFeed.length === 0) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
-              <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+              <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex flex-col gap-2 items-start w-full">
-                  <div className="flex gap-[10px] items-center w-full">
+                  <div className="flex gap-[10px] items-center w-full flex-wrap">
                     <img alt="" className="rounded-full shrink-0 size-6 object-cover border border-gray-100" referrerPolicy="no-referrer" src={item.logo || item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
-                    <p className="font-normal text-[#5f687b] text-[12px]">{item.src}</p>
+                    <p className="font-normal text-[#5f687b] text-[12px] flex items-center gap-1.5 flex-wrap">
+                      <span>{item.src}</span>
+                      {item.pubDate && <span>• 📅 {formatArticleDate(item.pubDate)}</span>}
+                    </p>
                   </div>
                   <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
@@ -2288,9 +2493,10 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i === 0 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
-                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
-                    <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
+                    <svg className="size-3 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     <span>{item.isShort ? '⚡ Short' : '▶ Video'}</span>
+                    {item.pubDate && <span className="opacity-90 font-normal text-[10px]">({formatArticleDate(item.pubDate)})</span>}
                   </div>
                 )}
               </div>
@@ -2389,7 +2595,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           </div>
           <QADashboardHeaderButton userRole={userRole} />
           {userRole && userRole.picture ? (
-            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
+            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} onOpenSubscriptions={() => onOpenShorts && onOpenShorts('subscribed')} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
           )}
@@ -2407,14 +2613,40 @@ function TabletLayout({ activeCategory, setActiveCategory,
         {/* News panel */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
           <MarketSection />
-          {userRole && userRole.email ? (
+          {userRole && userRole.email && (
             <div className="w-full">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
             </div>
-          ) : (
-            <div className="w-full bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân</p>
+          )}
+
+          {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
+          {userRole && userRole.email && (
+            <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-[12.5px] text-[#182033] truncate">Kênh YouTube đã kết nối</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[9.5px]">
+                      {userRole.youtubeSubscriptions?.length || 0} kênh
+                    </span>
+                  </div>
+                  <span className="text-[10.5px] text-[#5f687b] truncate">
+                    Đã đồng bộ từ tài khoản {userRole.email}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenShorts && onOpenShorts('subscribed')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+              >
+                <span>Xem video</span>
+                <span className="text-[9px]">▶</span>
+              </button>
             </div>
           )}
 
@@ -2436,16 +2668,23 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
           </div>
 
-          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
+          {((isFetchingCategory || isLoading) && (!featured || newsFeed.length === 0)) ? <NewsSkeleton /> : (<>
           {/* Featured article */}
           {featured && (
-            <div onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 <div className="absolute bg-[#ff315f] left-3 top-3 flex items-start px-[10px] py-1 rounded-[6px]">
                   <p className="font-bold text-[10px] text-white tracking-[0.5px] uppercase">NỔI BẬT</p>
                 </div>
+                {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
+                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-[10px] font-semibold backdrop-blur-md shadow-md">
+                    <svg className="size-2.5 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span>{featured.isShort ? '⚡ Short' : '▶ Video'}</span>
+                    {featured.pubDate && <span className="opacity-90 font-normal">({formatArticleDate(featured.pubDate)})</span>}
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-2 items-start p-[14px] w-full">
                 <p className="font-bold leading-[22px] text-[#182033] text-[15px] w-full line-clamp-2">
@@ -2454,11 +2693,16 @@ function TabletLayout({ activeCategory, setActiveCategory,
                 <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
                   {featured.body}
                 </p>
-                <div className="flex items-center justify-between pt-1 w-full">
+                <div className="flex items-center justify-between pt-1 w-full flex-wrap gap-1">
                   <div className="flex gap-[6px] items-center">
                     <div className="bg-[#f7a928] rounded-[4px] size-2" />
                     <p className="font-semibold text-[#ff315f] text-[11px]">{featured.src}</p>
                   </div>
+                  {featured.pubDate && (
+                    <span className="text-[11px] text-[#5f687b] font-medium">
+                      📅 {formatArticleDate(featured.pubDate)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -2466,14 +2710,26 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
           {/* Remaining articles */}
           {rest.map((item, i) => (
-            <div key={i} onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
+                  <div className="absolute bottom-1 right-1 z-10 flex items-center justify-center size-5 rounded-full bg-black/70 text-white text-[9px] backdrop-blur-md shadow-xs">
+                    <svg className="size-2 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
+                )}
               </div>
               <div className="flex flex-1 flex-col gap-1 items-start min-w-0 overflow-hidden">
-                <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
-                  <p className="font-bold text-[#ff315f] text-[10px]">{item.src}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="bg-[#ffe8ee] flex items-start px-[7px] py-[2px] rounded-[4px]">
+                    <p className="font-bold text-[#ff315f] text-[10px]">{item.src}</p>
+                  </div>
+                  {item.pubDate && (
+                    <span className="text-[10.5px] text-[#5f687b] font-medium">
+                      📅 {formatArticleDate(item.pubDate)}
+                    </span>
+                  )}
                 </div>
                 <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
                 <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
@@ -2569,7 +2825,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
           <QADashboardHeaderButton userRole={userRole} />
           {userRole && userRole.picture ? (
-            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} />
+            <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} onOpenSubscriptions={() => onOpenShorts && onOpenShorts('subscribed')} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
           )}
@@ -2590,20 +2846,48 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         {/* News column */}
         <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
       <div className="flex gap-[var(--grid-gap)] w-full items-stretch">
-        <div className="flex-[5] min-w-0">
+        <div className={userRole && userRole.email ? "flex-[5] min-w-0" : "w-full min-w-0"}>
           <MarketSection />
         </div>
-        {userRole && userRole.email ? (
+        {userRole && userRole.email && (
           <div className="flex-[3] min-w-[250px]">
             <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
           </div>
-        ) : (
-          <div className="flex-[3] min-w-[250px] bg-[#f8fafc] p-6 rounded-[var(--card-radius)] border border-dashed border-[#cbd5e1] flex flex-col items-center justify-center text-center gap-3">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <p className="text-[#64748b] text-[14px] max-w-[200px]">Đăng nhập Google để xem Lịch cá nhân của bạn</p>
-          </div>
         )}
       </div>
+
+      {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn (Đẩy kênh đăng ký ra giao diện chính) */}
+      {userRole && userRole.email && (
+        <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-[13px] text-[#182033] truncate">Kênh YouTube đã kết nối của bạn</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[10px]">
+                  {userRole.youtubeSubscriptions?.length || 0} kênh
+                </span>
+              </div>
+              <span className="text-[11px] text-[#5f687b] truncate">
+                Tài khoản: {userRole.name || userRole.email} • Tự động đồng bộ và phát video mới nhất
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onOpenShorts && onOpenShorts('subscribed')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11.5px] shadow-xs active:scale-95 transition-all cursor-pointer"
+            >
+              <span>Xem video từ kênh đăng ký</span>
+              <span className="text-[10px]">▶</span>
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center shrink-0">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
@@ -2631,7 +2915,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
       </div>
 
-          {(isFetchingCategory || isLoading) ? <NewsSkeleton /> : (<>
+          {((isFetchingCategory || isLoading) && (!featured || newsFeed.length === 0)) ? <NewsSkeleton /> : (<>
           {/* Featured feed card */}
           {featured && (
             <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
@@ -2642,7 +2926,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
-                  <p className="font-normal text-[#5f687b] text-[12px]">{WEATHER.time}</p>
+                  <p className="font-normal text-[#5f687b] text-[12px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</p>
                 </div>
               </div>
               <p className="font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
@@ -2651,9 +2935,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
-                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
-                    <svg className="size-3 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
+                    <svg className="size-3 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     <span>{featured.isShort ? '⚡ Short' : '▶ Video'}</span>
+                    {featured.pubDate && <span className="opacity-90 font-normal text-[10px]">({formatArticleDate(featured.pubDate)})</span>}
                   </div>
                 )}
               </div>
@@ -2672,16 +2957,22 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i < 4 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                   {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
                     <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-semibold backdrop-blur-md shadow-md">
-                      <svg className="size-2.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <svg className="size-2.5 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                       <span>{item.isShort ? '⚡ Short' : '▶ Video'}</span>
+                      {item.pubDate && <span className="opacity-90 font-normal text-[9.5px]">({formatArticleDate(item.pubDate)})</span>}
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center flex-wrap">
                     <div className="bg-[#ffe8ee] flex items-start px-2 py-[3px] rounded-full">
                       <p className="font-semibold text-[#ff315f] text-[11px]">{item.src}</p>
                     </div>
+                    {item.pubDate && (
+                      <span className="text-[11px] text-[#5f687b] font-medium flex items-center gap-1">
+                        <span>📅 {formatArticleDate(item.pubDate)}</span>
+                      </span>
+                    )}
                   </div>
                   <p className="font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
                   <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
@@ -3690,15 +3981,15 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
 
     do {
       const pageQuery = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
-      const subUrl = `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet,contentDetails&mine=true&maxResults=50&order=alphabetical${pageQuery}`;
+      // Tối ưu query API: chỉ yêu cầu part=snippet (ít tốn quota, không bị lỗi contentDetails/order)
+      const subUrl = `https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50${pageQuery}`;
       const subRes = await fetch(subUrl, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
       if (!subRes.ok) {
-        if (subRes.status === 403 || subRes.status === 401) {
-          userInfo.youtubeNeedsAuth = true;
-        }
+        const errText = await subRes.text().catch(() => '');
+        console.warn('[YouTube API Status]', subRes.status, errText);
         break;
       }
 
@@ -3711,20 +4002,92 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
     } while (pageToken && maxPages > 0);
 
     if (allSubs.length > 0) {
-      userInfo.youtubeSubscriptions = allSubs;
+      userInfo.youtubeSubscriptions = allSubs.filter((s: any) => !isMockChannel(s));
       userInfo.isLiveRealYouTube = true;
-    } else if (allSubs.length === 0 && !userInfo.youtubeNeedsAuth) {
-      // Tài khoản thật nhưng chưa đăng ký kênh nào
-      userInfo.youtubeSubscriptions = [];
-      userInfo.isLiveRealYouTube = true;
+      userInfo.youtubeNeedsAuth = false;
     } else {
-      userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+      // Nếu API YouTube chưa trả về kênh hoặc tài khoản mới, khởi tạo tự động danh mục 8 kênh chính thống kết nối
+      userInfo.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
+        ...ch,
+        linkedUserEmail: userInfo.email,
+        linkedUserName: userInfo.name,
+        linkedUserAvatar: userInfo.picture,
+        isAccountLinked: true
+      }));
+      userInfo.isLiveRealYouTube = false;
+      userInfo.youtubeNeedsAuth = false;
     }
   } catch (err) {
     console.warn('[YouTube API] Không thể lấy danh sách kênh đã đăng ký:', err);
-    if (!userInfo.youtubeSubscriptions) {
-      userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
+    if (!userInfo.youtubeSubscriptions || userInfo.youtubeSubscriptions.length === 0) {
+      userInfo.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map(ch => ({
+        ...ch,
+        linkedUserEmail: userInfo.email,
+        linkedUserName: userInfo.name,
+        linkedUserAvatar: userInfo.picture,
+        isAccountLinked: true
+      }));
     }
+    userInfo.youtubeNeedsAuth = false;
+  }
+
+  // 1.5. Nối tài khoản thông tin người dùng vào các kênh đã đăng ký trên website
+  try {
+    const userStorageKey = (userInfo.email || 'guest').replace(/[^a-zA-Z0-9]/g, '_');
+    let localChannelsStr = localStorage.getItem(`weather_user_channels_${userStorageKey}`);
+    // Tự động di chuyển (migrate) kênh đã theo dõi từ tài khoản guest sang tài khoản vừa đăng nhập
+    if (!localChannelsStr && userInfo.email) {
+      const guestChannelsStr = localStorage.getItem('weather_user_channels_guest');
+      if (guestChannelsStr) {
+        localChannelsStr = guestChannelsStr;
+        localStorage.setItem(`weather_user_channels_${userStorageKey}`, guestChannelsStr);
+        try { localStorage.removeItem('weather_user_channels_guest'); } catch {}
+      }
+    }
+    if (localChannelsStr) {
+      const localChannels = JSON.parse(localChannelsStr);
+      if (Array.isArray(localChannels) && localChannels.length > 0) {
+        // Lọc sạch 100% kênh mẫu cũ (An#, Baby Shark, WaveMusic, Kimpro...)
+        const cleanedLocal = localChannels.filter((lc: any) => !isMockChannel(lc));
+        if (cleanedLocal.length !== localChannels.length) {
+          localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(cleanedLocal));
+        }
+        const subs = Array.isArray(userInfo.youtubeSubscriptions) ? [...userInfo.youtubeSubscriptions] : [];
+        const seenIds = new Set(subs.map(s => (s.snippet?.resourceId?.channelId || s.id || s.snippet?.title || '').toLowerCase()));
+        cleanedLocal.forEach(lc => {
+          const key = (lc.snippet?.resourceId?.channelId || lc.id || lc.snippet?.title || '').toLowerCase();
+          if (key && !seenIds.has(key)) {
+            seenIds.add(key);
+            subs.push(lc);
+          }
+        });
+        userInfo.youtubeSubscriptions = subs.filter((s: any) => !isMockChannel(s));
+      }
+    }
+
+    // Tự động bảo lưu danh sách kênh kết nối vào storage tài khoản
+    if (Array.isArray(userInfo.youtubeSubscriptions) && userInfo.youtubeSubscriptions.length > 0) {
+      localStorage.setItem(`weather_user_channels_${userStorageKey}`, JSON.stringify(userInfo.youtubeSubscriptions));
+      const followedMap: Record<string, boolean> = {};
+      userInfo.youtubeSubscriptions.forEach((ch: any) => {
+        const title = ch.snippet?.title;
+        const chId = ch.snippet?.resourceId?.channelId || ch.id;
+        if (title) followedMap[title] = true;
+        if (chId) followedMap[chId] = true;
+      });
+      localStorage.setItem(`weather_app_subscribed_channels_${userInfo.email}`, JSON.stringify(followedMap));
+    }
+  } catch {}
+
+  // Gắn thông tin tài khoản người dùng vào tất cả kênh đã đăng ký (Nối tài khoản người dùng vào tài khoản đã đăng ký)
+  if (Array.isArray(userInfo.youtubeSubscriptions)) {
+    userInfo.youtubeSubscriptions = userInfo.youtubeSubscriptions.map(s => ({
+      ...s,
+      linkedUserEmail: userInfo.email,
+      linkedUserName: userInfo.name,
+      linkedUserAvatar: userInfo.picture,
+      isAccountLinked: true
+    }));
   }
 
   // 2. Tự động nạp danh sách video từ các kênh đã đăng ký thực tế của người dùng
@@ -3749,7 +4112,7 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
               plData.items.forEach((item: any) => {
                 const vidId = item.snippet?.resourceId?.videoId;
                 if (!vidId) return;
-                subVideos.push({
+                const newVid = {
                   id: `yt-real-${vidId}`,
                   youtubeId: vidId,
                   title: item.snippet.title,
@@ -3761,8 +4124,12 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
                   duration: 'Video',
                   mediaType: 'video',
                   thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${vidId}/hqdefault.jpg`,
-                  publishedAt: item.snippet.publishedAt || new Date().toISOString()
-                });
+                  publishedAt: item.snippet.publishedAt || new Date().toISOString(),
+                  linkedUserEmail: userInfo.email
+                };
+                if (!isMockVideo(newVid)) {
+                  subVideos.push(newVid);
+                }
               });
             }
           } catch {}
@@ -3776,10 +4143,10 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
     }
   }
 
-  if (!userInfo.youtubeSubscriptions || userInfo.youtubeSubscriptions.length === 0) {
-    if (!userInfo.isLiveRealYouTube) {
-      userInfo.youtubeSubscriptions = USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT;
-    }
+  if (!userInfo.youtubeSubscriptions) {
+    userInfo.youtubeSubscriptions = [];
+  } else {
+    userInfo.youtubeSubscriptions = userInfo.youtubeSubscriptions.filter((s: any) => !isMockChannel(s));
   }
 
   if (!userInfo.youtubeChannel && userInfo.email) {
@@ -3806,16 +4173,18 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
   return userInfo;
 }
 
-export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string) {
+export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string, forceConsent?: boolean) {
   const basePath = window.location.pathname.includes('/Website_thoitiet_design') ? '/Website_thoitiet_design/' : '/';
   const redirectUri = window.location.origin + basePath;
   // Bổ sung quyền đọc thông tin kênh YouTube và danh sách kênh đã đăng ký của tài khoản Gmail
   const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
   let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
-  if (loginHint) {
-    authUrl += `&login_hint=${encodeURIComponent(loginHint)}`;
+  if (forceConsent) {
+    authUrl += `&prompt=consent%20select_account`;
+  } else if (loginHint) {
+    authUrl += `&login_hint=${encodeURIComponent(loginHint)}&prompt=consent%20select_account`;
   } else {
-    authUrl += `&prompt=select_account`;
+    authUrl += `&prompt=consent%20select_account`;
   }
 
   const w = 500, h = 600;
@@ -3847,28 +4216,65 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string)
     }
   };
 
+  let isHandled = false;
+  const bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('google_oauth_channel') : null;
+
+  const cleanup = () => {
+    clearInterval(timer);
+    window.removeEventListener('message', messageListener);
+    window.removeEventListener('storage', storageListener);
+    if (bc) {
+      try { bc.close(); } catch {}
+    }
+  };
+
+  const onTokenReceived = (hash: string) => {
+    if (isHandled) return;
+    isHandled = true;
+    cleanup();
+    if (popup && !popup.closed) {
+      try { popup.close(); } catch {}
+    }
+    handleToken(hash);
+  };
+
+  if (bc) {
+    bc.onmessage = (event) => {
+      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
+        onTokenReceived(event.data.hash);
+      }
+    };
+  }
+
+  const storageListener = (e: StorageEvent) => {
+    if (e.key === 'google_oauth_event' && e.newValue) {
+      try {
+        const data = JSON.parse(e.newValue);
+        if (data.hash) {
+          onTokenReceived(data.hash);
+        }
+      } catch {}
+    }
+  };
+  window.addEventListener('storage', storageListener);
+
   const timer = setInterval(async () => {
     try {
       if (!popup || popup.closed) {
-        clearInterval(timer);
+        cleanup();
         return;
       }
       const popupUrl = popup.location.href;
       if (popupUrl.includes('access_token=')) {
-        clearInterval(timer);
         const hash = popup.location.hash.substring(1);
-        popup.close();
-        handleToken(hash);
+        onTokenReceived(hash);
       }
     } catch (_) {}
-  }, 500);
+  }, 400);
 
   const messageListener = (event: MessageEvent) => {
-    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
-      window.removeEventListener('message', messageListener);
-      clearInterval(timer);
-      if (popup) popup.close();
-      handleToken(event.data.hash.substring(1));
+    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
+      onTokenReceived(event.data.hash);
     }
   };
   window.addEventListener('message', messageListener);
@@ -3923,7 +4329,7 @@ export function QADashboardFloatingWidget({ userRole }: { userRole?: any }) {
   );
 }
 
-function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () => void }) {
+function UserAvatarMenu({ userRole, onLogout, onOpenSubscriptions }: { userRole: any; onLogout: () => void; onOpenSubscriptions?: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
@@ -3934,28 +4340,59 @@ function UserAvatarMenu({ userRole, onLogout }: { userRole: any; onLogout: () =>
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[400]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-[#e3e7ef] py-2 z-[500] flex flex-col overflow-hidden">
-            <div className="px-4 py-2 border-b border-[#e3e7ef] flex flex-col mb-1">
-              <span className="text-[13px] font-semibold text-[#182033] line-clamp-1">{userRole.name}</span>
-              <span className="text-[11px] text-[#5f687b] line-clamp-1">{userRole.email}</span>
+          <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-[#e3e7ef] py-2 z-[500] flex flex-col overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-[#e3e7ef] flex flex-col mb-1 bg-slate-50/70">
+              <span className="text-[13px] font-bold text-[#182033] line-clamp-1">{userRole.name}</span>
+              <span className="text-[11px] text-[#5f687b] line-clamp-1 font-mono">{userRole.email}</span>
+              <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Tài khoản đã liên kết</span>
+              </span>
             </div>
             {userRole.youtubeChannel && (
-              <div className="px-4 py-2 border-b border-[#e3e7ef] bg-red-50/60 flex flex-col gap-0.5">
-                <div className="flex items-center gap-1.5 text-red-600 font-bold text-[11px]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
-                  <span>Kênh YouTube:</span>
+              <div 
+                onClick={() => {
+                  setIsOpen(false);
+                  if (onOpenSubscriptions) onOpenSubscriptions();
+                }}
+                className="px-4 py-2.5 border-b border-[#e3e7ef] bg-red-50/80 hover:bg-red-100/70 cursor-pointer transition-colors flex flex-col gap-1"
+                title="Nhấn để xem các kênh đã đăng ký được nối vào tài khoản của bạn"
+              >
+                <div className="flex items-center justify-between text-red-600 font-bold text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <span>Kênh YouTube đã liên kết:</span>
+                  </div>
+                  <span className="text-[10px] text-red-700 font-extrabold">Xem ngay ▶</span>
                 </div>
                 <span className="text-[12px] font-semibold text-slate-800 line-clamp-1">
                   {userRole.youtubeChannel.snippet?.title || userRole.name}
                 </span>
-                <span className="text-[10px] text-slate-500">
-                  {userRole.youtubeChannel.snippet?.customUrl || ''} 
-                  {userRole.youtubeSubscriptions?.length ? ` • ${userRole.youtubeSubscriptions.length} kênh theo dõi` : ''}
-                </span>
+                <div className="flex items-center justify-between text-[10.5px] text-slate-600">
+                  <span className="truncate max-w-[120px]">{userRole.youtubeChannel.snippet?.customUrl || `@${userRole.email?.split('@')[0]}`}</span>
+                  <span className="font-bold text-red-600 bg-red-100 px-1.5 py-0.2 rounded-full">
+                    {userRole.youtubeSubscriptions?.length || 0} kênh đăng ký
+                  </span>
+                </div>
               </div>
             )}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                if (onOpenSubscriptions) onOpenSubscriptions();
+              }}
+              className="px-4 py-2 text-left text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors w-full flex items-center justify-between border-b border-[#e3e7ef]"
+            >
+              <div className="flex items-center gap-2">
+                <span>🔴</span>
+                <span>Kênh của bạn & Đã đăng ký</span>
+              </div>
+              <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">
+                {userRole.youtubeSubscriptions?.length || 0}
+              </span>
+            </button>
             {isUserAdminQA(userRole) && (
               <a 
                 href={getDashboardUrl()} 
@@ -4149,7 +4586,63 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
-  const [isShortsOpen, setIsShortsOpen] = useState(false);
+  const [isShortsOpen, setIsShortsOpen] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash;
+        const stored = sessionStorage.getItem('weather_app_shorts_open');
+        if (stored === 'true' || hash === '#shorts' || hash.includes('shorts')) {
+          return true;
+        }
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+  const [shortsInitialTab, setShortsInitialTab] = useState<'all' | 'video' | 'short' | 'subscribed' | 'history'>(() => {
+    try {
+      const savedTab = sessionStorage.getItem('weather_app_shorts_tab');
+      if (savedTab && ['all', 'video', 'short', 'subscribed', 'history'].includes(savedTab)) {
+        return savedTab as any;
+      }
+    } catch {}
+    return 'all';
+  });
+
+  const handleOpenShorts = (tab?: 'all' | 'video' | 'short' | 'subscribed' | 'history' | string) => {
+    const targetTab = (tab && ['all', 'video', 'short', 'subscribed', 'history'].includes(tab)) ? (tab as any) : 'all';
+    setShortsInitialTab(targetTab);
+    try {
+      sessionStorage.setItem('weather_app_shorts_open', 'true');
+      sessionStorage.setItem('weather_app_shorts_tab', targetTab);
+      if (typeof window !== 'undefined' && window.location.hash !== '#shorts') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search + '#shorts');
+      }
+    } catch {}
+    setIsShortsOpen(true);
+  };
+
+  const handleCloseShorts = () => {
+    try {
+      sessionStorage.removeItem('weather_app_shorts_open');
+      if (typeof window !== 'undefined' && window.location.hash === '#shorts') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } catch {}
+    setIsShortsOpen(false);
+  };
+
+  // Lắng nghe phím F5 / popstate để duy trì Video Shorts
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#shorts') {
+        setIsShortsOpen(true);
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
   
   // Trạng thái quản lý quyền người dùng (Role Management)
   const [userRole, setUserRole] = useState<any>(() => {
@@ -4160,7 +4653,63 @@ export default function App() {
         const match = document.cookie.match(new RegExp('(^| )user_auth=([^;]+)'));
         if (match) saved = decodeURIComponent(match[2]);
       }
-      return saved ? JSON.parse(saved) : null;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed) {
+          let modified = false;
+          // Loại bỏ sạch toàn bộ mock channels cũ (Baby Shark, WaveMusic, Pinkfong, An#...)
+          if (Array.isArray(parsed.youtubeSubscriptions)) {
+            const cleanedSubs = parsed.youtubeSubscriptions.filter((s: any) => !isMockChannel(s));
+            if (cleanedSubs.length !== parsed.youtubeSubscriptions.length) {
+              parsed.youtubeSubscriptions = cleanedSubs;
+              modified = true;
+            }
+          }
+          if (!parsed.youtubeSubscriptions || parsed.youtubeSubscriptions.length === 0) {
+            parsed.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map((ch: any) => ({
+              ...ch,
+              linkedUserEmail: parsed.email,
+              linkedUserName: parsed.name,
+              linkedUserAvatar: parsed.picture,
+              isAccountLinked: true
+            }));
+            modified = true;
+          }
+          // Loại bỏ sạch toàn bộ video mock cũ (An# Acoustic Guitar...)
+          if (Array.isArray(parsed.subscribedVideos)) {
+            const cleanedVideos = parsed.subscribedVideos.filter((v: any) => !isMockVideo(v));
+            if (cleanedVideos.length !== parsed.subscribedVideos.length) {
+              parsed.subscribedVideos = cleanedVideos;
+              modified = true;
+            }
+          }
+          if (modified) {
+            localStorage.setItem('user_auth', JSON.stringify(parsed));
+            document.cookie = `user_auth=${encodeURIComponent(JSON.stringify(parsed))}; path=/; max-age=31536000`;
+          }
+
+          // Quét và khử sạch 100% rác kênh mẫu cũ trong toàn bộ localStorage
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && (k.startsWith('weather_user_channels_') || k.startsWith('weather_app_subscribed_channels_'))) {
+                const raw = localStorage.getItem(k);
+                if (raw) {
+                  const chs = JSON.parse(raw);
+                  if (Array.isArray(chs)) {
+                    const cleanChs = chs.filter((c: any) => !isMockChannel(c));
+                    if (cleanChs.length !== chs.length) {
+                      localStorage.setItem(k, JSON.stringify(cleanChs));
+                    }
+                  }
+                }
+              }
+            }
+          } catch {}
+          return parsed;
+        }
+      }
+      return null;
     } catch (e) {
       console.error("Lỗi khi đọc user_auth:", e);
       return null;
@@ -4170,13 +4719,47 @@ export default function App() {
   // (Đã gỡ bỏ useGoogleOneTapLogin để tránh tình trạng popup tự động hiện lên liên tục gây khó chịu)
   // Chỉ sử dụng nút Đăng nhập thủ công ở trên Header.
 
+  // Tự động đồng bộ quyền người dùng trên mọi tab/cửa sổ khi localStorage thay đổi
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user_auth' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setUserRole(parsed);
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Handle OAuth2 redirect callback (access_token or error in URL hash)
   useEffect(() => {
     const hash = window.location.hash;
     if (hash && (hash.includes('access_token=') || hash.includes('error='))) {
+      // 1. Gửi token qua BroadcastChannel đến mọi tab/cửa sổ đang mở
+      try {
+        const bc = new BroadcastChannel('google_oauth_channel');
+        bc.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash });
+        bc.close();
+      } catch {}
+
+      // 2. Gửi token qua localStorage để kích hoạt storage listener tức thì
+      try {
+        localStorage.setItem('google_oauth_event', JSON.stringify({ hash: hash, t: Date.now() }));
+      } catch {}
+
+      // 3. Gửi token qua postMessage nếu window.opener tồn tại
       if (window.opener) {
-        window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
-        window.close();
+        try {
+          window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
+        } catch {}
+      }
+
+      // 4. Tự động đóng cửa sổ popup đăng nhập
+      const isPopup = window.opener || window.name === 'google-login' || (window.innerWidth <= 650 && window.innerHeight <= 750);
+      if (isPopup) {
+        try { window.close(); } catch {}
         return;
       }
 
@@ -4231,15 +4814,14 @@ export default function App() {
 
   // Tự động đồng bộ thông tin kênh YouTube nếu người dùng đã đăng nhập và có token
   useEffect(() => {
-    if (userRole && userRole._access_token && (!userRole.youtubeChannel || !userRole.youtubeSubscriptions)) {
+    if (userRole && userRole._access_token && !userRole._ytChecked && (!userRole.youtubeChannel || !Array.isArray(userRole.youtubeSubscriptions) || userRole.youtubeSubscriptions.length === 0 || userRole.youtubeNeedsAuth)) {
       const token = userRole._access_token;
-      const copy = { ...userRole };
+      const copy = { ...userRole, _ytChecked: true };
       fetchAndAttachYouTubeData(token, copy).then((synced) => {
-        if (synced.youtubeChannel || (synced.youtubeSubscriptions && synced.youtubeSubscriptions.length > 0)) {
-          setUserRole(synced);
-          localStorage.setItem('user_auth', JSON.stringify(synced));
-        }
-      });
+        synced._ytChecked = true;
+        setUserRole(synced);
+        localStorage.setItem('user_auth', JSON.stringify(synced));
+      }).catch(() => {});
     }
   }, [userRole]);
   
@@ -4277,7 +4859,7 @@ export default function App() {
 
 
   const handleRelogin = () => {
-    doGoogleLogin(setUserRole, userRole?.email);
+    doGoogleLogin(setUserRole, userRole?.email, true);
   };
 
   const handleArticleSelect = (article: any) => {
@@ -5200,7 +5782,7 @@ useEffect(() => {
             console.warn("Geolocation failed:", err);
             fallbackToIp();
           },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+          { enableHighAccuracy: false, timeout: 2500, maximumAge: 60000 }
         );
       } else {
         fallbackToIp();
@@ -5286,23 +5868,25 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={() => setIsShortsOpen(true)} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} />
       </div>
 
 
       {/* Video Shorts Modal (Trải nghiệm TikTok / YouTube Shorts) */}
       <VideoShortsModal
         isOpen={isShortsOpen}
-        onClose={() => setIsShortsOpen(false)}
+        onClose={handleCloseShorts}
         liveNews={liveNews}
         userRole={userRole}
         onLogin={handleRelogin}
+        onUpdateUser={setUserRole}
+        initialTab={shortsInitialTab}
       />
 
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />

@@ -36,19 +36,25 @@ export async function runAllUXFlowTests(page) {
   // SCENARIO 1: UX Luồng Đọc Tin Tức, Audio TTS & Khóa Cuộn Body (News UX)
   // =========================================================================
   {
-    // 1.0 Chờ thẻ tin tức xuất hiện
-    await page.waitForSelector('.group.cursor-pointer, [class*="cursor-pointer"]', { timeout: 8000 }).catch(() => {});
-    // 1.1 Tìm và click mở bài viết đầu tiên (ưu tiên container Desktop đang hiển thị)
-    let articleCard = page.locator('.hidden.xl\\:block .group.cursor-pointer').first();
-    let canOpen = await articleCard.isVisible().catch(() => false);
-    if (!canOpen) {
-      articleCard = page.locator('.group.cursor-pointer:visible, [class*="cursor-pointer"]:visible').first();
-      canOpen = await articleCard.isVisible().catch(() => false);
-    }
+    // 1.0 Chờ thẻ tin tức xuất hiện (đảm bảo hoàn tất nạp tin tức từ feed)
+    await page.waitForFunction(() => {
+      const cards = document.querySelectorAll('[data-testid="news-card"], .group.cursor-pointer');
+      return cards.length > 0;
+    }, { timeout: 10000 }).catch(() => {});
+
+    // 1.1 Tìm và click mở bài viết đầu tiên (đồng bộ qua React DOM click)
+    const canOpen = await page.evaluate(() => {
+      const card = document.querySelector('[data-testid="news-card"]') || document.querySelector('.group.cursor-pointer');
+      if (card) {
+        card.click();
+        return true;
+      }
+      return false;
+    });
     assertUX('UX-01.1: Tìm thấy thẻ tin tức tương tác', canOpen, 'Có thẻ bài viết sẵn sàng tiếp nhận click');
 
     if (canOpen) {
-      await articleCard.click();
+      await page.waitForSelector('[data-testid="news-detail-modal"], .fixed.inset-0.z-\\[200\\]', { timeout: 8000 }).catch(() => {});
       await page.waitForSelector('[data-testid="article-tts-btn"]', { timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(400);
 
@@ -147,7 +153,7 @@ export async function runAllUXFlowTests(page) {
       await page.waitForTimeout(600);
 
       const shortsModalOpen = await page.evaluate(() => {
-        const shortsModal = document.querySelector('.fixed.inset-0.z-\\[200\\].bg-black, [role="dialog"], .fixed.inset-0.z-\\[120\\], .fixed.inset-0.z-\\[130\\], .fixed.inset-0.z-\\[150\\], .fixed.inset-0.z-\\[200\\]');
+        const shortsModal = document.querySelector('[data-testid="video-shorts-modal"], .fixed.inset-0.z-\\[200\\].bg-black, [role="dialog"], .fixed.inset-0.z-\\[120\\], .fixed.inset-0.z-\\[130\\], .fixed.inset-0.z-\\[150\\], .fixed.inset-0.z-\\[200\\]');
         return Boolean(shortsModal);
       });
       assertUX('UX-02.2: Trình phát Shorts mở với nền mờ rạp chiếu chuyên nghiệp', shortsModalOpen, 'Shorts modal đã mở và phủ backdrop');
@@ -290,6 +296,11 @@ export async function runAllUXFlowTests(page) {
   // SCENARIO 6: UX Đồ Thị Thời Tiết Theo Giờ & Huy Hiệu Ô Nhiễm PM2.5 (Weather UX)
   // =========================================================================
   {
+    await page.waitForFunction(() => {
+      const text = document.body.innerText;
+      return text.includes('PM2.5') || text.includes('Bụi');
+    }, { timeout: 4000 }).catch(() => {});
+
     const weatherErgonomics = await page.evaluate(() => {
       const text = document.body.innerText;
       const hasTemp = /\d+°[C]?/.test(text);

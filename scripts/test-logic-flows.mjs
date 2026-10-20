@@ -35,6 +35,10 @@ import {
   formatArticleDate,
   isBoilerplate,
   isAuthorAvatar,
+  isJunkOrTagContent,
+  isTagOrShareElement,
+  isMockChannel,
+  formatVideoDate,
   validateYouTubeId,
   matchesChannel,
   generateChannelPlaylist,
@@ -378,7 +382,26 @@ export function runAllLogicFlowTests() {
 
   const cdataText = "<![CDATA[Bản tin VTV 19h]]>";
   assert(decodeHTMLEntities(cdataText) === "Bản tin VTV 19h", "Bóc tách khối CDATA thành công");
-  console.log(`    ${colors.green}✓ Luồng Parser: Đạt 15/15 kiểm tra bảo vệ avatar, bóc tách CDATA & khử rác${colors.reset}`);
+
+  // 4.4 isJunkOrTagContent (Triệt tiêu rác chia sẻ & hashtag bài báo)
+  assert(isJunkOrTagContent("Chia sẻ") === true, "Loại bỏ 'Chia sẻ'");
+  assert(isJunkOrTagContent("Chi sẻ") === true, "Loại bỏ 'Chi sẻ'");
+  assert(isJunkOrTagContent("Chia sẻ qua Facebook") === true, "Loại bỏ 'Chia sẻ qua Facebook'");
+  assert(isJunkOrTagContent("Chia sẻ qua Twitter") === true, "Loại bỏ 'Chia sẻ qua Twitter'");
+  assert(isJunkOrTagContent("Chia sẻ qua Email") === true, "Loại bỏ 'Chia sẻ qua Email'");
+  assert(isJunkOrTagContent("#Quốc hội") === true, "Loại bỏ hashtag '#Quốc hội'");
+  assert(isJunkOrTagContent("#cò mồi") === true, "Loại bỏ hashtag '#cò mồi'");
+  assert(isJunkOrTagContent("#trục lợi") === true, "Loại bỏ hashtag '#trục lợi'");
+  assert(isJunkOrTagContent("#đấu giá tài sản") === true, "Loại bỏ hashtag '#đấu giá tài sản'");
+  assert(isJunkOrTagContent("#Luật Đấu giá tài sản") === true, "Loại bỏ hashtag '#Luật Đấu giá tài sản'");
+
+  // 4.5 isTagOrShareElement (Nhận diện thẻ tag và chia sẻ)
+  assert(isTagOrShareElement({ className: "article__tag item" }) === true, "Bắt thẻ có class article__tag");
+  assert(isTagOrShareElement({ className: "box_tag news" }) === true, "Bắt thẻ có class _tag");
+  assert(isTagOrShareElement({ className: "post-tag" }) === true, "Bắt thẻ có class tag");
+  assert(isTagOrShareElement({ className: "chia-se-social" }) === true, "Bắt thẻ chia sẻ mạng xã hội");
+  assert(isTagOrShareElement({ className: "content-detail paragraph" }) === false, "Nội dung đoạn văn bình thường không bị lọc");
+  console.log(`    ${colors.green}✓ Luồng Parser: Đạt 30/30 kiểm tra bảo vệ avatar, bóc tách CDATA & triệt tiêu rác/hashtag${colors.reset}`);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LUỒNG 5: VIDEO SHORTS & SMART TV LOGIC FLOW
@@ -441,7 +464,26 @@ export function runAllLogicFlowTests() {
   const now = 100000;
   assert(calculateControlsVisibility(now - 2000, now) === true, "Controls hiển thị khi mới tương tác (2000ms < 5000ms)");
   assert(calculateControlsVisibility(now - 5500, now) === false, "Controls tự động ẩn sau 5500ms không thao tác");
-  console.log(`    ${colors.green}✓ Luồng Shorts & TV: Đạt 32/32 kiểm tra 97 video, 10 kênh truyền hình & auto-recovery${colors.reset}`);
+
+  // 5.7 isMockChannel & formatVideoDate
+  assert(isMockChannel({ snippet: { title: "WaveMusic" } }) === true, "Nhận diện mock channel WaveMusic");
+  assert(isMockChannel({ snippet: { title: "김프로KIMPRO" } }) === true, "Nhận diện mock channel KIMPRO");
+  assert(isMockChannel({ snippet: { title: "Jay Prehistoric Pets" } }) === true, "Nhận diện mock channel Jay Prehistoric");
+  assert(isMockChannel({ snippet: { title: "VIETSUCCESS" } }) === true, "Nhận diện mock channel VIETSUCCESS");
+  assert(isMockChannel({ snippet: { title: "Baby Shark" } }) === true, "Nhận diện mock channel Baby Shark");
+  assert(isMockChannel({ snippet: { title: "Pinkfong! Cá mập con" } }) === true, "Nhận diện mock channel Pinkfong");
+  assert(isMockChannel({ snippet: { title: "J House jr." } }) === true, "Nhận diện mock channel J House");
+  assert(isMockChannel({ snippet: { title: "An# Music" } }) === true, "Nhận diện mock channel An#");
+  assert(isMockChannel({ snippet: { title: "VTV24" } }) === false, "Kênh VTV24 là kênh tin tức thực tế");
+  assert(isMockChannel({ snippet: { title: "Báo Tiền Phong" } }) === false, "Kênh Báo Tiền Phong là kênh thực tế");
+  assert(isMockChannel({ snippet: { title: "Tuổi Trẻ Online" } }) === false, "Kênh Tuổi Trẻ là kênh thực tế");
+
+  // formatVideoDate
+  const sampleIso = new Date().toISOString();
+  const formattedToday = formatVideoDate(sampleIso);
+  assert(formattedToday.includes("Hôm nay"), "Định dạng ngày video hôm nay chứa 'Hôm nay'");
+  assert(formatVideoDate("") === "", "Chuỗi rỗng trả về rỗng");
+  console.log(`    ${colors.green}✓ Luồng Shorts & TV: Đạt 45/45 kiểm tra 97 video, 10 kênh truyền hình, auto-recovery & lọc sạch kênh mẫu${colors.reset}`);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LUỒNG 6: AUTH, AUTHORIZATION & ROUTING FLOW

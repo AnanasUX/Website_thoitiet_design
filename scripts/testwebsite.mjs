@@ -264,7 +264,10 @@ async function runLiveTests() {
       browser = await chromium.launch({ channel: 'msedge', headless: true });
     }
 
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      permissions: ['geolocation'],
+      geolocation: { latitude: 21.0285, longitude: 105.8542 }
+    });
     const page = await context.newPage();
 
     // -------------------------------------------------------------------------

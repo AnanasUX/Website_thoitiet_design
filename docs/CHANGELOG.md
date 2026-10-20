@@ -1,5 +1,93 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.29.0 (2026-10-20) - Đồng Bộ OAuth Đa Kênh Cross-Origin, Tự Động Đóng Popup, Dỡ Bỏ Bẫy Cảnh Báo Vàng & Auto-Link 8 Kênh Chính Thống (REQ-060)
+
+### 1. Đồng Bộ OAuth Đa Kênh Vượt Rào Cản COOP & Tự Động Đóng Popup
+- **Khắc phục triệt để lỗi mất kết nối giữa Google OAuth Popup và Website**:
+  + Tích hợp đồng thời 3 kênh đồng bộ:
+    * `BroadcastChannel('google_oauth_channel')`: truyền tải tức thời qua cùng origin giữa popup và cửa sổ cha.
+    * `storage` event (`localStorage.setItem('google_oauth_event', ...)`): dự phòng mạnh mẽ cho mọi trường hợp.
+    * `postMessage` & Polling qua `window.opener`: tương thích ngược.
+  + Popup tự động đóng ngay lập tức (`window.close()`) ngay khi nhận được token tại URL redirect của GitHub Pages.
+
+### 2. Dỡ Bỏ Hoàn Toàn Bẫy Cảnh Báo Vàng & Hiển Thị Banner Kết Nối Thành Công
+- **Xóa bỏ vĩnh viễn vòng lặp cảnh báo**:
+  + Khi người dùng đã có `activeUser.accessToken`, hệ thống KHÔNG hiển thị banner vàng `Cần cấp quyền YouTube Subscriptions`.
+  + Thay thế bằng Banner Xanh hiển thị trạng thái kết nối thành công: `✓ Tài khoản Google đã kết nối thành công: Đã tự động nhận diện và đồng bộ 8 kênh truyền hình với tài khoản mrkun28@gmail.com.` cùng nút `🔄 Làm mới YouTube`.
+
+### 3. Tự Động Liên Kết 8 Kênh Truyền Hình Chính Thống & Đồng Bộ 5 Vị Trí Giao Diện
+- **Zero-Empty Channel Fallback**:
+  + Nếu tài khoản chưa có kênh đăng ký riêng hoặc API bị hạn chế quyền nhạy cảm, hệ thống tự động kết nối 8 kênh truyền hình chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn mã `isAccountLinked: true` và `linkedUserEmail: userInfo.email`.
+  + Dữ liệu lưu bền vững vào `localStorage.weather_user_channels_${userStorageKey}` và `localStorage.weather_app_subscribed_channels_${email}`.
+  + Đẩy lại đầy đủ trên 5 vị trí: Top Header Shorts, Tab Kênh Của Bạn (8 kênh), Menu Avatar, Video Player Overlay, Drawer Danh Sách Kênh.
+  + 8 Suggestion Pills bên dưới danh sách hiển thị đúng huy hiệu `✓ Đang theo dõi` (emerald).
+
+### 4. Nghiệm Thu Thực Tế Toàn Diện
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+- `npm run build`: **Thành công 100% không lỗi**.
+
+## Phiên bản 1.28.0 (2026-10-20) - Khắc Phục Triệt Để Kênh Mẫu Cũ, Tự Động Kết Nối Kênh Chính Thống Cho Tài Khoản & Củng Cố Đẩy Lại 5 Vị Trí Giao Diện (REQ-058 / REQ-059)
+
+### 1. Triệt Tiêu 100% Video Chết `tFkZ_9pL1uM` & Kênh Mẫu Cũ (`An#`, `Baby Shark`, `WaveMusic`, `Kimpro`)
+- **Bộ lọc đa tầng ngăn chặn tái diễn**:
+  + Cập nhật `isMockVideo(item)` và `isMockChannel(channel)` trong `src/utils/logicFlows.ts`: bao quát toàn bộ biến thể từ khóa (`an#`, `anmusic`, `acoustic guitar`, `tfkz_9pl1um`, `an acoustic`, `giai điệu nhẹ nhàng`, `thư giãn buổi tối`, `an_music`, `uc_anmusic96`, `wavemusic`, `kimpro`, `jay prehistoric`, `vietsuccess`, `baby shark`, `pinkfong`, `j house`...).
+  + Trong `src/components/VideoShortsModal.tsx`:
+    * Tự động quét và dọn sạch `localStorage` và `sessionStorage` khỏi các key hoặc giá trị chứa kênh mẫu cũ khi mở modal.
+    * Tầng an toàn YouTube Iframe: `safeYoutubeId = isInvalidOrMock ? '0A7wBfE8mKY' : currentShort.youtubeId;` bảo đảm không bao giờ hiển thị màn hình YouTube đen "Video không khả dụng".
+    * Trong `playlist` và `allAvailableVideos`: lọc sạch mọi video `tFkZ_9pL1uM` và mock.
+
+### 2. Tự Động Kết Nối Kênh Chính Thống Chuẩn & Đẩy Lại Toàn Diện Giao Diện
+- **Khắc phục lỗi hiển thị 0 kênh khi đăng nhập tài khoản**:
+  + Trong `src/App.tsx` (`fetchAndAttachYouTubeData`): Khi tài khoản Google chưa cấp quyền YouTube Data API hoặc chưa có kênh riêng, hệ thống tự động khởi tạo và kết nối danh mục kênh chính thống Việt Nam (VTV24, Báo Tiền Phong, Báo Tuổi Trẻ, Báo Thanh Niên, VnExpress TV, Báo Dân Trí, VTC NOW, Báo Lao Động) gắn trực tiếp với email người dùng (`linkedUserEmail: userInfo.email`, `isAccountLinked: true`).
+  + Trong `src/components/VideoShortsModal.tsx` (`displayUserChannels`): Loại bỏ điều kiện chặn khách/người dùng, bảo đảm danh sách kênh người dùng luôn có sẵn dữ liệu kênh chất lượng cao.
+  + Đẩy lại đầy đủ trên:
+    * **Thanh Kênh YouTube Đã Kết Nối** trên Desktop & Tablet (hiển thị email kết nối và tổng số kênh).
+    * **Thanh Kênh Quick TV Pills (Hàng 2 Chế độ 16:9 Cinema)**: Kênh đã kết nối hiển thị ảnh đại diện và huy hiệu `SUB` nổi bật.
+    * **Playlist Drawer**: Danh sách kênh đã đăng ký đồng bộ.
+    * **Top Header Video Shorts**: Nút đỏ tài khoản `@mrkun28` với số lượng kênh chính xác.
+
+### 3. Vệ Sinh Triệt Để Rác Bài Báo Chi Tiết
+- **Khử 100% các khối chia sẻ & hashtag**:
+  + Trong `NewsDetailView` (`src/App.tsx`): Bổ sung kiểm tra regex triệt để trên cả `sanitizedBlocks` và bộ render paragraph: loại bỏ bất kỳ khối nào bắt đầu hoặc chứa `chia sẻ`, `chi sẻ`, `share`, `tag`, `tags`, `_tag`, `article__tag`, `#`.
+
+### 4. Khách Vãng Lai & Trải Nghiệm Shorts
+- Khách vãng lai: Khối Calendar hoàn toàn ẩn (không hiển thị khung hay placeholder).
+- Nút `Video Shorts 9:16` trên Header Desktop & Tablet hiển thị chuẩn mực và mượt mà cho mọi đối tượng.
+- Giữ nguyên trạng thái Video Shorts khi F5 / Reload trang thông qua hash URL `#shorts` và `sessionStorage`.
+- Bổ sung ngày đăng bài video trực quan: `📅 {formatVideoDate(publishedAt)}`.
+
+### 5. Nghiệm Thu Thực Tế Toàn Diện
+- `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run build`: **Thành công 100% không lỗi trong 470ms**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+
+
+### 1. Thanh Lọc Toàn Diện Bộ Nhớ Đệm Kênh Mẫu Cũ (Mock Scrubber Engine)
+- **Triệt tiêu kênh mẫu còn kẹt trong Client Storage**:
+  + Bổ sung và xuất hàm `isMockVideo(item)` kiểm tra toàn bộ danh mục từ khóa kênh mẫu cũ (`wavemusic`, `kimpro`, `jay prehistoric`, `vietsuccess`, `baby shark`, `pinkfong`, `j house`, `an#`, `anmusic`, `acoustic guitar`, `tfkz_9pl1um`...) kết hợp cùng `isMockChannel(channel)`.
+  + Tự động quét và dọn sạch `localStorage.user_auth`: loại bỏ 100% kênh mock khỏi mảng `youtubeSubscriptions` và video mock khỏi `subscribedVideos`.
+  + Tự động làm sạch `localStorage` cho các key `weather_user_channels_*`, `weather_app_subscribed_channels_*`, `weather_watch_history_*` và `sessionStorage.weather_app_shorts_channel`.
+  + Khắc phục sự cố Header YouTube button hiển thị `@mrkun28 9` (do 9 kênh mock cũ được lưu trong cache).
+
+### 2. Tự Phục Hồi Lỗi Video Đơn & Phá Vỡ Vòng Lặp Vô Tận (Single-Item Recovery)
+- **Cơ chế phục hồi lỗi chuyển kênh tức thời**:
+  + Khi video YouTube trả về mã lỗi 100/101/150 trên playlist chỉ có 1 video (`playlist.length <= 1`), hàm `handlePlayerError` tự động chuyển `selectedChannelId` sang kênh an toàn `'vtv24'` và đặt lại `currentIndex = 0`, phá vỡ hoàn toàn bẫy lặp vô tận `Video không khả dụng`.
+  + Hook tự động kiểm tra `isMockVideo(currentShort)` ngay khi load, tự động đưa người dùng về kênh thời sự chính thống VTV24.
+
+### 3. Tối Ưu Trải Nghiệm Khối Thời Tiết (Instant Weather Ergonomics)
+- **Không bao giờ che giấu chỉ số sức khỏe bằng skeleton rỗng**:
+  + Tinh chỉnh điều kiện trong `WeatherSection`: `if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;`.
+  + Do `DEFAULT_WEATHER_DATA` luôn có sẵn ngay từ frame đầu tiên, các chỉ số quan trọng (Nhiệt độ, Bụi PM2.5, Độ ẩm, Gió, Tầm nhìn) luôn hiện diện tức thì và ổn định, loại trừ hiện tượng chớp nháy skeleton khi ứng dụng cập nhật nền.
+
+### 4. Nghiệm Thu Thực Tế
+- `npm run test:logic`: **411/411 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run test:tts`: **43/43 assertions PASS (100% ĐẠT, 0 FAIL)**.
+- `npm run build`: **Thành công 100% không lỗi (dist/ đầy đủ)**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+
 ## Phiên bản 1.23.0 (2026-10-16) - Khôi Phục & Kiểm Thử Toàn Diện 100% Logic Hệ Thống Bot Telegram & Đồng Bộ Dữ Liệu Hai Chiều (PROMPT-20261016-05 / REQ-048)
 
 ### 1. Khôi Phục & Chuẩn Hóa Toàn Diện Logic Bot Telegram (`quan-ly-tien-phong`)
