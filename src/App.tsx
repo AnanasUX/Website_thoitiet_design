@@ -4228,6 +4228,16 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
     }
   };
 
+  const onUserInfoReceived = (userInfo: any) => {
+    if (isHandled) return;
+    isHandled = true;
+    cleanup();
+    if (popup && !popup.closed) {
+      try { popup.close(); } catch {}
+    }
+    onSuccess(userInfo);
+  };
+
   const onTokenReceived = (hash: string) => {
     if (isHandled) return;
     isHandled = true;
@@ -4240,8 +4250,12 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
 
   if (bc) {
     bc.onmessage = (event) => {
-      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
-        onTokenReceived(event.data.hash);
+      if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
+        if (event.data.userInfo) {
+          onUserInfoReceived(event.data.userInfo);
+        } else if (event.data.hash) {
+          onTokenReceived(event.data.hash);
+        }
       }
     };
   }
@@ -4250,31 +4264,62 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
     if (e.key === 'google_oauth_event' && e.newValue) {
       try {
         const data = JSON.parse(e.newValue);
-        if (data.hash) {
+        if (data.userInfo) {
+          onUserInfoReceived(data.userInfo);
+        } else if (data.hash) {
           onTokenReceived(data.hash);
+        }
+      } catch {}
+    } else if (e.key === 'user_auth' && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed && parsed.email) {
+          onUserInfoReceived(parsed);
         }
       } catch {}
     }
   };
   window.addEventListener('storage', storageListener);
 
-  const timer = setInterval(async () => {
+  let popupCloseCheckCount = 0;
+  const timer = setInterval(() => {
     try {
-      if (!popup || popup.closed) {
-        cleanup();
-        return;
+      const savedAuth = localStorage.getItem('user_auth');
+      if (savedAuth) {
+        try {
+          const parsed = JSON.parse(savedAuth);
+          if (parsed && parsed.email) {
+            onUserInfoReceived(parsed);
+            return;
+          }
+        } catch {}
       }
-      const popupUrl = popup.location.href;
-      if (popupUrl.includes('access_token=')) {
-        const hash = popup.location.hash.substring(1);
-        onTokenReceived(hash);
+
+      if (popup && !popup.closed) {
+        try {
+          const popupUrl = popup.location.href;
+          if (popupUrl.includes('access_token=')) {
+            const hash = popup.location.hash.substring(1);
+            onTokenReceived(hash);
+            return;
+          }
+        } catch (_) {}
+      } else if (popup && popup.closed) {
+        popupCloseCheckCount++;
+        if (popupCloseCheckCount > 6) {
+          cleanup();
+        }
       }
     } catch (_) {}
-  }, 400);
+  }, 350);
 
   const messageListener = (event: MessageEvent) => {
-    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS' && event.data.hash) {
-      onTokenReceived(event.data.hash);
+    if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
+      if (event.data.userInfo) {
+        onUserInfoReceived(event.data.userInfo);
+      } else if (event.data.hash) {
+        onTokenReceived(event.data.hash);
+      }
     }
   };
   window.addEventListener('message', messageListener);
@@ -4737,60 +4782,97 @@ export default function App() {
   useEffect(() => {
     const hash = window.location.hash;
     if (hash && (hash.includes('access_token=') || hash.includes('error='))) {
-      // 1. Gửi token qua BroadcastChannel đến mọi tab/cửa sổ đang mở
-      try {
-        const bc = new BroadcastChannel('google_oauth_channel');
-        bc.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash });
-        bc.close();
-      } catch {}
-
-      // 2. Gửi token qua localStorage để kích hoạt storage listener tức thì
-      try {
-        localStorage.setItem('google_oauth_event', JSON.stringify({ hash: hash, t: Date.now() }));
-      } catch {}
-
-      // 3. Gửi token qua postMessage nếu window.opener tồn tại
-      if (window.opener) {
-        try {
-          window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash }, '*');
-        } catch {}
-      }
-
-      // 4. Tự động đóng cửa sổ popup đăng nhập
-      const isPopup = window.opener || window.name === 'google-login' || (window.innerWidth <= 650 && window.innerHeight <= 750);
-      if (isPopup) {
-        try { window.close(); } catch {}
-        return;
-      }
-
       const params = new URLSearchParams(hash.substring(1));
       const error = params.get('error');
       const accessToken = params.get('access_token');
-      
+
       // Clean URL hash immediately
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
       if (error) {
-         sessionStorage.setItem('google_silent_failed', '1');
-         return;
+        sessionStorage.setItem('google_silent_failed', '1');
+        try {
+          const bc = new BroadcastChannel('google_oauth_channel');
+          bc.postMessage({ type: 'GOOGLE_LOGIN_ERROR', error });
+          bc.close();
+        } catch {}
+        if (window.opener || window.name === 'google-login') {
+          setTimeout(() => { try { window.close(); } catch {} }, 500);
+        }
+        return;
       }
 
       if (accessToken) {
         sessionStorage.removeItem('google_silent_failed');
+
+        // 1. Gửi ngay tín hiệu token qua BroadcastChannel, localStorage và postMessage
+        try {
+          const bc = new BroadcastChannel('google_oauth_channel');
+          bc.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash, accessToken });
+          bc.close();
+        } catch {}
+
+        try {
+          localStorage.setItem('google_oauth_event', JSON.stringify({ hash: hash, accessToken, t: Date.now() }));
+        } catch {}
+
+        if (window.opener) {
+          try {
+            window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', hash: hash, accessToken }, '*');
+          } catch {}
+        }
+
+        // 2. Tự xử lý thông tin người dùng ngay lập tức và lưu vào localStorage
         fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
           .then(r => r.json())
           .then(async userInfo => {
             userInfo._access_token = accessToken;
-            // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản
-            await fetchAndAttachYouTubeData(accessToken, userInfo);
+            try {
+              await fetchAndAttachYouTubeData(accessToken, userInfo);
+            } catch (ytErr) {
+              console.warn("Lỗi đồng bộ YouTube:", ytErr);
+            }
             const authStr = JSON.stringify(userInfo);
             localStorage.setItem('user_auth', authStr);
             document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
             setUserRole(userInfo);
+
+            // Gửi dữ liệu đầy đủ tới cửa sổ chính
+            try {
+              const bc2 = new BroadcastChannel('google_oauth_channel');
+              bc2.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', userInfo, authStr });
+              bc2.close();
+            } catch {}
+
+            try {
+              localStorage.setItem('google_oauth_event', JSON.stringify({ userInfo, authStr, t: Date.now() }));
+            } catch {}
+
+            if (window.opener) {
+              try {
+                window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', userInfo, authStr }, '*');
+              } catch {}
+            }
+
+            // Đóng cửa sổ popup sau khi đã lưu hoàn tất
+            const isPopup = window.opener || window.name === 'google-login' || (window.innerWidth <= 650 && window.innerHeight <= 750);
+            if (isPopup) {
+              setTimeout(() => {
+                try { window.close(); } catch {}
+              }, 400);
+            }
           })
-          .catch(err => console.error("Lỗi lấy thông tin Google:", err));
+          .catch(err => {
+            console.error("Lỗi lấy thông tin Google:", err);
+            const isPopup = window.opener || window.name === 'google-login' || (window.innerWidth <= 650 && window.innerHeight <= 750);
+            if (isPopup) {
+              setTimeout(() => {
+                try { window.close(); } catch {}
+              }, 500);
+            }
+          });
       }
     }
   }, []);
