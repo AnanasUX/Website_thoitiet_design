@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.32.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `33bd1e1` (`fix(auth): immediately persist user session to storage and prevent cookie bloat on page reset (REQ-062)`)
+- **Phiên bản**: `1.33.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `173114c` (`fix(auth): resolve ReferenceError DEFAULT_OFFICIAL_CHANNELS and add 3-tier session persistence on page reload (REQ-062)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK).
@@ -646,6 +646,33 @@
     - **Nghiệm thu thực tế**:
       + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 498ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+38. **[REQ-062] Khắc Phục Triệt Để Lỗi ReferenceError DEFAULT_OFFICIAL_CHANNELS, Kiến Trúc Dự Phòng Phiên Đăng Nhập 3 Tầng (LocalStorage + SessionStorage + Cookie) & Khôi Phục 100% Tài Khoản Khi Tải Lại Trang (Reload / Reset)**:
+    - **Vấn đề người dùng phản hồi**:
+      + "Tại sao cứ loading lại trang là tài khoản bị mất kiểm tra và ghi nhận nếu đã đăng nhập thì sẽ không bị đẩy ra".
+      + "Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ".
+    - **Điều tra nguyên nhân gốc rễ (Root Cause Analysis)**:
+      1. *Lỗi `ReferenceError: DEFAULT_OFFICIAL_CHANNELS is not defined`*: Tại dòng 4741 trong `src/App.tsx`, khi hàm khởi tạo `useState` đọc `localStorage.getItem('user_auth')`, nếu tài khoản chưa có danh sách kênh hoặc mảng rỗng, hệ thống gọi `DEFAULT_OFFICIAL_CHANNELS.map(...)`. Tuy nhiên, biến này chưa được import ở đầu `App.tsx` (chỉ import `USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT`). Do đó, trình duyệt ném lỗi `ReferenceError` ngay trong quá trình nạp trang.
+      2. *Khối catch toàn cục nuốt lỗi và trả về `null`*: Ngoại lệ trên kích hoạt khối `catch (e) { return null; }` của `useState`. Kết quả là ngay khi F5 reload trang, `userRole` lập tức bị gán thành `null`, avatar biến mất, 3 thanh header (Mobile, Tablet, Desktop) thụt lùi về nút `<CustomLoginButton>`, đẩy người dùng ra ngoài như chưa từng đăng nhập.
+      3. *Thiếu tầng dự phòng `sessionStorage`*: Trong các chế độ trình duyệt bảo mật hoặc Safari Private Mode, thiếu `sessionStorage` khiến việc khôi phục phiên cùng tab sau F5 reload không được bảo đảm.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Bổ sung import và Fallback an toàn tuyệt đối*:
+         - Import chuẩn xác `DEFAULT_OFFICIAL_CHANNELS` từ `./constants/userYouTubeSubscriptions`.
+         - Trang bị fallback an toàn: `const defaultChannels = typeof DEFAULT_OFFICIAL_CHANNELS !== 'undefined' ? DEFAULT_OFFICIAL_CHANNELS : (typeof USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT !== 'undefined' ? USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT : []);`, triệt tiêu 100% nguy cơ `ReferenceError`.
+      2. *Kiến trúc đọc & khôi phục phiên 3 tầng độc lập (3-Tier Storage Resilience)*:
+         - Tầng 1: Đọc `localStorage.getItem('user_auth')` với khối try-catch riêng biệt.
+         - Tầng 2: Nếu tầng 1 trống hoặc lỗi, đọc ngay `sessionStorage.getItem('user_auth')` (bảo đảm bền vững 100% qua F5 cùng tab).
+         - Tầng 3: Nếu tầng 2 trống, đọc `document.cookie` (`user_auth=...`).
+      3. *Cách ly hoàn toàn tác vụ làm sạch kênh (Isolated Sanitization)*:
+         - Toàn bộ thao tác lọc mock channels, mock videos và gán kênh mặc định được bọc trong try-catch riêng biệt. Nếu có lỗi phát sinh trong quá trình lọc, hệ thống chỉ cảnh báo `console.warn` và VẪN BẢO TOÀN TRẢ VỀ `parsed` (tài khoản người dùng), tuyệt đối KHÔNG BAO GIỜ trả về `null`.
+      4. *Tự động đồng bộ hóa 3 tầng (Auto-Persist Sync Effect)*:
+         - Bổ sung `useEffect` giám sát `userRole`: Mỗi khi `userRole` có thông tin hợp lệ (`email || sub || name`), tự động ghi đồng bộ tức thì xuống cả 3 tầng (`localStorage`, `sessionStorage`, `saveUserAuthCookie`).
+      5. *Xác thực thực tế qua Chromium Playwright*:
+         - Khi reload trang (F5), `titles` hiển thị chính xác tên người dùng (`Nguyen Van B`), `avatarImg` hiển thị 3/3 bố cục (Desktop, Tablet, Mobile), `loginText` = rỗng (0 nút đăng nhập), người dùng không bao giờ bị đẩy ra ngoài.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 496ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---

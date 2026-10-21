@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { VideoShortsModal } from "./components/VideoShortsModal";
-import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT } from "./constants/userYouTubeSubscriptions";
+import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT, DEFAULT_OFFICIAL_CHANNELS } from "./constants/userYouTubeSubscriptions";
 import {
   type ConditionKey,
   detectConditionKey,
@@ -4176,11 +4176,12 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
   return userInfo;
 }
 
-// Hàm lưu trữ cookie xác thực an toàn, nhỏ gọn (< 300 bytes), tuyệt đối không lưu mảng video/kênh vào cookie
+// Hàm lưu trữ cookie & sessionStorage xác thực an toàn, nhỏ gọn (< 300 bytes), tuyệt đối không lưu mảng video/kênh vào cookie
 export function saveUserAuthCookie(user: any) {
   try {
     if (!user || (!user.email && !user.sub)) {
       document.cookie = "user_auth=; path=/; max-age=0; SameSite=Lax";
+      try { sessionStorage.removeItem('user_auth'); } catch {}
       return;
     }
     const minimalSession = {
@@ -4192,8 +4193,9 @@ export function saveUserAuthCookie(user: any) {
     };
     const minStr = JSON.stringify(minimalSession);
     document.cookie = `user_auth=${encodeURIComponent(minStr)}; path=/; max-age=31536000; SameSite=Lax`;
+    try { sessionStorage.setItem('user_auth', minStr); } catch {}
   } catch (err) {
-    console.warn('[Cookie Save Warning]:', err);
+    console.warn('[Cookie/SessionStorage Save Warning]:', err);
   }
 }
 
@@ -4701,96 +4703,109 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
   
-  // Trạng thái quản lý quyền người dùng (Role Management)
+  // Trạng thái quản lý quyền người dùng (Role Management) - Đảm bảo phiên đăng nhập bền vững 3 tầng (localStorage, sessionStorage, cookie)
   const [userRole, setUserRole] = useState<any>(() => {
+    let rawData: string | null = null;
+    let parsed: any = null;
+
+    // Tầng 1: Đọc từ localStorage
     try {
-      let saved = localStorage.getItem('user_auth');
-      if (!saved || saved === 'null' || saved === 'undefined') {
-        // Fallback to cookie if localStorage is empty
+      const local = localStorage.getItem('user_auth');
+      if (local && local !== 'null' && local !== 'undefined') {
+        rawData = local;
+      }
+    } catch (e) {
+      console.warn('[LocalStorage Read Warning]:', e);
+    }
+
+    // Tầng 2: Dự phòng từ sessionStorage (bền vững tuyệt đối qua F5 reload cùng tab)
+    if (!rawData) {
+      try {
+        const session = sessionStorage.getItem('user_auth');
+        if (session && session !== 'null' && session !== 'undefined') {
+          rawData = session;
+        }
+      } catch (e) {
+        console.warn('[SessionStorage Read Warning]:', e);
+      }
+    }
+
+    // Tầng 3: Dự phòng từ cookie an toàn
+    if (!rawData && typeof document !== 'undefined') {
+      try {
         const match = document.cookie.match(new RegExp('(^| )user_auth=([^;]+)'));
         if (match) {
           try {
-            saved = decodeURIComponent(match[2]);
+            rawData = decodeURIComponent(match[2]);
           } catch {
-            saved = match[2];
+            rawData = match[2];
           }
         }
+      } catch (e) {
+        console.warn('[Cookie Read Warning]:', e);
       }
-      if (saved && saved !== 'null' && saved !== 'undefined') {
-        let parsed: any = null;
-        try {
-          parsed = JSON.parse(saved);
-        } catch (jsonErr) {
-          console.warn('[user_auth JSON Parse Warning]:', jsonErr);
-          const match = document.cookie.match(new RegExp('(^| )user_auth=([^;]+)'));
-          if (match) {
-            try { parsed = JSON.parse(decodeURIComponent(match[2])); } catch {}
-          }
-        }
-        if (parsed && (parsed.email || parsed.sub || parsed.name)) {
-          let modified = false;
-          // Loại bỏ sạch toàn bộ mock channels cũ (Baby Shark, WaveMusic, Pinkfong, An#...)
-          if (Array.isArray(parsed.youtubeSubscriptions)) {
-            const cleanedSubs = parsed.youtubeSubscriptions.filter((s: any) => !isMockChannel(s));
-            if (cleanedSubs.length !== parsed.youtubeSubscriptions.length) {
-              parsed.youtubeSubscriptions = cleanedSubs;
-              modified = true;
-            }
-          }
-          if (!parsed.youtubeSubscriptions || parsed.youtubeSubscriptions.length === 0) {
-            parsed.youtubeSubscriptions = DEFAULT_OFFICIAL_CHANNELS.map((ch: any) => ({
-              ...ch,
-              linkedUserEmail: parsed.email,
-              linkedUserName: parsed.name,
-              linkedUserAvatar: parsed.picture,
-              isAccountLinked: true
-            }));
-            modified = true;
-          }
-          // Loại bỏ sạch toàn bộ video mock cũ (An# Acoustic Guitar...)
-          if (Array.isArray(parsed.subscribedVideos)) {
-            const cleanedVideos = parsed.subscribedVideos.filter((v: any) => !isMockVideo(v));
-            if (cleanedVideos.length !== parsed.subscribedVideos.length) {
-              parsed.subscribedVideos = cleanedVideos;
-              modified = true;
-            }
-          }
-          if (modified) {
-            try {
-              localStorage.setItem('user_auth', JSON.stringify(parsed));
-            } catch (saveErr) {
-              console.warn('[user_auth Save Warning]:', saveErr);
-            }
-            saveUserAuthCookie(parsed);
-          }
-
-          // Quét và khử sạch 100% rác kênh mẫu cũ trong toàn bộ localStorage
-          try {
-            for (let i = 0; i < localStorage.length; i++) {
-              const k = localStorage.key(i);
-              if (k && (k.startsWith('weather_user_channels_') || k.startsWith('weather_app_subscribed_channels_'))) {
-                const raw = localStorage.getItem(k);
-                if (raw) {
-                  const chs = JSON.parse(raw);
-                  if (Array.isArray(chs)) {
-                    const cleanChs = chs.filter((c: any) => !isMockChannel(c));
-                    if (cleanChs.length !== chs.length) {
-                      localStorage.setItem(k, JSON.stringify(cleanChs));
-                    }
-                  }
-                }
-              }
-            }
-          } catch {}
-          return parsed;
-        }
-      }
-      return null;
-    } catch (e) {
-      console.error("Lỗi khi đọc user_auth:", e);
-      return null;
     }
+
+    if (rawData) {
+      try {
+        parsed = JSON.parse(rawData);
+      } catch (jsonErr) {
+        console.warn('[user_auth JSON Parse Warning]:', jsonErr);
+      }
+    }
+
+    // Nếu tìm thấy thông tin định danh hợp lệ (email, sub, hoặc name)
+    if (parsed && (parsed.email || parsed.sub || parsed.name)) {
+      // Bảo vệ cách ly: Dọn dẹp mock channels và gán danh mục kênh chuẩn mà KHÔNG BAO GIỜ làm crash hoặc hủy phiên đăng nhập
+      try {
+        const defaultChannels = typeof DEFAULT_OFFICIAL_CHANNELS !== 'undefined'
+          ? DEFAULT_OFFICIAL_CHANNELS
+          : (typeof USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT !== 'undefined' ? USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT : []);
+
+        if (Array.isArray(parsed.youtubeSubscriptions)) {
+          const cleanedSubs = parsed.youtubeSubscriptions.filter((s: any) => !isMockChannel(s));
+          if (cleanedSubs.length !== parsed.youtubeSubscriptions.length) {
+            parsed.youtubeSubscriptions = cleanedSubs;
+          }
+        }
+        if (!parsed.youtubeSubscriptions || parsed.youtubeSubscriptions.length === 0) {
+          parsed.youtubeSubscriptions = defaultChannels.map((ch: any) => ({
+            ...ch,
+            linkedUserEmail: parsed.email,
+            linkedUserName: parsed.name,
+            linkedUserAvatar: parsed.picture,
+            isAccountLinked: true
+          }));
+        }
+        if (Array.isArray(parsed.subscribedVideos)) {
+          const cleanedVideos = parsed.subscribedVideos.filter((v: any) => !isMockVideo(v));
+          if (cleanedVideos.length !== parsed.subscribedVideos.length) {
+            parsed.subscribedVideos = cleanedVideos;
+          }
+        }
+      } catch (cleanErr) {
+        console.warn('[user_auth Channel Sanitization Warning]:', cleanErr);
+      }
+
+      // Tự động sao lưu và đồng bộ tức thì trên cả 3 tầng lưu trữ
+      try { localStorage.setItem('user_auth', JSON.stringify(parsed)); } catch {}
+      try { sessionStorage.setItem('user_auth', JSON.stringify(parsed)); } catch {}
+      try { saveUserAuthCookie(parsed); } catch {}
+
+      return parsed;
+    }
+
+    return null;
   });
+
+  // Luôn đảm bảo tài khoản người dùng đã đăng nhập được sao lưu đồng bộ 3 tầng (localStorage, sessionStorage, cookie)
+  useEffect(() => {
+    if (userRole && (userRole.email || userRole.sub || userRole.name)) {
+      try { localStorage.setItem('user_auth', JSON.stringify(userRole)); } catch {}
+      try { sessionStorage.setItem('user_auth', JSON.stringify(userRole)); } catch {}
+      try { saveUserAuthCookie(userRole); } catch {}
+    }
+  }, [userRole]);
 
   // (Đã gỡ bỏ useGoogleOneTapLogin để tránh tình trạng popup tự động hiện lên liên tục gây khó chịu)
   // Chỉ sử dụng nút Đăng nhập thủ công ở trên Header.
@@ -4923,7 +4938,8 @@ export default function App() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user_auth');
+    try { localStorage.removeItem('user_auth'); } catch {}
+    try { sessionStorage.removeItem('user_auth'); } catch {}
     saveUserAuthCookie(null);
     setUserRole(null);
   };

@@ -549,4 +549,26 @@
        + **Phục hồi an toàn đa tầng**: `useState` trang bị lá chắn try-catch độc lập, xử lý các trường hợp chuỗi `'null'`, `'undefined'`, fallback cookie an toàn và chống ngoại lệ `QuotaExceededError`.
        + **Bảo đảm cờ `prompt=consent%20select_account`**: Khi người dùng bấm "nhấn cấp quyền" trên Calendar, Google sẽ bắt buộc hiển thị lại màn hình cấp quyền Calendar.
 
+  44. **[REQ-062] Khắc Phục Triệt Để Lỗi ReferenceError DEFAULT_OFFICIAL_CHANNELS, Kiến Trúc Dự Phòng Phiên Đăng Nhập 3 Tầng (LocalStorage + SessionStorage + Cookie) & Khôi Phục 100% Tài Khoản Khi Tải Lại Trang (Reload / Reset)**:
+     - *Bối cảnh & Vấn đề*:
+       + Người dùng phản hồi: "+Tại sao cứ loading lại trang là tài khoản bị mất kiểm tra và ghi nhận nếu đã đăng nhập thì sẽ không bị đẩy ra".
+       + Truy quét nguyên nhân cốt lõi qua kiểm thử trực tiếp trên Chromium Playwright (`scripts/test-reload-issue.mjs`):
+         1. *Lỗi `ReferenceError: DEFAULT_OFFICIAL_CHANNELS is not defined`*: Tại dòng 4741 trong `src/App.tsx`, khi khởi tạo state `userRole` từ `localStorage.getItem('user_auth')`, nếu tài khoản chưa có danh sách kênh hoặc rỗng, hệ thống gọi `DEFAULT_OFFICIAL_CHANNELS.map(...)`. Tuy nhiên, biến này CHƯA ĐƯỢC IMPORT ở đầu file `App.tsx` (chỉ import `USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT`). Do đó, trình duyệt ném ra `ReferenceError: DEFAULT_OFFICIAL_CHANNELS is not defined`.
+         2. *Khối catch toàn cục nuốt lỗi và trả về `null`*: Ngoại lệ trên bị khối `catch (e)` toàn cục bao bọc `useState` tóm lấy và trả về `return null`. Kết quả: ngay khi F5 reload trang, `userRole` lập tức bị biến thành `null`, avatar biến mất và giao diện thụt lùi về nút `<CustomLoginButton>`, đẩy người dùng ra ngoài như chưa từng đăng nhập.
+         3. *Thiếu tầng dự phòng `sessionStorage`*: Trong các trường hợp Safari Private Mode hoặc trình duyệt bảo mật chặn `localStorage`, việc không ghi nhận vào `sessionStorage` khiến việc khôi phục phiên cùng tab sau F5 reload bị đứt gãy.
+     - *Quyết định kiến trúc & Giải pháp*:
+       + **Bổ sung import và Fallback an toàn tuyệt đối**:
+         * Import chuẩn xác `DEFAULT_OFFICIAL_CHANNELS` từ `./constants/userYouTubeSubscriptions`.
+         * Trang bị fallback an toàn: `const defaultChannels = typeof DEFAULT_OFFICIAL_CHANNELS !== 'undefined' ? DEFAULT_OFFICIAL_CHANNELS : (typeof USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT !== 'undefined' ? USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT : []);`, triệt tiêu 100% nguy cơ `ReferenceError`.
+       + **Kiến trúc đọc & khôi phục phiên 3 tầng độc lập (3-Tier Storage Resilience)**:
+         * Tầng 1: Đọc `localStorage.getItem('user_auth')` với khối try-catch riêng biệt.
+         * Tầng 2: Nếu tầng 1 trống hoặc lỗi, đọc ngay `sessionStorage.getItem('user_auth')` (bảo đảm bền vững 100% qua F5 cùng tab).
+         * Tầng 3: Nếu tầng 2 trống, đọc `document.cookie` (`user_auth=...`).
+       + **Cách ly hoàn toàn tác vụ làm sạch kênh (Isolated Sanitization)**:
+         * Toàn bộ thao tác lọc mock channels, mock videos và gán kênh mặc định được bọc trong try-catch riêng biệt. Nếu có lỗi phát sinh trong quá trình lọc, hệ thống chỉ cảnh báo `console.warn` và VẪN BẢO TOÀN TRẢ VỀ `parsed` (tài khoản người dùng), tuyệt đối KHÔNG BAO GIỜ trả về `null`.
+       + **Tự động đồng bộ hóa 3 tầng (Auto-Persist Sync Effect)**:
+         * Bổ sung `useEffect` giám sát `userRole`: Mỗi khi `userRole` có thông tin hợp lệ (`email || sub || name`), tự động ghi đồng bộ tức thì xuống cả 3 tầng (`localStorage`, `sessionStorage`, `saveUserAuthCookie`).
+       + **Xác thực thực tế qua Chromium Playwright**:
+         * Khi reload trang (F5), `titles` hiển thị chính xác tên người dùng (`Nguyen Van B`), `avatarImg` hiển thị 3/3 bố cục (Desktop, Tablet, Mobile), `loginText` = rỗng (0 nút đăng nhập), người dùng không bao giờ bị đẩy ra ngoài.
+
 

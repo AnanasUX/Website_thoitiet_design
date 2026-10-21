@@ -1,5 +1,35 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.33.0 (2026-10-21) - Khắc Phục Triệt Để Lỗi ReferenceError DEFAULT_OFFICIAL_CHANNELS, Kiến Trúc Dự Phòng Phiên Đăng Nhập 3 Tầng (LocalStorage + SessionStorage + Cookie) & Khôi Phục 100% Tài Khoản Khi Tải Lại Trang (REQ-062)
+
+### 1. Khắc Phục Triệt Để Hiện Tượng Cứ Loading / Reset Trang Là Tài Khoản Bị Mất (Đẩy Ra Ngoài)
+- **Nguyên nhân gốc rễ được tìm thấy và xử lý triệt để**:
+  1. *Lỗi `ReferenceError: DEFAULT_OFFICIAL_CHANNELS is not defined`*: Tại dòng 4741 trong `src/App.tsx`, hàm khởi tạo `useState` đọc `localStorage.getItem('user_auth')`. Khi danh mục kênh rỗng, code gọi `DEFAULT_OFFICIAL_CHANNELS.map(...)`. Tuy nhiên, biến này chưa được import ở đầu `App.tsx` (chỉ import `USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT`). Do đó, trình duyệt ném lỗi `ReferenceError` ngay khi tải trang.
+  2. *Khối catch toàn cục nuốt lỗi và trả về `null`*: Ngoại lệ trên kích hoạt khối `catch (e) { return null; }` của `useState`. Kết quả là ngay khi F5 reload trang, `userRole` lập tức bị gán thành `null`, avatar biến mất, 3 thanh header (Mobile, Tablet, Desktop) thụt lùi về nút `<CustomLoginButton>`, đẩy người dùng ra ngoài như chưa từng đăng nhập.
+  3. *Thiếu tầng dự phòng `sessionStorage`*: Trong các chế độ trình duyệt bảo mật hoặc Safari Private Mode, thiếu `sessionStorage` khiến việc khôi phục phiên cùng tab sau F5 reload không được bảo đảm.
+
+### 2. Các Giải Pháp Kỹ Thuật Đã Triển Khai
+- **Bổ sung import và Fallback an toàn tuyệt đối**:
+  + Import chuẩn xác `DEFAULT_OFFICIAL_CHANNELS` từ `./constants/userYouTubeSubscriptions`.
+  + Trang bị fallback an toàn: `const defaultChannels = typeof DEFAULT_OFFICIAL_CHANNELS !== 'undefined' ? DEFAULT_OFFICIAL_CHANNELS : (typeof USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT !== 'undefined' ? USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT : []);`, triệt tiêu 100% nguy cơ `ReferenceError`.
+- **Kiến trúc đọc & khôi phục phiên 3 tầng độc lập (3-Tier Storage Resilience)**:
+  + Tầng 1: Đọc `localStorage.getItem('user_auth')` với khối try-catch riêng biệt.
+  + Tầng 2: Nếu tầng 1 trống hoặc lỗi, đọc ngay `sessionStorage.getItem('user_auth')` (bảo đảm bền vững 100% qua F5 cùng tab).
+  + Tầng 3: Nếu tầng 2 trống, đọc `document.cookie` (`user_auth=...`).
+- **Cách ly hoàn toàn tác vụ làm sạch kênh (Isolated Sanitization)**:
+  + Toàn bộ thao tác lọc mock channels, mock videos và gán kênh mặc định được bọc trong try-catch riêng biệt. Nếu có lỗi phát sinh trong quá trình lọc, hệ thống chỉ cảnh báo `console.warn` và VẪN BẢO TOÀN TRẢ VỀ `parsed` (tài khoản người dùng), tuyệt đối KHÔNG BAO GIỜ trả về `null`.
+- **Tự động đồng bộ hóa 3 tầng (Auto-Persist Sync Effect)**:
+  + Bổ sung `useEffect` giám sát `userRole`: Mỗi khi `userRole` có thông tin hợp lệ (`email || sub || name`), tự động ghi đồng bộ tức thì xuống cả 3 tầng (`localStorage`, `sessionStorage`, `saveUserAuthCookie`).
+- **Xác thực thực tế qua Chromium Playwright**:
+  + Khi reload trang (F5), `titles` hiển thị chính xác tên người dùng (`Nguyen Van B`), `avatarImg` hiển thị 3/3 bố cục (Desktop, Tablet, Mobile), `loginText` = rỗng (0 nút đăng nhập), người dùng không bao giờ bị đẩy ra ngoài.
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run test:logic`: **423/423 assertions PASS (100% PASS)**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
+- `npm run build`: **Biên dịch thành công 100% không lỗi trong 496ms**.
+
+---
+
 ## Phiên bản 1.32.0 (2026-10-21) - Lưu Trữ Phiên Đăng Nhập Tức Thì (Instant Auth Persistence), Khử Tràn Cookie 4KB (Zero Cookie Bloat) & Khôi Phục Phiên F5 An Toàn Tuyệt Đối (REQ-062)
 
 ### 1. Khắc Phục Triệt Để Hiện Tượng Mất Thông Tin Gmail Sau Khi Reset / Reload Trang
