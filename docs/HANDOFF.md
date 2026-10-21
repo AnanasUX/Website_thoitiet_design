@@ -2,14 +2,14 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.29.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `3398666` (`feat: multi-channel OAuth broadcast, popup auto-close, auto-link 8 premier channels, and pass 47/47 QA release gate`)
-- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `6e3657b` (`fix(backend): hoan thien trich xuat paragraph voi tham so desc va chuan hoa vieneu v3 turbo`)
+- **Phiên bản**: `1.30.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `3bbaa28` (`fix(auth): restore universal OAuth scope openid email profile, fix mobile popup misdetection, and add Playwright E2E auth tests`)
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
-  + ✅ **Kiểm thử logic chuyên sâu 23 luồng hệ thống (`npm run test:logic`)**: 411/411 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 24 luồng hệ thống (`npm run test:logic`)**: 423/423 assertions logic passed (100% PASS).
   + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).
   + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop và Mobile.
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
@@ -599,6 +599,30 @@
     - **Nghiệm thu thực tế**:
       + `npm run build`: **Thành công 100% không lỗi trong 538ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+41. **[REQ-061 / REQ-062] Đồng Bộ 20 Commits Mới Từ Remote (`origin/main`), Tích Hợp YouTube Cá Nhân 6 Tab, Tên Miền anx.io.vn & Nâng Cấp Động Cơ Gemini 3.8 Flash Kèm Chế Độ AI Tích Hợp**:
+    - **Yêu cầu & Nội dung đồng bộ từ remote**:
+      1. *Hệ thống YouTube Cá Nhân 6 Tab & Bộ nhớ cô lập người dùng (`src/components/VideoShortsModal.tsx`, `src/services/youtubeApi.ts`, `src/services/youtubeStorage.ts`)*:
+         - Hỗ trợ phân trang vô tận `nextPageToken` trực tiếp trên API YouTube.
+         - Phái sinh uploads playlist ID chuẩn `UU...` từ Channel ID `UC...`.
+         - Phát trực tiếp không chuyển trang youtube.com, bảo đảm trải nghiệm rạp chiếu mượt mà.
+         - Phân loại 6 tab chuyên nghiệp: Đã đăng ký, Đang thịnh hành, Tin thời sự, Video đã thích, Lịch sử xem, Kênh của bạn.
+      2. *Cấu hình tên miền tùy chỉnh `anx.io.vn` & Tối ưu Google Client ID*:
+         - Cấu hình file `CNAME` cho tên miền chính thức `anx.io.vn`.
+         - Khôi phục universal OAuth scope `openid email profile` để tương thích toàn diện với Google OAuth Consent Screen.
+         - Sửa lỗi strip ký tự `#` đầu URLSearchParams và cơ chế nhận diện popup trên thiết bị di động.
+      3. *Đồng bộ CI/CD & Build Android APK*:
+         - Nâng cấp pipeline `build-apk.yml` với Java 21 và Gradle 8.11.1, Android AGP 8.7.3.
+         - Tích hợp bộ kiểm thử E2E Playwright mới (`tests/auth-login.spec.js`, `tests/site-audit.spec.js`).
+      4. *Nâng cấp Backend Telegram Bot (`quan-ly-tien-phong`)*:
+         - Cập nhật danh sách model Gemini lên chuẩn mới nhất: `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`.
+         - Xử lý mã lỗi ngừng phục vụ người dùng mới của model cũ `gemini-2.5-flash`.
+         - Tích hợp Chế độ AI Thông minh tích hợp (`tao_cau_tra_loi_ai_tich_hop`) tự động phản hồi chuyên nghiệp khi API ngoài gián đoạn.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+      + Backend Telegram tests: **14/14 tests PASS (100% ĐẠT)**, unittest REST API: **20/20 tests PASS (100% ĐẠT)**.
 
 ---
 
