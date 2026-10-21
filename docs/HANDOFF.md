@@ -3,7 +3,7 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.32.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Sẽ cập nhật sau commit bản vá REQ-062
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `33bd1e1` (`fix(auth): immediately persist user session to storage and prevent cookie bloat on page reset (REQ-062)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK).
