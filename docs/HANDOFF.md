@@ -2,12 +2,12 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.30.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `3bbaa28` (`fix(auth): restore universal OAuth scope openid email profile, fix mobile popup misdetection, and add Playwright E2E auth tests`)
+- **Phiên bản**: `1.31.0`
+- **Commit mới nhất Frontend (`Website_thoitiet_design`)**: Chuẩn bị commit (`fix(auth): prevent calendar scope 401 from wiping session, ensure persistent login on page reload, and add resilient avatar fallback`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
-  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK), bao gồm `/api/article-detail` (bóc tách 5 tầng, hỗ trợ tham số `desc`), `/api/tts/vieneu` (chuẩn hóa VieNeu-TTS v3 Turbo), `/api/daily-news`, phân loại thời tiết và nén giải nén token.
-  + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK), kiểm tra hoàn chỉnh /start, /tintuc, /thoitiethientai, /thoitiet, /vung, /websitecn, /shopee, /shopeefd, /tinhcn (nhập nhanh 1 dòng), /tinh (hội thoại 5 bước), .sonuocngay (lên lịch Google Calendar 19:00 - 19:30 & tự hủy 30s), /startgemini + /endgemini (quản lý phiên AI), APScheduler (cập nhật thời tiết/tin tức), /baocao (đồng bộ 2 tab Google Sheets TOAN và TIENGVIET).
+  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK).
+  + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
   + ✅ **Kiểm thử logic chuyên sâu 24 luồng hệ thống (`npm run test:logic`)**: 423/423 assertions logic passed (100% PASS).
   + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).

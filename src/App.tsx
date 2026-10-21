@@ -2391,7 +2391,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
           <QADashboardHeaderButton userRole={userRole} />
 
-          {userRole && userRole.picture ? (
+          {userRole && (userRole.email || userRole.picture || userRole.name || userRole.sub) ? (
             <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} onOpenSubscriptions={() => onOpenShorts && onOpenShorts('subscribed')} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
@@ -2594,7 +2594,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
             )}
           </div>
           <QADashboardHeaderButton userRole={userRole} />
-          {userRole && userRole.picture ? (
+          {userRole && (userRole.email || userRole.picture || userRole.name || userRole.sub) ? (
             <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} onOpenSubscriptions={() => onOpenShorts && onOpenShorts('subscribed')} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
@@ -2824,7 +2824,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             )}
           </div>
           <QADashboardHeaderButton userRole={userRole} />
-          {userRole && userRole.picture ? (
+          {userRole && (userRole.email || userRole.picture || userRole.name || userRole.sub) ? (
             <UserAvatarMenu userRole={userRole} onLogout={onLogout || (() => {})} onOpenSubscriptions={() => onOpenShorts && onOpenShorts('subscribed')} />
           ) : (
             <CustomLoginButton onLoginSuccess={onLoginSuccess} />
@@ -3544,7 +3544,8 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
         if (!r.ok) {
           if (r.status === 401) {
             setHasScopeError(true);
-            if (onTokenExpired) onTokenExpired();
+            // Lỗi 401 Calendar là lỗi thiếu scope/quyền, KHÔNG PHẢI phiên đăng nhập hết hạn.
+            // Tuyệt đối KHÔNG xóa token của user tại đây để giữ vững phiên đăng nhập khi F5 reload.
           } else if (r.status === 403) {
             setHasScopeError(true);
           }
@@ -3662,13 +3663,13 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
         ) : !accessToken ? (
           <>
             <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] shrink-0"></div>
-            <p className="text-[#94a3b8] text-[11px] leading-tight">Phiên hết hạn, <span onClick={onRelogin} className="font-semibold text-[#f7a928] cursor-pointer hover:underline">nhấn vào đây để đăng nhập lại</span></p>
+            <p className="text-[#94a3b8] text-[11px] leading-tight">Lịch ngoại tuyến, <span onClick={onRelogin} className="font-semibold text-[#3a7bd5] cursor-pointer hover:underline">kết nối Google Calendar</span></p>
           </>
         ) : hasScopeError ? (
           <>
             <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse shrink-0"></div>
             <p className="text-[#94a3b8] text-[11px] leading-tight">
-              Đồng bộ Lịch — <span className="text-[#f7a928] font-semibold">đang chờ xác minh app (yêu cầu cấp quyền)</span>
+              Đồng bộ Lịch — <span className="text-[#f7a928] font-semibold">chưa cấp quyền</span> (<span onClick={onRelogin} className="font-semibold text-[#3a7bd5] cursor-pointer hover:underline">nhấn cấp quyền</span>)
             </p>
           </>
         ) : (
@@ -4180,7 +4181,8 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
   const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
   const redirectUri = window.location.origin + basePath;
   // Standard OAuth 2.0 OpenID scopes cho phép mọi tài khoản Google đăng nhập ngay lập tức không bị rào cản
-  const scope = 'openid email profile';
+  // Bổ sung đầy đủ quyền đọc Lịch và kênh YouTube để đồng bộ tự động
+  const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
   let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
   if (loginHint) {
     authUrl += `&login_hint=${encodeURIComponent(loginHint)}&prompt=select_account`;
@@ -4348,7 +4350,13 @@ function UserAvatarMenu({ userRole, onLogout, onOpenSubscriptions }: { userRole:
   return (
     <div className="relative ml-2 shrink-0">
       <div onClick={() => setIsOpen(!isOpen)} className="w-[32px] h-[32px] rounded-full overflow-hidden border border-[rgba(255,255,255,0.2)] cursor-pointer hover:ring-2 hover:ring-[#3a7bd5] transition-all">
-        <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+        {userRole.picture ? (
+          <img src={userRole.picture} alt={userRole.name || "User"} title={userRole.name || "User"} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+        ) : (
+          <div className="w-full h-full bg-[#3a7bd5] text-white flex items-center justify-center font-bold text-xs" title={userRole.name || userRole.email || "User"}>
+            {(userRole.name || userRole.email || 'U')[0].toUpperCase()}
+          </div>
+        )}
       </div>
       {isOpen && (
         <>
@@ -4780,6 +4788,9 @@ export default function App() {
 
       // 4. Tự động đóng cửa sổ popup đăng nhập (chỉ khi có opener hoặc đúng tên google-login, không nhầm mobile)
       const isPopup = Boolean(window.opener || window.name === 'google-login');
+      if (typeof window !== 'undefined' && window.self !== window.top) {
+        return; // Đang chạy trong iframe ẩn (Silent Refresh), dừng tại đây không can thiệp URL cha
+      }
       if (isPopup) {
         try { window.close(); } catch {}
         return;
@@ -4850,6 +4861,9 @@ export default function App() {
   
   // Làm mới token Google ngầm (Silent Refresh) bằng iframe ẩn - TUYỆT ĐỐI KHÔNG redirect top-level để tránh đẩy người dùng về trang chủ hoặc đóng Shorts
   useEffect(() => {
+    // Tuyệt đối không tạo iframe bên trong iframe (ngăn chặn đệ quy / infinite iframe loop)
+    if (typeof window === 'undefined' || window.self !== window.top) return;
+
     if (userRole && userRole.email && !userRole._access_token) {
       if (sessionStorage.getItem('google_silent_failed')) return;
 

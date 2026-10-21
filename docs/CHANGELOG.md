@@ -1,5 +1,30 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.31.0 (2026-10-21) - Bảo Vệ Phiên Đăng Nhập Bền Vững Qua F5, Khắc Phục Lỗi Cấp Quyền Lịch Google & Avatar Dự Phòng Thông Minh (REQ-061)
+
+### 1. Khắc Phục Triệt Để Lỗi Mất Phiên Đăng Nhập Khi Reload Trang (F5 / Page Reload)
+- **Cơ chế cô lập lỗi quyền hạn phụ (Decoupled Permission Architecture)**:
+  + Loại bỏ hoàn toàn lệnh gọi `onTokenExpired()` trong `CalendarSection` khi gặp mã lỗi HTTP 401/403. Việc người dùng chưa cấp quyền đọc Lịch hoặc quyền đang chờ xác minh Google tuyệt đối KHÔNG làm mất phiên đăng nhập chung (`user_auth`) của tài khoản.
+  + Bảo toàn 100% `_access_token`, `email`, `name`, `picture` trong `localStorage` và cookie khi người dùng tải lại trang (`F5`), loại trừ hoàn toàn tình trạng bị "đẩy ra" hoặc mất đăng nhập.
+
+### 2. Khắc Phục Thông Báo Cấp Quyền Lịch Google & Giao Diện Thân Thiện
+- **Chuyển đổi trạng thái thông minh**:
+  + Thay thế thông báo tiêu cực "Phiên hết hạn, nhấn vào đây để đăng nhập lại" bằng trạng thái "Lịch ngoại tuyến, kết nối Google Calendar" kèm nút hành động rõ ràng.
+  + Khi chưa cấp quyền đọc Lịch, hiển thị trạng thái "chưa cấp quyền (nhấn cấp quyền)" và hỗ trợ 1-click cấp quyền trực tiếp ngay trên Calendar.
+  + Khôi phục đầy đủ danh mục OAuth Scopes trong `doGoogleLogin`: yêu cầu `openid email profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/youtube.readonly` để người dùng đồng bộ cả Lịch và YouTube khi đồng ý cấp quyền.
+
+### 3. Avatar Người Dùng Dự Phòng & Ngăn Chặn Đệ Quy Iframe (Silent Refresh Loop)
+- **Hiển thị đăng nhập kiên cường**:
+  + Cập nhật điều kiện hiển thị Avatar Menu trên cả 3 màn hình Desktop, Tablet, Mobile thành `{userRole && (userRole.email || userRole.picture || userRole.name || userRole.sub) ? ...}`. Không bao giờ hiển thị nút đăng nhập cho tài khoản đã có phiên chỉ vì ảnh đại diện chưa tải xong hoặc không có avatar.
+  + Tích hợp Avatar Fallback hiển thị chữ cái đầu tên/email người dùng trên nền xanh chuẩn mực khi tài khoản không có ảnh đại diện Google.
+  + Trang bị chốt chặn an toàn `if (window.self !== window.top) return;` cho cơ chế Silent Refresh OAuth, triệt tiêu 100% nguy cơ lặp đệ quy tải trang vô hạn trong iframe ẩn.
+
+### 4. Kết Quả Kiểm Thử Toàn Trang
+- `npm run test:logic`: **423/423 assertions PASS (100% PASS)**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
+- `npm run build`: **Biên dịch thành công 100% không lỗi**.
+
+
 ## Phiên bản 1.29.0 (2026-10-20) - Đồng Bộ OAuth Đa Kênh Cross-Origin, Tự Động Đóng Popup, Dỡ Bỏ Bẫy Cảnh Báo Vàng & Auto-Link 8 Kênh Chính Thống (REQ-060)
 
 ### 1. Đồng Bộ OAuth Đa Kênh Vượt Rào Cản COOP & Tự Động Đóng Popup

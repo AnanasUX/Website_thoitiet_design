@@ -519,3 +519,19 @@
         * Hiển thị đầy đủ và đồng bộ tại 5 vị trí: Top Header Shorts, Tab Kênh Của Bạn (8 kênh), Menu Avatar, Video Player Overlay, và Drawer Danh Sách Kênh.
       + **Đồng bộ trạng thái Theo dõi cho các Pill Gợi ý**:
         * Các pill gợi ý 8 kênh bên dưới danh sách hiển thị đúng trạng thái `✓ Đang theo dõi` với huy hiệu emerald, loại trừ tình trạng hiển thị `+ Theo dõi` trùng lặp.
+
+20. **Kiến Trúc Cô Lập Quyền Hạn Phụ & Bảo Toàn Phiên Đăng Nhập Qua Tải Lại Trang (Decoupled Permission Architecture & Reload Session Resilience) (REQ-061)**:
+    - *Bối cảnh & Vấn đề*:
+      + Khi người dùng đăng nhập tài khoản Gmail, đăng nhập thành công nhưng Calendar hiển thị cảnh báo "đang chờ xác minh app (yêu cầu cấp quyền)" hoặc "Phiên hết hạn, nhấn vào đây để đăng nhập lại".
+      + Khi người dùng bấm F5 tải lại trang (reload), phiên đăng nhập bị mất và người dùng bị đẩy ra ngoài giao diện chưa đăng nhập.
+      + Nguyên nhân kỹ thuật:
+        1. *Lỗi gọi `onTokenExpired()` trên phạm vi quyền hạn phụ*: Khi `CalendarSection` gọi Google Calendar API và nhận phản hồi 401 (insufficient_scope do người dùng chưa tích chọn Lịch hoặc scope chưa xác minh), mã cũ đã lập tức kích hoạt `onTokenExpired()`. Hàm này xóa bỏ `_access_token` khỏi `user_auth` trong `localStorage` và cookie.
+        2. *Mất phiên khi tải lại trang*: Khi F5, `user_auth` trong storage không còn `_access_token`, dẫn đến Calendar hiển thị cảnh báo phiên hết hạn. Đồng thời các thanh điều hướng Desktop, Tablet, Mobile kiểm tra `{userRole && userRole.picture ? ... : <CustomLoginButton />}`, nếu `picture` chưa tải hoặc trống thì giao diện tự động thụt lùi về nút đăng nhập màu xanh.
+        3. *Đệ quy Iframe trong Silent Refresh*: Do thiếu token, cơ chế silent refresh trong `useEffect` liên tục mount iframe ngầm. Nếu không chặn `window.self !== window.top`, iframe con lại tiếp tục mount iframe cháu gây nghẽn tiến trình.
+    - *Giải pháp kiến trúc & Triển khai*:
+      + **Cô lập tuyệt đối quyền hạn phụ (Decoupled Scope Isolation)**: Lỗi 401/403 của Calendar API chỉ cập nhật trạng thái `hasScopeError(true)`, TUYỆT ĐỐI KHÔNG gọi `onTokenExpired()`. Quyền đăng nhập cơ bản (`openid email profile`) luôn được bảo toàn 100%.
+      + **Bảo toàn phiên đăng nhập vĩnh viễn qua F5**: `_access_token`, `email`, `name`, `picture` được giữ nguyên vẹn trong `user_auth`. Khi F5, trạng thái đăng nhập được khôi phục ngay lập tức.
+      + **Hiển thị Avatar kiên cường**: Chuyển điều kiện hiển thị Avatar Menu thành `{userRole && (userRole.email || userRole.picture || userRole.name || userRole.sub) ? ...}` kèm Avatar Fallback chữ cái đầu tên người dùng trên nền xanh chuẩn mực khi không có ảnh đại diện Google.
+      + **Chặn đứng đệ quy Iframe**: Thêm điều kiện `if (window.self !== window.top) return;` vào cả luồng Silent Refresh và OAuth Hash Handler, ngăn chặn 100% việc tạo iframe lặp vô hạn.
+      + **Giao diện Calendar thân thiện**: Thay đổi nhãn "Phiên hết hạn" thành "Lịch ngoại tuyến, kết nối Google Calendar" và hỗ trợ nút 1-click cấp quyền trực tiếp ngay trên Calendar.
+
