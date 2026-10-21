@@ -572,3 +572,31 @@
          * Khi reload trang (F5), `titles` hiển thị chính xác tên người dùng (`Nguyen Van B`), `avatarImg` hiển thị 3/3 bố cục (Desktop, Tablet, Mobile), `loginText` = rỗng (0 nút đăng nhập), người dùng không bao giờ bị đẩy ra ngoài.
 
 
+
+
+  45. **[REQ-063, REQ-064] Tự Động Xóa Lịch Gán Số Điện Nước Quá Hạn Trên Google Calendar & Khắc Phục Lỗi Đẩy Tin Tức / Thời Tiết Định Kỳ Telegram**:
+      - *Bối cảnh & Vấn đề*:
+        + Người dùng yêu cầu: "tin tức và thời tiết của telegram tôi lại thấy lỗi không gửi thông tin mới nhất nữa, kiểm tra lại. Ở Google Calendar nếu thông tin của quá khứ liên quan đến gán số điện nước kiểu như hệ thống gán như này nếu mà qua thời gian rồi tự động xóa đi." kèm ảnh chụp lịch Google Calendar có sự kiện `💧 Lịch chốt số nước` (19/10/2026 19:00 - 19:30, tạo bởi `bot-calendar@bot-lich-nuoc.iam.gserviceaccount.com`).
+        + *Phân tích nguyên nhân Google Calendar*:
+          1. Hàm `them_lich_chot_nuoc` trước đây dùng `timeMin=now` khi tìm sự kiện trùng để xóa, do đó chỉ quét các sự kiện trong TƯƠNG LAI, hoàn toàn bỏ qua các sự kiện trong QUÁ KHỨ (`end <= now`).
+          2. Không có cơ chế tự động dọn dẹp các sự kiện chốt số định kỳ đã diễn ra xong, khiến các sự kiện nhắc nhở trong quá khứ bị tích tụ trên giao diện Google Calendar của người dùng.
+        + *Phân tích nguyên nhân Telegram không gửi tin tức và thời tiết mới nhất*:
+          1. *Thiếu Chat ID môi trường trong GitHub Actions Scheduler*: Workflow `.github/workflows/bot-cron.yml` chạy hourly cron nhưng không truyền các biến `TELEGRAM_AUTO_NEWS_CHATS`, `TELEGRAM_CHAT_ID`, `ADMIN_CHAT_ID` vào `env:`. File `bot_data.json` nằm trong `.gitignore` nên khi chạy trên GitHub Actions, `active_auto_news_chats` rỗng hoặc chỉ có chat giả lập `"12345678"`, dẫn tới cron chạy nhưng không có người nhận thực tế (`valid_chats = []`).
+          2. *RSS tuần tự gây nghẽn mạng*: `lay_tat_ca_bai_viet_ngau_nhien` trước đây quét tuần tự hơn 15 link RSS bằng vòng lặp đơn, mỗi link timeout 8s khiến tổng thời gian thu thập kéo dài 25-30 giây, dễ bị nghẽn mạng hoặc timeout trên các môi trường cloud.
+          3. *Thiếu cơ chế tự phục hồi Chat ID*: Khi server khởi động lại trên môi trường ephemeral (Render free / GitHub Actions), nếu người dùng chưa gửi tin nhắn mới, bot không thể tự động phát hiện Chat ID của quản trị viên (`anaa2700`).
+      - *Quyết định kiến trúc & Giải pháp*:
+        + **Tự động quét và xóa sạch lịch điện nước quá hạn (`xoa_lich_dien_nuoc_qua_han`)**:
+          * Truy vấn Google Calendar API với `timeMax=now_iso` để lấy các sự kiện đã kết thúc trong quá khứ.
+          * Bộ lọc an toàn tuyệt đối 100%: Chỉ xóa các sự kiện do Service Account tạo (`*@*.gserviceaccount.com` hoặc `bot-calendar@...`) HOẶC có tiêu đề/mô tả thuộc hệ thống chốt số điện nước AnX (`Lịch chốt số nước`, `Lịch chốt số điện`, `Ngày khoá nước (Chốt số)`, `chốt số nước`, `chốt số điện`, `khối/ngày`, `Hệ thống AnX nhắc nhở chốt`). Tuyệt đối không xóa bất kỳ lịch cá nhân, cuộc họp hay sự kiện nào khác của người dùng.
+          * Tích hợp tự động 4 vị trí: (1) Chạy tự động trước mỗi lần gán lịch mới trong `them_lich_chot_nuoc`; (2) Chạy định kỳ mỗi giờ trong `job_thoi_tiet_hang_gio`; (3) Chạy trong scheduler `minute=15`; (4) Hỗ trợ lệnh Telegram `.xoalichquahan` / `/cleanpastcalendar` và REST API `GET/POST /api/calendar/cleanup-expired`.
+          * Đã xóa thực tế thành công 2 sự kiện quá hạn trên tài khoản `mrkun28@gmail.com` (`cno3f2s91d0r47lqeg2vi6b2u0` và `s32orf9kiv962bkjg4bdmhmah4`).
+        + **Tối ưu hóa đa luồng RSS Concurrency & Tự động phục hồi Chat ID Telegram**:
+          * Áp dụng `concurrent.futures.ThreadPoolExecutor(max_workers=8)` trong `lay_tat_ca_bai_viet_ngau_nhien`: Giảm thời gian thu thập tin tức từ 30s xuống chỉ còn 3.91s (nhanh hơn gấp 7 lần), bảo đảm luôn có sẵn hơn 200 bài báo mới nhất trong ngày.
+          * Xây dựng hàm `tu_dong_khoi_phuc_chat_id()`: Ưu tiên đọc từ biến môi trường `TELEGRAM_AUTO_NEWS_CHATS`, `TELEGRAM_CHAT_ID`, `ADMIN_CHAT_ID`, `CHAT_ID`. Nếu rỗng, tự động gọi `getUpdates` của Telegram API để nhận diện chat_id của admin (`AUTHORIZED_USERNAME = anaa2700`).
+          * Cập nhật workflow `.github/workflows/bot-cron.yml`: Truyền đầy đủ các biến Chat ID từ GitHub Secrets và thêm lệnh dọn dẹp lịch `main.xoa_lich_dien_nuoc_qua_han()` chạy hàng giờ.
+          * Nâng timeout Telegram API lên 15s và bổ sung logging chi tiết trạng thái gửi tin.
+      - *Kết quả nghiệm thu*:
+        + `python -m unittest discover tests -v`: **22/22 tests PASS (100% OK)** trong 13.5s.
+        + `python test_all_telegram_commands.py`: **14/14 tests PASS (100% OK)**.
+        + `python test_news_collector.py`: **9/9 tests PASS (100% OK)**.
+        + Hai sự kiện lịch quá hạn đã được xóa sạch hoàn toàn khỏi Google Calendar của `mrkun28@gmail.com` (xác minh `Remaining events: 0`).

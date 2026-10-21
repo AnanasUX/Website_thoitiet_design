@@ -129,6 +129,7 @@
 | PROMPT-20261020-04 | 2026-10-20 | Xác nhận quyền rồi tuy nhiên vẫn không đồng bộ được các kênh đã đăng ký (popup kẹt, cảnh báo vàng lặp lại, 0 kênh đăng ký) | REQ-060 | Resolved | Approved |
 | PROMPT-20261021-01 | 2026-10-21 | Đăng nhập Gmail thành công nhưng Calendar báo phải cấp quyền, reload F5 thì bị mất đăng nhập bị đẩy ra | REQ-061 | Resolved | Approved |
 | PROMPT-20261021-02 | 2026-10-21 | Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ | REQ-062 | Resolved | Approved |
+| PROMPT-20261021-03 | 2026-10-21 | Tin tức và thời tiết của telegram tôi lại thấy lỗi không gửi thông tin mới nhất nữa, kiểm tra lại. Ở Google Calendar nếu thông tin của quá khứ liên quan đến gán số điện nước kiểu như hệ thống gán như này nếu mà qua thời gian rồi tự động xóa đi. | REQ-063, REQ-064 | Resolved | Approved |
 
 
 

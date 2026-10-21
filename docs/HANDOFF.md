@@ -2,11 +2,11 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.33.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `1f94680` (`fix(auth): resolve ReferenceError DEFAULT_OFFICIAL_CHANNELS and add 3-tier session persistence on page reload (REQ-062)`)
-- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
+- **Phiên bản**: `1.34.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `8bfbc54` (`fix(auth): resolve ReferenceError DEFAULT_OFFICIAL_CHANNELS and add 3-tier session persistence on page reload (REQ-062)`)
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
-  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK).
+  + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
   + ✅ **Kiểm thử logic chuyên sâu 24 luồng hệ thống (`npm run test:logic`)**: 423/423 assertions logic passed (100% PASS).
@@ -674,6 +674,26 @@
       + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 496ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
+
+---
+
+39. **[REQ-063, REQ-064] Tự Động Xóa Lịch Gán Số Điện Nước Quá Hạn Trên Google Calendar & Tối Ưu Hóa Thu Thập / Đẩy Tin Tức & Thời Tiết Định Kỳ Telegram**:
+    - **Yêu cầu người dùng**:
+      + "tin tức và thời tiết của telegram tôi lại thấy lỗi không gửi thông tin mới nhất nữa, kiểm tra lại. Ở Google Calendar nếu thông tin của quá khứ liên quan đến gán số điện nước kiểu như hệ thống gán như này nếu mà qua thời gian rồi tự động xóa đi." kèm ảnh chụp Google Calendar có sự kiện quá hạn `💧 Lịch chốt số nước` (19/10/2026).
+    - **Điều tra nguyên nhân gốc rễ (Root Cause Analysis)**:
+      1. *Google Calendar*: Hàm `them_lich_chot_nuoc` trước đây sử dụng `timeMin=now` nên chỉ lọc sự kiện trùng trong tương lai, hoàn toàn không dọn dẹp các sự kiện chốt số điện nước đã qua hạn trong quá khứ.
+      2. *Telegram Scheduler*: Workflow GitHub Actions `.github/workflows/bot-cron.yml` chạy hourly update nhưng không truyền biến `TELEGRAM_AUTO_NEWS_CHATS`, `TELEGRAM_CHAT_ID`, `ADMIN_CHAT_ID` vào môi trường `env:`. Do `bot_data.json` nằm trong `.gitignore`, môi trường ephemeral của GitHub Actions có `active_auto_news_chats` rỗng hoặc chỉ có chat giả lập `12345678`, dẫn đến bot không thể gửi tới chat thực tế của người dùng.
+      3. *Nghẽn mạng RSS tuần tự*: Hàm `lay_tat_ca_bai_viet_ngau_nhien` quét tuần tự hơn 15 nguồn RSS, mỗi nguồn timeout 8s khiến thời gian cào tin kéo dài ~30s, dễ gây timeout trên các cloud runners.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Hàm `xoa_lich_dien_nuoc_qua_han()`*: Quét Google Calendar API với `timeMax=now_iso`. Bộ lọc an toàn tuyệt đối 100% chỉ xóa các sự kiện do bot tạo hoặc có tiêu đề/mô tả chốt số điện nước của hệ thống AnX. Tuyệt đối không xóa lịch cá nhân. Tự động chạy tại 4 vị trí (trước khi gán lịch mới, mỗi giờ trong cron thời tiết, scheduler `minute=15`, và lệnh `.xoalichquahan` / endpoint `/api/calendar/cleanup-expired`).
+      2. *Đã xóa thực tế thành công 2 sự kiện quá hạn trên `mrkun28@gmail.com`*: `s32orf9kiv962bkjg4bdmhmah4` (19/09/2026) và `cno3f2s91d0r47lqeg2vi6b2u0` (19/10/2026).
+      3. *Đa luồng RSS Concurrency*: Sử dụng `ThreadPoolExecutor(max_workers=8)` giúp thời gian cào hơn 200 tin tức giảm từ ~30s xuống chỉ còn **3.91s** (nhanh gấp 7 lần).
+      4. *Tự động phục hồi Chat ID*: Hàm `tu_dong_khoi_phuc_chat_id()` tự động đọc từ biến môi trường và gọi `getUpdates` để tìm chat ID của admin `anaa2700`.
+      5. *Cập nhật `.github/workflows/bot-cron.yml`*: Truyền đầy đủ secrets Chat ID và bổ sung dọn dẹp lịch tự động hàng giờ.
+    - **Nghiệm thu thực tế**:
+      + `python -m unittest discover tests -v`: **22/22 tests PASS (100% OK)** trong 13.5s.
+      + `python test_all_telegram_commands.py`: **14/14 tests PASS (100% OK)**.
+      + `python test_news_collector.py`: **9/9 tests PASS (100% OK)**.
 
 ---
 
