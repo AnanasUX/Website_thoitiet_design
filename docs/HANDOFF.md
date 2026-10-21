@@ -3,7 +3,7 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.31.0`
-- **Commit mới nhất Frontend (`Website_thoitiet_design`)**: Chuẩn bị commit (`fix(auth): prevent calendar scope 401 from wiping session, ensure persistent login on page reload, and add resilient avatar fallback`)
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `272acc0` (`fix(auth): prevent calendar scope 401 from wiping session, ensure persistent login on page reload, and add resilient avatar fallback`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK).
