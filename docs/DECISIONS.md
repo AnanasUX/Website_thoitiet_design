@@ -535,3 +535,18 @@
       + **Chặn đứng đệ quy Iframe**: Thêm điều kiện `if (window.self !== window.top) return;` vào cả luồng Silent Refresh và OAuth Hash Handler, ngăn chặn 100% việc tạo iframe lặp vô hạn.
       + **Giao diện Calendar thân thiện**: Thay đổi nhãn "Phiên hết hạn" thành "Lịch ngoại tuyến, kết nối Google Calendar" và hỗ trợ nút 1-click cấp quyền trực tiếp ngay trên Calendar.
 
+  43. **[REQ-062] Lưu Trữ Phiên Đăng Nhập Tức Thì (Instant Auth Persistence), Khử Tràn Cookie 4KB (Zero Cookie Bloat) & Khôi Phục Phiên F5 An Toàn Tuyệt Đối**:
+     - *Bối cảnh & Vấn đề*:
+       + Người dùng phản ánh: "Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ".
+       + Truy quét nguyên nhân:
+         1. *Chặn luồng lưu trữ bởi 13 cuộc gọi YouTube*: Lệnh `localStorage.setItem('user_auth')` bị đặt sau `await fetchAndAttachYouTubeData`. Quá trình này quét 4 trang subscriptions và 8 playlists video (13 requests nối tiếp mất 3-10 giây). Người dùng reset/reload trong khoảng thời gian này khiến `user_auth` chưa kịp ghi vào ổ đĩa.
+         2. *Tràn bộ nhớ Cookie (>4KB) & Lỗi SyntaxError khi parse*: Ghi toàn bộ dữ liệu 64 video và 8 kênh vào cookie vượt quá giới hạn 4096 bytes của RFC 6265. Trình duyệt tự động truncate chuỗi JSON. Khi reload trang, hàm parse từ cookie bị vỡ cú pháp `SyntaxError: Unexpected end of JSON input` và fallback về `null`.
+         3. *Rò rỉ sự kiện BroadcastChannel trong Silent Refresh Iframe*: Iframe ẩn khi gặp lỗi `interaction_required` phát tán token rỗng trước khi kiểm tra `window.self !== window.top`.
+     - *Quyết định kiến trúc & Giải pháp*:
+       + **Lưu trữ tức thì (Instant Persistence)**: Lưu `user_auth` vào `localStorage` và cookie siêu nhẹ (<300 bytes) ngay khi có `userInfo` (~200ms) trước khi bắt đầu bất kỳ tác vụ mạng thứ cấp nào.
+       + **Tách rời Background Task**: Chuyển `fetchAndAttachYouTubeData` thành tác vụ nền hoàn toàn bất đồng bộ không chặn (Non-blocking), chỉ làm giàu dữ liệu (enrich) sau đó.
+       + **Hàm chuyên biệt `saveUserAuthCookie`**: Chỉ lưu các trường tối thiểu `{ email, name, picture, sub, _access_token }` vào cookie với cờ `SameSite=Lax`, tuyệt đối không lưu mảng video/kênh, triệt tiêu 100% lỗi tràn cookie và lỗi HTTP 431 trên CDN.
+       + **Phục hồi an toàn đa tầng**: `useState` trang bị lá chắn try-catch độc lập, xử lý các trường hợp chuỗi `'null'`, `'undefined'`, fallback cookie an toàn và chống ngoại lệ `QuotaExceededError`.
+       + **Bảo đảm cờ `prompt=consent%20select_account`**: Khi người dùng bấm "nhấn cấp quyền" trên Calendar, Google sẽ bắt buộc hiển thị lại màn hình cấp quyền Calendar.
+
+

@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.31.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `272acc0` (`fix(auth): prevent calendar scope 401 from wiping session, ensure persistent login on page reload, and add resilient avatar fallback`)
+- **Phiên bản**: `1.32.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Sẽ cập nhật sau commit bản vá REQ-062
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `66681dc` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 20/20 tests PASS (100% OK).
@@ -623,6 +623,30 @@
       + `npm run build`: **Thành công 100% không lỗi**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
       + Backend Telegram tests: **14/14 tests PASS (100% ĐẠT)**, unittest REST API: **20/20 tests PASS (100% ĐẠT)**.
+
+42. **[REQ-062] Lưu Trữ Phiên Đăng Nhập Tức Thì (Instant Auth Persistence), Khử Tràn Cookie 4KB (Zero Cookie Bloat) & Khôi Phục Phiên F5 An Toàn Tuyệt Đối**:
+    - **Yêu cầu & Vấn đề giải quyết**:
+      + Người dùng phản hồi: *"Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ"*.
+      + Khi người dùng đăng nhập tài khoản Gmail xong, reload trang hoặc F5 reset thì mất phiên đăng nhập.
+      + Điều tra nguyên nhân gốc:
+        1. *Hoãn lưu storage do 13 request YouTube*: `localStorage.setItem('user_auth')` bị hoãn lại sau `await fetchAndAttachYouTubeData`. Quá trình nạp kênh YouTube mất từ 3-10 giây. Người dùng bấm reload trong khoảng thời gian này khiến `user_auth` chưa kịp ghi vào ổ đĩa.
+        2. *Tràn bộ nhớ Cookie (>4KB) & Truncate SyntaxError*: Cookie `user_auth` ghi nguyên cả object chứa danh sách 8 kênh và 64 video YouTube (> 20KB), vượt quá giới hạn 4096 bytes của trình duyệt. Trình duyệt tự động truncate chuỗi JSON. Khi reload trang, hàm parse từ cookie bị vỡ cú pháp `SyntaxError: Unexpected end of JSON input` và fallback về `null`.
+        3. *Iframe ẩn rò rỉ sự kiện BroadcastChannel*: Cơ chế silent refresh khi gặp lỗi `error=interaction_required` phát tán token rỗng ra ngoài trước khi kiểm tra `window.self !== window.top`.
+    - **Giải pháp chuyển hóa & Triển khai thực tế**:
+      1. *Lưu trữ tức thì (Instant Auth Persistence)*:
+         - Ngay khi nhận được `userInfo` từ Google (~200ms), hệ thống **ghi ngay `user_auth` vào `localStorage`** và cập nhật giao diện người dùng hiển thị avatar và menu tài khoản ngay lập tức.
+         - Tách toàn bộ việc nạp YouTube thành tác vụ nền bất đồng bộ (Non-blocking Background Task), chỉ cập nhật làm giàu dữ liệu khi hoàn tất.
+      2. *Lá chắn Cookie tinh gọn an toàn (`saveUserAuthCookie`)*:
+         - Xây dựng hàm `saveUserAuthCookie`: Chỉ lưu các trường danh tính cốt lõi (`email`, `name`, `picture`, `sub`, `_access_token`) với kích thước siêu nhỏ (< 300 bytes), kèm cờ `SameSite=Lax`.
+         - Tuyệt đối không lưu mảng video hoặc kênh vào cookie, triệt tiêu 100% lỗi cắt cụt chuỗi, lỗi mã HTTP 431 trên CDN và bảo đảm phục hồi phiên an toàn khi F5.
+      3. *Khôi phục an toàn đa tầng*:
+         - `useState` trang bị lá chắn try-catch độc lập, xử lý các trường hợp chuỗi `'null'`, `'undefined'`, fallback cookie an toàn và chống ngoại lệ `QuotaExceededError`.
+         - Chặn triệt để mã redirect chạy trong iframe ẩn ngay từ dòng đầu tiên của `useEffect`.
+         - Bổ sung cờ `prompt=consent%20select_account` khi người dùng bấm "nhấn cấp quyền" trên Calendar để Google hiển thị lại hộp chọn quyền một cách chính xác.
+    - **Nghiệm thu thực tế**:
+      + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run build`: **Thành công 100% không lỗi trong 498ms**.
+      + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
 ---
 

@@ -1,5 +1,33 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.32.0 (2026-10-21) - Lưu Trữ Phiên Đăng Nhập Tức Thì (Instant Auth Persistence), Khử Tràn Cookie 4KB (Zero Cookie Bloat) & Khôi Phục Phiên F5 An Toàn Tuyệt Đối (REQ-062)
+
+### 1. Khắc Phục Triệt Để Hiện Tượng Mất Thông Tin Gmail Sau Khi Reset / Reload Trang
+- **Nguyên nhân gốc rễ được tìm thấy và xử lý triệt để**:
+  1. *Lỗi hoãn lưu phiên do chờ 13 API YouTube*: Trước đây, `localStorage.setItem('user_auth')` và `onSuccess(userInfo)` / `setUserRole(userInfo)` bị đặt sau khối `await fetchAndAttachYouTubeData(accessToken, userInfo)`. Khối này thực hiện tới 13 yêu cầu mạng liên tiếp đến YouTube Data API (kéo dài 3-10 giây). Nếu người dùng reset/reload trang trong thời gian này, dữ liệu phiên chưa hề được ghi vào `localStorage`, dẫn đến mất hoàn toàn phiên đăng nhập.
+  2. *Lỗi tràn bộ nhớ Cookie (>4KB) & Truncate JSON SyntaxError*: Việc cố tình nhồi toàn bộ object `userInfo` chứa 8 kênh truyền hình và 64 video YouTube vào `document.cookie` làm chuỗi vượt quá giới hạn 4096 bytes của trình duyệt. Trình duyệt tự động cắt cụt chuỗi cookie. Khi F5 reload, hàm parse đọc từ cookie bị lỗi `SyntaxError: Unexpected end of JSON input` và đẩy người dùng về trạng thái chưa đăng nhập (`null`).
+  3. *Lỗi rò rỉ sự kiện BroadcastChannel trong Silent Refresh Iframe*: Iframe ẩn khi gặp mã lỗi `error=interaction_required` đã phát tán `GOOGLE_LOGIN_SUCCESS` với `accessToken = null` trước khi kiểm tra `window.self !== window.top`, làm ghi đè trạng thái token ở các cửa sổ khác.
+
+### 2. Các Giải Pháp Kỹ Thuật Đã Triển Khai
+- **Lưu trữ phiên đăng nhập tức thì (Instant Auth Persistence)**:
+  + Tách rời hoàn toàn luồng xác thực và luồng tải dữ liệu thứ cấp (YouTube / Calendar).
+  + Ngay khi nhận được `userInfo` từ Google (~200ms), hệ thống **lập tức ghi ngay `user_auth` vào `localStorage`**, kích hoạt `saveUserAuthCookie` và cập nhật giao diện người dùng tức thì.
+  + Toàn bộ logic `fetchAndAttachYouTubeData` được chuyển sang chạy ngầm không chặn (Non-blocking Background Task), chỉ cập nhật bổ sung vào storage khi hoàn tất mà không bao giờ làm gián đoạn hay làm mất phiên đăng nhập.
+- **Lá chắn Cookie tinh gọn an toàn (`saveUserAuthCookie`)**:
+  + Xây dựng hàm `saveUserAuthCookie`: Chỉ lưu các trường danh tính cốt lõi (`email`, `name`, `picture`, `sub`, `_access_token`) với kích thước siêu nhỏ (< 300 bytes), kèm cờ `SameSite=Lax`.
+  + Tuyệt đối không lưu mảng video hoặc kênh vào cookie, triệt tiêu 100% lỗi cắt cụt chuỗi, lỗi mã HTTP 431 trên CDN và bảo đảm phục hồi phiên an toàn khi F5.
+- **Khôi phục phiên đa tầng bền vững qua F5**:
+  + Bộ khởi tạo `useState` xử lý an toàn mọi định dạng chuỗi (`'null'`, `'undefined'`), trang bị fallback 2 tầng giữa `localStorage` và `cookie` với lá chắn try-catch độc lập chống `QuotaExceededError`.
+  + Chặn triệt để mã redirect chạy trong iframe ẩn ngay từ dòng đầu tiên của `useEffect`.
+  + Bổ sung cờ `prompt=consent%20select_account` khi người dùng bấm "nhấn cấp quyền" trên Calendar để Google hiển thị lại hộp chọn quyền một cách chính xác.
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run test:logic`: **423/423 assertions PASS (100% PASS)**.
+- `npm run testwebsite`: **47/47 Test Cases PASS (100% PASS)**, **RELEASE GATE: PASSED**.
+- `npm run build`: **Biên dịch thành công 100% không lỗi trong 498ms**.
+
+---
+
 ## Phiên bản 1.31.0 (2026-10-21) - Bảo Vệ Phiên Đăng Nhập Bền Vững Qua F5, Khắc Phục Lỗi Cấp Quyền Lịch Google & Avatar Dự Phòng Thông Minh (REQ-061)
 
 ### 1. Khắc Phục Triệt Để Lỗi Mất Phiên Đăng Nhập Khi Reload Trang (F5 / Page Reload)

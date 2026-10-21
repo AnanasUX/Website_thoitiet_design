@@ -2393,7 +2393,17 @@ export function VideoShortsModal({
         authObj.subscribedCount = mergedList.length;
         authObj.lastSyncedAt = new Date().toISOString();
         localStorage.setItem('user_auth', JSON.stringify(authObj));
-        document.cookie = `user_auth=${encodeURIComponent(JSON.stringify(authObj))}; path=/; max-age=31536000`;
+        // Chỉ ghi các trường phiên đăng nhập cơ bản vào cookie (<300 bytes), tuyệt đối không lưu mảng video/kênh
+        try {
+          const minimalSession = {
+            email: authObj.email,
+            name: authObj.name,
+            picture: authObj.picture,
+            sub: authObj.sub,
+            _access_token: authObj._access_token
+          };
+          document.cookie = `user_auth=${encodeURIComponent(JSON.stringify(minimalSession))}; path=/; max-age=31536000; SameSite=Lax`;
+        } catch {}
         setSyncedYtSubs(mergedList);
         if (onUpdateUser) {
           onUpdateUser(authObj);

@@ -4176,6 +4176,27 @@ export async function fetchAndAttachYouTubeData(accessToken: string, userInfo: a
   return userInfo;
 }
 
+// Hàm lưu trữ cookie xác thực an toàn, nhỏ gọn (< 300 bytes), tuyệt đối không lưu mảng video/kênh vào cookie
+export function saveUserAuthCookie(user: any) {
+  try {
+    if (!user || (!user.email && !user.sub)) {
+      document.cookie = "user_auth=; path=/; max-age=0; SameSite=Lax";
+      return;
+    }
+    const minimalSession = {
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      sub: user.sub,
+      _access_token: user._access_token
+    };
+    const minStr = JSON.stringify(minimalSession);
+    document.cookie = `user_auth=${encodeURIComponent(minStr)}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch (err) {
+    console.warn('[Cookie Save Warning]:', err);
+  }
+}
+
 export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string, forceConsent?: boolean) {
   const isCustomDomain = window.location.hostname === 'anx.io.vn' || !window.location.pathname.includes('/Website_thoitiet_design');
   const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
@@ -4185,7 +4206,10 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
   const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
   let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
   if (loginHint) {
-    authUrl += `&login_hint=${encodeURIComponent(loginHint)}&prompt=select_account`;
+    authUrl += `&login_hint=${encodeURIComponent(loginHint)}`;
+  }
+  if (forceConsent) {
+    authUrl += `&prompt=consent%20select_account`;
   } else {
     authUrl += `&prompt=select_account`;
   }
@@ -4213,17 +4237,29 @@ export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string,
         if (userInfo && (userInfo.email || userInfo.sub)) {
           userInfo._access_token = accessToken;
 
-          // Tải thông tin kênh YouTube và các kênh đã đăng ký của tài khoản một cách an toàn
+          // 1. NGAY LẬP TỨC: Lưu phiên đăng nhập vào localStorage và Cookie nhỏ gọn (<300 bytes)
           try {
-            await fetchAndAttachYouTubeData(accessToken, userInfo);
-          } catch (ytErr) {
-            console.warn('[YouTube API Sync Warning]:', ytErr);
+            localStorage.setItem('user_auth', JSON.stringify(userInfo));
+          } catch (storageErr) {
+            console.warn('[LocalStorage Save Warning]:', storageErr);
           }
+          saveUserAuthCookie(userInfo);
 
-          const authStr = JSON.stringify(userInfo);
-          localStorage.setItem('user_auth', authStr);
-          document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+          // 2. NGAY LẬP TỨC: Cập nhật giao diện người dùng hiển thị avatar và trạng thái đã đăng nhập
           onSuccess(userInfo);
+
+          // 3. CHẠY NGẦM KHÔNG BLOCK: Tải dữ liệu YouTube ở chế độ background mà không làm chậm việc lưu phiên
+          fetchAndAttachYouTubeData(accessToken, userInfo).then(enrichedUser => {
+            try {
+              localStorage.setItem('user_auth', JSON.stringify(enrichedUser));
+              saveUserAuthCookie(enrichedUser);
+              onSuccess(enrichedUser);
+            } catch (saveErr) {
+              console.warn('[YouTube Storage Sync Warning]:', saveErr);
+            }
+          }).catch(ytErr => {
+            console.warn('[YouTube API Sync Warning]:', ytErr);
+          });
         }
       } catch (err) {
         console.error('[Google OAuth UserInfo Error]:', err);
@@ -4669,14 +4705,29 @@ export default function App() {
   const [userRole, setUserRole] = useState<any>(() => {
     try {
       let saved = localStorage.getItem('user_auth');
-      if (!saved) {
+      if (!saved || saved === 'null' || saved === 'undefined') {
         // Fallback to cookie if localStorage is empty
         const match = document.cookie.match(new RegExp('(^| )user_auth=([^;]+)'));
-        if (match) saved = decodeURIComponent(match[2]);
+        if (match) {
+          try {
+            saved = decodeURIComponent(match[2]);
+          } catch {
+            saved = match[2];
+          }
+        }
       }
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed) {
+      if (saved && saved !== 'null' && saved !== 'undefined') {
+        let parsed: any = null;
+        try {
+          parsed = JSON.parse(saved);
+        } catch (jsonErr) {
+          console.warn('[user_auth JSON Parse Warning]:', jsonErr);
+          const match = document.cookie.match(new RegExp('(^| )user_auth=([^;]+)'));
+          if (match) {
+            try { parsed = JSON.parse(decodeURIComponent(match[2])); } catch {}
+          }
+        }
+        if (parsed && (parsed.email || parsed.sub || parsed.name)) {
           let modified = false;
           // Loại bỏ sạch toàn bộ mock channels cũ (Baby Shark, WaveMusic, Pinkfong, An#...)
           if (Array.isArray(parsed.youtubeSubscriptions)) {
@@ -4705,8 +4756,12 @@ export default function App() {
             }
           }
           if (modified) {
-            localStorage.setItem('user_auth', JSON.stringify(parsed));
-            document.cookie = `user_auth=${encodeURIComponent(JSON.stringify(parsed))}; path=/; max-age=31536000`;
+            try {
+              localStorage.setItem('user_auth', JSON.stringify(parsed));
+            } catch (saveErr) {
+              console.warn('[user_auth Save Warning]:', saveErr);
+            }
+            saveUserAuthCookie(parsed);
           }
 
           // Quét và khử sạch 100% rác kênh mẫu cũ trong toàn bộ localStorage
@@ -4756,6 +4811,11 @@ export default function App() {
 
   // Handle OAuth2 redirect callback (access_token or error in URL hash)
   useEffect(() => {
+    // Tuyệt đối không can thiệp bên trong iframe ẩn (Silent Refresh), tránh rò rỉ sự kiện BroadcastChannel
+    if (typeof window !== 'undefined' && window.self !== window.top) {
+      return;
+    }
+
     const rawHash = window.location.hash;
     if (rawHash && (rawHash.includes('access_token=') || rawHash.includes('error='))) {
       const cleanHash = rawHash.replace(/^[#?]/, '');
@@ -4788,10 +4848,28 @@ export default function App() {
 
       // 4. Tự động đóng cửa sổ popup đăng nhập (chỉ khi có opener hoặc đúng tên google-login, không nhầm mobile)
       const isPopup = Boolean(window.opener || window.name === 'google-login');
-      if (typeof window !== 'undefined' && window.self !== window.top) {
-        return; // Đang chạy trong iframe ẩn (Silent Refresh), dừng tại đây không can thiệp URL cha
-      }
       if (isPopup) {
+        // Nếu là popup có token, lưu nhanh thông tin người dùng vào localStorage dùng chung trước khi đóng
+        if (accessToken) {
+          fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+            .then(r => r.json())
+            .then(userInfo => {
+              if (userInfo && (userInfo.email || userInfo.sub)) {
+                userInfo._access_token = accessToken;
+                try {
+                  localStorage.setItem('user_auth', JSON.stringify(userInfo));
+                } catch {}
+                saveUserAuthCookie(userInfo);
+              }
+            })
+            .catch(() => {})
+            .finally(() => {
+              try { window.close(); } catch {}
+            });
+          return;
+        }
         try { window.close(); } catch {}
         return;
       }
@@ -4810,18 +4888,33 @@ export default function App() {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
           .then(r => r.json())
-          .then(async userInfo => {
+          .then(userInfo => {
             if (userInfo && (userInfo.email || userInfo.sub)) {
               userInfo._access_token = accessToken;
+
+              // 1. NGAY LẬP TỨC: Lưu phiên đăng nhập vào localStorage và Cookie nhỏ gọn (<300 bytes)
               try {
-                await fetchAndAttachYouTubeData(accessToken, userInfo);
-              } catch (ytErr) {
-                console.warn('[YouTube API Sync Warning]:', ytErr);
+                localStorage.setItem('user_auth', JSON.stringify(userInfo));
+              } catch (storageErr) {
+                console.warn('[LocalStorage Save Warning]:', storageErr);
               }
-              const authStr = JSON.stringify(userInfo);
-              localStorage.setItem('user_auth', authStr);
-              document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+              saveUserAuthCookie(userInfo);
+
+              // 2. NGAY LẬP TỨC: Cập nhật state để người dùng thấy trạng thái đăng nhập tức thì
               setUserRole(userInfo);
+
+              // 3. CHẠY NGẦM KHÔNG BLOCK: Tải dữ liệu YouTube ở chế độ background
+              fetchAndAttachYouTubeData(accessToken, userInfo).then(enrichedUser => {
+                try {
+                  localStorage.setItem('user_auth', JSON.stringify(enrichedUser));
+                  saveUserAuthCookie(enrichedUser);
+                  setUserRole(enrichedUser);
+                } catch (saveErr) {
+                  console.warn('[YouTube Storage Sync Warning]:', saveErr);
+                }
+              }).catch(ytErr => {
+                console.warn('[YouTube API Sync Warning]:', ytErr);
+              });
             }
           })
           .catch(err => console.error('[Google OAuth UserInfo Error]:', err));
@@ -4831,7 +4924,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('user_auth');
-    document.cookie = "user_auth=; path=/; max-age=0";
+    saveUserAuthCookie(null);
     setUserRole(null);
   };
 
@@ -4840,9 +4933,10 @@ export default function App() {
       const updated = { ...userRole };
       delete updated._access_token;
       setUserRole(updated);
-      const authStr = JSON.stringify(updated);
-      localStorage.setItem('user_auth', authStr);
-      document.cookie = `user_auth=${encodeURIComponent(authStr)}; path=/; max-age=31536000`;
+      try {
+        localStorage.setItem('user_auth', JSON.stringify(updated));
+      } catch {}
+      saveUserAuthCookie(updated);
     }
   };
 
@@ -4854,7 +4948,10 @@ export default function App() {
       fetchAndAttachYouTubeData(token, copy).then((synced) => {
         synced._ytChecked = true;
         setUserRole(synced);
-        localStorage.setItem('user_auth', JSON.stringify(synced));
+        try {
+          localStorage.setItem('user_auth', JSON.stringify(synced));
+        } catch {}
+        saveUserAuthCookie(synced);
       }).catch(() => {});
     }
   }, [userRole]);

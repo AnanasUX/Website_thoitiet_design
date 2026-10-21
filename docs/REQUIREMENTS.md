@@ -127,6 +127,7 @@
 | PROMPT-20261020-03 | 2026-10-20 | Khắc phục triệt để lỗi kẹt video không khả dụng trên kênh cũ An# Acoustic Guitar, thanh lọc bộ nhớ đệm, tự động chuyển VTV24 khi playlist 1 video bị lỗi, và duy trì hiển thị tức thì thời tiết | REQ-059 | Resolved | Approved |
 | PROMPT-20261020-04 | 2026-10-20 | Xác nhận quyền rồi tuy nhiên vẫn không đồng bộ được các kênh đã đăng ký (popup kẹt, cảnh báo vàng lặp lại, 0 kênh đăng ký) | REQ-060 | Resolved | Approved |
 | PROMPT-20261021-01 | 2026-10-21 | Đăng nhập Gmail thành công nhưng Calendar báo phải cấp quyền, reload F5 thì bị mất đăng nhập bị đẩy ra | REQ-061 | Resolved | Approved |
+| PROMPT-20261021-02 | 2026-10-21 | Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ | REQ-062 | Resolved | Approved |
 
 
 
