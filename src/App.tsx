@@ -5,6 +5,8 @@
 
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useGoogleOneTapLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 import { VideoShortsModal } from "./components/VideoShortsModal";
 import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT, DEFAULT_OFFICIAL_CHANNELS } from "./constants/userYouTubeSubscriptions";
 import {
@@ -4200,6 +4202,7 @@ export function saveUserAuthCookie(user: any) {
 }
 
 export function doGoogleLogin(onSuccess: (res: any) => void, loginHint?: string, forceConsent?: boolean) {
+  try { sessionStorage.removeItem('user_logged_out'); } catch {}
   const isCustomDomain = window.location.hostname === 'anx.io.vn' || !window.location.pathname.includes('/Website_thoitiet_design');
   const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
   const redirectUri = window.location.origin + basePath;
@@ -4807,8 +4810,108 @@ export default function App() {
     }
   }, [userRole]);
 
-  // (Đã gỡ bỏ useGoogleOneTapLogin để tránh tình trạng popup tự động hiện lên liên tục gây khó chịu)
-  // Chỉ sử dụng nút Đăng nhập thủ công ở trên Header.
+  // TỰ ĐỘNG ĐĂNG NHẬP (Auto-Login) KHI NGƯỜI DÙNG ĐÃ TỪNG ĐĂNG NHẬP GOOGLE TRÊN TRÌNH DUYỆT:
+  // Sử dụng Google Identity Services (GIS) One-Tap với cờ auto_select=true để tự động nhận diện tài khoản mà không gây gián đoạn
+  useGoogleOneTapLogin({
+    onSuccess: (credentialResponse) => {
+      if (credentialResponse.credential) {
+        try {
+          const decoded: any = jwtDecode(credentialResponse.credential);
+          if (decoded && (decoded.email || decoded.sub)) {
+            const defaultChannels = typeof DEFAULT_OFFICIAL_CHANNELS !== 'undefined'
+              ? DEFAULT_OFFICIAL_CHANNELS
+              : (typeof USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT !== 'undefined' ? USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT : []);
+
+            const newUser: any = {
+              sub: decoded.sub,
+              name: decoded.name,
+              given_name: decoded.given_name,
+              family_name: decoded.family_name,
+              picture: decoded.picture,
+              email: decoded.email,
+              email_verified: decoded.email_verified,
+              locale: decoded.locale,
+              youtubeSubscriptions: defaultChannels.map((ch: any) => ({
+                ...ch,
+                linkedUserEmail: decoded.email,
+                linkedUserName: decoded.name,
+                linkedUserAvatar: decoded.picture,
+                isAccountLinked: true
+              })),
+              youtubeChannel: {
+                id: 'mine',
+                snippet: {
+                  title: decoded.name || 'Tài khoản YouTube của tôi',
+                  description: `Tài khoản Google liên kết: ${decoded.email}`,
+                  customUrl: decoded.email ? `@${decoded.email.split('@')[0]}` : '@user',
+                  thumbnails: {
+                    default: { url: decoded.picture || '' },
+                    medium: { url: decoded.picture || '' },
+                    high: { url: decoded.picture || '' }
+                  }
+                },
+                statistics: {
+                  subscriberCount: '0',
+                  videoCount: '0',
+                  viewCount: '0'
+                }
+              }
+            };
+
+            // Lưu phiên đăng nhập 3 tầng bền vững ngay lập tức
+            try { localStorage.setItem('user_auth', JSON.stringify(newUser)); } catch {}
+            try { sessionStorage.setItem('user_auth', JSON.stringify(newUser)); } catch {}
+            saveUserAuthCookie(newUser);
+
+            setUserRole(newUser);
+          }
+        } catch (err) {
+          console.warn('[Google One Tap Auto-Login Error]:', err);
+        }
+      }
+    },
+    onError: () => {
+      // Bỏ qua khi người dùng không chọn hoặc trình duyệt không có tài khoản sẵn
+    },
+    disabled: Boolean(
+      (userRole && (userRole.email || userRole.sub || userRole.name)) ||
+      (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('user_logged_out') === '1')
+    ),
+    auto_select: true
+  });
+
+  // Tự động kiểm tra và làm mới đồng bộ thông tin tài khoản (Avatar, Name) từ Google nếu có token khi truy cập trang
+  useEffect(() => {
+    if (userRole && userRole._access_token) {
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${userRole._access_token}` },
+      })
+        .then(r => {
+          if (r.ok) return r.json();
+          if (r.status === 401) {
+            handleTokenExpired();
+          }
+          return null;
+        })
+        .then(freshInfo => {
+          if (freshInfo && (freshInfo.email || freshInfo.sub)) {
+            setUserRole((prev: any) => {
+              if (!prev) return prev;
+              const merged = {
+                ...prev,
+                ...freshInfo,
+                _access_token: prev._access_token
+              };
+              try { localStorage.setItem('user_auth', JSON.stringify(merged)); } catch {}
+              try { sessionStorage.setItem('user_auth', JSON.stringify(merged)); } catch {}
+              saveUserAuthCookie(merged);
+              return merged;
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   // Tự động đồng bộ quyền người dùng trên mọi tab/cửa sổ khi localStorage thay đổi
   useEffect(() => {
@@ -4940,6 +5043,7 @@ export default function App() {
   const handleLogout = () => {
     try { localStorage.removeItem('user_auth'); } catch {}
     try { sessionStorage.removeItem('user_auth'); } catch {}
+    try { sessionStorage.setItem('user_logged_out', '1'); } catch {}
     saveUserAuthCookie(null);
     setUserRole(null);
   };

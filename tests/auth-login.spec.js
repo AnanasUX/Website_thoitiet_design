@@ -176,4 +176,59 @@ test.describe("Google OAuth Authentication Flow & State Persistence", () => {
     const loginBtn = page.locator('div[title="Đăng nhập Google"]:visible');
     await expect(loginBtn).toBeVisible({ timeout: 5000 });
   });
+
+  test("AUTH-005: Auto-login on visit restores previous browser session and syncs user info", async ({ page }) => {
+    let userinfoRequested = false;
+    await page.route("https://www.googleapis.com/oauth2/v3/userinfo", async (route) => {
+      userinfoRequested = true;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          sub: "112233445566",
+          name: "Nguyễn Văn A Sync",
+          picture: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
+          email: "nguyenvana@gmail.com",
+          email_verified: true
+        })
+      });
+    });
+
+    await page.route("https://www.googleapis.com/youtube/v3/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [] })
+      });
+    });
+
+    // 1. Giả lập người dùng đã từng đăng nhập trước đó trên trình duyệt
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.evaluate(() => {
+      const priorSession = {
+        sub: "112233445566",
+        name: "Nguyễn Văn A Cũ",
+        email: "nguyenvana@gmail.com",
+        picture: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
+        _access_token: "valid_prior_token_123"
+      };
+      localStorage.setItem("user_auth", JSON.stringify(priorSession));
+      document.cookie = `user_auth=${encodeURIComponent(JSON.stringify(priorSession))}; path=/; max-age=31536000; SameSite=Lax`;
+    });
+
+    // 2. Người dùng truy cập lại trang web
+    await page.reload({ waitUntil: "domcontentloaded" });
+
+    // 3. Hệ thống tự động login ngay lập tức: Avatar hiển thị mà KHÔNG cần bấm nút đăng nhập
+    const avatar = page.locator('div.rounded-full:has(img):visible').first();
+    await expect(avatar).toBeVisible({ timeout: 10000 });
+
+    // 4. Kiểm tra hệ thống tự động đồng bộ thông tin mới nhất từ Google
+    await expect.poll(() => userinfoRequested, { timeout: 10000 }).toBe(true);
+
+    // 5. Kiểm tra tên người dùng được cập nhật tự động sau khi đồng bộ
+    await avatar.click();
+    const updatedName = page.locator('span:has-text("Nguyễn Văn A Sync"):visible').first();
+    await expect(updatedName).toBeVisible({ timeout: 5000 });
+  });
 });
