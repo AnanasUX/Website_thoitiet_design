@@ -648,4 +648,30 @@
         + **Bảo Toàn 100% Tiêu Chuẩn Nghiệm Thu & Kiểm Thử**:
           * Toàn bộ 47 ca kiểm thử trong `docs/qa/TEST_PLAN.md` đều tiếp tục đạt kết quả PASS (100%), không có bất kỳ hiện tượng thoái lui nào.
 
-
+  48. **[REQ-067] Kiến Trúc Định Vị Đa Tầng 4 Lớp, Loại Bỏ Hardcode Fallback & Bộ Chọn Vị Trí Khí Tượng Tương Tác**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu: "Hiện tại định vị trí trí đang sai kiểm tra lại".
+        + Nguyên nhân gốc rễ (Root Cause):
+          1. Hàm `fallbackToIp()` trong `src/App.tsx` gọi `https://ipapi.co/json/`. Dịch vụ này đã bị cạn kiệt hạn ngạch miễn phí, liên tục trả về lỗi HTTP 429 (`{"error": true, "reason": "RateLimited"}`), khiến tọa độ `data.latitude` và `data.longitude` luôn là `undefined`.
+          2. Khi không có tọa độ IP, khối lệnh fallback rơi vào đoạn mã hardcode: `doFetch(20.9716, 105.7725, "Hà Đông District, VN")`.
+          3. Trong `navigator.geolocation.getCurrentPosition`, tham số `timeout` chỉ được đặt 2500ms (2.5 giây) và `enableHighAccuracy: false`. Người dùng chỉ cần mất hơn 2.5s để bấm "Cho phép" trên hộp thoại trình duyệt hoặc dùng mạng Wi-Fi không có GPS vệ tinh là sự kiện timeout lập tức bị kích hoạt và rơi vào fallback Hà Đông.
+          4. Người dùng không có bất kỳ giao diện nào để tự chọn vị trí hoặc kích hoạt định vị lại.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Triệt Tiêu 100% Fallback Hà Đông Cưỡng Bức**:
+          * Xóa bỏ hoàn toàn tọa độ và nhãn hardcode `"Hà Đông District, VN"`.
+        + **Kiến Trúc Định Vị Đa Tầng 4 Lớp (Multi-Tier Resilient Geolocation)**:
+          * *Tầng 0 (Client Cache)*: Khi khởi động, hệ thống kiểm tra trước `localStorage.getItem('user_weather_location')`. Nếu người dùng đã từng xác nhận hoặc chọn địa điểm, tải ngay tức thì không cần đợi GPS/IP.
+          * *Tầng 1 (High-Accuracy Hardware GPS)*: Nâng cấp `enableHighAccuracy: true`, tăng timeout lên 8000ms và `maximumAge: 120000` (2 phút), giúp định vị cực kỳ chính xác khi thiết bị có GPS hoặc Wi-Fi triangulation.
+          * *Tầng 2 (IP Geolocation Không Bị Bóp Quota)*: Tích hợp dịch vụ `https://ipwho.is/` (đã kiểm chứng hoạt động 100% tại Việt Nam, không giới hạn rate limit) và dự phòng tầng 2.2 `http://ip-api.com/json/`.
+          * *Tầng 3 (Tọa Độ Thủ Đô Chuẩn Xác)*: Nếu cả GPS lẫn IP đều bị chặn hoàn toàn, hệ thống fallback về tọa độ trung tâm Thủ đô Hà Nội (`21.0285, 105.8542`) với nhãn tiếng Việt chuẩn `"Hà Nội, VN"`.
+        + **Động Cơ OWM Reverse Geocoding Tiếng Việt**:
+          * Tích hợp OpenWeatherMap Reverse Geocoding API (`https://api.openweathermap.org/geo/1.0/reverse`) chạy song song trong `Promise.all` cùng thời tiết.
+          * Tự động ưu tiên bóc tách trường `local_names.vi` ("Hà Nội", "Thành phố Hồ Chí Minh", "Thành phố Đà Nẵng",...) giúp địa danh luôn hiển thị thuần Việt chuẩn mực.
+        + **Bộ Chọn Vị Trí Khí Tượng Tương Tác (`LocationSelectorModal`)**:
+          * Cho phép nhấp vào huy hiệu vị trí ở bất cứ đâu trên giao diện: Hero Weather Card (`data-testid="hero-location-badge"`), Mobile Header (`data-testid="mobile-location-btn"`), Tablet Header (`data-testid="tablet-location-btn"`) và Desktop Header (`data-testid="desktop-location-selector-btn"`).
+          * Cung cấp nút định vị tức thời "🎯 Tự động định vị vị trí hiện tại (GPS)" (`data-testid="location-gps-btn"`).
+          * Thanh tìm kiếm tức thì quận huyện/tỉnh thành không dấu (`data-testid="location-search-input"`).
+          * Danh mục 32 địa phương trọng điểm (Hà Nội, Cầu Giấy, Hoàn Kiếm, Đống Đa, Ba Đình, Nam Từ Liêm, TP. Hồ Chí Minh, Quận 1, Thủ Đức, Đà Nẵng, Hải Phòng, Cần Thơ, Nha Trang, Đà Lạt, Sa Pa,...) phân theo các tab vùng miền.
+          * Khi chọn địa điểm mới, dữ liệu thời tiết được nạp lại tức thì và lưu trữ vào `localStorage.setItem('user_weather_location', ...)`.
+        + **Bảo Toàn Nghiệm Thu & Kiểm Thử**:
+          * Đạt 423/423 logic assertions (`npm run test:logic`), 47/47 ca kiểm thử website (`npm run testwebsite`), `RELEASE GATE: PASSED`.

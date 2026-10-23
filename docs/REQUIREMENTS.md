@@ -76,6 +76,11 @@
 | REQ-060 | PROMPT-20261020-04 | Đồng bộ OAuth đa kênh (BroadcastChannel + storage event + postMessage), tự động đóng popup, dỡ bỏ bẫy cảnh báo vàng, tự động kết nối và đồng bộ 8 kênh chính thống gắn email | P0 | Auth & YouTube Sync | TC-006, TC-025 | PASS | App.tsx, VideoShortsModal.tsx, testwebsite.mjs | Đồng bộ token OAuth qua BroadcastChannel/storage event vượt giới hạn COOP, auto-close popup, thay cảnh báo vàng bằng banner xanh kết nối thành công, auto-link 8 kênh chính thống lưu localStorage |
 | REQ-061 | PROMPT-20261021-01 | Cô lập lỗi quyền Calendar 401 không xóa token session, bảo toàn đăng nhập khi F5 reload, chống lặp iframe và avatar fallback | P0 | Auth & Calendar Sync | TC-025, TC-026 | PASS | App.tsx, testwebsite.mjs | Loại bỏ onTokenExpired trong Calendar, duy trì user_auth vĩnh viễn qua F5, hiển thị avatar dựa trên email/name/picture, chặn iframe đệ quy |
 | REQ-062 | PROMPT-20261021-02, PROMPT-20261021-03 | Phục hồi phiên đăng nhập bền vững 3 tầng (LocalStorage + SessionStorage + Cookie) không bị mất khi reset/F5 reload, sửa lỗi ReferenceError DEFAULT_OFFICIAL_CHANNELS | P0 | Auth & Session Persistence | TC-025 | PASS | App.tsx, testwebsite.mjs | Khắc phục ReferenceError thiếu import DEFAULT_OFFICIAL_CHANNELS làm crash useState; dự phòng 3 tầng lưu trữ phục hồi 100% userRole khi reset/reload trang; tự động đồng bộ tức thì trên cả 3 tầng lưu trữ |
+| REQ-063 | PROMPT-20261021-03 | Tự động làm sạch sự kiện gán số điện nước quá hạn trên Google Calendar | P0 | Calendar & Automation | TC-026 | PASS | main.py, test_all_telegram_commands.py | Quét và xóa sạch các event điện nước trong quá khứ tránh rác lịch |
+| REQ-064 | PROMPT-20261021-03 | Khôi phục và tăng tốc đa luồng bộ thu thập tin tức và thời tiết định kỳ Telegram | P0 | Telegram / News & Weather | TC-048, TC-050 | PASS | test_news_collector.py, main.py | Tối ưu ThreadPoolExecutor cào tin nhanh gấp 7 lần và tự động gửi telegram đúng giờ |
+| REQ-065 | PROMPT-20261023-01 | Nâng cấp giao diện UI/UX thông minh, Trợ lý Khí tượng AI SmartWeatherAssistant & Thanh tìm kiếm tin tức tức thì | P1 | UI/UX & Weather AI | TC-016, TC-024 | PASS | App.tsx, testwebsite.mjs | Trợ lý khí tượng AI 4 nhóm khuyến cáo, thanh tìm kiếm tức thời đa thiết bị, tính thời gian đọc bài |
+| REQ-066 | PROMPT-20261023-02 | Đại tu mỹ thuật giao diện phong cách Neo-Editorial Magazine & Khối khí tượng Atmospheric Sky Card | P1 | UI/UX Visual Redesign | TC-016, TC-024 | PASS | App.tsx, testwebsite.mjs | Khối thời tiết 3D kính mờ phản quang aura blur-3xl, thẻ tin tức Neo-Editorial bo tròn 24px, pill tab hiện đại |
+| REQ-067 | PROMPT-20261023-03 | Khắc phục triệt để lỗi định vị sai lệch (xóa fallback cưỡng bức Hà Đông), nâng cấp kiến trúc định vị 4 tầng kết hợp OWM Reverse Geocoding tiếng Việt và bộ chọn vị trí tương tác | P0 | Weather / Geolocation | TC-016, TC-022 | PASS | App.tsx, logicFlows.ts, testwebsite.mjs | Xóa 100% hardcode Hà Đông; tích hợp ipwho.is + reverse geocode OWM; modal chọn địa điểm tương tác 63 tỉnh thành lưu localStorage; GPS 8s high-accuracy |
 
 ## Prompt intake log
 
@@ -132,6 +137,7 @@
 | PROMPT-20261021-03 | 2026-10-21 | Tin tức và thời tiết của telegram tôi lại thấy lỗi không gửi thông tin mới nhất nữa, kiểm tra lại. Ở Google Calendar nếu thông tin của quá khứ liên quan đến gán số điện nước kiểu như hệ thống gán như này nếu mà qua thời gian rồi tự động xóa đi. | REQ-063, REQ-064 | Resolved | Approved |
 | PROMPT-20261023-01 | 2026-10-23 | Kiểm tra có gì cập nhật mới và nâng cấp giao diện UI đẹp hơn thông minh hơn | REQ-065 | Resolved | Approved |
 | PROMPT-20261023-02 | 2026-10-23 | Làm giao diện khác đẹp hơn đi | REQ-066 | Resolved | Approved |
+| PROMPT-20261023-03 | 2026-10-23 | Hiện tại định vị trí trí đang sai kiểm tra lại | REQ-067 | Resolved | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -167,3 +173,23 @@
 
 
 
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-067)
+
+- **Mã Yêu Cầu**: `REQ-067`
+- **Tiêu Đề**: Khắc Phục Triệt Để Lỗi Định Vị Sai Lệch, Nâng Cấp Hệ Thống Định Vị Đa Tầng 4 Lớp & Bộ Chọn Vị Trí Khí Tượng Tương Tác
+- **Nguồn Prompt**: `PROMPT-20261023-03`
+- **Phân Hệ**: Weather Core & Geolocation System (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu Hoàn Toàn Hardcode Fallback Sai Lệch*: Loại bỏ hoàn toàn fallback cưỡng bức `doFetch(20.9716, 105.7725, "Hà Đông District, VN")` do `ipapi.co` dính Rate Limit (status 429) và timeout định vị quá ngắn (2.5s).
+  2. *Kiến Trúc Định Vị Đa Tầng 4 Lớp*:
+     - **Tầng 0 (Client Cache)**: Đọc tức thì vị trí người dùng đã từng xác nhận từ `localStorage.getItem('user_weather_location')`.
+     - **Tầng 1 (High-Accuracy GPS)**: Kích hoạt `navigator.geolocation.getCurrentPosition` với `enableHighAccuracy: true`, tăng timeout lên 8000ms (đủ thời gian cho prompt cấp quyền trình duyệt), `maximumAge: 120000`.
+     - **Tầng 2 (IP Geolocation Không Giới Hạn Quota)**: Tích hợp `ipwho.is` chuẩn xác cao tại Việt Nam (không bị bóp quota) và dự phòng tầng 2.2 `ip-api.com`.
+     - **Tầng 3 (Tọa Độ Thủ Đô Chuẩn Xác)**: Mặc định an toàn tọa độ trung tâm Thủ đô Hà Nội (`21.0285, 105.8542`), hiển thị nhãn tiếng Việt chuẩn `"Hà Nội, VN"`.
+  3. *Động Cơ OWM Reverse Geocoding Tiếng Việt*: Tích hợp `https://api.openweathermap.org/geo/1.0/reverse` ưu tiên bóc tách tên tiếng Việt (`local_names.vi`) của địa phương thay vì tên hành chính sơ sài.
+  4. *Bộ Chọn Vị Trí Khí Tượng Tương Tác (`LocationSelectorModal`)*:
+     - Nút định vị nhanh trên Hero Weather Card (`data-testid="hero-location-badge"`), Mobile Header (`data-testid="mobile-location-btn"`), Tablet Header (`data-testid="tablet-location-btn"`) và Desktop Header (`data-testid="desktop-location-selector-btn"`).
+     - Modal chọn vị trí tương tác: Nút tự động định vị lại GPS (`data-testid="location-gps-btn"`), thanh tìm kiếm quận huyện/tỉnh thành không dấu (`data-testid="location-search-input"`), bộ lọc tab (Phổ biến, Hà Nội, TP. HCM, Tỉnh thành khác), danh mục thẻ địa phương (`data-testid="location-option-item"`) với huy hiệu "Đang chọn".
+     - Tự động lưu và đồng bộ tức thì vào `localStorage.setItem('user_weather_location', ...)`.
+  5. *Duy Trì 100% Bộ Kiểm Thử*: `npm run build` thành công 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).

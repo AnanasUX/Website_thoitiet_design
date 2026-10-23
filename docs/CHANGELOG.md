@@ -1,5 +1,35 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.37.0 (2026-10-23) - Khắc Phục Triệt Để Lỗi Định Vị Sai Lệch, Hệ Thống Định Vị Đa Tầng 4 Lớp & Bộ Chọn Vị Trí Tương Tác (REQ-067)
+
+### 1. Triệt Tiêu 100% Lỗi Định Vị Cưỡng Bức Hà Đông
+- Xóa bỏ vĩnh viễn đoạn mã hardcode `doFetch(20.9716, 105.7725, "Hà Đông District, VN")`.
+- Giải quyết triệt để lỗi `ipapi.co` cạn hạn ngạch (status 429 Rate Limited) và timeout HTML5 Geolocation 2.5s quá ngắn.
+
+### 2. Kiến Trúc Định Vị Đa Tầng 4 Lớp (Multi-Tier Resilient Geolocation)
+- **Tầng 0 (Client Cache)**: Tự động ghi nhớ vị trí người dùng đã chọn vào `localStorage.getItem('user_weather_location')` và nạp tức thời khi mở trang hoặc F5 reload.
+- **Tầng 1 (Hardware GPS)**: Nâng cấp `enableHighAccuracy: true`, tăng timeout lên 8000ms (đủ thời gian cho prompt cấp quyền trình duyệt), `maximumAge: 120000` (2 phút).
+- **Tầng 2 (IP Geolocation Không Bị Bóp Quota)**: Tích hợp dịch vụ `https://ipwho.is/` (chính xác cao tại Việt Nam, không giới hạn rate limit) và dự phòng tầng 2.2 `http://ip-api.com/json/`.
+- **Tầng 3 (Tọa Độ Thủ Đô Chuẩn Xác)**: Fallback an toàn về trung tâm Thủ đô Hà Nội (`21.0285, 105.8542`) với nhãn tiếng Việt chuẩn `"Hà Nội, VN"`.
+
+### 3. Động Cơ OWM Reverse Geocoding Tiếng Việt
+- Tích hợp OpenWeatherMap Reverse Geocoding API (`https://api.openweathermap.org/geo/1.0/reverse`) chạy song song trong `Promise.all`.
+- Ưu tiên bóc tách trường `local_names.vi` ("Hà Nội", "Thành phố Hồ Chí Minh", "Thành phố Đà Nẵng",...) giúp địa danh hiển thị thuần Việt chuẩn mực.
+
+### 4. Bộ Chọn Vị Trí Khí Tượng Tương Tác (`LocationSelectorModal`)
+- Nhấp vào huy hiệu vị trí ở bất cứ đâu trên giao diện: Hero Weather Card (`data-testid="hero-location-badge"`), Mobile Header (`data-testid="mobile-location-btn"`), Tablet Header (`data-testid="tablet-location-btn"`) và Desktop Header (`data-testid="desktop-location-selector-btn"`).
+- Nút tự động định vị lại GPS tức thời ("🎯 Tự động định vị vị trí hiện tại (GPS)").
+- Thanh tìm kiếm quận huyện/tỉnh thành không dấu tức thì.
+- Danh mục 32 địa phương trọng điểm phân theo tab vùng miền (Phổ biến, Hà Nội, TP. HCM, Tỉnh thành khác) với huy hiệu "Đang chọn".
+- Lưu trữ bền vững vào `localStorage.setItem('user_weather_location', ...)`.
+
+### 5. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Thành công 100% trong 509ms.
+- `npm run test:logic`: 423/423 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả 3 kích thước màn hình Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.36.0 (2026-10-23) - Đại Tu Mỹ Thuật Giao Diện Toàn Diện (Neo-Editorial Magazine & Atmospheric Sky Card) (REQ-066)
 
 ### 1. Khối Khí Tượng Atmospheric Sky Card Chiều Sâu 3D

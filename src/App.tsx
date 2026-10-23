@@ -523,6 +523,7 @@ function WeatherSection({
   darkMode,
   isLoading,
   onArticleClick,
+  onOpenLocationSelector,
 }: {
   compact?: boolean;
   condKey: ConditionKey;
@@ -531,6 +532,7 @@ function WeatherSection({
   darkMode?: boolean;
   isLoading?: boolean;
   onArticleClick?: (article: any) => void;
+  onOpenLocationSelector?: () => void;
 }) {
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
@@ -561,12 +563,23 @@ function WeatherSection({
         <div className="absolute -left-12 -bottom-12 w-48 h-48 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none"></div>
 
         <div className="flex items-center justify-between w-full z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white font-medium text-[12.5px] shadow-xs">
-            <span>📍</span>
-            <span>{compact ? WEATHER.location : WEATHER.locationFull}</span>
+          <button
+            type="button"
+            onClick={onOpenLocationSelector}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md border border-white/25 text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group"
+            title="Nhấp để đổi vị trí hoặc tự động định vị lại GPS"
+            data-testid="hero-location-badge"
+          >
+            <span className="group-hover:scale-125 transition-transform">📍</span>
+            <span className="underline decoration-dotted decoration-white/70 underline-offset-2">
+              {compact ? WEATHER.location : WEATHER.locationFull}
+            </span>
             <span className="opacity-60">·</span>
             <span>{WEATHER.time}</span>
-          </div>
+            <span className="text-[10px] bg-white/25 hover:bg-white/35 font-bold px-1.5 py-0.5 rounded-full ml-1">
+              Đổi
+            </span>
+          </button>
         </div>
 
         <div className="flex flex-col gap-1 items-start w-full z-10">
@@ -2452,7 +2465,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onLogout,
   onTokenExpired,
   onRelogin,
-  onOpenShorts
+  onOpenShorts,
+  onOpenLocationSelector
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -2471,6 +2485,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
     onTokenExpired?: () => void;
     onRelogin?: () => void;
     onOpenShorts?: () => void;
+    onOpenLocationSelector?: () => void;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2494,9 +2509,16 @@ function MobileLayout({ activeCategory, setActiveCategory,
         <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent">Anx.</span>
         <div className="flex items-center">
           <div className="flex flex-col items-end">
-            <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
-              📍 {WEATHER.location}
-            </p>
+            <button
+              type="button"
+              onClick={onOpenLocationSelector}
+              className="font-medium text-[#182033] dark:text-slate-200 text-[12px] whitespace-nowrap text-right hover:text-blue-600 transition-colors cursor-pointer flex items-center justify-end gap-1 group"
+              title="Nhấp để đổi vị trí hoặc tự động định vị lại GPS"
+              data-testid="mobile-location-btn"
+            >
+              <span className="group-hover:scale-110 transition-transform">📍</span>
+              <span className="underline decoration-dotted decoration-slate-400 underline-offset-2">{WEATHER.location}</span>
+            </button>
             <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
               <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
                 {shortDateStr} · {timeStr}
@@ -2526,7 +2548,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
-          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
+          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
@@ -2666,7 +2688,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onLogout,
   onTokenExpired,
   onRelogin,
-  onOpenShorts
+  onOpenShorts,
+  onOpenLocationSelector
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -2685,6 +2708,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     onTokenExpired?: () => void;
     onRelogin?: () => void;
     onOpenShorts?: () => void;
+    onOpenLocationSelector?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2710,9 +2734,16 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent">Anx.</span>
-          <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
-            📍 {WEATHER.location}
-          </p>
+          <button
+            type="button"
+            onClick={onOpenLocationSelector}
+            className="font-medium text-[#5f687b] dark:text-slate-300 text-[13px] whitespace-nowrap hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-1 group"
+            title="Nhấp để đổi vị trí hoặc tự động định vị lại GPS"
+            data-testid="tablet-location-btn"
+          >
+            <span className="group-hover:scale-110 transition-transform">📍</span>
+            <span className="underline decoration-dotted decoration-slate-400 underline-offset-2">{WEATHER.location}</span>
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-[#f4f6fa] flex items-center h-[32px] px-3 py-1 rounded-full shrink-0">
@@ -2760,7 +2791,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
-          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} />
         </div>
 
         {/* News panel */}
@@ -2916,7 +2947,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onLogout,
   onTokenExpired,
   onRelogin,
-  onOpenShorts
+  onOpenShorts,
+  onOpenLocationSelector
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -2935,6 +2967,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     onTokenExpired?: () => void;
     onRelogin?: () => void;
     onOpenShorts?: () => void;
+    onOpenLocationSelector?: () => void;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2967,6 +3000,22 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         </div>
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onOpenLocationSelector}
+            className="bg-[#f4f6fa] dark:bg-slate-800 hover:bg-[#e3e7ef] dark:hover:bg-slate-700 flex items-center gap-1.5 h-[32px] px-3 py-1 rounded-full shrink-0 cursor-pointer transition-colors border border-transparent hover:border-blue-300 group"
+            title="Nhấp để đổi vị trí thời tiết hoặc tự động định vị GPS"
+            data-testid="desktop-location-selector-btn"
+          >
+            <span className="text-blue-600 group-hover:scale-110 transition-transform">📍</span>
+            <span className="font-semibold text-[#182033] dark:text-slate-200 text-[12px] whitespace-nowrap underline decoration-dotted decoration-slate-400 underline-offset-2">
+              {WEATHER?.location || "Hà Nội"}
+            </span>
+            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/50 px-1.5 py-0.5 rounded-full ml-0.5">
+              Đổi
+            </span>
+          </button>
+
           <div className="bg-[#f4f6fa] flex items-center h-[32px] px-3 py-1 rounded-full shrink-0">
             <p className="font-normal text-[#5f687b] text-[12px] whitespace-nowrap">
               {dateStr} · {timeStr}
@@ -3015,7 +3064,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       >
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
-          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} />
         </div>
 
         {/* News column */}
@@ -3256,6 +3305,280 @@ function DevWeatherPanel({
         </div>
       </div>
     </>
+  );
+}
+
+
+// ── Location Selector Modal (Interactive GPS & Vietnam Districts/Provinces) ───
+
+interface LocationItem {
+  id: string;
+  name: string;
+  nameFull: string;
+  lat: number;
+  lon: number;
+  region: 'Hà Nội' | 'TP. Hồ Chí Minh' | 'Miền Bắc' | 'Miền Trung' | 'Tây Nguyên' | 'Miền Nam';
+  isPopular?: boolean;
+}
+
+const VIETNAM_LOCATIONS: LocationItem[] = [
+  // Hà Nội & các quận nội ngoại thành
+  { id: 'hn-center', name: 'Hà Nội (Trung tâm)', nameFull: 'Hà Nội, VN', lat: 21.0285, lon: 105.8542, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-cau-giay', name: 'Quận Cầu Giấy', nameFull: 'Cầu Giấy, Hà Nội', lat: 21.0362, lon: 105.7906, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-hoan-kiem', name: 'Quận Hoàn Kiếm', nameFull: 'Hoàn Kiếm, Hà Nội', lat: 21.0307, lon: 105.8524, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-dong-da', name: 'Quận Đống Đa', nameFull: 'Đống Đa, Hà Nội', lat: 21.0166, lon: 105.8249, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-ba-dinh', name: 'Quận Ba Đình', nameFull: 'Ba Đình, Hà Nội', lat: 21.0341, lon: 105.8239, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-nam-tu-liem', name: 'Quận Nam Từ Liêm', nameFull: 'Nam Từ Liêm, Hà Nội', lat: 21.0163, lon: 105.7656, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-bac-tu-liem', name: 'Quận Bắc Từ Liêm', nameFull: 'Bắc Từ Liêm, Hà Nội', lat: 21.0667, lon: 105.7600, region: 'Hà Nội' },
+  { id: 'hn-tay-ho', name: 'Quận Tây Hồ', nameFull: 'Tây Hồ, Hà Nội', lat: 21.0718, lon: 105.8248, region: 'Hà Nội' },
+  { id: 'hn-thanh-xuan', name: 'Quận Thanh Xuân', nameFull: 'Thanh Xuân, Hà Nội', lat: 20.9937, lon: 105.8122, region: 'Hà Nội' },
+  { id: 'hn-ha-dong', name: 'Quận Hà Đông', nameFull: 'Hà Đông, Hà Nội', lat: 20.9716, lon: 105.7725, region: 'Hà Nội' },
+  { id: 'hn-long-bien', name: 'Quận Long Biên', nameFull: 'Long Biên, Hà Nội', lat: 21.0364, lon: 105.8951, region: 'Hà Nội' },
+  { id: 'hn-hoang-mai', name: 'Quận Hoàng Mai', nameFull: 'Hoàng Mai, Hà Nội', lat: 20.9760, lon: 105.8524, region: 'Hà Nội' },
+  { id: 'hn-hai-ba-trung', name: 'Quận Hai Bà Trưng', nameFull: 'Hai Bà Trưng, Hà Nội', lat: 21.0076, lon: 105.8544, region: 'Hà Nội' },
+
+  // TP. Hồ Chí Minh
+  { id: 'hcm-center', name: 'TP. Hồ Chí Minh (Trung tâm)', nameFull: 'TP. Hồ Chí Minh, VN', lat: 10.8231, lon: 106.6297, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-q1', name: 'Quận 1, TP. HCM', nameFull: 'Quận 1, TP. Hồ Chí Minh', lat: 10.7769, lon: 106.7009, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-thu-duc', name: 'TP. Thủ Đức, TP. HCM', nameFull: 'Thủ Đức, TP. Hồ Chí Minh', lat: 10.8494, lon: 106.7716, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-q3', name: 'Quận 3, TP. HCM', nameFull: 'Quận 3, TP. Hồ Chí Minh', lat: 10.7844, lon: 106.6844, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-q7', name: 'Quận 7, TP. HCM', nameFull: 'Quận 7, TP. Hồ Chí Minh', lat: 10.7380, lon: 106.7266, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-binh-thanh', name: 'Quận Bình Thạnh, TP. HCM', nameFull: 'Bình Thạnh, TP. Hồ Chí Minh', lat: 10.8034, lon: 106.6997, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-tan-binh', name: 'Quận Tân Bình, TP. HCM', nameFull: 'Tân Bình, TP. Hồ Chí Minh', lat: 10.8015, lon: 106.6548, region: 'TP. Hồ Chí Minh' },
+
+  // Miền Bắc
+  { id: 'hai-phong', name: 'Hải Phòng', nameFull: 'Hải Phòng, VN', lat: 20.8449, lon: 106.6881, region: 'Miền Bắc', isPopular: true },
+  { id: 'quang-ninh', name: 'Hạ Long (Quảng Ninh)', nameFull: 'Quảng Ninh, VN', lat: 20.9505, lon: 107.0734, region: 'Miền Bắc', isPopular: true },
+  { id: 'lao-cai', name: 'Sa Pa (Lào Cai)', nameFull: 'Sa Pa, Lào Cai, VN', lat: 22.3364, lon: 103.8438, region: 'Miền Bắc', isPopular: true },
+  { id: 'lang-son', name: 'Lạng Sơn', nameFull: 'Lạng Sơn, VN', lat: 21.8533, lon: 106.7615, region: 'Miền Bắc' },
+  { id: 'thai-nguyen', name: 'Thái Nguyên', nameFull: 'Thái Nguyên, VN', lat: 21.5942, lon: 105.8482, region: 'Miền Bắc' },
+  { id: 'bac-ninh', name: 'Bắc Ninh', nameFull: 'Bắc Ninh, VN', lat: 21.1861, lon: 106.0763, region: 'Miền Bắc' },
+  { id: 'nam-dinh', name: 'Nam Định', nameFull: 'Nam Định, VN', lat: 20.4344, lon: 106.1774, region: 'Miền Bắc' },
+
+  // Miền Trung
+  { id: 'da-nang', name: 'Đà Nẵng', nameFull: 'Đà Nẵng, VN', lat: 16.0544, lon: 108.2022, region: 'Miền Trung', isPopular: true },
+  { id: 'hue', name: 'Thừa Thiên Huế', nameFull: 'Huế, VN', lat: 16.4637, lon: 107.5909, region: 'Miền Trung', isPopular: true },
+  { id: 'nha-trang', name: 'Nha Trang (Khánh Hòa)', nameFull: 'Nha Trang, Khánh Hòa, VN', lat: 12.2388, lon: 109.1967, region: 'Miền Trung', isPopular: true },
+  { id: 'vinh', name: 'Vinh (Nghệ An)', nameFull: 'Vinh, Nghệ An, VN', lat: 18.6796, lon: 105.6813, region: 'Miền Trung' },
+  { id: 'thanh-hoa', name: 'Thanh Hóa', nameFull: 'Thanh Hóa, VN', lat: 19.8067, lon: 105.7852, region: 'Miền Trung' },
+  { id: 'quy-nhon', name: 'Quy Nhơn (Bình Định)', nameFull: 'Quy Nhơn, Bình Định, VN', lat: 13.7830, lon: 109.2197, region: 'Miền Trung' },
+
+  // Tây Nguyên
+  { id: 'da-lat', name: 'Đà Lạt (Lâm Đồng)', nameFull: 'Đà Lạt, Lâm Đồng, VN', lat: 11.9404, lon: 108.4583, region: 'Tây Nguyên', isPopular: true },
+  { id: 'buon-ma-thuot', name: 'Buôn Ma Thuột (Đắk Lắk)', nameFull: 'Buôn Ma Thuột, Đắk Lắk, VN', lat: 12.6667, lon: 108.0383, region: 'Tây Nguyên' },
+  { id: 'pleiku', name: 'Pleiku (Gia Lai)', nameFull: 'Pleiku, Gia Lai, VN', lat: 13.9833, lon: 108.0000, region: 'Tây Nguyên' },
+
+  // Miền Nam
+  { id: 'can-tho', name: 'Cần Thơ', nameFull: 'Cần Thơ, VN', lat: 10.0452, lon: 105.7469, region: 'Miền Nam', isPopular: true },
+  { id: 'vung-tau', name: 'Bà Rịa - Vũng Tàu', nameFull: 'Vũng Tàu, VN', lat: 10.3460, lon: 107.0843, region: 'Miền Nam', isPopular: true },
+  { id: 'phu-quoc', name: 'Phú Quốc (Kiên Giang)', nameFull: 'Phú Quốc, Kiên Giang, VN', lat: 10.2899, lon: 103.9840, region: 'Miền Nam', isPopular: true },
+  { id: 'ca-mau', name: 'Cà Mau', nameFull: 'Cà Mau, VN', lat: 9.1769, lon: 105.1524, region: 'Miền Nam' },
+  { id: 'binh-duong', name: 'Bình Dương (Thủ Dầu Một)', nameFull: 'Bình Dương, VN', lat: 10.9804, lon: 106.6519, region: 'Miền Nam' },
+  { id: 'dong-nai', name: 'Đồng Nai (Biên Hòa)', nameFull: 'Biên Hòa, Đồng Nai, VN', lat: 10.9574, lon: 106.8427, region: 'Miền Nam' },
+];
+
+function LocationSelectorModal({
+  isOpen,
+  onClose,
+  currentLocation,
+  onSelectLocation,
+  onRequestGps,
+  isGpsLoading,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  currentLocation?: string;
+  onSelectLocation: (lat: number, lon: number, name: string, nameFull: string) => void;
+  onRequestGps: () => void;
+  isGpsLoading?: boolean;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<'all' | 'popular' | 'Hà Nội' | 'TP. Hồ Chí Minh' | 'khac'>('all');
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const normalizeStr = (str: string) =>
+    str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').toLowerCase().trim();
+
+  const filteredLocations = VIETNAM_LOCATIONS.filter(item => {
+    if (searchQuery.trim()) {
+      const q = normalizeStr(searchQuery);
+      return normalizeStr(item.name).includes(q) || normalizeStr(item.nameFull).includes(q) || normalizeStr(item.region).includes(q);
+    }
+    if (activeTab === 'popular') return item.isPopular;
+    if (activeTab === 'Hà Nội') return item.region === 'Hà Nội';
+    if (activeTab === 'TP. Hồ Chí Minh') return item.region === 'TP. Hồ Chí Minh';
+    if (activeTab === 'khac') return item.region !== 'Hà Nội' && item.region !== 'TP. Hồ Chí Minh';
+    return true;
+  });
+
+  return (
+    <div
+      className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
+      data-testid="location-selector-modal"
+    >
+      <div
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] transition-all"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-50/50 via-indigo-50/30 to-transparent dark:from-slate-800/50">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl p-2 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600">📍</span>
+            <div>
+              <h3 className="font-bold text-[17px] text-slate-800 dark:text-slate-100">Chọn vị trí thời tiết</h3>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400">Xem dự báo khí tượng & chất lượng không khí chuẩn xác</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* GPS Quick Action Card */}
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+          <button
+            type="button"
+            onClick={onRequestGps}
+            disabled={isGpsLoading}
+            className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+            data-testid="location-gps-btn"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{isGpsLoading ? "⏳" : "🎯"}</span>
+              <div className="text-left">
+                <p className="font-bold text-[14px]">
+                  {isGpsLoading ? "Đang dò tìm tọa độ GPS..." : "Tự động định vị vị trí hiện tại (GPS)"}
+                </p>
+                <p className="text-[11px] text-blue-100 opacity-90">Sử dụng cảm biến thiết bị & mạng cục bộ chính xác nhất</p>
+              </div>
+            </div>
+            <span className="text-[12px] font-semibold bg-white/20 px-2.5 py-1 rounded-full">
+              {isGpsLoading ? "Đang xử lý" : "Định vị ngay"}
+            </span>
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div className="p-4 pb-2">
+          <div className="relative">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm quận huyện, tỉnh thành (Cầu Giấy, Hoàn Kiếm, TP. HCM...)"
+              className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              data-testid="location-search-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Filter Tabs */}
+          {!searchQuery && (
+            <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 scrollbar-none text-[12px]">
+              {[
+                { key: 'all', label: 'Tất cả' },
+                { key: 'popular', label: '⭐ Phổ biến' },
+                { key: 'Hà Nội', label: 'Hà Nội' },
+                { key: 'TP. Hồ Chí Minh', label: 'TP. HCM' },
+                { key: 'khac', label: 'Tỉnh thành khác' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key as any)}
+                  className={`px-3 py-1 rounded-full shrink-0 font-medium transition-all cursor-pointer ${
+                    activeTab === tab.key
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Locations List */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 max-h-[45vh]">
+          {filteredLocations.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-[13px]">
+              Không tìm thấy địa điểm phù hợp với "{searchQuery}"
+            </div>
+          ) : (
+            filteredLocations.map(loc => {
+              const isCurrent = currentLocation && (currentLocation.includes(loc.name) || loc.name.includes(currentLocation));
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => onSelectLocation(loc.lat, loc.lon, loc.name, loc.nameFull)}
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl border text-left transition-all cursor-pointer group ${
+                    isCurrent
+                      ? "border-blue-500 bg-blue-50/60 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200"
+                      : "border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750"
+                  }`}
+                  data-testid="location-option-item"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base group-hover:scale-110 transition-transform">📍</span>
+                    <div>
+                      <p className="font-semibold text-[13.5px] text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        {loc.name}
+                        {loc.isPopular && (
+                          <span className="text-[10px] bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-bold px-1.5 py-0.2 rounded-full">
+                            Hot
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                        {loc.nameFull} · {loc.region}
+                      </p>
+                    </div>
+                  </div>
+                  {isCurrent ? (
+                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span>✓</span> Đang chọn
+                    </span>
+                  ) : (
+                    <span className="text-[12px] text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transition-colors">
+                      Chọn →
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -4840,6 +5163,39 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
 
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null) => void) | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [isGpsLocating, setIsGpsLocating] = useState(false);
+
+  const handleSelectLocation = (lat: number, lon: number, name: string, nameFull: string) => {
+    setShowLocationModal(false);
+    if (doFetchRef.current) {
+      doFetchRef.current(lat, lon, nameFull || name);
+    }
+  };
+
+  const handleRequestGps = () => {
+    if (!navigator.geolocation) {
+      alert("Trình duyệt không hỗ trợ định vị GPS.");
+      return;
+    }
+    setIsGpsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsGpsLocating(false);
+        setShowLocationModal(false);
+        if (doFetchRef.current) {
+          doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null);
+        }
+      },
+      (err) => {
+        console.warn("GPS request error:", err);
+        setIsGpsLocating(false);
+        alert("Không thể lấy vị trí GPS (vui lòng cho phép truy cập vị trí trên trình duyệt hoặc chọn trong danh sách).");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [isShortsOpen, setIsShortsOpen] = useState(() => {
     try {
@@ -6003,8 +6359,9 @@ useEffect(() => {
             fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`)
               .then(r => r.json())
               .catch(() => null),
-            fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 }))
-          ]).then(([weather, forecast, aqi, weatherNewsRaw, geoReverse, uviRes]) => {
+            fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 })),
+            fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`).then(r => r.json()).catch(() => [])
+          ]).then(([weather, forecast, aqi, weatherNewsRaw, geoReverse, uviRes, owmGeo]) => {
           const c_temp = Math.round(weather.main?.temp || 0);
           const feels_like = Math.round(weather.main?.feels_like || 0);
           const humidity = weather.main?.humidity || 0;
@@ -6078,20 +6435,29 @@ useEffect(() => {
 
           let resolvedLocation = locationNameStr;
           if (!resolvedLocation) {
-             let bestLocality = geoReverse?.locality;
-             if (geoReverse?.localityInfo?.administrative) {
-                 const admin6s = geoReverse.localityInfo.administrative.filter((a: any) => a.adminLevel === 6 || a.adminLevel === 7 || a.adminLevel === 8);
-                 if (admin6s.length > 0) {
-                     bestLocality = admin6s[0].name;
+             if (Array.isArray(owmGeo) && owmGeo.length > 0) {
+                 const item = owmGeo[0];
+                 const viName = item.local_names?.vi || item.name;
+                 if (viName) {
+                     resolvedLocation = `${viName}, VN`;
                  }
              }
-             if (bestLocality) {
-                 bestLocality = bestLocality.replace(/ \(phường\)/i, "").replace(/ \(xã\)/i, "");
-                 resolvedLocation = `${bestLocality}, ${geoReverse.principalSubdivision || 'VN'}`;
-             } else if (geoReverse?.city) {
-                 resolvedLocation = `${geoReverse.city}, VN`;
-             } else {
-                 resolvedLocation = (weather.name || "Hà Nội") + ", VN";
+             if (!resolvedLocation) {
+                 let bestLocality = geoReverse?.locality;
+                 if (geoReverse?.localityInfo?.administrative) {
+                     const admin6s = geoReverse.localityInfo.administrative.filter((a: any) => a.adminLevel === 6 || a.adminLevel === 7 || a.adminLevel === 8);
+                     if (admin6s.length > 0) {
+                         bestLocality = admin6s[0].name;
+                     }
+                 }
+                 if (bestLocality) {
+                     bestLocality = bestLocality.replace(/ \(phường\)/i, "").replace(/ \(xã\)/i, "");
+                     resolvedLocation = `${bestLocality}, ${geoReverse.principalSubdivision || 'VN'}`;
+                 } else if (geoReverse?.city) {
+                     resolvedLocation = `${geoReverse.city}, VN`;
+                 } else {
+                     resolvedLocation = (weather.name || "Hà Nội") + ", VN";
+                 }
              }
           }
 
@@ -6195,6 +6561,15 @@ useEffect(() => {
           };
           
           processJson(jsonPayload);
+          try {
+            localStorage.setItem('user_weather_location', JSON.stringify({
+              lat,
+              lon,
+              name: resolvedLocation.split(',')[0].trim(),
+              nameFull: resolvedLocation,
+              timestamp: Date.now()
+            }));
+          } catch {}
           
         }).catch((e: any) => {
         console.error("Standalone fetch error:", e);
@@ -6202,37 +6577,79 @@ useEffect(() => {
       });
       }; // end doFetch
 
+      doFetchRef.current = doFetch;
+
       const fallbackToIp = () => {
-        fetch("https://ipapi.co/json/")
+        // Tầng 1: Sử dụng ipwho.is (Rất chính xác tại VN, không rate limit)
+        fetch("https://ipwho.is/")
           .then(res => res.json())
           .then(data => {
-            // LƯU SESSION COOKIE IP NGƯỜI DÙNG NHƯ YÊU CẦU
-            if (data.ip) {
-              localStorage.setItem('user_session_ip', data.ip);
-              document.cookie = `user_session_ip=${data.ip}; path=/; max-age=31536000`;
-            }
-
-            if (data.latitude && data.longitude) {
-              doFetch(data.latitude, data.longitude, `${data.city || "Hanoi"}, ${data.country || "VN"}`);
+            if (data && data.success && data.latitude && data.longitude) {
+              if (data.ip) {
+                try {
+                  localStorage.setItem('user_session_ip', data.ip);
+                  document.cookie = `user_session_ip=${data.ip}; path=/; max-age=31536000`;
+                } catch {}
+              }
+              const cityName = data.city ? `${data.city}, VN` : "Hà Nội, VN";
+              doFetch(data.latitude, data.longitude, cityName);
             } else {
-              doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+              fallbackToIpApi();
             }
           })
           .catch(() => {
-            doFetch(20.9716, 105.7725, "Hà Đông District, VN");
+            fallbackToIpApi();
           });
       };
 
+      const fallbackToIpApi = () => {
+        // Tầng 2: Dự phòng ip-api.com
+        fetch("http://ip-api.com/json/?fields=status,message,country,city,regionName,lat,lon,query")
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.status === "success" && data.lat && data.lon) {
+              if (data.query) {
+                try {
+                  localStorage.setItem('user_session_ip', data.query);
+                  document.cookie = `user_session_ip=${data.query}; path=/; max-age=31536000`;
+                } catch {}
+              }
+              const cityName = data.city ? `${data.city}, VN` : "Hà Nội, VN";
+              doFetch(data.lat, data.lon, cityName);
+            } else {
+              // Tầng 3: Tọa độ trung tâm Thủ đô Hà Nội
+              doFetch(21.0285, 105.8542, "Hà Nội, VN");
+            }
+          })
+          .catch(() => {
+            // Tầng 3: Tọa độ trung tâm Thủ đô Hà Nội
+            doFetch(21.0285, 105.8542, "Hà Nội, VN");
+          });
+      };
+
+      // Tầng 0: Kiểm tra vị trí đã lưu trước đó trong bộ nhớ
+      let savedLoc: any = null;
+      try {
+        const stored = localStorage.getItem('user_weather_location');
+        if (stored) savedLoc = JSON.parse(stored);
+      } catch {}
+
+      if (savedLoc && typeof savedLoc.lat === 'number' && typeof savedLoc.lon === 'number') {
+        doFetch(savedLoc.lat, savedLoc.lon, savedLoc.nameFull || savedLoc.name);
+        return;
+      }
+
+      // Tầng 1: HTML5 Geolocation chính xác cao (8 giây timeout)
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             doFetch(pos.coords.latitude, pos.coords.longitude);
           },
           (err) => {
-            console.warn("Geolocation failed:", err);
+            console.warn("Geolocation prompt or timeout:", err);
             fallbackToIp();
           },
-          { enableHighAccuracy: false, timeout: 2500, maximumAge: 60000 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 }
         );
       } else {
         fallbackToIp();
@@ -6318,15 +6735,25 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} />
       </div>
 
+
+      {/* Modal chọn vị trí thời tiết tương tác */}
+      <LocationSelectorModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        currentLocation={(liveData ?? DEFAULT_WEATHER_DATA)[condKey]?.location}
+        onSelectLocation={handleSelectLocation}
+        onRequestGps={handleRequestGps}
+        isGpsLoading={isGpsLocating}
+      />
 
       {/* Video Shorts Modal (Trải nghiệm TikTok / YouTube Shorts) */}
       <VideoShortsModal

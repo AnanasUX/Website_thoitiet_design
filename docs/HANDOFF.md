@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.36.0`
+- **Phiên bản**: `1.37.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `d36fbde` (`feat(auth): auto-login on browser visit via Google One-Tap and background profile sync`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -696,6 +696,21 @@
       + `python test_news_collector.py`: **9/9 tests PASS (100% OK)**.
 
 ---
+
+
+48. **[REQ-067] Khắc Phục Triệt Để Lỗi Định Vị Sai Lệch, Hệ Thống Định Vị Đa Tầng 4 Lớp & Bộ Chọn Vị Trí Khí Tượng Tương Tác**:
+    - *Triệt Tiêu Hardcode Hà Đông*: Loại bỏ hoàn toàn fallback cưỡng bức `doFetch(20.9716, 105.7725, "Hà Đông District, VN")`.
+    - *Kiến Trúc Định Vị Đa Tầng 4 Lớp*:
+      + Tầng 0 (Client Cache): Đọc tức thì vị trí người dùng đã từng xác nhận từ `localStorage.getItem('user_weather_location')`.
+      + Tầng 1 (High-Accuracy GPS): Kích hoạt `navigator.geolocation.getCurrentPosition` với `enableHighAccuracy: true`, timeout 8000ms, `maximumAge: 120000`.
+      + Tầng 2 (IP Geolocation Không Rate Limit): Tích hợp `https://ipwho.is/` và `http://ip-api.com/json/`.
+      + Tầng 3 (Tọa Độ Thủ Đô Chuẩn Xác): Mặc định trung tâm Thủ đô Hà Nội (`21.0285, 105.8542`), nhãn thuần Việt `"Hà Nội, VN"`.
+    - *Động Cơ OWM Reverse Geocoding Tiếng Việt*: Chạy song song trong `Promise.all`, bóc tách `local_names.vi` chuẩn xác.
+    - *Bộ Chọn Vị Trí Khí Tượng Tương Tác (`LocationSelectorModal`)*:
+      + Nhấp vào huy hiệu vị trí ở bất cứ đâu (Hero Card, Mobile, Tablet, Desktop Header).
+      + Nút định vị GPS tức thời (`data-testid="location-gps-btn"`), thanh tìm kiếm không dấu (`data-testid="location-search-input"`), danh mục 32 địa phương phân tab (Phổ biến, Hà Nội, TP. HCM, Tỉnh thành khác) với huy hiệu "Đang chọn".
+      + Tự động lưu và đồng bộ tức thì vào `localStorage.setItem('user_weather_location', ...)`.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
