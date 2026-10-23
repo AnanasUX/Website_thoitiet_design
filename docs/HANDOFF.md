@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.38.0`
+- **Phiên bản**: `1.39.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `769e358` (`refactor(ui): remove redundant mobile quick search bar per user request (REQ-068)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -717,6 +717,13 @@
     - Xóa bỏ 100% thanh tìm kiếm nhanh `Tìm nhanh tin tức, giá vàng...` và ô đếm số lượng bài trên Mobile.
     - Tối ưu hóa bố cục trực quan, đưa luồng bài viết tiếp cận ngay dưới thanh tiêu đề & dropdown danh mục.
     - Bảo toàn 100% kiểm thử: `npm run build` 0 lỗi, `npm run test:logic` 423/423 PASS, `npm run testwebsite` 47/47 PASS (RELEASE GATE: PASSED).
+
+50. **[REQ-069] Cơ Chế Tự Động Định Vị Chuẩn Xác Theo Khu Vực Người Dùng & Phân Định Quyền Thay Đổi Thủ Công**:
+    - *Tự Động Định Vị Thực Tế Của Người Dùng*: Hệ thống luôn tự động định vị đúng vị trí thực tế của người dùng đang ở khu vực nào (Cầu Giấy, Hoàn Kiếm, Đống Đa, Nam Từ Liêm, Sài Gòn, Hải Châu...) và đẩy dự báo thời tiết khu vực đó vào ứng dụng.
+    - *Động Cơ Nominatim Reverse Geocoding Tiếng Việt*: Bóc tách chuẩn xác cấp Quận/Huyện/Thị xã và Tỉnh/Thành phố với ngôn ngữ tiếng Việt tự nhiên; fallback sang OWM Geo, OWM Weather và IP Geolocation đa tầng.
+    - *Triệt Tiêu Hardcode*: Thay thế hoàn toàn "Quận Hà Đông, Hà Nội" trong `DEFAULT_WEATHER_DATA` thành "Hà Nội" / "Thành phố Hà Nội, VN".
+    - *Phân Định Rạch Ròi Manual vs Auto*: Tách biệt `user_weather_manual_location` (người dùng tự chọn thủ công) và `user_weather_auto_location` (hệ thống tự động). Tôn trọng lựa chọn thủ công của người dùng, hỗ trợ chuyển đổi linh hoạt qua nút "Bật lại tự động" và nút GPS.
+    - *Bảo Toàn Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.

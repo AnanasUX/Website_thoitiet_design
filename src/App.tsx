@@ -242,7 +242,7 @@ type WeatherEntry = {
 
 // ── Default mock data (fallback khi chưa có API) ──────────────────────────────
 const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
-  "binh-thuong": { time: "08:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%", pressure: "1012 hPa", clouds: "10%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+  "binh-thuong": { time: "08:00", location: "Hà Nội", locationFull: "Thành phố Hà Nội, VN", temp: "26.0°C", feelsLike: "27.0°C", conditionLabel: "Bình thường", humidity: "60%", pm25: "18.50 µg/m³", wind: "8 km/h", forecastText: "~26°C | Trời đẹp | Mưa: 5%", pressure: "1012 hPa", clouds: "10%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
     { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
     { time: "16h", icon: "02d", temp: 31, pop: 10 },
     { time: "19h", icon: "03n", temp: 29, pop: 20 },
@@ -258,7 +258,7 @@ const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
     { day: "T5", icon: "01d", tempMin: 26, tempMax: 34, pop: 0 }
   ]
 ,
-  "nang":        { time: "10:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%", pressure: "1009 hPa", clouds: "5%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+  "nang":        { time: "10:30", location: "Hà Nội", locationFull: "Thành phố Hà Nội, VN", temp: "31.0°C", feelsLike: "34.0°C", conditionLabel: "Nắng", humidity: "55%", pm25: "22.10 µg/m³", wind: "10 km/h", forecastText: "~32°C | Nắng | Mưa: 2%", pressure: "1009 hPa", clouds: "5%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
     { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
     { time: "16h", icon: "02d", temp: 31, pop: 10 },
     { time: "19h", icon: "03n", temp: 29, pop: 20 },
@@ -274,7 +274,7 @@ const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
     { day: "T5", icon: "01d", tempMin: 26, tempMax: 34, pop: 0 }
   ]
 ,
-  "nang-gat":   { time: "13:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%", pressure: "1005 hPa", clouds: "0%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+  "nang-gat":   { time: "13:00", location: "Hà Nội", locationFull: "Thành phố Hà Nội, VN", temp: "38.5°C", feelsLike: "43.2°C", conditionLabel: "Nắng gắt", humidity: "42%", pm25: "35.80 µg/m³", wind: "6 km/h", forecastText: "~39°C | Nắng gắt | Mưa: 0%", pressure: "1005 hPa", clouds: "0%", visibility: "10 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
     { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
     { time: "16h", icon: "02d", temp: 31, pop: 10 },
     { time: "19h", icon: "03n", temp: 29, pop: 20 },
@@ -290,7 +290,7 @@ const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
     { day: "T5", icon: "01d", tempMin: 26, tempMax: 34, pop: 0 }
   ]
 ,
-  "am-u":       { time: "14:00", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%", pressure: "1015 hPa", clouds: "80%", visibility: "6 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+  "am-u":       { time: "14:00", location: "Hà Nội", locationFull: "Thành phố Hà Nội, VN", temp: "27.0°C", feelsLike: "29.5°C", conditionLabel: "Âm u", humidity: "75%", pm25: "20.00 µg/m³", wind: "9 km/h", forecastText: "~27°C | Âm u | Mưa: 8%", pressure: "1015 hPa", clouds: "80%", visibility: "6 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
     { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
     { time: "16h", icon: "02d", temp: 31, pop: 10 },
     { time: "19h", icon: "03n", temp: 29, pop: 20 },
@@ -306,7 +306,7 @@ const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
     { day: "T5", icon: "01d", tempMin: 26, tempMax: 34, pop: 0 }
   ]
 ,
-  "mua-nho":    { time: "16:55", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%", pressure: "1010 hPa", clouds: "100%", visibility: "4 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+  "mua-nho":    { time: "16:55", location: "Hà Nội", locationFull: "Thành phố Hà Nội, VN", temp: "29.5°C", feelsLike: "33.3°C", conditionLabel: "Mưa nhỏ", humidity: "68%", pm25: "14.33 µg/m³", wind: "12 km/h", forecastText: "~29.5°C | Mưa nhỏ | Mưa: 13%", pressure: "1010 hPa", clouds: "100%", visibility: "4 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
     { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
     { time: "16h", icon: "02d", temp: 31, pop: 10 },
     { time: "19h", icon: "03n", temp: 29, pop: 20 },
@@ -322,7 +322,7 @@ const DEFAULT_WEATHER_DATA: Record<ConditionKey, WeatherEntry> = {
     { day: "T5", icon: "01d", tempMin: 26, tempMax: 34, pop: 0 }
   ]
 ,
-  "mua-dong":   { time: "17:30", location: "Quận Hà Đông, Hà Nội", locationFull: "Quận Hà Đông, Thành phố Hà Nội", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%", pressure: "998 hPa", clouds: "100%", visibility: "2 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
+  "mua-dong":   { time: "17:30", location: "Hà Nội", locationFull: "Thành phố Hà Nội, VN", temp: "25.0°C", feelsLike: "24.0°C", conditionLabel: "Mưa dông", humidity: "88%", pm25: "12.00 µg/m³", wind: "35 km/h", forecastText: "~24°C | Mưa dông | Mưa: 80%", pressure: "998 hPa", clouds: "100%", visibility: "2 km", sunrise: "06:00", sunset: "18:00", tempMin: "25°C", tempMax: "32°C", uvIndex: "5", dewPoint: "24°C", hourlyForecast: [
     { time: "Bây giờ", icon: "01d", temp: 32, pop: 0 },
     { time: "16h", icon: "02d", temp: 31, pop: 10 },
     { time: "19h", icon: "03n", temp: 29, pop: 20 },
@@ -522,6 +522,7 @@ function WeatherSection({
   liveOverrides,
   darkMode,
   isLoading,
+  isManualLocation = false,
   onArticleClick,
   onOpenLocationSelector,
 }: {
@@ -531,6 +532,7 @@ function WeatherSection({
   liveOverrides?: LiveOverrides;
   darkMode?: boolean;
   isLoading?: boolean;
+  isManualLocation?: boolean;
   onArticleClick?: (article: any) => void;
   onOpenLocationSelector?: () => void;
 }) {
@@ -567,17 +569,17 @@ function WeatherSection({
             type="button"
             onClick={onOpenLocationSelector}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md border border-white/25 text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group"
-            title="Nhấp để đổi vị trí hoặc tự động định vị lại GPS"
+            title={isManualLocation ? "Vị trí do bạn tự chọn thủ công (Nhấp để đổi hoặc bật lại tự động định vị)" : "Vị trí tự động định vị theo khu vực thực tế của bạn (Nhấp để thay đổi)"}
             data-testid="hero-location-badge"
           >
-            <span className="group-hover:scale-125 transition-transform">📍</span>
+            <span className="group-hover:scale-125 transition-transform">{isManualLocation ? "📌" : "📍"}</span>
             <span className="underline decoration-dotted decoration-white/70 underline-offset-2">
               {compact ? WEATHER.location : WEATHER.locationFull}
             </span>
             <span className="opacity-60">·</span>
             <span>{WEATHER.time}</span>
             <span className="text-[10px] bg-white/25 hover:bg-white/35 font-bold px-1.5 py-0.5 rounded-full ml-1">
-              Đổi
+              {isManualLocation ? "Đã chọn" : "Tự động"}
             </span>
           </button>
         </div>
@@ -2466,7 +2468,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onTokenExpired,
   onRelogin,
   onOpenShorts,
-  onOpenLocationSelector
+  onOpenLocationSelector,
+  isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -2503,11 +2506,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
               type="button"
               onClick={onOpenLocationSelector}
               className="font-medium text-[#182033] dark:text-slate-200 text-[12px] whitespace-nowrap text-right hover:text-blue-600 transition-colors cursor-pointer flex items-center justify-end gap-1 group"
-              title="Nhấp để đổi vị trí hoặc tự động định vị lại GPS"
+              title={isManualLocation ? "Vị trí do bạn tự chọn (Nhấp để đổi hoặc bật lại tự động)" : "Vị trí tự động định vị theo khu vực thực tế của bạn (Nhấp để thay đổi)"}
               data-testid="mobile-location-btn"
             >
-              <span className="group-hover:scale-110 transition-transform">📍</span>
+              <span className="group-hover:scale-110 transition-transform">{isManualLocation ? "📌" : "📍"}</span>
               <span className="underline decoration-dotted decoration-slate-400 underline-offset-2">{WEATHER.location}</span>
+              <span className="text-[9.5px] text-slate-400 font-normal ml-0.5">({isManualLocation ? "Tự chọn" : "Tự động"})</span>
             </button>
             <div className="bg-[#f4f6fa] mt-1 flex items-center px-2 py-0.5 rounded-full">
               <p className="font-normal text-[#5f687b] text-[10px] whitespace-nowrap">
@@ -2538,7 +2542,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
       <div className="flex flex-col gap-[var(--grid-gap)] items-start pb-8 pt-4 px-4 w-full">
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">Thời tiết</p>
-          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} />
+          <WeatherSection isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
         <div className="flex flex-col gap-[var(--grid-gap)] items-start w-full">
@@ -2662,7 +2666,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onTokenExpired,
   onRelogin,
   onOpenShorts,
-  onOpenLocationSelector
+  onOpenLocationSelector,
+  isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -2711,11 +2716,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
             type="button"
             onClick={onOpenLocationSelector}
             className="font-medium text-[#5f687b] dark:text-slate-300 text-[13px] whitespace-nowrap hover:text-blue-600 transition-colors cursor-pointer flex items-center gap-1 group"
-            title="Nhấp để đổi vị trí hoặc tự động định vị lại GPS"
+            title={isManualLocation ? "Vị trí do bạn tự chọn (Nhấp để đổi hoặc bật lại tự động)" : "Vị trí tự động định vị theo khu vực thực tế của bạn (Nhấp để thay đổi)"}
             data-testid="tablet-location-btn"
           >
-            <span className="group-hover:scale-110 transition-transform">📍</span>
+            <span className="group-hover:scale-110 transition-transform">{isManualLocation ? "📌" : "📍"}</span>
             <span className="underline decoration-dotted decoration-slate-400 underline-offset-2">{WEATHER.location}</span>
+            <span className="text-[10px] text-slate-400 font-normal ml-0.5">({isManualLocation ? "Tự chọn" : "Tự động"})</span>
           </button>
         </div>
         <div className="flex items-center gap-2">
@@ -2764,7 +2770,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
       <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
-          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
         {/* News panel */}
@@ -2921,7 +2927,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onTokenExpired,
   onRelogin,
   onOpenShorts,
-  onOpenLocationSelector
+  onOpenLocationSelector,
+  isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
     isLoading?: boolean;
@@ -2977,15 +2984,15 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             type="button"
             onClick={onOpenLocationSelector}
             className="bg-[#f4f6fa] dark:bg-slate-800 hover:bg-[#e3e7ef] dark:hover:bg-slate-700 flex items-center gap-1.5 h-[32px] px-3 py-1 rounded-full shrink-0 cursor-pointer transition-colors border border-transparent hover:border-blue-300 group"
-            title="Nhấp để đổi vị trí thời tiết hoặc tự động định vị GPS"
+            title={isManualLocation ? "Vị trí do bạn tự chọn (Nhấp để đổi hoặc bật lại tự động)" : "Vị trí tự động định vị theo khu vực thực tế của bạn (Nhấp để thay đổi)"}
             data-testid="desktop-location-selector-btn"
           >
-            <span className="text-blue-600 group-hover:scale-110 transition-transform">📍</span>
+            <span className={`${isManualLocation ? "text-amber-500" : "text-blue-600"} group-hover:scale-110 transition-transform`}>{isManualLocation ? "📌" : "📍"}</span>
             <span className="font-semibold text-[#182033] dark:text-slate-200 text-[12px] whitespace-nowrap underline decoration-dotted decoration-slate-400 underline-offset-2">
               {WEATHER?.location || "Hà Nội"}
             </span>
             <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/50 px-1.5 py-0.5 rounded-full ml-0.5">
-              Đổi
+              {isManualLocation ? "Tự chọn" : "Tự động"}
             </span>
           </button>
 
@@ -3037,7 +3044,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       >
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
-          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} />
+          <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
         {/* News column */}
@@ -3354,15 +3361,19 @@ function LocationSelectorModal({
   isOpen,
   onClose,
   currentLocation,
+  isManualLocation = false,
   onSelectLocation,
   onRequestGps,
+  onResetToAutoLocation,
   isGpsLoading,
 }: {
   isOpen: boolean;
   onClose: () => void;
   currentLocation?: string;
+  isManualLocation?: boolean;
   onSelectLocation: (lat: number, lon: number, name: string, nameFull: string) => void;
   onRequestGps: () => void;
+  onResetToAutoLocation?: () => void;
   isGpsLoading?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -3426,6 +3437,25 @@ function LocationSelectorModal({
           </button>
         </div>
 
+        {isManualLocation && (
+          <div className="mx-4 mt-3 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 flex items-center justify-between text-[12.5px] text-amber-900 dark:text-amber-200">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📌</span>
+              <span>Đang chọn thủ công: <strong className="font-semibold">{currentLocation}</strong></span>
+            </div>
+            {onResetToAutoLocation && (
+              <button
+                type="button"
+                onClick={onResetToAutoLocation}
+                className="px-2.5 py-1 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium text-[11px] shadow-xs cursor-pointer shrink-0 transition-all active:scale-95"
+                data-testid="reset-auto-location-btn"
+              >
+                Bật lại tự động
+              </button>
+            )}
+          </div>
+        )}
+
         {/* GPS Quick Action Card */}
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
           <button
@@ -3439,13 +3469,13 @@ function LocationSelectorModal({
               <span className="text-xl">{isGpsLoading ? "⏳" : "🎯"}</span>
               <div className="text-left">
                 <p className="font-bold text-[14px]">
-                  {isGpsLoading ? "Đang dò tìm tọa độ GPS..." : "Tự động định vị vị trí hiện tại (GPS)"}
+                  {isGpsLoading ? "Đang dò tìm tọa độ GPS thực tế..." : "Tự động định vị vị trí hiện tại (GPS)"}
                 </p>
-                <p className="text-[11px] text-blue-100 opacity-90">Sử dụng cảm biến thiết bị & mạng cục bộ chính xác nhất</p>
+                <p className="text-[11px] text-blue-100 opacity-90">Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết</p>
               </div>
             </div>
             <span className="text-[12px] font-semibold bg-white/20 px-2.5 py-1 rounded-full">
-              {isGpsLoading ? "Đang xử lý" : "Định vị ngay"}
+              {isGpsLoading ? "Đang xử lý" : (isManualLocation ? "Bật tự động" : "Định vị ngay")}
             </span>
           </button>
         </div>
@@ -5136,20 +5166,46 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
 
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
-  const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null) => void) | null>(null);
+  const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean) => void) | null>(null);
+  const fallbackToIpRef = useRef<(() => void) | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
+  const [isManualLocation, setIsManualLocation] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('user_weather_manual_location');
+      if (stored) {
+        const p = JSON.parse(stored);
+        return !!(p && p.isManual);
+      }
+    } catch {}
+    return false;
+  });
 
   const handleSelectLocation = (lat: number, lon: number, name: string, nameFull: string) => {
     setShowLocationModal(false);
+    setIsManualLocation(true);
     if (doFetchRef.current) {
-      doFetchRef.current(lat, lon, nameFull || name);
+      doFetchRef.current(lat, lon, nameFull || name, true);
     }
   };
 
+  const handleResetToAutoLocation = () => {
+    try {
+      localStorage.removeItem('user_weather_manual_location');
+    } catch {}
+    setIsManualLocation(false);
+    setShowLocationModal(false);
+    handleRequestGps();
+  };
+
   const handleRequestGps = () => {
+    try {
+      localStorage.removeItem('user_weather_manual_location');
+    } catch {}
+    setIsManualLocation(false);
     if (!navigator.geolocation) {
-      alert("Trình duyệt không hỗ trợ định vị GPS.");
+      alert("Trình duyệt không hỗ trợ định vị GPS. Hệ thống sẽ xác định theo vị trí IP mạng.");
+      if (fallbackToIpRef.current) fallbackToIpRef.current();
       return;
     }
     setIsGpsLocating(true);
@@ -5158,15 +5214,20 @@ export default function App() {
         setIsGpsLocating(false);
         setShowLocationModal(false);
         if (doFetchRef.current) {
-          doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null);
+          doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null, false);
         }
       },
       (err) => {
-        console.warn("GPS request error:", err);
+        console.warn("GPS request error, falling back to IP:", err);
         setIsGpsLocating(false);
-        alert("Không thể lấy vị trí GPS (vui lòng cho phép truy cập vị trí trên trình duyệt hoặc chọn trong danh sách).");
+        setShowLocationModal(false);
+        if (fallbackToIpRef.current) {
+          fallbackToIpRef.current();
+        } else if (doFetchRef.current) {
+          doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false);
+        }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   };
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -6318,7 +6379,7 @@ useEffect(() => {
     if (!cData && !rawData && !apiUrl) {
         setApiStatus("loading");
         
-        const doFetch = (lat: number, lon: number, locationNameStr: string | null = null) => {
+        const doFetch = (lat: number, lon: number, locationNameStr: string | null = null, isManualSelection = false) => {
           const apiKey = "a201c471567522a7d0b7a0567ad245fe";
 
           Promise.all([
@@ -6329,9 +6390,9 @@ useEffect(() => {
               .then(r => r.json())
               .then(data => data.items || [])
               .catch(() => []),
-            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`)
-              .then(r => r.json())
-              .catch(() => null),
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi`, {
+              headers: { 'User-Agent': 'AnxWeatherApp/1.0' }
+            }).then(r => r.json()).catch(() => null),
             fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 })),
             fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`).then(r => r.json()).catch(() => [])
           ]).then(([weather, forecast, aqi, weatherNewsRaw, geoReverse, uviRes, owmGeo]) => {
@@ -6408,30 +6469,52 @@ useEffect(() => {
 
           let resolvedLocation = locationNameStr;
           if (!resolvedLocation) {
-             if (Array.isArray(owmGeo) && owmGeo.length > 0) {
-                 const item = owmGeo[0];
-                 const viName = item.local_names?.vi || item.name;
-                 if (viName) {
-                     resolvedLocation = `${viName}, VN`;
-                 }
-             }
-             if (!resolvedLocation) {
-                 let bestLocality = geoReverse?.locality;
-                 if (geoReverse?.localityInfo?.administrative) {
-                     const admin6s = geoReverse.localityInfo.administrative.filter((a: any) => a.adminLevel === 6 || a.adminLevel === 7 || a.adminLevel === 8);
-                     if (admin6s.length > 0) {
-                         bestLocality = admin6s[0].name;
-                     }
-                 }
-                 if (bestLocality) {
-                     bestLocality = bestLocality.replace(/ \(phường\)/i, "").replace(/ \(xã\)/i, "");
-                     resolvedLocation = `${bestLocality}, ${geoReverse.principalSubdivision || 'VN'}`;
-                 } else if (geoReverse?.city) {
-                     resolvedLocation = `${geoReverse.city}, VN`;
-                 } else {
-                     resolvedLocation = (weather.name || "Hà Nội") + ", VN";
-                 }
-             }
+            // Nguồn 1: Nominatim OpenStreetMap (Chi tiết cấp Quận/Huyện/Thị xã & Tỉnh/Thành tiếng Việt)
+            if (geoReverse && geoReverse.address) {
+              const addr = geoReverse.address;
+              const districtRaw = addr.city_district || addr.district || addr.suburb || addr.quarter || addr.town || addr.county || '';
+              const cityRaw = addr.city || addr.state || addr.province || '';
+              let district = districtRaw
+                .replace(/^Phường\s+/i, '')
+                .replace(/^Xã\s+/i, '')
+                .replace(/^Thị trấn\s+/i, '')
+                .trim();
+              let city = cityRaw
+                .replace(/^Thành phố\s+/i, '')
+                .replace(/^Tỉnh\s+/i, '')
+                .trim();
+              if (/Hồ Chí Minh/i.test(city) || /Sai Gon|Sài Gòn/i.test(city)) {
+                city = 'TP. Hồ Chí Minh';
+              }
+              if (district && city) {
+                resolvedLocation = district.toLowerCase() === city.toLowerCase()
+                  ? `${city}, VN`
+                  : `${district}, ${city}, VN`;
+              } else if (city) {
+                resolvedLocation = `${city}, VN`;
+              } else if (district) {
+                resolvedLocation = `${district}, VN`;
+              }
+            }
+
+            // Nguồn 2: OpenWeatherMap Geocoding API
+            if (!resolvedLocation && Array.isArray(owmGeo) && owmGeo.length > 0) {
+              const item = owmGeo[0];
+              const viName = item.local_names?.vi || item.name;
+              if (viName) {
+                resolvedLocation = `${viName}, VN`;
+              }
+            }
+
+            // Nguồn 3: OpenWeatherMap Current Weather name
+            if (!resolvedLocation && weather?.name) {
+              resolvedLocation = `${weather.name}, VN`;
+            }
+
+            // Nguồn 4: Fallback mặc định
+            if (!resolvedLocation) {
+              resolvedLocation = "Hà Nội, VN";
+            }
           }
 
           let dewPoint = c_temp;
@@ -6535,13 +6618,29 @@ useEffect(() => {
           
           processJson(jsonPayload);
           try {
-            localStorage.setItem('user_weather_location', JSON.stringify({
-              lat,
-              lon,
-              name: resolvedLocation.split(',')[0].trim(),
-              nameFull: resolvedLocation,
-              timestamp: Date.now()
-            }));
+            if (isManualSelection) {
+              localStorage.setItem('user_weather_manual_location', JSON.stringify({
+                lat,
+                lon,
+                name: resolvedLocation.split(',')[0].trim(),
+                nameFull: resolvedLocation,
+                isManual: true,
+                timestamp: Date.now()
+              }));
+              setIsManualLocation(true);
+            } else {
+              localStorage.setItem('user_weather_auto_location', JSON.stringify({
+                lat,
+                lon,
+                name: resolvedLocation.split(',')[0].trim(),
+                nameFull: resolvedLocation,
+                isManual: false,
+                timestamp: Date.now()
+              }));
+              setIsManualLocation(false);
+            }
+            // Dọn dẹp key cũ không phân định để tránh khóa cứng vị trí cũ
+            localStorage.removeItem('user_weather_location');
           } catch {}
           
         }).catch((e: any) => {
@@ -6565,7 +6664,7 @@ useEffect(() => {
                 } catch {}
               }
               const cityName = data.city ? `${data.city}, VN` : "Hà Nội, VN";
-              doFetch(data.latitude, data.longitude, cityName);
+              doFetch(data.latitude, data.longitude, cityName, false);
             } else {
               fallbackToIpApi();
             }
@@ -6588,44 +6687,74 @@ useEffect(() => {
                 } catch {}
               }
               const cityName = data.city ? `${data.city}, VN` : "Hà Nội, VN";
-              doFetch(data.lat, data.lon, cityName);
+              doFetch(data.lat, data.lon, cityName, false);
             } else {
               // Tầng 3: Tọa độ trung tâm Thủ đô Hà Nội
-              doFetch(21.0285, 105.8542, "Hà Nội, VN");
+              doFetch(21.0285, 105.8542, "Hà Nội, VN", false);
             }
           })
           .catch(() => {
             // Tầng 3: Tọa độ trung tâm Thủ đô Hà Nội
-            doFetch(21.0285, 105.8542, "Hà Nội, VN");
+            doFetch(21.0285, 105.8542, "Hà Nội, VN", false);
           });
       };
 
-      // Tầng 0: Kiểm tra vị trí đã lưu trước đó trong bộ nhớ
-      let savedLoc: any = null;
+      fallbackToIpRef.current = fallbackToIp;
+
+      // ── BƯỚC 1: KIỂM TRA LỰA CHỌN THỦ CÔNG CỦA NGƯỜI DÙNG ──
+      // "việc thay đổi sẽ là do người dùng thay đổi" -> Nếu người dùng đã tự tay chọn vị trí, tôn trọng 100%
+      let manualLoc: any = null;
       try {
-        const stored = localStorage.getItem('user_weather_location');
-        if (stored) savedLoc = JSON.parse(stored);
+        const storedManual = localStorage.getItem('user_weather_manual_location');
+        if (storedManual) {
+          const parsed = JSON.parse(storedManual);
+          if (parsed && parsed.isManual && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
+            manualLoc = parsed;
+          }
+        }
       } catch {}
 
-      if (savedLoc && typeof savedLoc.lat === 'number' && typeof savedLoc.lon === 'number') {
-        doFetch(savedLoc.lat, savedLoc.lon, savedLoc.nameFull || savedLoc.name);
+      if (manualLoc) {
+        setIsManualLocation(true);
+        doFetch(manualLoc.lat, manualLoc.lon, manualLoc.nameFull || manualLoc.name, true);
         return;
       }
 
-      // Tầng 1: HTML5 Geolocation chính xác cao (8 giây timeout)
+      // ── BƯỚC 2: TỰ ĐỘNG ĐỊNH VỊ VỊ TRÍ THỰC TẾ CỦA NGƯỜI DÙNG ──
+      // "hệ thống sẽ phải định vị đúng vị trí của người dùng đang ở khu vực nào thì sẽ đẩy vào"
+      setIsManualLocation(false);
+
+      // Nếu có cache tự động trước đó, load tức thì (0ms) để không bị giật lag giao diện
+      let autoCacheLoc: any = null;
+      try {
+        const storedAuto = localStorage.getItem('user_weather_auto_location');
+        if (storedAuto) {
+          const parsed = JSON.parse(storedAuto);
+          if (parsed && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
+            autoCacheLoc = parsed;
+            doFetch(parsed.lat, parsed.lon, parsed.nameFull || parsed.name, false);
+          }
+        }
+      } catch {}
+
+      // Luôn kích hoạt định vị vị trí thực tế của thiết bị để phát hiện đúng khu vực hiện tại (maximumAge: 0)
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            doFetch(pos.coords.latitude, pos.coords.longitude);
+            doFetch(pos.coords.latitude, pos.coords.longitude, null, false);
           },
           (err) => {
-            console.warn("Geolocation prompt or timeout:", err);
-            fallbackToIp();
+            console.warn("Geolocation prompt or timeout, falling back to IP:", err);
+            if (!autoCacheLoc) {
+              fallbackToIp();
+            }
           },
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 }
+          { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
         );
       } else {
-        fallbackToIp();
+        if (!autoCacheLoc) {
+          fallbackToIp();
+        }
       }
       return;
     }
@@ -6708,13 +6837,13 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
       </div>
 
 
@@ -6723,8 +6852,10 @@ useEffect(() => {
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         currentLocation={(liveData ?? DEFAULT_WEATHER_DATA)[condKey]?.location}
+        isManualLocation={isManualLocation}
         onSelectLocation={handleSelectLocation}
         onRequestGps={handleRequestGps}
+        onResetToAutoLocation={handleResetToAutoLocation}
         isGpsLoading={isGpsLocating}
       />
 

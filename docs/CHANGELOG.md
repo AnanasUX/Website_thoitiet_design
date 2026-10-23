@@ -1,5 +1,26 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.39.0 (2026-10-23) - Cơ Chế Tự Động Định Vị Chuẩn Xác Theo Khu Vực Người Dùng & Phân Định Quyền Thay Đổi Thủ Công (REQ-069)
+
+### 1. Tự Động Định Vị Chính Xác Khu Vực Thực Tế Của Người Dùng
+- Hệ thống luôn tự động định vị vị trí thực tế của người dùng đang ở khu vực nào (Quận/Huyện, Tỉnh/Thành phố) và đẩy dữ liệu thời tiết của khu vực đó vào ứng dụng.
+- Nâng cấp `navigator.geolocation.getCurrentPosition` với `maximumAge: 0` để luôn lấy vị trí tươi mới nhất, không khóa cứng người dùng vào vị trí cũ khi reload trang hoặc di chuyển.
+- Tích hợp động cơ Nominatim OpenStreetMap Reverse Geocoding (`accept-language=vi`) bóc tách chính xác cấp Quận/Huyện tiếng Việt (Cầu Giấy, Hoàn Kiếm, Đống Đa, Nam Từ Liêm, Sài Gòn, Hải Châu...).
+- Triệt tiêu 100% hardcode "Quận Hà Đông, Hà Nội" trong `DEFAULT_WEATHER_DATA`.
+
+### 2. Phân Định Rạch Ròi Giữa Lựa Chọn Thủ Công & Định Vị Tự Động
+- Tách biệt hai khóa lưu trữ: `user_weather_manual_location` (khi người dùng tự tay chọn địa điểm trong danh sách) và `user_weather_auto_location` (khi hệ thống tự động định vị).
+- Tôn trọng 100% lựa chọn của người dùng khi người dùng chủ động chọn vị trí.
+- Hỗ trợ nút "Bật lại tự động" và nút "Tự động định vị vị trí thực tế (GPS)" trong `LocationSelectorModal` để người dùng có thể khôi phục lại chế độ tự động định vị bất cứ lúc nào với 1 cú nhấp.
+- Trực quan hóa minh bạch trạng thái: hiển thị nhãn `(Tự động)` kèm icon 📍 hoặc `(Tự chọn)` kèm icon 📌 trên Hero Weather Card và Header cả 3 giao diện (Desktop, Tablet, Mobile).
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Thành công 100% trong 518ms.
+- `npm run test:logic`: 423/423 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả 3 kích thước màn hình Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.38.0 (2026-10-23) - Tinh Gọn Giao Diện Mobile, Loại Bỏ Thanh Tìm Kiếm Nhanh (REQ-068)
 
 ### 1. Tinh Gọn Layout Mobile

@@ -688,3 +688,32 @@
         + `npm run build`: 0 lỗi biên dịch.
         + `npm run test:logic`: 423/423 assertions đạt 100%.
         + `npm run testwebsite`: 47/47 test cases PASS (RELEASE GATE: PASSED).
+
+
+  50. **[REQ-069] Phân Định Rạch Ròi Định Vị Tự Động Thực Tế & Lựa Chọn Thủ Công Của Người Dùng**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu cụ thể: "Về việc định vị hệ thống sẽ phải định vị đúng vị trí của người dùng đang ở khu vực nào thì sẽ đẩy vào, còn việc thay đổi sẽ là do người dùng thay đổi."
+        + Phân tích nguyên nhân gốc:
+          1. Trong phiên bản trước, hàm `doFetch` lưu tất cả các lần tải vị trí (dù là do IP fallback, do vị trí mặc định hay do GPS) vào cùng một key `user_weather_location` trong localStorage.
+          2. Khi người dùng tải lại trang (F5 reload) hoặc truy cập lại, tầng kiểm tra cache đọc `user_weather_location` và thực thi lệnh return ngay lập tức. Điều này khiến `navigator.geolocation.getCurrentPosition` không bao giờ được kích hoạt lại, vô tình "khóa cứng" người dùng vào một vị trí cũ dù họ đã di chuyển sang khu vực khác.
+          3. Dịch vụ reverse geocoding trước đó (`BigDataCloud`) bị lỗi HTTP 402 ("banned / not supported") và `OpenWeatherMap Geo` chỉ trả về tên thành phố lớn ("Hà Nội") mà không bóc tách được các quận/huyện cụ thể nơi người dùng thực tế đang sinh sống/làm việc (Cầu Giấy, Hoàn Kiếm, Đống Đa, Nam Từ Liêm, Quận 1, Hải Châu...).
+          4. Mock ban đầu trong `DEFAULT_WEATHER_DATA` chứa hardcode "Quận Hà Đông, Hà Nội", gây hiểu lầm trong 0.5s đầu khi tải trang.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Tách Biệt Lưu Trữ 2 Trạng Thái**:
+          * `user_weather_manual_location`: Chỉ được ghi khi người dùng CHỦ ĐỘNG click chọn một địa phương trong danh sách modal (`handleSelectLocation`). Khi có cờ này, hệ thống tôn trọng 100% quyết định của người dùng ("việc thay đổi sẽ là do người dùng thay đổi").
+          * `user_weather_auto_location`: Lưu kết quả định vị tự động gần nhất làm bộ nhớ đệm hiển thị tức thì (0ms) tránh chớp nháy. Tuy nhiên, hệ thống LUÔN LUÔN kích hoạt ngầm `navigator.geolocation.getCurrentPosition` với `enableHighAccuracy: true, maximumAge: 0` để bắt kịp ngay vị trí thực tế của người dùng.
+          * Xóa bỏ hoàn toàn key cũ `user_weather_location` để không còn rủi ro kẹt vị trí cũ.
+        + **Tích Hợp Động Cơ Nominatim OpenStreetMap Reverse Geocoding**:
+          * Sử dụng endpoint `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi` với header User-Agent chuẩn mực.
+          * Tự động trích xuất và chuẩn hóa địa danh đa cấp độ: `district` (Cầu Giấy, Hoàn Kiếm, Hà Đông, Sài Gòn, Hải Châu, Sơn Trà...) + `city` (Hà Nội, TP. Hồ Chí Minh, Đà Nẵng...) -> cho ra định dạng tự nhiên thuần Việt: "Cầu Giấy, Hà Nội, VN" hoặc "Sài Gòn, TP. Hồ Chí Minh, VN".
+          * Fallback an toàn sang OpenWeatherMap Reverse Geocoding và OpenWeatherMap Direct Weather Name.
+        + **Triệt Tiêu Hardcode Trong Mock Data**:
+          * Sửa toàn bộ 6 ConditionKey trong `DEFAULT_WEATHER_DATA` từ "Quận Hà Đông, Hà Nội" thành "Hà Nội" và "Thành phố Hà Nội, VN".
+        + **Trực Quan Hóa Rõ Nghĩa Trên Giao Diện**:
+          * Thẻ Hero Weather Card (`hero-location-badge`): Hiển thị icon 📌 và huy hiệu "Đã chọn" nếu là thủ công; icon 📍 và huy hiệu "Tự động" nếu do hệ thống định vị thực tế.
+          * Header Mobile, Tablet, Desktop hiển thị nhãn `(Tự chọn)` hoặc `(Tự động)`.
+          * `LocationSelectorModal`: Hiển thị banner cảnh báo vị trí thủ công kèm nút "Bật lại tự động" (`data-testid="reset-auto-location-btn"`). Nút GPS cập nhật thông điệp rõ ràng "Tự động định vị vị trí thực tế (GPS)".
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: 0 lỗi, đóng gói hoàn tất trong 518ms.
+        + `npm run test:logic`: 423/423 assertions đạt 100%.
+        + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
