@@ -3,7 +3,7 @@
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
 - **Phiên bản**: `1.38.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `d36fbde` (`feat(auth): auto-login on browser visit via Google One-Tap and background profile sync`)
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `769e358` (`refactor(ui): remove redundant mobile quick search bar per user request (REQ-068)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
