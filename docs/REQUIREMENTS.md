@@ -81,6 +81,7 @@
 | REQ-065 | PROMPT-20261023-01 | Nâng cấp giao diện UI/UX thông minh, Trợ lý Khí tượng AI SmartWeatherAssistant & Thanh tìm kiếm tin tức tức thì | P1 | UI/UX & Weather AI | TC-016, TC-024 | PASS | App.tsx, testwebsite.mjs | Trợ lý khí tượng AI 4 nhóm khuyến cáo, thanh tìm kiếm tức thời đa thiết bị, tính thời gian đọc bài |
 | REQ-066 | PROMPT-20261023-02 | Đại tu mỹ thuật giao diện phong cách Neo-Editorial Magazine & Khối khí tượng Atmospheric Sky Card | P1 | UI/UX Visual Redesign | TC-016, TC-024 | PASS | App.tsx, testwebsite.mjs | Khối thời tiết 3D kính mờ phản quang aura blur-3xl, thẻ tin tức Neo-Editorial bo tròn 24px, pill tab hiện đại |
 | REQ-067 | PROMPT-20261023-03 | Khắc phục triệt để lỗi định vị sai lệch (xóa fallback cưỡng bức Hà Đông), nâng cấp kiến trúc định vị 4 tầng kết hợp OWM Reverse Geocoding tiếng Việt và bộ chọn vị trí tương tác | P0 | Weather / Geolocation | TC-016, TC-022 | PASS | App.tsx, logicFlows.ts, testwebsite.mjs | Xóa 100% hardcode Hà Đông; tích hợp ipwho.is + reverse geocode OWM; modal chọn địa điểm tương tác 63 tỉnh thành lưu localStorage; GPS 8s high-accuracy |
+| REQ-068 | PROMPT-20261023-04 | Loại bỏ thanh tìm kiếm nhanh thừa trên giao diện Mobile theo yêu cầu người dùng | P1 | UI/UX & Mobile Streamline | TC-024 | PASS | App.tsx, testwebsite.mjs | Đã xóa 100% thanh tìm kiếm dư thừa trên Mobile; danh mục tin tức kết nối trực tiếp vào luồng bài viết không bị cản trở |
 
 ## Prompt intake log
 
@@ -138,6 +139,7 @@
 | PROMPT-20261023-01 | 2026-10-23 | Kiểm tra có gì cập nhật mới và nâng cấp giao diện UI đẹp hơn thông minh hơn | REQ-065 | Resolved | Approved |
 | PROMPT-20261023-02 | 2026-10-23 | Làm giao diện khác đẹp hơn đi | REQ-066 | Resolved | Approved |
 | PROMPT-20261023-03 | 2026-10-23 | Hiện tại định vị trí trí đang sai kiểm tra lại | REQ-067 | Resolved | Approved |
+| PROMPT-20261023-04 | 2026-10-23 | Bỏ thanh tìm kiếm nhanh trên mobile (div w-full flex items-center justify-between gap-2...) | REQ-068 | Resolved | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -193,3 +195,14 @@
      - Modal chọn vị trí tương tác: Nút tự động định vị lại GPS (`data-testid="location-gps-btn"`), thanh tìm kiếm quận huyện/tỉnh thành không dấu (`data-testid="location-search-input"`), bộ lọc tab (Phổ biến, Hà Nội, TP. HCM, Tỉnh thành khác), danh mục thẻ địa phương (`data-testid="location-option-item"`) với huy hiệu "Đang chọn".
      - Tự động lưu và đồng bộ tức thì vào `localStorage.setItem('user_weather_location', ...)`.
   5. *Duy Trì 100% Bộ Kiểm Thử*: `npm run build` thành công 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-068)
+
+- **Mã Yêu Cầu**: `REQ-068`
+- **Tiêu Đề**: Loại Bỏ Thanh Tìm Kiếm Nhanh Thừa Trên Giao Diện Mobile Theo Yêu Cầu Người Dùng
+- **Nguồn Prompt**: `PROMPT-20261023-04`
+- **Phân Hệ**: UI/UX Layout Streamline (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Loại Bỏ Hoàn Toàn Khối UI Tìm Kiếm Nhanh*: Xóa bỏ đoạn mã `<div className="w-full flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2">...</div>` chứa ô input "Tìm nhanh tin tức, giá vàng..." và bộ đếm "x bài" trên giao diện Mobile.
+  2. *Giao Diện Tinh Gọn Liền Mạch*: Khối tiêu đề "Tin Tức Mới Nhất" và menu chọn chuyên mục MobileCategoryMenu nối trực tiếp vào luồng danh sách bài viết mà không bị thanh tìm kiếm chắn giữa.
+  3. *Duy Trì 100% Bộ Kiểm Thử*: `npm run build` thành công 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).

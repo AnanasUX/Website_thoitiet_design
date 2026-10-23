@@ -1,5 +1,18 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.38.0 (2026-10-23) - Tinh Gọn Giao Diện Mobile, Loại Bỏ Thanh Tìm Kiếm Nhanh (REQ-068)
+
+### 1. Tinh Gọn Layout Mobile
+- Loại bỏ hoàn toàn thanh tìm kiếm nhanh `Tìm nhanh tin tức, giá vàng...` và bộ đếm bài viết trên giao diện Mobile theo yêu cầu người dùng.
+- Tối ưu hóa không gian hiển thị, luồng tin tức kết nối trực tiếp và mượt mà ngay dưới thanh chuyên mục.
+
+### 2. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Thành công 100% trong 518ms.
+- `npm run test:logic`: 423/423 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả 3 kích thước màn hình Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.37.0 (2026-10-23) - Khắc Phục Triệt Để Lỗi Định Vị Sai Lệch, Hệ Thống Định Vị Đa Tầng 4 Lớp & Bộ Chọn Vị Trí Tương Tác (REQ-067)
 
 ### 1. Triệt Tiêu 100% Lỗi Định Vị Cưỡng Bức Hà Đông

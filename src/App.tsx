@@ -2489,16 +2489,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
-  const [searchQuery, setSearchQuery] = useState("");
-  const filteredNews = useMemo(() => {
-    if (!searchQuery.trim()) return newsFeed;
-    const q = searchQuery.toLowerCase().trim();
-    return newsFeed.filter(item => 
-      (item.author && item.author.toLowerCase().includes(q)) ||
-      (item.body && item.body.toLowerCase().includes(q)) ||
-      (item.src && item.src.toLowerCase().includes(q))
-    );
-  }, [newsFeed, searchQuery]);
   const now = useCurrentTime();
   const shortDateStr = `${now.getDate()} thg ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
@@ -2619,25 +2609,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
             <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
           </div>
 
-          <div className="w-full flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2">
-            <div className="relative flex-1 flex items-center">
-              <svg className="absolute left-2.5 size-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm nhanh tin tức, giá vàng..."
-                className="w-full pl-7 pr-6 py-1 text-[12px] bg-slate-50 border border-slate-200/80 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-[#182033]"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">✕</button>
-              )}
-            </div>
-            <span className="text-[11px] text-[#5f687b] font-medium shrink-0">{filteredNews.length} bài</span>
-          </div>
-
           {((isFetchingCategory || isLoading) && newsFeed.length === 0) ? <NewsSkeleton /> : (<>
-          {filteredNews.map((item, i) => (
+          {newsFeed.map((item, i) => (
               <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex flex-col gap-2 items-start w-full">

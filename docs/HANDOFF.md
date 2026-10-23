@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.37.0`
+- **Phiên bản**: `1.38.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `d36fbde` (`feat(auth): auto-login on browser visit via Google One-Tap and background profile sync`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -711,6 +711,12 @@
       + Nút định vị GPS tức thời (`data-testid="location-gps-btn"`), thanh tìm kiếm không dấu (`data-testid="location-search-input"`), danh mục 32 địa phương phân tab (Phổ biến, Hà Nội, TP. HCM, Tỉnh thành khác) với huy hiệu "Đang chọn".
       + Tự động lưu và đồng bộ tức thì vào `localStorage.setItem('user_weather_location', ...)`.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+
+49. **[REQ-068] Tinh Gọn Giao Diện Mobile - Loại Bỏ Thanh Tìm Kiếm Nhanh**:
+    - Xóa bỏ 100% thanh tìm kiếm nhanh `Tìm nhanh tin tức, giá vàng...` và ô đếm số lượng bài trên Mobile.
+    - Tối ưu hóa bố cục trực quan, đưa luồng bài viết tiếp cận ngay dưới thanh tiêu đề & dropdown danh mục.
+    - Bảo toàn 100% kiểm thử: `npm run build` 0 lỗi, `npm run test:logic` 423/423 PASS, `npm run testwebsite` 47/47 PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.

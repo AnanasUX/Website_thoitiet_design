@@ -675,3 +675,16 @@
           * Khi chọn địa điểm mới, dữ liệu thời tiết được nạp lại tức thì và lưu trữ vào `localStorage.setItem('user_weather_location', ...)`.
         + **Bảo Toàn Nghiệm Thu & Kiểm Thử**:
           * Đạt 423/423 logic assertions (`npm run test:logic`), 47/47 ca kiểm thử website (`npm run testwebsite`), `RELEASE GATE: PASSED`.
+
+  49. **[REQ-068] Tinh Gọn Giao Diện Mobile - Loại Bỏ Thanh Tìm Kiếm Nhanh Theo Yêu Cầu Người Dùng**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu trực tiếp: "Bỏ thanh này đi <div class=\"w-full flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2\">...</div>".
+        + Thanh tìm kiếm nhanh trên Mobile chiếm dụng không gian hiển thị ngay dưới thanh danh mục, gây chật chội và không cần thiết khi người dùng đã có menu lọc chuyên mục tiện lợi.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + Xóa bỏ 100% container chứa input "Tìm nhanh tin tức, giá vàng..." và bộ đếm bài viết.
+        + Dọn dẹp trạng thái `searchQuery` và hàm lọc không sử dụng trong `MobileLayout`, cho phép `newsFeed` truyền trực tiếp vào thẻ bài viết.
+        + Giao diện Mobile trở nên thanh thoát, thoáng đãng, luồng đọc tin tức được ưu tiên hiển thị ngay lập tức.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: 0 lỗi biên dịch.
+        + `npm run test:logic`: 423/423 assertions đạt 100%.
+        + `npm run testwebsite`: 47/47 test cases PASS (RELEASE GATE: PASSED).
