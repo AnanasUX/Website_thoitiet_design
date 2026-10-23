@@ -628,3 +628,24 @@
           * Giữ nguyên toàn bộ các `data-testid="news-card"`, cấu trúc DOM và hành vi phân trang danh mục `NEWS_CATEGORIES`.
           * 100% các bài test `npm run test:logic` (423/423 assertions) và `npm run testwebsite` (47/47 test cases) tiếp tục đạt tuyệt đối.
 
+  47. **[REQ-066] Thiết Kế Mỹ Thuật Đột Phá Neo-Editorial Glassmorphism & Khối Khí Tượng Atmospheric Sky Card**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu: "Làm giao diện khác đẹp hơn đi".
+        + Giao diện trước đây tuy đầy đủ tính năng nhưng bố cục thẻ hình học vuông vức cơ bản, thiếu chiều sâu thị giác, dải danh mục dạng nút phẳng đơn điệu và khối thời tiết chưa tạo được ấn tượng thị giác mạnh mẽ.
+      - *Quyết định thẩm mỹ & Giải pháp kiến trúc giao diện*:
+        + **Khối Thời Tiết Atmospheric Sky Card 3D**:
+          * Tái cấu trúc Hero Weather Card với bo góc siêu mềm mại (`rounded-3xl`), lớp viền siêu mỏng phản quang bán trong suốt (`border border-white/20`).
+          * Cấy ghép 2 vùng phản quang quang sai gradient mờ (`blur-3xl`) tạo hiệu ứng ánh sáng vòm trời chiều sâu.
+          * Thông số nhiệt độ nâng lên cỡ chữ khổng lồ (`text-[64px] sm:text-[72px] font-black tracking-tighter drop-shadow-md`) kèm cảm nhận mờ.
+          * 4 chỉ số khí tượng (Gió, Độ ẩm, Bụi PM2.5, Tầm nhìn) chuyển thành dạng capsule kính mờ cao cấp (`bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl hover:bg-white/25 transition-all`).
+        + **Thiết Kế Thẻ Tin Tức Tạp Chí Biên Tập Cao Cấp (Neo-Editorial Layout)**:
+          * *Thẻ nổi bật (Featured Card)*: Bo góc 24px (`rounded-3xl`), đường viền mượt (`border-slate-200/90 dark:border-slate-800`), độ cao nổi shadow tăng cường (`hover:shadow-[0_16px_36px_-6px_rgba(23,33,51,0.16)]`). Hình ảnh bài báo có lớp phủ gradient bóng mờ (scrim) bảo đảm độ tương phản chữ, huy hiệu `🔥 NỔI BẬT` chuyển sắc Rose-Amber rực rỡ, hiệu ứng zoom ảnh 700ms mượt mà khi di chuột.
+          * *Thẻ tin dạng lưới (Grid Cards)*: Bo góc 16px (`rounded-2xl`), ảnh tỷ lệ chuẩn với huy hiệu video phát quang, phần chân thẻ có đường kẻ phân cách tinh tế (`border-t border-slate-100 dark:border-slate-800`) phân tách thời lượng đọc và huy hiệu tươi mới.
+        + **Dải Danh Mục Chuyển Sắc Hiện Đại & Tinh Chỉnh Header**:
+          * Nút danh mục active mang dải chuyển sắc `from-blue-600 to-indigo-600`, chữ trắng, đổ bóng mềm `shadow-blue-500/25` và hiệu ứng phóng to nhẹ `scale-[1.02]`.
+          * Logo thương hiệu `Anx.` chuyển sắc đa quang phổ (`bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent font-black text-[22px]`) kèm huy hiệu phụ `Khí Tượng & Tin Tức 24/7`.
+          * Loại bỏ hoàn toàn thanh tìm kiếm trùng lặp trên giao diện Mobile.
+        + **Bảo Toàn 100% Tiêu Chuẩn Nghiệm Thu & Kiểm Thử**:
+          * Toàn bộ 47 ca kiểm thử trong `docs/qa/TEST_PLAN.md` đều tiếp tục đạt kết quả PASS (100%), không có bất kỳ hiện tượng thoái lui nào.
+
+

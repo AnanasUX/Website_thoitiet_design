@@ -131,6 +131,7 @@
 | PROMPT-20261021-02 | 2026-10-21 | Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ | REQ-062 | Resolved | Approved |
 | PROMPT-20261021-03 | 2026-10-21 | Tin tức và thời tiết của telegram tôi lại thấy lỗi không gửi thông tin mới nhất nữa, kiểm tra lại. Ở Google Calendar nếu thông tin của quá khứ liên quan đến gán số điện nước kiểu như hệ thống gán như này nếu mà qua thời gian rồi tự động xóa đi. | REQ-063, REQ-064 | Resolved | Approved |
 | PROMPT-20261023-01 | 2026-10-23 | Kiểm tra có gì cập nhật mới và nâng cấp giao diện UI đẹp hơn thông minh hơn | REQ-065 | Resolved | Approved |
+| PROMPT-20261023-02 | 2026-10-23 | Làm giao diện khác đẹp hơn đi | REQ-066 | Resolved | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -143,6 +144,20 @@
   2. *Thanh Tìm Kiếm & Lọc Tin Tức Tức Thì*: Tích hợp thanh tìm kiếm nhanh bài viết và lọc chủ đề thông minh tức thì trên cả 3 giao diện Mobile, Tablet và Desktop.
   3. *Huy Hiệu Thời Gian Đọc & Độ Tươi Mới*: Tự động tính toán thời lượng đọc bài (`⏱️ x phút đọc`) và gắn nhãn bài viết mới cập nhật (`🟢 Mới cập nhật`).
   4. *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` thành công, `npm run test:logic` 423/423 assertions đạt (100% PASS), `npm run testwebsite` đạt 47/47 ca kiểm thử (RELEASE GATE: PASSED).
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-066)
+
+- **Mã Yêu Cầu**: `REQ-066`
+- **Tiêu Đề**: Đại Tu Thẩm Mỹ Giao Diện Toàn Diện - Phong Cách Neo-Editorial Magazine & Khối Khí Tượng Atmospheric Sky Card
+- **Nguồn Prompt**: `PROMPT-20261023-02`
+- **Phân Hệ**: UI/UX Visual Redesign & Design System (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Khối Khí Tượng Atmospheric Sky Card*: Thiết kế khối thời tiết chủ đạo dạng kính mờ 3D (`rounded-3xl`, viền phát quang siêu mỏng `border-white/20`, hai khối cầu ánh sáng phản quang gradient `blur-3xl`, thông số 4 chỉ số dạng capsule mờ sang trọng).
+  2. *Thẻ Tin Tức Tạp Chí Biên Tập Cao Cấp (Neo-Editorial Cards)*: Bài viết nổi bật (Featured Card) dạng tạp chí cao cấp với gradient scrim tối tương phản cao, badge `🔥 NỔI BẬT` chuyển sắc Rose-Amber, thumbnail phóng to mượt mà khi rê chuột (`group-hover:scale-105 duration-700`).
+  3. *Hệ Thống Thẻ Lưới Hiện Đại (Modern Grid Cards)*: Thiết kế bo tròn 16px (`rounded-2xl`), viền mảnh `border-slate-200/90`, đổ bóng mềm mại `shadow-xs hover:shadow-xl hover:-translate-y-1.5`, nguồn tin với badge pill nổi bật.
+  4. *Bộ Tab Danh Mục Chuyển Sắc Hiện Đại*: Danh mục dạng pill bo tròn với hiệu ứng hoạt họa active gradient `from-blue-600 to-indigo-600` và đổ bóng tỏa `shadow-blue-500/25`.
+  5. *Đạt 100% Bộ Kiểm Thử*: Duy trì 47/47 ca kiểm thử `npm run testwebsite` PASS (RELEASE GATE: PASSED), 423/423 assertions `npm run test:logic` đạt 100%.
+
 
 
 

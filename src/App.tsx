@@ -477,25 +477,25 @@ function SmartWeatherAssistant({
     : { icon: "🏃", title: "Hoạt động", desc: "Rất thích hợp chạy bộ, tập luyện thể thao ngoài trời" };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50/95 via-indigo-50/60 to-purple-50/40 border border-blue-200/80 rounded-2xl p-4 shadow-sm w-full flex flex-col gap-3">
+    <div className="bg-gradient-to-br from-indigo-50/95 via-blue-50/70 to-purple-50/60 dark:from-slate-800/90 dark:via-indigo-950/40 dark:to-slate-900/90 border border-indigo-200/80 dark:border-indigo-800/60 rounded-3xl p-4 shadow-sm w-full flex flex-col gap-3 backdrop-blur-xs">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="size-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs shadow-xs font-bold">
+          <div className="size-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs shadow-xs font-bold">
             ✨
           </div>
-          <span className="font-bold text-[13.5px] text-[#182033] tracking-tight">Trợ Lý Khí Tượng AI Thông Minh</span>
+          <span className="font-bold text-[13.5px] text-[#182033] dark:text-slate-100 tracking-tight">Trợ Lý Khí Tượng AI</span>
         </div>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-100 text-blue-700 border border-blue-200/60 shadow-2xs">
-          <span className="size-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-          Phân Tích Tự Động
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-700/60 shadow-2xs">
+          <span className="size-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse"></span>
+          Phân Tích Trực Tiếp
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 w-full text-[12px]">
+      <div className="grid grid-cols-2 gap-2.5 w-full text-[12px]">
         {[outfitAdvice, commuteAdvice, healthAdvice, activityAdvice].map((item, i) => (
-          <div key={i} className="bg-white/95 hover:bg-white border border-blue-100/90 rounded-xl p-2.5 flex flex-col gap-1 transition-all shadow-2xs hover:shadow-xs">
+          <div key={i} className="bg-white/95 dark:bg-slate-800/95 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl p-3 flex flex-col gap-1 transition-all shadow-2xs hover:shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#182033] flex items-center gap-1.5 text-[11.5px]">
+              <span className="font-bold text-[#182033] dark:text-slate-100 flex items-center gap-1.5 text-[11.5px]">
                 <span>{item.icon}</span>
                 <span>{item.title}</span>
               </span>
@@ -505,7 +505,7 @@ function SmartWeatherAssistant({
                 </span>
               )}
             </div>
-            <p className="text-[#5f687b] text-[11px] leading-snug line-clamp-2">
+            <p className="text-[#5f687b] dark:text-slate-400 text-[11px] leading-snug line-clamp-2">
               {item.desc}
             </p>
           </div>
@@ -547,36 +547,51 @@ function WeatherSection({
 
   return (
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
-      {/* Hero card */}
+      {/* Hero card - Modern Atmospheric Glass Card */}
       <div
-        className="flex flex-col gap-4 items-start overflow-hidden p-6 rounded-2xl shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] w-full transition-transform duration-500 hover:scale-[1.02] lg:h-[400px] lg:justify-between"
-          style={{ background: darkMode ? "linear-gradient(21deg, rgb(23, 43, 115) 0%, rgb(18, 28, 48) 50%, rgb(41, 76, 194) 100%)" : "linear-gradient(21deg, rgb(72, 141, 203) 0%, rgb(51, 106, 214) 50%, rgb(79, 196, 255) 100%)" }}
-          
+        className="relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20"
+        style={{
+          background: darkMode
+            ? "linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 27, 75) 50%, rgb(15, 23, 42) 100%)"
+            : "linear-gradient(135deg, rgb(30, 64, 175) 0%, rgb(37, 99, 235) 50%, rgb(2, 132, 199) 100%)",
+        }}
       >
-        <p className="font-semibold text-[13px] text-white whitespace-nowrap">
-          📍 {compact ? WEATHER.location : WEATHER.locationFull} <span className="animate-pulse inline-block">·</span> {WEATHER.time}
-        </p>
-        <div className="flex flex-col gap-1 items-start w-full">
-          <p className="font-extrabold leading-none text-[60px] text-white whitespace-nowrap">
+        {/* Ambient decorative aura */}
+        <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
+        <div className="absolute -left-12 -bottom-12 w-48 h-48 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none"></div>
+
+        <div className="flex items-center justify-between w-full z-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white font-medium text-[12.5px] shadow-xs">
+            <span>📍</span>
+            <span>{compact ? WEATHER.location : WEATHER.locationFull}</span>
+            <span className="opacity-60">·</span>
+            <span>{WEATHER.time}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1 items-start w-full z-10">
+          <p className="font-black leading-none text-[64px] sm:text-[72px] text-white tracking-tighter drop-shadow-md">
             {WEATHER.temp}
           </p>
-          <p className="font-semibold text-[18px] text-white whitespace-nowrap">
-            <span className="inline-block animate-bounce" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span> {WEATHER.conditionLabel}
+          <p className="font-bold text-[18px] text-white flex items-center gap-2 drop-shadow-xs">
+            <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span>
+            <span>{WEATHER.conditionLabel}</span>
           </p>
-          <p className="font-normal text-[14px] text-[rgba(255,255,255,0.8)] whitespace-nowrap">
+          <p className="font-medium text-[13.5px] text-white/80">
             Cảm nhận {WEATHER.feelsLike}
           </p>
         </div>
-                <div className="grid grid-cols-2 gap-2 w-full text-[13px]">
+
+        <div className="grid grid-cols-2 gap-2.5 w-full text-[13px] z-10">
           {[
             { label: "💨 Gió", value: WEATHER.wind },
             { label: "💧 Độ ẩm", value: WEATHER.humidity },
             { label: "🌫️ Bụi PM2.5", value: WEATHER.pm25 },
             { label: "👁️ Tầm nhìn", value: WEATHER.visibility }
           ].map((stat, idx) => (
-            <div key={idx} className="bg-[rgba(255,255,255,0.09)] border border-[rgba(255,255,255,0.2)] flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-xl">
-              <p className="font-medium text-[rgba(255,255,255,0.9)] text-[12px] whitespace-nowrap">{stat.label}</p>
-              <p className="font-bold leading-5 text-white">{stat.value}</p>
+            <div key={idx} className="bg-white/15 backdrop-blur-md border border-white/25 flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-2xl hover:bg-white/25 transition-all duration-300 shadow-xs">
+              <p className="font-medium text-white/90 text-[11.5px] whitespace-nowrap">{stat.label}</p>
+              <p className="font-bold leading-5 text-white text-[14px]">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -2476,7 +2491,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
-        <p className="font-bold text-[#ff315f] text-[20px]">Anx.</p>
+        <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent">Anx.</span>
         <div className="flex items-center">
           <div className="flex flex-col items-end">
             <p className="font-medium text-[#182033] text-[12px] whitespace-nowrap text-right">
@@ -2580,23 +2595,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <div className="flex items-center justify-between w-full sticky top-[calc(var(--header-height)-1px)] bg-[#f4f6fa] z-[90] py-2 mt-[-4px]">
             <p className="font-bold text-[#182033] text-[17px]">Tin Tức Mới Nhất</p>
             <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
-          </div>
-
-          <div className="w-full flex items-center justify-between gap-2.5 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2">
-            <div className="relative flex-1 flex items-center">
-              <svg className="absolute left-2.5 size-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm nhanh tin tức theo tiêu đề hoặc nội dung..."
-                className="w-full pl-7 pr-6 py-1 text-[12.5px] bg-slate-50 border border-slate-200/80 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-[#182033]"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute right-2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">✕</button>
-              )}
-            </div>
-            <span className="text-[11.5px] text-[#5f687b] font-medium shrink-0">{filteredNews.length} bài viết</span>
           </div>
 
           <div className="w-full flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2">
@@ -2711,7 +2709,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
-          <p className="font-bold text-[#ff315f] text-[20px] whitespace-nowrap">Anx.</p>
+          <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent">Anx.</span>
           <p className="font-medium text-[#5f687b] text-[13px] whitespace-nowrap">
             📍 {WEATHER.location}
           </p>
@@ -2960,7 +2958,13 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
-          <p className="font-bold text-[#182033] text-[18px] whitespace-nowrap">Anx.</p>
+          <div className="flex items-center gap-2 group cursor-pointer">
+            <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">Anx.</span>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Khí Tượng & Tin Tức
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2.5">
           <div className="bg-[#f4f6fa] flex items-center h-[32px] px-3 py-1 rounded-full shrink-0">
@@ -3074,10 +3078,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             <button
               key={cat}
               onClick={() => setActiveCategory && setActiveCategory(cat)}
-              className={`shrink-0 whitespace-nowrap px-3.5 py-[5px] rounded-full font-semibold text-[13px] transition-all cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full font-bold text-[13px] transition-all duration-200 cursor-pointer ${
                 activeCategory === cat
-                  ? 'bg-[#ff315f] text-white shadow-md'
-                  : 'bg-white text-[#5f687b] border border-[#e3e7ef] hover:border-[#cbd5e1] hover:text-[#182033]'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/90 dark:border-slate-700/80 hover:border-blue-400 hover:text-blue-600 shadow-2xs'
               }`}
             >
               {cat}
@@ -3087,43 +3091,46 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       </div>
 
           {((isFetchingCategory || isLoading) && (!featured || newsFeed.length === 0)) ? <NewsSkeleton /> : (<>
-          {/* Featured feed card */}
+          {/* Featured feed card - Modern Editorial Magazine Card */}
           {featured && (
-            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 flex flex-col gap-3.5 items-start overflow-hidden p-5 rounded-3xl shadow-[0_4px_24px_-4px_rgba(23,33,51,0.08)] hover:-translate-y-1 hover:shadow-[0_16px_36px_-6px_rgba(23,33,51,0.16)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
-              <div className="flex gap-[10px] items-center overflow-hidden w-full">
-                <div className="bg-[#ffe8ee] flex flex-col items-center justify-center overflow-hidden rounded-full shrink-0 size-11 border border-gray-100">
-                  <img alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} loading="lazy" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+              <div className="h-[210px] sm:h-[240px] relative rounded-2xl w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-700 ease-out" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[10.5px] font-black uppercase tracking-wider shadow-md">
+                  <span>🔥</span>
+                  <span>NỔI BẬT</span>
                 </div>
-                <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
-                  <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-normal text-[#5f687b] text-[12px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</p>
-                    <span className="text-[11px] text-[#5f687b] font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
-                    {getArticleFreshness(featured.pubDate).isFresh && (
-                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-1.5 py-0.2 rounded-full text-[10px] font-bold flex items-center gap-1">
-                        <span className="size-1 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Mới
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <p className="font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
-                {featured.author}
-              </p>
-              <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
-                <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
-                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 text-white text-[11px] font-semibold backdrop-blur-md shadow-md">
+                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 text-white text-[11px] font-bold backdrop-blur-md shadow-md">
                     <svg className="size-3 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     <span>{featured.isShort ? '⚡ Short' : '▶ Video'}</span>
                     {featured.pubDate && <span className="opacity-90 font-normal text-[10px]">({formatArticleDate(featured.pubDate)})</span>}
                   </div>
                 )}
               </div>
+              <div className="flex gap-2.5 items-center w-full flex-wrap">
+                <div className="size-7 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
+                  <img alt="" className="size-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} loading="lazy" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
+                </div>
+                <span className="font-bold text-[#ff315f] text-[12.5px]">{featured.src}</span>
+                <span className="text-slate-400">·</span>
+                <span className="font-normal text-[#5f687b] dark:text-slate-400 text-[12px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</span>
+                <span className="text-slate-400">·</span>
+                <span className="text-[11.5px] text-[#5f687b] dark:text-slate-400 font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
+                {getArticleFreshness(featured.pubDate).isFresh && (
+                  <span className="ml-auto bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold flex items-center gap-1 shadow-2xs">
+                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Mới cập nhật
+                  </span>
+                )}
+              </div>
+              <h3 className="font-black text-[#182033] dark:text-slate-100 text-[18px] sm:text-[20px] leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors w-full line-clamp-2">
+                {featured.author}
+              </h3>
               {featured.body && (
-                <p className="font-normal text-[#5f687b] text-[length:var(--font-body)] line-clamp-2 mt-3">{featured.body}</p>
+                <p className="font-normal text-[#5f687b] dark:text-slate-400 text-[14px] leading-relaxed line-clamp-2">{featured.body}</p>
               )}
             </div>
           )}
@@ -3131,37 +3138,39 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {/* News grid */}
             <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
               {grid.map((item, i) => (
-                <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+                <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 flex flex-col items-start overflow-hidden rounded-2xl shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
-                <div className="h-[140px] relative w-full overflow-hidden">
+                <div className="h-[150px] relative w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i < 4 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                   {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
-                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 text-white text-[10px] font-semibold backdrop-blur-md shadow-md">
+                    <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold backdrop-blur-md shadow-md">
                       <svg className="size-2.5 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                       <span>{item.isShort ? '⚡ Short' : '▶ Video'}</span>
                       {item.pubDate && <span className="opacity-90 font-normal text-[9.5px]">({formatArticleDate(item.pubDate)})</span>}
                     </div>
                   )}
                 </div>
-                <div className="flex flex-col gap-[6px] items-start p-[14px] w-full">
-                  <div className="flex gap-2 items-center flex-wrap">
-                    <div className="bg-[#ffe8ee] flex items-start px-2 py-[3px] rounded-full">
-                      <p className="font-semibold text-[#ff315f] text-[11px]">{item.src}</p>
+                <div className="flex flex-col gap-2 items-start p-4 w-full flex-1 justify-between">
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                      <span className="font-bold text-[#ff315f] bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-900/60">{item.src}</span>
+                      {item.pubDate && (
+                        <span className="text-[#5f687b] dark:text-slate-400 font-medium">
+                          📅 {formatArticleDate(item.pubDate)}
+                        </span>
+                      )}
                     </div>
-                    {item.pubDate && (
-                      <span className="text-[11px] text-[#5f687b] font-medium flex items-center gap-1">
-                        <span>📅 {formatArticleDate(item.pubDate)}</span>
-                      </span>
-                    )}
-                    <span className="text-[10.5px] text-[#5f687b] font-medium">⏱️ {getReadingTime(item.body || item.author)}</span>
+                    <p className="font-bold text-[#182033] dark:text-slate-100 text-[14.5px] leading-snug w-full line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.author}</p>
+                    <p className="font-normal text-[#5f687b] dark:text-slate-400 text-[12.5px] leading-relaxed line-clamp-2">{item.body}</p>
+                  </div>
+                  <div className="flex items-center justify-between w-full pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-[#5f687b] dark:text-slate-400">
+                    <span className="font-medium">⏱️ {getReadingTime(item.body || item.author)}</span>
                     {getArticleFreshness(item.pubDate).isFresh && (
-                      <span className="text-[9.5px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
                         Mới
                       </span>
                     )}
                   </div>
-                  <p className="font-bold text-[#182033] text-[length:var(--font-h4)] w-full line-clamp-2 mt-2">{item.author}</p>
-                  <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">{item.body}</p>
                 </div>
               </div>
             ))}

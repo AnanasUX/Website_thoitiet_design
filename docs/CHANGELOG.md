@@ -1,5 +1,28 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.36.0 (2026-10-23) - Đại Tu Mỹ Thuật Giao Diện Toàn Diện (Neo-Editorial Magazine & Atmospheric Sky Card) (REQ-066)
+
+### 1. Khối Khí Tượng Atmospheric Sky Card Chiều Sâu 3D
+- Nâng cấp khối thời tiết chủ đạo (Hero Weather Card) với bo góc 24px mềm mại (`rounded-3xl`), viền phản quang mờ (`border-white/20`) và hai khối cầu ánh sáng phản quang gradient (`blur-3xl`).
+- Nhiệt độ cỡ chữ lớn (`text-[64px] sm:text-[72px] font-black tracking-tighter drop-shadow-md`).
+- 4 chỉ số khí tượng (Gió, Độ ẩm, Bụi PM2.5, Tầm nhìn) chuyển thành dạng capsule kính mờ sang trọng (`bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl hover:bg-white/25 transition-all`).
+
+### 2. Thẻ Tin Tức Tạp Chí Biên Tập Cao Cấp (Neo-Editorial Layout)
+- **Thẻ Nổi Bật (Featured Card)**: Bo góc 24px (`rounded-3xl`), viền mượt (`border-slate-200/90 dark:border-slate-800`), độ nổi khối cao (`hover:shadow-[0_16px_36px_-6px_rgba(23,33,51,0.16)]`), lớp phủ gradient đen mờ dưới ảnh (scrim) bảo đảm tương phản chữ, huy hiệu `🔥 NỔI BẬT` chuyển sắc Rose-Amber rực rỡ và hiệu ứng zoom ảnh 700ms mượt mà khi rê chuột.
+- **Thẻ Lưới (Grid Cards)**: Bo góc 16px (`rounded-2xl`), ảnh tỷ lệ chuẩn với huy hiệu video phát quang, đường kẻ tinh tế phân tách thời gian đọc và huy hiệu tươi mới (`🟢 Mới`).
+
+### 3. Dải Danh Mục Chuyển Sắc Hiện Đại & Tinh Chỉnh Header
+- Nút danh mục active mang dải chuyển sắc `from-blue-600 to-indigo-600`, chữ trắng, đổ bóng mềm `shadow-blue-500/25` và hiệu ứng phóng to nhẹ `scale-[1.02]`.
+- Logo thương hiệu `Anx.` chuyển sắc đa quang phổ (`bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent font-black text-[22px]`) kèm huy hiệu phụ `Khí Tượng & Tin Tức 24/7`.
+- Loại bỏ hoàn toàn thanh tìm kiếm trùng lặp trên giao diện Mobile.
+
+### 4. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Thành công 100% trong 1.80s.
+- `npm run test:logic`: 423/423 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả 3 kích thước màn hình Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.35.0 (2026-10-23) - Nâng Cấp Giao Diện UI/UX Thông Minh, Trợ Lý Khí Tượng AI & Bộ Lọc Tìm Kiếm Tức Thì (REQ-065)
 
 ### 1. Trợ Lý Khí Tượng AI Thông Minh (`SmartWeatherAssistant`)
