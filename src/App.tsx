@@ -556,13 +556,13 @@ function WeatherSection({
         className="relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20"
         style={{
           background: darkMode
-            ? "linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 27, 75) 50%, rgb(15, 23, 42) 100%)"
-            : "linear-gradient(135deg, rgb(30, 64, 175) 0%, rgb(37, 99, 235) 50%, rgb(2, 132, 199) 100%)",
+            ? "linear-gradient(135deg, #0c0f12 0%, #14062d 50%, #2563ff 100%)"
+            : "linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #5715d1 100%)",
         }}
       >
-        {/* Ambient decorative aura */}
-        <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-12 -bottom-12 w-48 h-48 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none"></div>
+        {/* Ambient decorative aura (Almond Frost & Sky Glow) */}
+        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#b8ccff]/25 blur-3xl pointer-events-none"></div>
+        <div className="absolute -left-12 -bottom-12 w-56 h-56 rounded-full bg-[#68dbff]/20 blur-3xl pointer-events-none"></div>
 
         <div className="flex items-center justify-between w-full z-10">
           <button
@@ -2499,7 +2499,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   return (
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
-        <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent">Anx.</span>
+        <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
         <div className="flex items-center">
           <div className="flex flex-col items-end">
             <button
@@ -2711,7 +2711,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
-          <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent">Anx.</span>
+          <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
           <button
             type="button"
             onClick={onOpenLocationSelector}
@@ -2972,7 +2972,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100]">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <div className="flex items-center gap-2 group cursor-pointer">
-            <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-rose-500 bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">Anx.</span>
+            <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">Anx.</span>
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Khí Tượng & Tin Tức
@@ -3097,7 +3097,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
             Tin Tức Mới Nhất
           </p>
-          <div className="bg-[#f7a928] flex items-start px-[10px] py-[3px] rounded-full shrink-0">
+          <div className="bg-[#ff7917] flex items-center px-2.5 py-0.5 rounded-full shadow-xs shrink-0">
             <p className="font-bold text-[11px] text-white">LIVE</p>
           </div>
         </div>
@@ -3109,8 +3109,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               onClick={() => setActiveCategory && setActiveCategory(cat)}
               className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full font-bold text-[13px] transition-all duration-200 cursor-pointer ${
                 activeCategory === cat
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/25 scale-[1.02]'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/90 dark:border-slate-700/80 hover:border-blue-400 hover:text-blue-600 shadow-2xs'
+                  ? 'bg-[#2563ff] text-white font-bold shadow-md shadow-blue-500/30 scale-[1.02]'
+                  : 'bg-white dark:bg-[#151921] text-[#4e5b6d] dark:text-[#94a3b8] border border-[#d8dbdf] dark:border-white/10 hover:border-[#2563ff] hover:text-[#2563ff] shadow-2xs'
               }`}
             >
               {cat}
@@ -3127,7 +3127,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
               <div className="h-[210px] sm:h-[240px] relative rounded-2xl w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-700 ease-out" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
-                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white text-[10.5px] font-black uppercase tracking-wider shadow-md">
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#2563ff] to-[#5715d1] text-white text-[10.5px] font-black uppercase tracking-wider shadow-md">
                   <span>🔥</span>
                   <span>NỔI BẬT</span>
                 </div>
@@ -3149,7 +3149,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 <span className="text-slate-400">·</span>
                 <span className="text-[11.5px] text-[#5f687b] dark:text-slate-400 font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
                 {getArticleFreshness(featured.pubDate).isFresh && (
-                  <span className="ml-auto bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold flex items-center gap-1 shadow-2xs">
+                  <span className="ml-auto bg-[#25caac]/10 dark:bg-[#25caac]/20 text-[#0f8b73] dark:text-[#25caac] border border-[#25caac]/30 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold flex items-center gap-1 shadow-2xs">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Mới cập nhật
                   </span>

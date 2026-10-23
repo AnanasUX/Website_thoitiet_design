@@ -717,3 +717,23 @@
         + `npm run build`: 0 lỗi, đóng gói hoàn tất trong 518ms.
         + `npm run test:logic`: 423/423 assertions đạt 100%.
         + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+  51. **[REQ-070] Triển Khai Hệ Thống Thiết Kế & Bảng Phối Màu Almond AI SaaS**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu: "Về phối màu sẽ sử dụng trang này và lên design system cho website này https://almond.framer.website/".
+        + Template Almond AI SaaS sở hữu phong cách thiết kế hiện đại, tinh gọn với độ tương phản sắc sảo, bề mặt kính sứ ấm áp (Warm Alabaster #f6f5f4) và Dark Mode chiều sâu vũ trụ (Deep Obsidian Noir #0c0f12).
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Tài Liệu Hóa Design System Độc Lập (`docs/DESIGN_SYSTEM.md`)**:
+          * Lưu trữ bền vững 51 tokens màu sắc chuẩn hóa, ma trận Dark/Light mode, font Inter, hệ thống bán kính góc bo (shape language), hệ thống bóng đổ (shadow tokens) và bảng quy chuẩn linh kiện (Component Library).
+        + **Bảng Màu Cốt Lõi Almond**:
+          * *Light Canvas*: `#f6f5f4` thay thế xám lạnh thông thường bằng màu sứ ấm áp.
+          * *Dark Canvas*: `#0c0f12` sắc đen thẳm với ánh tím không gian.
+          * *Surfaces*: Thẻ sáng `#ffffff` viền `#e8e6e1`; thẻ tối `#151921` viền `#242b38`.
+          * *Brand Accents*: Electric Royal Blue (`#2563ff`), Cosmic Violet (`#5715d1`), Flame Amber (`#ff7917`), Mint Freshness (`#25caac`), Frost Sky (`#b8ccff`).
+        + **Áp Dụng Thực Tế Trên Toàn Hệ Thống**:
+          * `src/index.css`: Khởi tạo biến màu Almond, phông chữ Inter, bề mặt nền sáng/tối và gradient khí quyển.
+          * `src/App.tsx`: Khối khí tượng Atmospheric Hero Sky Card với gradient đôi `#2563ff` -> `#5715d1` cùng các khối cầu aura mờ ảo (`#b8ccff`); logo thương hiệu chuyển sắc 3 nấc (`#2563ff` -> `#5715d1` -> `#ff7917`); tab danh mục active nền xanh Royal Blue đổ bóng phát quang `shadow-blue-500/25`; badge trực tiếp Flame Amber (`#ff7917`) và badge tươi mới Mint (`#25caac`).
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Hoàn tất thành công 0 lỗi.
+        + `npm run test:logic`: 423/423 assertions đạt 100%.
+        + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).

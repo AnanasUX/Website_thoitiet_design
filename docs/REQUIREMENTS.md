@@ -83,6 +83,7 @@
 | REQ-067 | PROMPT-20261023-03 | Khắc phục triệt để lỗi định vị sai lệch (xóa fallback cưỡng bức Hà Đông), nâng cấp kiến trúc định vị 4 tầng kết hợp OWM Reverse Geocoding tiếng Việt và bộ chọn vị trí tương tác | P0 | Weather / Geolocation | TC-016, TC-022 | PASS | App.tsx, logicFlows.ts, testwebsite.mjs | Xóa 100% hardcode Hà Đông; tích hợp ipwho.is + reverse geocode OWM; modal chọn địa điểm tương tác 63 tỉnh thành lưu localStorage; GPS 8s high-accuracy |
 | REQ-068 | PROMPT-20261023-04 | Loại bỏ thanh tìm kiếm nhanh thừa trên giao diện Mobile theo yêu cầu người dùng | P1 | UI/UX & Mobile Streamline | TC-024 | PASS | App.tsx, testwebsite.mjs | Đã xóa 100% thanh tìm kiếm dư thừa trên Mobile; danh mục tin tức kết nối trực tiếp vào luồng bài viết không bị cản trở |
 | REQ-069 | PROMPT-20261023-05 | Hệ thống tự động định vị chuẩn xác khu vực thực tế của người dùng và đẩy dữ liệu vào, phân định rạch ròi với quyền thay đổi vị trí thủ công của người dùng | P0 | Weather / Geolocation | TC-016, TC-022 | PASS | App.tsx, testwebsite.mjs | Nominatim reverse geocode đa tầng bóc tách Quận/Huyện tiếng Việt; GPS high accuracy; phân tách user_weather_manual_location vs user_weather_auto_location; xóa hardcode Hà Đông; tôn trọng 100% lựa chọn thủ công của người dùng |
+| REQ-070 | PROMPT-20261023-06 | Triển khai hệ thống thiết kế (Design System) và bảng phối màu Almond AI SaaS (https://almond.framer.website/): Warm Alabaster Canvas (#f6f5f4), Deep Obsidian Dark Canvas (#0c0f12), Electric Royal Blue (#2563ff), Cosmic Violet (#5715d1), Flame Amber (#ff7917), Mint (#25caac), thẻ bo góc 24px viền tinh tế và tài liệu DESIGN_SYSTEM.md | P1 | Design System & Visual Theme | TC-016, TC-024 | PASS | index.css, App.tsx, DESIGN_SYSTEM.md, testwebsite.mjs | Almond AI SaaS tokens, Inter font, warm alabaster matte background, atmospheric hero mesh, category pill active state |
 
 ## Prompt intake log
 
@@ -230,3 +231,24 @@
      - Hero Weather Card (`hero-location-badge`) và Header (Mobile, Tablet, Desktop) hiển thị rõ ràng nhãn `(Tự động)` kèm icon 📍 hoặc `(Tự chọn)` kèm icon 📌.
      - `LocationSelectorModal` hiển thị banner thông báo khi đang ở chế độ thủ công cùng nút "Bật lại tự động" (`data-testid="reset-auto-location-btn"`).
   4. *Duy Trì 100% Bộ Kiểm Thử*: `npm run build` thành công 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-070)
+
+- **Mã Yêu Cầu**: `REQ-070`
+- **Tiêu Đề**: Triển Khai Hệ Thống Thiết Kế (Design System) & Phối Màu Almond AI SaaS (https://almond.framer.website/)
+- **Nguồn Prompt**: `PROMPT-20261023-06`: *"Về phối màu sẽ sử dụng trang này và lên design system cho website này https://almond.framer.website/"*
+- **Phân Hệ**: UI/UX Design System, Typography & Theme Engine (`src/index.css`, `src/App.tsx`, `docs/DESIGN_SYSTEM.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Bộ Nhớ Bền Vững & Hồ Sơ Design System*: Xây dựng tài liệu đặc tả chuẩn hóa `docs/DESIGN_SYSTEM.md` bao gồm toàn bộ bảng màu 51 tokens, tỷ lệ typography, bán kính góc bo (shape language), hệ thống bóng mờ và ma trận chuyển đổi Dark/Light mode.
+  2. *Bảng Màu Almond AI SaaS Đặc Trưng*:
+     - **Canvas Nền**: Warm Alabaster (`#f6f5f4`) mang phong cách sứ mờ cao cấp ở chế độ sáng, Deep Obsidian Noir (`#0c0f12`) với ánh tím cosmic sâu thẳm ở chế độ tối.
+     - **Bề Mặt Thẻ (Surfaces)**: Thẻ sáng `#ffffff` với viền `border-[#e8e6e1]`, thẻ tối `#151921` với viền `border-[#242b38]`.
+     - **Màu Nhấn (Brand Accents)**: Electric Royal Blue (`#2563ff`), Cosmic Violet (`#5715d1`), Flame Amber (`#ff7917`), và Mint Freshness (`#25caac`).
+  3. *Typography & Hình Khối*:
+     - Phông chữ tiêu chuẩn Inter với độ tương phản văn bản cao (`#0c0f12` cho tiêu đề, `#4e5b6d` cho nội dung).
+     - Bán kính bo góc phân tầng: Thẻ chính bo 24px (`rounded-3xl`), phần tử con bên trong bo 14-16px, nút bấm và badge theo ngôn ngữ Pill (`rounded-full`).
+  4. *Atmospheric Hero Card & Phối Sắc Giao Diện*:
+     - Khối thời tiết chủ đạo (Hero Weather Card) với dải gradient đôi `#2563ff` -> `#5715d1` kèm aura phát quang Frost Sky `#b8ccff`.
+     - Logo thương hiệu chuyển sắc 3 nấc (`#2563ff` -> `#5715d1` -> `#ff7917`).
+     - Badge Trực tiếp LIVE màu Flame Amber (`#ff7917`), badge tươi mới màu Mint (`#25caac`).
+  5. *Duy Trì 100% Bộ Kiểm Thử*: `npm run build` thành công 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).

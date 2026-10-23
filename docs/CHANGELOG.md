@@ -1,5 +1,30 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.40.0 (2026-10-23) - Triển Khai Hệ Thống Thiết Kế & Bảng Phối Màu Almond AI SaaS (REQ-070)
+
+### 1. Bảng Phối Màu Hiện Đại Phong Cách Almond AI SaaS
+- Tích hợp bảng màu cao cấp lấy cảm hứng từ template Almond (https://almond.framer.website/).
+- **Light Canvas**: Warm Alabaster (`#f6f5f4`) mang chất liệu sứ ấm áp, thanh nhã.
+- **Dark Canvas**: Deep Obsidian Noir (`#0c0f12`) mang chiều sâu vũ trụ huyền bí.
+- **Card Surfaces**: Thẻ sáng `#ffffff` với viền mảnh `border-[#e8e6e1]`, thẻ tối `#151921` với viền sâu `border-[#242b38]`.
+- **Màu Nhấn (Brand Accents)**: Electric Royal Blue (`#2563ff`), Cosmic Violet (`#5715d1`), Flame Amber (`#ff7917`), Mint (`#25caac`), và Frost Sky (`#b8ccff`).
+
+### 2. Hồ Sơ Đặc Tả Design System Độc Lập
+- Xây dựng tài liệu `docs/DESIGN_SYSTEM.md` chi tiết đầy đủ 51 tokens màu sắc, kiểu chữ Inter, bán kính bo góc phân cấp (24px, 16px, pill rounded-full), hệ thống đổ bóng và ma trận linh kiện.
+
+### 3. Nâng Cấp Giao Diện Ứng Dụng
+- Thẻ thời tiết Hero Sky Card với dải gradient đôi `#2563ff` -> `#5715d1` kết hợp aura ánh sáng phản quang Frost Sky.
+- Logo thương hiệu đa sắc (`#2563ff` -> `#5715d1` -> `#ff7917`).
+- Tab danh mục active nền Royal Blue bo tròn năng động.
+- Giữ vững 100% thuộc tính testid, khả năng tiếp cận WCAG 2.1 và trải nghiệm tương tác liền mạch.
+
+### 4. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Thành công 100% trong 533ms.
+- `npm run test:logic`: 423/423 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả 3 kích thước màn hình Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.39.0 (2026-10-23) - Cơ Chế Tự Động Định Vị Chuẩn Xác Theo Khu Vực Người Dùng & Phân Định Quyền Thay Đổi Thủ Công (REQ-069)
 
 ### 1. Tự Động Định Vị Chính Xác Khu Vực Thực Tế Của Người Dùng

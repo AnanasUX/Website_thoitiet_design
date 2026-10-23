@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.39.0`
+- **Phiên bản**: `1.40.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -724,6 +724,13 @@
     - *Triệt Tiêu Hardcode*: Thay thế hoàn toàn "Quận Hà Đông, Hà Nội" trong `DEFAULT_WEATHER_DATA` thành "Hà Nội" / "Thành phố Hà Nội, VN".
     - *Phân Định Rạch Ròi Manual vs Auto*: Tách biệt `user_weather_manual_location` (người dùng tự chọn thủ công) và `user_weather_auto_location` (hệ thống tự động). Tôn trọng lựa chọn thủ công của người dùng, hỗ trợ chuyển đổi linh hoạt qua nút "Bật lại tự động" và nút GPS.
     - *Bảo Toàn Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+
+51. **[REQ-070] Triển Khai Hệ Thống Thiết Kế & Bảng Phối Màu Almond AI SaaS**:
+    - *Bảng Màu Cốt Lõi Almond*: Warm Alabaster (`#f6f5f4`), Deep Obsidian Noir (`#0c0f12`), Electric Royal Blue (`#2563ff`), Cosmic Violet (`#5715d1`), Flame Amber (`#ff7917`), Mint Freshness (`#25caac`).
+    - *Hồ Sơ Design System*: Xây dựng tài liệu độc lập `docs/DESIGN_SYSTEM.md` với 51 tokens màu sắc, kiểu chữ Inter, bán kính bo góc 24px/16px/pill và ma trận dark mode.
+    - *Giao Diện Hero Sky Card & Thương Hiệu*: Cập nhật Atmospheric Hero Card chuyển sắc Royal Blue & Cosmic Violet, logo 3 nấc gradient, tab danh mục active nổi bật và thẻ tin tức viền tinh tế.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
