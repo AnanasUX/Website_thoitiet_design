@@ -423,6 +423,98 @@ function getConditionLabel(iconCode: string) {
   }
 }
 
+
+export function getReadingTime(text?: string): string {
+  if (!text) return "1 phút đọc";
+  const words = text.trim().split(/\s+/).length;
+  const minutes = Math.max(1, Math.ceil(words / 45));
+  return `${minutes} phút đọc`;
+}
+
+export function getArticleFreshness(pubDateStr?: string): { isFresh: boolean; label: string } {
+  if (!pubDateStr) return { isFresh: false, label: "" };
+  try {
+    const date = new Date(pubDateStr);
+    const diffMinutes = Math.floor((Date.now() - date.getTime()) / (1000 * 60));
+    if (diffMinutes >= 0 && diffMinutes <= 120) return { isFresh: true, label: "Mới cập nhật" };
+    if (diffMinutes > 120 && diffMinutes <= 360) return { isFresh: true, label: "Hôm nay" };
+  } catch {}
+  return { isFresh: false, label: "" };
+}
+
+function SmartWeatherAssistant({
+  weather,
+  condKey,
+}: {
+  weather: WeatherEntry;
+  condKey: ConditionKey;
+}) {
+  const tempNum = parseInt(weather.temp) || 28;
+  const pm25Num = parseInt(weather.pm25) || 35;
+
+  const outfitAdvice = tempNum >= 32
+    ? { icon: "👕", title: "Trang phục", desc: "Vải lanh, cotton thoáng mát & đội mũ nón chống nắng" }
+    : tempNum <= 20
+    ? { icon: "🧥", title: "Trang phục", desc: "Áo khoác giữ ấm, mặc nhiều lớp tránh gió lạnh" }
+    : { icon: "👕", title: "Trang phục", desc: "Quần áo nhẹ nhàng, thoải mái vận động linh hoạt" };
+
+  const commuteAdvice = condKey.includes("mua")
+    ? { icon: "☂️", title: "Di chuyển", desc: "Mang theo ô/áo mưa, giữ khoảng cách lái xe an toàn" }
+    : condKey === "nang-gat"
+    ? { icon: "🕶️", title: "Di chuyển", desc: "Đeo kính râm chống chói, tránh sốc nhiệt khi ra nắng" }
+    : { icon: "🚴", title: "Di chuyển", desc: "Đường khô thoáng, điều kiện giao thông thuận lợi" };
+
+  const healthAdvice = pm25Num > 75
+    ? { icon: "😷", title: "Không khí", desc: `AQI cao (${pm25Num} µg/m³) - Nên đeo khẩu trang N95`, badge: "Cần chú ý", badgeColor: "bg-rose-50 text-rose-600 border-rose-200" }
+    : pm25Num > 40
+    ? { icon: "🍃", title: "Không khí", desc: `Bụi vừa (${pm25Num} µg/m³) - Nhóm nhạy cảm lưu ý`, badge: "Vừa phải", badgeColor: "bg-amber-50 text-amber-600 border-amber-200" }
+    : { icon: "🌿", title: "Không khí", desc: `Trong lành (${pm25Num} µg/m³) - Lý tưởng mở cửa thông gió`, badge: "Tốt", badgeColor: "bg-emerald-50 text-emerald-600 border-emerald-200" };
+
+  const activityAdvice = condKey.includes("mua")
+    ? { icon: "☕", title: "Hoạt động", desc: "Ưu tiên hoạt động trong nhà, thể thao nhẹ trong phòng" }
+    : tempNum >= 34
+    ? { icon: "🥤", title: "Hoạt động", desc: "Hạn chế ra nắng trưa, bổ sung >2L nước và khoáng chất" }
+    : { icon: "🏃", title: "Hoạt động", desc: "Rất thích hợp chạy bộ, tập luyện thể thao ngoài trời" };
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50/95 via-indigo-50/60 to-purple-50/40 border border-blue-200/80 rounded-2xl p-4 shadow-sm w-full flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="size-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs shadow-xs font-bold">
+            ✨
+          </div>
+          <span className="font-bold text-[13.5px] text-[#182033] tracking-tight">Trợ Lý Khí Tượng AI Thông Minh</span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-100 text-blue-700 border border-blue-200/60 shadow-2xs">
+          <span className="size-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+          Phân Tích Tự Động
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 w-full text-[12px]">
+        {[outfitAdvice, commuteAdvice, healthAdvice, activityAdvice].map((item, i) => (
+          <div key={i} className="bg-white/95 hover:bg-white border border-blue-100/90 rounded-xl p-2.5 flex flex-col gap-1 transition-all shadow-2xs hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-[#182033] flex items-center gap-1.5 text-[11.5px]">
+                <span>{item.icon}</span>
+                <span>{item.title}</span>
+              </span>
+              {(item as any).badge && (
+                <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full border font-bold ${(item as any).badgeColor}`}>
+                  {(item as any).badge}
+                </span>
+              )}
+            </div>
+            <p className="text-[#5f687b] text-[11px] leading-snug line-clamp-2">
+              {item.desc}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function WeatherSection({
   compact = false,
   condKey,
@@ -489,6 +581,9 @@ function WeatherSection({
           ))}
         </div>
       </div>
+
+      {/* Smart Weather Assistant */}
+      <SmartWeatherAssistant weather={WEATHER} condKey={condKey} />
 
       {/* Forecast */}
       <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
@@ -2364,6 +2459,16 @@ function MobileLayout({ activeCategory, setActiveCategory,
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredNews = useMemo(() => {
+    if (!searchQuery.trim()) return newsFeed;
+    const q = searchQuery.toLowerCase().trim();
+    return newsFeed.filter(item => 
+      (item.author && item.author.toLowerCase().includes(q)) ||
+      (item.body && item.body.toLowerCase().includes(q)) ||
+      (item.src && item.src.toLowerCase().includes(q))
+    );
+  }, [newsFeed, searchQuery]);
   const now = useCurrentTime();
   const shortDateStr = `${now.getDate()} thg ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
@@ -2477,8 +2582,42 @@ function MobileLayout({ activeCategory, setActiveCategory,
             <MobileCategoryMenu activeCategory={activeCategory || "Tất cả"} setActiveCategory={setActiveCategory || (() => {})} />
           </div>
 
+          <div className="w-full flex items-center justify-between gap-2.5 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2">
+            <div className="relative flex-1 flex items-center">
+              <svg className="absolute left-2.5 size-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm nhanh tin tức theo tiêu đề hoặc nội dung..."
+                className="w-full pl-7 pr-6 py-1 text-[12.5px] bg-slate-50 border border-slate-200/80 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-[#182033]"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">✕</button>
+              )}
+            </div>
+            <span className="text-[11.5px] text-[#5f687b] font-medium shrink-0">{filteredNews.length} bài viết</span>
+          </div>
+
+          <div className="w-full flex items-center justify-between gap-2 bg-white px-3 py-1.5 rounded-xl border border-[#e3e7ef] shadow-2xs mb-2">
+            <div className="relative flex-1 flex items-center">
+              <svg className="absolute left-2.5 size-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm nhanh tin tức, giá vàng..."
+                className="w-full pl-7 pr-6 py-1 text-[12px] bg-slate-50 border border-slate-200/80 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white text-[#182033]"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">✕</button>
+              )}
+            </div>
+            <span className="text-[11px] text-[#5f687b] font-medium shrink-0">{filteredNews.length} bài</span>
+          </div>
+
           {((isFetchingCategory || isLoading) && newsFeed.length === 0) ? <NewsSkeleton /> : (<>
-          {newsFeed.map((item, i) => (
+          {filteredNews.map((item, i) => (
               <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex flex-col gap-2 items-start w-full">
@@ -2487,6 +2626,10 @@ function MobileLayout({ activeCategory, setActiveCategory,
                     <p className="font-normal text-[#5f687b] text-[12px] flex items-center gap-1.5 flex-wrap">
                       <span>{item.src}</span>
                       {item.pubDate && <span>• 📅 {formatArticleDate(item.pubDate)}</span>}
+                      <span>• ⏱️ {getReadingTime(item.body || item.author)}</span>
+                      {getArticleFreshness(item.pubDate).isFresh && (
+                        <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">Mới</span>
+                      )}
                     </p>
                   </div>
                   <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
@@ -2547,7 +2690,17 @@ function TabletLayout({ activeCategory, setActiveCategory,
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
-  const [featured, ...rest] = newsFeed;
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredNews = useMemo(() => {
+    if (!searchQuery.trim()) return newsFeed;
+    const q = searchQuery.toLowerCase().trim();
+    return newsFeed.filter(item => 
+      (item.author && item.author.toLowerCase().includes(q)) ||
+      (item.body && item.body.toLowerCase().includes(q)) ||
+      (item.src && item.src.toLowerCase().includes(q))
+    );
+  }, [newsFeed, searchQuery]);
+  const [featured, ...rest] = filteredNews.length > 0 ? filteredNews : newsFeed;
   const now = useCurrentTime();
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const dayName = days[now.getDay()];
@@ -2701,9 +2854,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
                     <p className="font-semibold text-[#ff315f] text-[11px]">{featured.src}</p>
                   </div>
                   {featured.pubDate && (
-                    <span className="text-[11px] text-[#5f687b] font-medium">
-                      📅 {formatArticleDate(featured.pubDate)}
-                    </span>
+                    <>
+                      <span className="text-[11px] text-[#5f687b] font-medium">
+                        📅 {formatArticleDate(featured.pubDate)}
+                      </span>
+                      <span className="text-[11px] text-[#5f687b] font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
+                    </>
                   )}
                 </div>
               </div>
@@ -2728,9 +2884,12 @@ function TabletLayout({ activeCategory, setActiveCategory,
                     <p className="font-bold text-[#ff315f] text-[10px]">{item.src}</p>
                   </div>
                   {item.pubDate && (
-                    <span className="text-[10.5px] text-[#5f687b] font-medium">
-                      📅 {formatArticleDate(item.pubDate)}
-                    </span>
+                    <>
+                      <span className="text-[10.5px] text-[#5f687b] font-medium">
+                        📅 {formatArticleDate(item.pubDate)}
+                      </span>
+                      <span className="text-[10px] text-[#5f687b] font-medium">⏱️ {getReadingTime(item.body || item.author)}</span>
+                    </>
                   )}
                 </div>
                 <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
@@ -2781,7 +2940,17 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
-  const [featured, ...grid] = newsFeed;
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredFeed = useMemo(() => {
+    if (!searchQuery.trim()) return newsFeed;
+    const q = searchQuery.toLowerCase().trim();
+    return newsFeed.filter(item => 
+      (item.author && item.author.toLowerCase().includes(q)) ||
+      (item.body && item.body.toLowerCase().includes(q)) ||
+      (item.src && item.src.toLowerCase().includes(q))
+    );
+  }, [newsFeed, searchQuery]);
+  const [featured, ...grid] = filteredFeed.length > 0 ? filteredFeed : newsFeed;
   const now = useCurrentTime();
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
     const dayName = days[now.getDay()];
@@ -2928,7 +3097,16 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 </div>
                 <div className="flex flex-1 flex-col items-start min-w-0 overflow-hidden">
                   <p className="font-semibold text-[#182033] text-[14px] line-clamp-1">{featured.src}</p>
-                  <p className="font-normal text-[#5f687b] text-[12px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-normal text-[#5f687b] text-[12px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</p>
+                    <span className="text-[11px] text-[#5f687b] font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
+                    {getArticleFreshness(featured.pubDate).isFresh && (
+                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-1.5 py-0.2 rounded-full text-[10px] font-bold flex items-center gap-1">
+                        <span className="size-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Mới
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <p className="font-bold text-[#182033] text-[length:var(--font-h3)] w-full line-clamp-3 mb-2">
@@ -2973,6 +3151,12 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                     {item.pubDate && (
                       <span className="text-[11px] text-[#5f687b] font-medium flex items-center gap-1">
                         <span>📅 {formatArticleDate(item.pubDate)}</span>
+                      </span>
+                    )}
+                    <span className="text-[10.5px] text-[#5f687b] font-medium">⏱️ {getReadingTime(item.body || item.author)}</span>
+                    {getArticleFreshness(item.pubDate).isFresh && (
+                      <span className="text-[9.5px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200/60">
+                        Mới
                       </span>
                     )}
                   </div>

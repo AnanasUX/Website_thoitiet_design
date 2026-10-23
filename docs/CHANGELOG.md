@@ -1,5 +1,31 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.35.0 (2026-10-23) - Nâng Cấp Giao Diện UI/UX Thông Minh, Trợ Lý Khí Tượng AI & Bộ Lọc Tìm Kiếm Tức Thì (REQ-065)
+
+### 1. Trợ Lý Khí Tượng AI Thông Minh (`SmartWeatherAssistant`)
+- Bổ sung khối phân tích AI thông minh ngay trong phân hệ Thời tiết với thiết kế kính mờ bán trong suốt (glassmorphism) hiện đại, viền phát quang dịu nhẹ và huy hiệu trạng thái động (`animate-pulse`).
+- Tự động diễn giải các chỉ số khí tượng (nhiệt độ, độ ẩm, PM2.5, kiểu thời tiết) thành 4 nhóm gợi ý thực tế công thái học:
+  1. 👕 **Trang phục**: Gợi ý quần áo thoáng mát mùa nóng, áo ấm mùa lạnh hoặc trang phục nhẹ nhàng linh hoạt.
+  2. ☂️ **Di chuyển**: Khuyến cáo mang theo ô/áo mưa khi mưa dông, kính râm khi nắng gắt hoặc thông báo đường khô ráo thuận lợi.
+  3. 🍃 **Sức khỏe & AQI**: Đánh giá nồng độ bụi PM2.5 theo ngưỡng an toàn, khuyến nghị khẩu trang N95 khi chất lượng không khí kém và thời điểm thích hợp mở cửa thông gió.
+  4. 🏃 **Hoạt động**: Đưa ra lời khuyên về thể thao ngoài trời hoặc hoạt động trong nhà.
+
+### 2. Bộ Lọc Tìm Kiếm Tin Tức Nhanh Tức Thời (Live News Search Bar)
+- Tích hợp thanh tìm kiếm bài viết trực tiếp ngay dưới thanh danh mục trên cả Desktop, Tablet và Mobile.
+- Lọc tức thì (0ms latency) theo tác giả/tiêu đề, tóm tắt và nguồn báo chí với `useMemo`.
+- Hiển thị bộ đếm số lượng tin bài trực quan (`{filteredFeed.length} tin tức`).
+
+### 3. Huy Hiệu Thời Gian Đọc & Độ Tươi Mới (Reading Time & Freshness Tag)
+- Tự động tính toán thời lượng đọc trung bình (`⏱️ x phút đọc`) trên mọi thẻ bài viết.
+- Gắn nhãn bài viết mới xuất bản (`🟢 Mới cập nhật` / `Mới`) giúp độc giả nhanh chóng nắm bắt các luồng thông tin nóng nhất.
+
+### 4. Kết Quả Kiểm Thử Hệ Thống Toàn Diện
+- `npm run build`: Thành công 100% trong 1.88s.
+- `npm run test:logic`: 423/423 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả 3 kích thước màn hình Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.34.0 (2026-10-21) - Tự Động Xóa Lịch Gán Số Điện Nước Quá Hạn Trên Google Calendar & Tối Ưu Hóa Thu Thập / Đẩy Tin Tức & Thời Tiết Định Kỳ Telegram (REQ-063, REQ-064)
 
 ### 1. Tự Động Xóa Sạch Các Sự Kiện Lịch Gán Số Điện Nước Quá Hạn Trên Google Calendar (REQ-063)

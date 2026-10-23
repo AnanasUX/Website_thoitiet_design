@@ -600,3 +600,31 @@
         + `python test_all_telegram_commands.py`: **14/14 tests PASS (100% OK)**.
         + `python test_news_collector.py`: **9/9 tests PASS (100% OK)**.
         + Hai sự kiện lịch quá hạn đã được xóa sạch hoàn toàn khỏi Google Calendar của `mrkun28@gmail.com` (xác minh `Remaining events: 0`).
+
+  46. **[REQ-065] Kiến Trúc Giao Diện UI/UX Thông Minh, Trợ Lý Khí Tượng AI & Bộ Lọc Tìm Kiếm Tức Thì (Smart UI/UX Evolution)**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu: "Kiểm tra có gì cập nhật mới và nâng cấp giao diện UI đẹp hơn thông minh hơn".
+        + Cập nhật mới từ remote:
+          1. Commit `d36fbde` (`Website_thoitiet_design`): Triển khai Google One-Tap Auto-login (`useGoogleOneTapLogin` với `auto_select: true`) và cơ chế silent background sync thông tin hồ sơ người dùng qua Google OAuth2 v3 userinfo.
+          2. Commit `cdaf9fb` (`quan-ly-tien-phong`): Tự động xóa sạch lịch gán số điện nước quá hạn trên Google Calendar (`xoa_lich_dien_nuoc_qua_han`) và nâng cấp đa luồng `ThreadPoolExecutor(max_workers=8)` giúp cào RSS nhanh gấp 7 lần (từ 30s xuống 3.91s).
+        + Nhu cầu nâng cấp giao diện: Cần mang lại diện mạo hiện đại hơn, giao diện sắc nét với hiệu ứng glassmorphism, hỗ trợ gợi ý hành vi trực quan thông minh (outfit, commute, health/AQI, activity) và tìm kiếm bài viết tức thời.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Trợ Lý Khí Tượng AI Thông Minh (`SmartWeatherAssistant`)**:
+          * Tự động bóc tách nhiệt độ số học (`tempNum`), nồng độ bụi mịn (`pm25Num`), độ ẩm và trạng thái thời tiết (`condKey`).
+          * Cung cấp 4 thẻ phân tích thực tế:
+            - 👕 *Trang phục*: Gợi ý vải lanh, cotton thoáng mát khi nắng nóng (>=32°C), áo khoác giữ ấm khi se lạnh (<=20°C), hoặc trang phục linh hoạt.
+            - ☂️ *Di chuyển*: Cảnh báo mang theo ô/áo mưa khi mưa dông, kính râm khi nắng gắt, hoặc thông báo lộ trình khô ráo.
+            - 🍃 *Sức khỏe & AQI*: Đánh giá mức độ ô nhiễm không khí theo tiêu chuẩn WHO/AQI; khuyến nghị đeo khẩu trang N95 khi PM2.5 > 75, cảnh báo nhóm nhạy cảm khi PM2.5 > 40, và thông báo thời điểm lý tưởng mở cửa sổ khi không khí trong lành.
+            - 🏃 *Hoạt động*: Gợi ý thể thao ngoài trời, hoạt động trong nhà, hoặc bù nước khoáng khi nhiệt độ cao.
+          * Tích hợp huy hiệu trực tiếp có hiệu ứng sóng xung `animate-pulse` và phong cách thiết kế kính mờ bán trong suốt (glassmorphism).
+        + **Thanh Tìm Kiếm Nhanh & Đếm Bài Viết Thời Gian Thực (Live News Search Bar)**:
+          * Bổ sung thanh tìm kiếm nhanh tức thời trên Desktop, Tablet và Mobile.
+          * Sử dụng hook `useMemo` lọc tức thì bài viết theo tiêu đề tác giả (`item.author`), tóm tắt (`item.body`) và nguồn báo (`item.src`) với độ trễ 0ms.
+          * Duy trì bộ đếm số lượng tin bài trực quan (`{filteredFeed.length} tin tức`).
+        + **Huy Hiệu Thời Gian Đọc & Độ Tươi Mới (Reading Time & Freshness Tag)**:
+          * Tự động ước lượng thời gian đọc theo tốc độ đọc tiếng Việt (`getReadingTime`, 45 từ/phút).
+          * Gắn nhãn `🟢 Mới cập nhật` (`getArticleFreshness`) cho các tin bài xuất bản trong vòng 2 giờ.
+        + **Bảo Toàn Tương Thích & Bộ Kiểm Thử**:
+          * Giữ nguyên toàn bộ các `data-testid="news-card"`, cấu trúc DOM và hành vi phân trang danh mục `NEWS_CATEGORIES`.
+          * 100% các bài test `npm run test:logic` (423/423 assertions) và `npm run testwebsite` (47/47 test cases) tiếp tục đạt tuyệt đối.
+

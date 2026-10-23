@@ -130,6 +130,20 @@
 | PROMPT-20261021-01 | 2026-10-21 | Đăng nhập Gmail thành công nhưng Calendar báo phải cấp quyền, reload F5 thì bị mất đăng nhập bị đẩy ra | REQ-061 | Resolved | Approved |
 | PROMPT-20261021-02 | 2026-10-21 | Đã đăng nhập và ghi nhận thông tin gmail trên website rồi nhưng tại sao khi reset lại bị mất phải ghi nhận lại chứ | REQ-062 | Resolved | Approved |
 | PROMPT-20261021-03 | 2026-10-21 | Tin tức và thời tiết của telegram tôi lại thấy lỗi không gửi thông tin mới nhất nữa, kiểm tra lại. Ở Google Calendar nếu thông tin của quá khứ liên quan đến gán số điện nước kiểu như hệ thống gán như này nếu mà qua thời gian rồi tự động xóa đi. | REQ-063, REQ-064 | Resolved | Approved |
+| PROMPT-20261023-01 | 2026-10-23 | Kiểm tra có gì cập nhật mới và nâng cấp giao diện UI đẹp hơn thông minh hơn | REQ-065 | Resolved | Approved |
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
+
+- **Mã Yêu Cầu**: `REQ-065`
+- **Tiêu Đề**: Nâng Cấp Giao Diện UI/UX Thông Minh, Trợ Lý Khí Tượng AI Thời Gian Thực & Thanh Tìm Kiếm / Lọc Bài Viết Tức Thì
+- **Nguồn Prompt**: `PROMPT-20261023-01`
+- **Phân Hệ**: UI/UX Design System & Client Core (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Trợ Lý Khí Tượng AI Thông Minh (`SmartWeatherAssistant`)*: Tự động phân tích các chỉ số thời tiết, nhiệt độ, độ ẩm và bụi mịn PM2.5 thời gian thực; đưa ra 4 nhóm khuyến cáo thông minh trực quan (Trang phục, Di chuyển, Sức khỏe/AQI, Hoạt động thể thao).
+  2. *Thanh Tìm Kiếm & Lọc Tin Tức Tức Thì*: Tích hợp thanh tìm kiếm nhanh bài viết và lọc chủ đề thông minh tức thì trên cả 3 giao diện Mobile, Tablet và Desktop.
+  3. *Huy Hiệu Thời Gian Đọc & Độ Tươi Mới*: Tự động tính toán thời lượng đọc bài (`⏱️ x phút đọc`) và gắn nhãn bài viết mới cập nhật (`🟢 Mới cập nhật`).
+  4. *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` thành công, `npm run test:logic` 423/423 assertions đạt (100% PASS), `npm run testwebsite` đạt 47/47 ca kiểm thử (RELEASE GATE: PASSED).
+
 
 
 
