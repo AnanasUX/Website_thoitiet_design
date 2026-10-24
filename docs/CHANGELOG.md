@@ -1,5 +1,29 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.46.0 (2026-10-24) - Đồng Bộ Hóa Toàn Diện Giao Diện Video Shorts Theo Theme Sáng/Tối (Dark/Light) & Triệt Tiêu Lỗi Tiêu Đề Danh Sách Bản Tin Màu Đen Bị Chìm (REQ-076)
+
+### 1. Đồng Bộ Hóa Toàn Diện Chủ Đề Dark/Light Cho Phân Hệ Video Shorts
+- **Liên kết trạng thái theme ứng dụng**: Truyền prop `darkMode={darkMode}` từ `src/App.tsx` vào `<VideoShortsModal ... />` và phân giải an toàn `const isDark = darkMode ?? (typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false);`.
+- **Tái thiết kế 2 tone màu chuẩn Almond cho 6 phân vùng Video Shorts**:
+  + *Khung Root & Ambient Glow*: Chuyển đổi giữa `bg-neutral-950/98 border-white/10` (Dark) và `bg-slate-50/98 border-slate-200/80` (Light).
+  + *Sidebar 16:9 Desktop*: Tương thích sáng tối toàn diện từ thanh tiêu đề, danh sách clip đề xuất, badge thời lượng, icon chuyển chế độ.
+  + *Drawer Danh sách phát (Playlist Drawer)*: Subtabs, thẻ video active, trạng thái đang phát, danh sách cuộn mượt mà thích ứng với 2 theme.
+  + *EPG Guide & Catalog Modal*: Thẻ tài khoản Google, subcategory tabs, danh sách kênh theo dõi, lưới video mới nhất, các tab Theo Kênh, Đã Lưu, Lịch Sử, Shorts 9:16, Lưới kênh truyền hình (`TV_CHANNELS`), và chân trang phím tắt TV.
+  + *Comments Drawer*: Nền drawer, form nhập bình luận, danh sách bình luận người dùng, nút Like/Trả lời chuẩn sắc Almond.
+  + *Add Channel Modal*: Modal thêm kênh, input URL/@handle, danh mục kênh gợi ý nhanh.
+
+### 2. Triệt Tiêu Hoàn Toàn Lỗi Tiêu Đề Bản Tin Bị Đen (Black Text on Dark Surfaces)
+- **Khắc phục lỗi CSS Cascade Override unlayered trong `src/index.css`**: Xóa bỏ khai báo `color: var(--almond-ink);` khỏi rule unlayered `h1..h6` trong `src/index.css`. Khai báo này trước đây nằm ngoài `@layer` khiến CSS Cascade Layer ưu tiên cao hơn và đè lên class `.text-white` của Tailwind khi người dùng ở Light Mode (`--almond-ink` là `#0c0f12`), làm toàn bộ tiêu đề bị đen xì không thể đọc được.
+- **Bổ sung CSS Scoped cho VideoShortsModal**: Thêm quy tắc `[data-testid="video-shorts-modal"] h1..h6, strong, b { color: inherit !important; }`.
+- **Gán class màu tương phản cao theo theme**: Mọi tiêu đề danh sách bản tin và thẻ video được gán rõ ràng: `isDark ? 'text-white' : 'text-[#0c0f12]'`, bảo đảm tương phản sắc nét chuẩn WCAG AAA.
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 0.55s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.45.0 (2026-10-24) - Xóa Bỏ Hoàn Toàn Dữ Liệu Giả Lập, Chỉ Hiển Thị 100% Dữ Liệu Thực Tế Từ Google Calendar Của Người Dùng (REQ-075)
 
 ### 1. Triệt Tiêu 100% Dữ Liệu Giả Lập/Bịa Đặt Trên Lịch Người Dùng

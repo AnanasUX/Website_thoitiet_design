@@ -2159,6 +2159,7 @@ interface VideoShortsModalProps {
   onUpdateUser?: (updatedUser: any) => void;
   initialCategory?: string;
   initialTab?: 'all' | 'video' | 'short' | 'subscribed' | 'history';
+  darkMode?: boolean;
 }
 
 export function VideoShortsModal({
@@ -2169,8 +2170,11 @@ export function VideoShortsModal({
   onLogin,
   onUpdateUser,
   initialCategory = 'Tất cả',
-  initialTab
+  initialTab,
+  darkMode
 }: VideoShortsModalProps) {
+  // Đồng bộ theme Dark / Light theo thiết lập thực tế của người dùng
+  const isDark = darkMode ?? (typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false);
   // ── NHẬN DIỆN TÀI KHOẢN GMAIL / GOOGLE NGƯỜI DÙNG ──
   // Lưu ý quan trọng: Chỉ xác định là đã đăng nhập khi "bên ngoài" (userRole) thực sự đã đăng nhập
   // Nếu bên ngoài chưa đăng nhập thì mặc nhiên không hiển thị nút Kênh YouTube
@@ -4090,13 +4094,17 @@ export function VideoShortsModal({
       ref={modalContainerRef}
       data-testid="video-shorts-modal"
       tabIndex={-1}
-      className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh] max-w-full max-h-full"
+      className={`fixed inset-0 z-[200] flex items-center justify-center overflow-hidden animate-fadeIn select-none w-screen h-[100dvh] max-w-full max-h-full transition-colors duration-300 ${
+        isDark ? 'bg-black text-white' : 'bg-[#f6f5f4] text-[#0c0f12]'
+      }`}
       style={{ width: '100vw', height: '100vh' }}
       onWheel={handleWheel}
     >
       {/* ── Ambient Backdrop Glow ── */}
       <div 
-        className="absolute inset-0 bg-cover bg-center filter blur-3xl opacity-20 scale-125 pointer-events-none transition-all duration-700 hidden sm:block"
+        className={`absolute inset-0 bg-cover bg-center filter blur-3xl scale-125 pointer-events-none transition-all duration-700 hidden sm:block ${
+          isDark ? 'opacity-20' : 'opacity-10'
+        }`}
         style={{ backgroundImage: `url(${currentShort.thumbnail})` }}
       />
 
@@ -4104,8 +4112,14 @@ export function VideoShortsModal({
       <div className={`hidden 2xl:flex flex-col gap-2 absolute left-6 bottom-20 z-30 transition-opacity duration-300 ${
         isControlsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
-        <div className="p-3.5 rounded-2xl bg-black/75 border border-white/15 backdrop-blur-md text-[11px] text-neutral-300 flex flex-col gap-1 max-w-[210px] shadow-2xl">
-          <p className="font-extrabold text-white flex items-center gap-1.5 pb-1 border-b border-white/10">
+        <div className={`p-3.5 rounded-2xl border backdrop-blur-md text-[11px] flex flex-col gap-1 max-w-[210px] shadow-2xl transition-colors ${
+          isDark 
+            ? 'bg-black/75 border-white/15 text-neutral-300' 
+            : 'bg-white/95 border-slate-200 text-slate-700 shadow-slate-300/40'
+        }`}>
+          <p className={`font-extrabold flex items-center gap-1.5 pb-1 border-b ${
+            isDark ? 'text-white border-white/10' : 'text-[#0c0f12] border-slate-200'
+          }`}>
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
             Điều khiển phím tắt TV:
           </p>
@@ -4126,7 +4140,11 @@ export function VideoShortsModal({
           className={`relative bg-black overflow-hidden flex flex-col justify-between shrink-0 transition-all duration-300 ${
             isLandscape || isFullscreen
               ? 'flex-1 w-full h-full max-w-full max-h-[100dvh] rounded-none border-none shadow-none'
-              : 'w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none border-none sm:w-[390px] md:w-[420px] sm:h-[92vh] sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl sm:border sm:border-white/20 sm:shadow-[0_0_80px_rgba(0,0,0,0.95)]'
+              : `w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none border-none sm:w-[390px] md:w-[420px] sm:h-[92vh] sm:max-h-[820px] sm:aspect-[9/16] sm:rounded-3xl ${
+                  isDark 
+                    ? 'sm:border sm:border-white/20 sm:shadow-[0_0_80px_rgba(0,0,0,0.95)]' 
+                    : 'sm:border sm:border-slate-300 sm:shadow-[0_25px_70px_rgba(0,0,0,0.25)]'
+                }`
           }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -4813,20 +4831,30 @@ export function VideoShortsModal({
 
         {/* ── BẢNG VIDEO LIÊN QUAN TỪ CÁC KÊNH ĐÃ ĐĂNG KÝ (HIỂN THỊ CẠNH BÊN TRÊN DESKTOP 16:9) ── */}
         {isLandscape && !isFullscreen && (
-          <div className="hidden xl:flex flex-col w-[340px] 2xl:w-[380px] h-full bg-[#0d0d12]/95 border-l border-white/10 z-30 p-3.5 shrink-0 overflow-hidden text-white backdrop-blur-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+          <div className={`hidden xl:flex flex-col w-[340px] 2xl:w-[380px] h-full z-30 p-3.5 shrink-0 overflow-hidden backdrop-blur-xl transition-colors ${
+            isDark 
+              ? 'bg-[#0d0d12]/95 border-l border-white/10 text-white' 
+              : 'bg-white/95 border-l border-slate-200 text-[#0c0f12] shadow-xl'
+          }`}>
+            <div className={`flex items-center justify-between pb-3 border-b shrink-0 ${
+              isDark ? 'border-white/10' : 'border-slate-200'
+            }`}>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                <h4 className="font-bold text-[13.5px] text-white">Video Kênh Đã Đăng Ký</h4>
+                <h4 className={`font-bold text-[13.5px] ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
+                  Video Kênh Đã Đăng Ký
+                </h4>
               </div>
-              <span className="text-[11px] font-mono text-neutral-400 bg-white/10 px-2 py-0.5 rounded-full">
+              <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full ${
+                isDark ? 'text-neutral-400 bg-white/10' : 'text-slate-600 bg-slate-100 border border-slate-200'
+              }`}>
                 {latestVideosList.length} clip
               </span>
             </div>
 
             <div className="flex-1 overflow-y-auto py-2.5 flex flex-col gap-2 pr-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {latestVideosList.length === 0 ? (
-                <div className="text-center py-10 text-neutral-400 text-xs">
+                <div className={`text-center py-10 text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                   Chưa có video từ các kênh đã đăng ký.
                 </div>
               ) : (
@@ -4838,11 +4866,17 @@ export function VideoShortsModal({
                       onClick={() => handleSelectVideoItem(vid)}
                       className={`flex items-start gap-2.5 p-2 rounded-xl cursor-pointer transition-all border group ${
                         isPlaying 
-                          ? 'bg-red-600/25 border-red-500 ring-1 ring-red-500/40' 
-                          : 'bg-white/[0.04] hover:bg-white/[0.09] border-white/5'
+                          ? (isDark 
+                              ? 'bg-red-600/25 border-red-500 ring-1 ring-red-500/40 text-white' 
+                              : 'bg-blue-50/90 border-[#2563ff] ring-1 ring-[#2563ff]/30 text-[#0c0f12]') 
+                          : (isDark 
+                              ? 'bg-white/[0.04] hover:bg-white/[0.09] border-white/5 text-white' 
+                              : 'bg-slate-50 hover:bg-slate-100/90 border-slate-200/80 text-[#0c0f12]')
                       }`}
                     >
-                      <div className="w-24 h-15 rounded-lg bg-black relative overflow-hidden shrink-0 border border-white/10">
+                      <div className={`w-24 h-15 rounded-lg bg-black relative overflow-hidden shrink-0 border ${
+                        isDark ? 'border-white/10' : 'border-slate-300'
+                      }`}>
                         <img 
                           src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
                           alt="" 
@@ -4858,14 +4892,22 @@ export function VideoShortsModal({
                         )}
                       </div>
                       <div className="flex flex-col min-w-0 flex-1">
-                        <h5 className={`text-[11.5px] font-semibold line-clamp-2 leading-snug group-hover:text-red-400 transition-colors ${isPlaying ? 'text-white font-bold' : 'text-neutral-200'}`}>
+                        <h5 className={`text-[11.5px] font-semibold line-clamp-2 leading-snug transition-colors ${
+                          isPlaying 
+                            ? (isDark ? 'text-white font-bold' : 'text-[#2563ff] font-bold') 
+                            : (isDark ? 'text-neutral-200 group-hover:text-red-400' : 'text-[#0c0f12] group-hover:text-[#2563ff]')
+                        }`}>
                           {cleanVideoTitle(vid.videoTitle)}
                         </h5>
-                        <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-1">
+                        <div className={`flex items-center justify-between text-[10px] mt-1 ${
+                          isDark ? 'text-neutral-400' : 'text-slate-500'
+                        }`}>
                           <span className="truncate">{vid.channelTitle}</span>
                           <button
                             onClick={(e) => handleToggleBookmark(e, vid)}
-                            className="text-neutral-400 hover:text-amber-400 p-0.5 rounded cursor-pointer"
+                            className={`p-0.5 rounded cursor-pointer ${
+                              isDark ? 'text-neutral-400 hover:text-amber-400' : 'text-slate-400 hover:text-amber-500'
+                            }`}
                             title="Lưu video"
                           >
                             {bookmarkedVideos.some(b => b.videoId === vid.videoId) ? '🔖' : '☆'}
@@ -4887,16 +4929,20 @@ export function VideoShortsModal({
           className="fixed inset-0 z-40 flex items-end sm:items-stretch sm:justify-end animate-fadeIn select-none"
           onClick={() => setShowPlaylistDrawer(false)}
         >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs cursor-pointer" />
+          <div className={`absolute inset-0 backdrop-blur-xs cursor-pointer ${isDark ? 'bg-black/60' : 'bg-black/40'}`} />
 
           <div 
-            className="relative w-full sm:w-[420px] md:w-[460px] h-[80vh] sm:h-full bg-[#0d0d10]/98 backdrop-blur-2xl rounded-t-3xl sm:rounded-none border-t sm:border-t-0 sm:border-l border-white/15 p-3.5 sm:p-5 flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.85)] z-50 animate-slideUp sm:animate-slideLeft text-white"
+            className={`relative w-full sm:w-[420px] md:w-[460px] h-[80vh] sm:h-full backdrop-blur-2xl rounded-t-3xl sm:rounded-none border-t sm:border-t-0 sm:border-l p-3.5 sm:p-5 flex flex-col z-50 animate-slideUp sm:animate-slideLeft transition-colors ${
+              isDark 
+                ? 'bg-[#0d0d10]/98 border-white/15 text-white shadow-[-20px_0_60px_rgba(0,0,0,0.85)]' 
+                : 'bg-white/98 border-slate-200 text-[#0c0f12] shadow-[-20px_0_60px_rgba(0,0,0,0.18)]'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile swipe grab bar */}
-            <div className="w-10 h-1 rounded-full bg-white/25 mx-auto mb-2 shrink-0 sm:hidden" />
+            <div className={`w-10 h-1 rounded-full mx-auto mb-2 shrink-0 sm:hidden ${isDark ? 'bg-white/25' : 'bg-slate-300'}`} />
             {/* Header Drawer */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-white/10 shrink-0">
+            <div className={`flex items-center justify-between pb-3.5 border-b shrink-0 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               <div className="flex items-center gap-2.5 min-w-0">
                 <div 
                   style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
@@ -4912,11 +4958,11 @@ export function VideoShortsModal({
                   </svg>
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <h3 className="font-extrabold text-[15px] text-white flex items-center gap-2 truncate">
+                  <h3 className={`font-extrabold text-[15px] flex items-center gap-2 truncate ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                     <span>DANH SÁCH PHÁT</span>
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0"></span>
                   </h3>
-                  <span className="text-[11px] text-neutral-400 truncate">
+                  <span className={`text-[11px] truncate ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                     {currentChannelInfo.id === 'all' ? 'Toàn bộ dòng chảy thời sự' : `${currentChannelInfo.number} • ${currentChannelInfo.name}`} ({playlist.length} clip)
                   </span>
                 </div>
@@ -4925,7 +4971,11 @@ export function VideoShortsModal({
               <button
                 onClick={() => setShowPlaylistDrawer(false)}
                 style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-                className="w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border border-white/15 cursor-pointer active:scale-90 transition-all"
+                className={`w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 border cursor-pointer active:scale-90 transition-all ${
+                  isDark 
+                    ? 'bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border-white/15' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black border-slate-200'
+                }`}
                 title="Đóng (Esc)"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -4933,33 +4983,35 @@ export function VideoShortsModal({
             </div>
 
             {/* Phân Tab Định Dạng: Tất cả | Video Kênh | Shorts | Đã xem | Kênh của bạn */}
-            <div className="flex items-center gap-1.5 py-2.5 border-b border-white/10 shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className={`flex items-center gap-1.5 py-2.5 border-b shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+              isDark ? 'border-white/10' : 'border-slate-200'
+            }`}>
               <button
                 onClick={() => handleSelectMediaTab('all')}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'all'
-                    ? 'bg-red-600 text-white shadow-md border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-[#2563ff] text-white shadow-md border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200')
                 }`}
               >
                 📺 Tất cả ({channelStatsMap[selectedChannelId]?.total || allAvailableVideos.length})
               </button>
               <button
                 onClick={() => handleSelectMediaTab('video')}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'video'
-                    ? 'bg-red-600 text-white shadow-md border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-[#2563ff] text-white shadow-md border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200')
                 }`}
               >
                 🎬 Video kênh ({channelStatsMap[selectedChannelId]?.videos || 0})
               </button>
               <button
                 onClick={() => handleSelectMediaTab('short')}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'short'
-                    ? 'bg-red-600 text-white shadow-md border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-[#2563ff] text-white shadow-md border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200')
                 }`}
               >
                 ⚡ Shorts ({channelStatsMap[selectedChannelId]?.shorts || 0})
@@ -4970,10 +5022,10 @@ export function VideoShortsModal({
                   setShowPlaylistDrawer(false);
                   setShowChannelMenu(true);
                 }}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'history'
-                    ? 'bg-red-600 text-white shadow-md border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-[#2563ff] text-white shadow-md border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200')
                 }`}
               >
                 🕒 Đã xem ({watchHistory.length})
@@ -4984,10 +5036,10 @@ export function VideoShortsModal({
                   setShowPlaylistDrawer(false);
                   setShowChannelMenu(true);
                 }}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`px-3 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'subscribed'
-                    ? 'bg-red-600 text-white shadow-md border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-[#2563ff] text-white shadow-md border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-200')
                 }`}
               >
                 🔴 Kênh của bạn ({displayUserChannels.length})
@@ -4995,7 +5047,9 @@ export function VideoShortsModal({
             </div>
 
             {/* Dải chọn nhanh kênh TV trong Drawer */}
-            <div className="flex items-center gap-1.5 py-2 border-b border-white/10 shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className={`flex items-center gap-1.5 py-2 border-b shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+              isDark ? 'border-white/10' : 'border-slate-200'
+            }`}>
               {TV_CHANNELS.map(ch => {
                 const isActive = selectedChannelId === ch.id;
                 return (
@@ -5004,8 +5058,8 @@ export function VideoShortsModal({
                     onClick={() => handleSelectChannel(ch.id)}
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
                       isActive 
-                        ? 'bg-red-600 text-white border-red-400 shadow-sm' 
-                        : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                        ? (isDark ? 'bg-red-600 text-white border-red-400 shadow-sm' : 'bg-[#2563ff] text-white border-[#2563ff] shadow-sm')
+                        : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
                     }`}
                   >
                     <span className="font-mono text-[9px] opacity-80">{ch.number}</span>
@@ -5026,8 +5080,8 @@ export function VideoShortsModal({
                     onClick={() => handleSelectSubscribedChannel(sub)}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
                       isActive 
-                        ? 'bg-red-600 text-white border-red-400 shadow-sm' 
-                        : 'bg-red-950/40 hover:bg-red-900/60 text-red-200 border-red-500/30'
+                        ? (isDark ? 'bg-red-600 text-white border-red-400 shadow-sm' : 'bg-[#2563ff] text-white border-[#2563ff] shadow-sm')
+                        : (isDark ? 'bg-red-950/40 hover:bg-red-900/60 text-red-200 border-red-500/30' : 'bg-blue-50 hover:bg-blue-100 text-[#2563ff] border-blue-200')
                     }`}
                     title={`Phát video từ kênh: ${title}`}
                   >
@@ -5047,13 +5101,15 @@ export function VideoShortsModal({
 
             {/* Dải chọn chuyên mục bản tin phân loại (Tin nóng 10 phút, Tổng hợp tin tức...) */}
             {availableSubCategories.length > 0 && (
-              <div className="flex items-center gap-1.5 py-2 border-b border-white/10 shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className={`flex items-center gap-1.5 py-2 border-b shrink-0 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                isDark ? 'border-white/10' : 'border-slate-200'
+              }`}>
                 <button
                   onClick={() => handleSelectSubCategory('all')}
                   className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
                     selectedSubCategory === 'all'
                       ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-sm'
-                      : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                      : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
                   }`}
                 >
                   📁 Tất cả chuyên mục
@@ -5068,7 +5124,7 @@ export function VideoShortsModal({
                       className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap cursor-pointer transition-all active:scale-95 border shrink-0 ${
                         isActive
                           ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-sm'
-                          : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                          : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
                       }`}
                     >
                       <span>{icon}</span>
@@ -5094,11 +5150,17 @@ export function VideoShortsModal({
                     }}
                     className={`flex items-center gap-3 p-2.5 rounded-2xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-red-600/25 border-red-500 shadow-md ring-1 ring-red-500/40'
-                        : 'bg-white/5 hover:bg-white/10 border-transparent text-neutral-300'
+                        ? (isDark 
+                            ? 'bg-red-600/25 border-red-500 shadow-md ring-1 ring-red-500/40 text-white' 
+                            : 'bg-blue-50 border-[#2563ff] shadow-md ring-1 ring-[#2563ff]/30 text-[#0c0f12]')
+                        : (isDark 
+                            ? 'bg-white/5 hover:bg-white/10 border-transparent text-neutral-300' 
+                            : 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 text-[#0c0f12]')
                     }`}
                   >
-                    <div className="w-20 h-14 sm:w-22 sm:h-15 rounded-xl bg-black relative overflow-hidden shrink-0 border border-white/10">
+                    <div className={`w-20 h-14 sm:w-22 sm:h-15 rounded-xl bg-black relative overflow-hidden shrink-0 border ${
+                      isDark ? 'border-white/10' : 'border-slate-300'
+                    }`}>
                       <img 
                         src={item.thumbnail} 
                         alt="" 
@@ -5117,29 +5179,35 @@ export function VideoShortsModal({
                       <div className="flex items-center gap-1.5">
                         <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded ${
                           item.badge === 'BẢN TIN TRANG'
-                            ? 'bg-red-600/30 text-red-400 font-black'
-                            : 'bg-white/10 text-neutral-300'
+                            ? (isDark ? 'bg-red-600/30 text-red-400 font-black' : 'bg-red-100 text-red-700 font-black')
+                            : (isDark ? 'bg-white/10 text-neutral-300' : 'bg-slate-200 text-slate-700')
                         }`}>
                           {item.badge}
                         </span>
                         {isSelected ? (
-                          <span className="text-[9.5px] font-bold text-red-400 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span className={`text-[9.5px] font-bold flex items-center gap-1 ${isDark ? 'text-red-400' : 'text-[#2563ff]'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isDark ? 'bg-red-500' : 'bg-[#2563ff]'}`}></span>
                             Đang phát
                           </span>
                         ) : isWatched(item.id, item.youtubeId) ? (
-                          <span className="text-[9px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                          <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded border ${
+                            isDark ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                          }`}>
                             ✓ Đã xem
                           </span>
                         ) : null}
                       </div>
-                      <p className={`text-[12px] font-semibold line-clamp-2 mt-0.5 leading-snug ${isSelected ? 'text-white font-bold' : 'text-neutral-200'}`}>
+                      <p className={`text-[12px] font-semibold line-clamp-2 mt-0.5 leading-snug transition-colors ${
+                        isSelected 
+                          ? (isDark ? 'text-white font-bold' : 'text-[#2563ff] font-bold') 
+                          : (isDark ? 'text-neutral-100 group-hover:text-red-400' : 'text-[#0c0f12] group-hover:text-[#2563ff]')
+                      }`}>
                         {item.title}
                       </p>
-                      <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-0.5">
+                      <div className={`flex items-center justify-between text-[10px] mt-0.5 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                         <span className="truncate">{item.channel}</span>
                         {item.publishedAt && (
-                          <span className="text-[9.5px] text-neutral-300 shrink-0 ml-1 font-medium">
+                          <span className={`text-[9.5px] shrink-0 ml-1 font-medium ${isDark ? 'text-neutral-300' : 'text-slate-600'}`}>
                             📅 {formatVideoDate(item.publishedAt)}
                           </span>
                         )}
@@ -5151,17 +5219,21 @@ export function VideoShortsModal({
             </div>
 
             {/* Điều hướng Trước / Sau dưới đáy Drawer */}
-            <div className="flex items-center gap-2 pt-3 border-t border-white/10 shrink-0">
+            <div className={`flex items-center gap-2 pt-3 border-t shrink-0 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               <button
                 onClick={handlePrevShort}
-                className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
+                className={`flex-1 py-2 rounded-xl font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 ${
+                  isDark ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
+                }`}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15"/></svg>
                 <span>Clip Trước</span>
               </button>
               <button
                 onClick={handleNextShort}
-                className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-red-600/40"
+                className={`flex-1 py-2 rounded-xl font-bold text-[12px] flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md ${
+                  isDark ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/40' : 'bg-[#2563ff] hover:bg-blue-600 text-white shadow-blue-500/20'
+                }`}
               >
                 <span>Clip Sau</span>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -5174,15 +5246,25 @@ export function VideoShortsModal({
       {/* ── SMART TV EPG GUIDE (DANH SÁCH KÊNH TRUYỀN HÌNH - FIX TRIỆT ĐỂ LỆCH LAYOUT ẢNH 1) ── */}
       {showChannelMenu && (
         <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-fadeIn"
+          className={`fixed inset-0 z-50 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-fadeIn ${
+            isDark ? 'bg-black/85' : 'bg-black/50'
+          }`}
           onClick={() => setShowChannelMenu(false)}
         >
           <div 
-            className="w-full max-w-4xl max-h-[92vh] bg-neutral-950/95 border border-white/20 rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden text-white animate-scaleIn"
+            className={`w-full max-w-4xl max-h-[92vh] rounded-3xl flex flex-col overflow-hidden animate-scaleIn transition-colors ${
+              isDark 
+                ? 'bg-neutral-950/98 border border-white/20 text-white shadow-[0_0_80px_rgba(0,0,0,0.9)]' 
+                : 'bg-white border border-slate-200 text-[#0c0f12] shadow-[0_20px_70px_rgba(0,0,0,0.2)]'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header TV Guide */}
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-gradient-to-r from-red-950/40 via-neutral-900/60 to-neutral-900/40">
+            <div className={`flex items-center justify-between p-4 sm:p-5 border-b ${
+              isDark 
+                ? 'border-white/10 bg-gradient-to-r from-red-950/40 via-neutral-900/60 to-neutral-900/40' 
+                : 'border-slate-200 bg-gradient-to-r from-blue-50/80 via-slate-50 to-white'
+            }`}>
               <div className="flex items-center gap-3 min-w-0">
                 <div 
                   style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', maxWidth: '42px', maxHeight: '42px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
@@ -5194,14 +5276,18 @@ export function VideoShortsModal({
                   </svg>
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <h3 className="text-[16px] sm:text-[18px] font-black text-white flex items-center gap-2 tracking-tight">
+                  <h3 className={`text-[16px] sm:text-[18px] font-black flex items-center gap-2 tracking-tight ${
+                    isDark ? 'text-white' : 'text-[#0c0f12]'
+                  }`}>
                     <span>DANH SÁCH KÊNH TRUYỀN HÌNH</span>
-                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600/30 text-red-400 border border-red-500/30">
+                    <span className={`hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      isDark ? 'bg-red-600/30 text-red-400 border-red-500/30' : 'bg-blue-100 text-[#2563ff] border-blue-200'
+                    }`}>
                       SMART TV EPG
                     </span>
                   </h3>
-                  <p className="text-[12px] text-neutral-400 truncate">
-                    Chọn kênh để phát tức thì từ video mới nhất • Đang xem: <span className="text-white font-bold">{currentChannelInfo.number} • {currentChannelInfo.name}</span>
+                  <p className={`text-[12px] truncate ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
+                    Chọn kênh để phát tức thì từ video mới nhất • Đang xem: <span className={`font-bold ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>{currentChannelInfo.number} • {currentChannelInfo.name}</span>
                   </p>
                 </div>
               </div>
@@ -5209,7 +5295,11 @@ export function VideoShortsModal({
               <button
                 onClick={() => setShowChannelMenu(false)}
                 style={{ width: '36px', height: '36px', minWidth: '36px', minHeight: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-                className="w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border border-white/15 cursor-pointer active:scale-90 transition-all ml-2"
+                className={`w-9 h-9 aspect-square rounded-full flex items-center justify-center shrink-0 border cursor-pointer active:scale-90 transition-all ml-2 ${
+                  isDark 
+                    ? 'bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white border-white/15' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-black border-slate-200'
+                }`}
                 title="Đóng (Esc)"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -5217,9 +5307,15 @@ export function VideoShortsModal({
             </div>
 
             {/* Thẻ Tài khoản YouTube liên kết */}
-            <div className="mx-3 sm:mx-5 mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-red-950/60 via-neutral-900/80 to-neutral-900/60 border border-red-500/30 flex items-center justify-between gap-3 flex-wrap">
+            <div className={`mx-3 sm:mx-5 mt-3 p-3.5 rounded-2xl border flex items-center justify-between gap-3 flex-wrap ${
+              isDark 
+                ? 'bg-gradient-to-r from-red-950/60 via-neutral-900/80 to-neutral-900/60 border-red-500/30 text-white' 
+                : 'bg-gradient-to-r from-blue-50/90 via-slate-50 to-blue-50/40 border-blue-200 text-[#0c0f12]'
+            }`}>
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-full overflow-hidden bg-red-600/30 border border-red-400/40 shrink-0 flex items-center justify-center text-white shadow-md">
+                <div className={`w-11 h-11 rounded-full overflow-hidden shrink-0 flex items-center justify-center text-white shadow-md border ${
+                  isDark ? 'bg-red-600/30 border-red-400/40' : 'bg-[#2563ff] border-blue-300'
+                }`}>
                   {syncedYtChannel?.snippet?.thumbnails?.default?.url || activeUser.picture ? (
                     <img 
                       src={syncedYtChannel?.snippet?.thumbnails?.default?.url || activeUser.picture} 
@@ -5234,28 +5330,34 @@ export function VideoShortsModal({
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-[13.5px] sm:text-[14.5px] text-white truncate">
+                    <span className={`font-bold text-[13.5px] sm:text-[14.5px] truncate ${
+                      isDark ? 'text-white' : 'text-[#0c0f12]'
+                    }`}>
                       {activeUser.isLoggedIn 
                         ? (syncedYtChannel?.snippet?.title || activeUser.name) 
                         : 'Chưa kết nối tài khoản YouTube'}
                     </span>
                     <span className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${
-                      activeUser.isLoggedIn ? 'bg-red-600/30 text-red-300 border-red-500/30' : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                      activeUser.isLoggedIn 
+                        ? (isDark ? 'bg-red-600/30 text-red-300 border-red-500/30' : 'bg-blue-100 text-blue-700 border-blue-300') 
+                        : (isDark ? 'bg-neutral-800 text-neutral-400 border-neutral-700' : 'bg-slate-200 text-slate-600 border-slate-300')
                     }`}>
                       {activeUser.isLoggedIn ? 'TÀI KHOẢN CỦA BẠN' : 'KHÁCH'}
                     </span>
                     {syncMeta?.status === 'success' && (
-                      <span className="px-2 py-0.5 rounded text-[9.5px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${
+                        isDark ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                      }`}>
                         ĐÃ ĐỒNG BỘ ({syncMeta.channelCount} kênh)
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-neutral-400 truncate mt-0.5">
+                  <p className={`text-[11px] truncate mt-0.5 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                     {activeUser.isLoggedIn ? (
                       <>
-                        <span className="text-neutral-300 font-mono">{activeUser.email}</span>
+                        <span className={`font-mono ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>{activeUser.email}</span>
                         {syncMeta?.lastSyncedAt && (
-                          <span className="text-neutral-400 ml-1.5 hidden sm:inline">
+                          <span className={`ml-1.5 hidden sm:inline ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                             • Cập nhật: {new Date(syncMeta.lastSyncedAt).toLocaleTimeString('vi-VN')} {new Date(syncMeta.lastSyncedAt).toLocaleDateString('vi-VN')}
                           </span>
                         )}
@@ -5270,7 +5372,9 @@ export function VideoShortsModal({
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
                 {activeUser.isLoggedIn ? (
                   <>
-                    <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white/10 border border-white/15">
+                    <div className={`hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl border ${
+                      isDark ? 'bg-white/10 border-white/15' : 'bg-white border-slate-300'
+                    }`}>
                       {activeUser.picture ? (
                         <img src={activeUser.picture} alt="" className="w-5 h-5 rounded-full object-cover" />
                       ) : (
@@ -5330,17 +5434,21 @@ export function VideoShortsModal({
             )}
 
             {/* Phân Tab Định Dạng: Smart TV EPG | Kênh Của Bạn (YouTube Cá Nhân) */}
-            <div className="flex items-center gap-2 p-3 sm:px-5 bg-white/[0.02] border-b border-white/10 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 shrink-0 mr-1 flex items-center gap-1">
+            <div className={`flex items-center gap-2 p-3 sm:px-5 border-b overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+              isDark ? 'bg-white/[0.02] border-white/10' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <span className={`text-[11px] font-bold uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1 ${
+                isDark ? 'text-neutral-400' : 'text-slate-500'
+              }`}>
                 <span>Danh mục:</span>
               </span>
 
               <button
                 onClick={() => handleSelectMediaTab('all')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab !== 'subscribed'
-                    ? 'bg-neutral-800 text-white shadow-md border border-neutral-700'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-neutral-800 text-white shadow-md border-neutral-700' : 'bg-[#2563ff] text-white shadow-md border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')
                 }`}
               >
                 <span>📺 Truyền hình Smart TV</span>
@@ -5351,10 +5459,10 @@ export function VideoShortsModal({
 
               <button
                 onClick={() => handleSelectMediaTab('subscribed')}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'subscribed'
-                    ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border-red-400' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20 border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')
                 }`}
               >
                 <span>🔴 YouTube Cá Nhân</span>
@@ -5365,10 +5473,10 @@ export function VideoShortsModal({
 
               <button
                 onClick={() => handleSelectMediaTab('history')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 border ${
                   mediaTab === 'history'
-                    ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400'
-                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10'
+                    ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border-red-400' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20 border-[#2563ff]')
+                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200')
                 }`}
               >
                 <span>🕒 Đã xem gần đây</span>
@@ -5383,20 +5491,26 @@ export function VideoShortsModal({
               <div className="flex-1 overflow-y-auto p-3 sm:p-5 max-h-[58vh] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-bold text-white flex items-center gap-1.5">
+                    <span className={`text-[13.5px] font-bold flex items-center gap-1.5 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                       <span>🕒 Video Bạn Đã Xem Trước Đó</span>
-                      <span className="px-2 py-0.5 rounded-full bg-red-600/30 text-red-400 text-[10px] font-mono">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                        isDark ? 'bg-red-600/30 text-red-400' : 'bg-blue-100 text-[#2563ff]'
+                      }`}>
                         {watchHistory.length}
                       </span>
                     </span>
-                    <span className="text-xs text-neutral-400 hidden sm:inline">
+                    <span className={`text-xs hidden sm:inline ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                       • Giúp bạn theo dõi liền mạch các bản tin yêu thích
                     </span>
                   </div>
                   {watchHistory.length > 0 && (
                     <button
                       onClick={handleClearWatchHistory}
-                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-white/10 hover:bg-red-950/60 hover:text-red-400 text-neutral-300 border border-white/10 hover:border-red-500/40 transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                        isDark 
+                          ? 'bg-white/10 hover:bg-red-950/60 hover:text-red-400 text-neutral-300 border-white/10 hover:border-red-500/40' 
+                          : 'bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-700 border-slate-200 hover:border-red-300'
+                      }`}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                       <span>Xóa toàn bộ lịch sử</span>
@@ -5406,18 +5520,22 @@ export function VideoShortsModal({
 
                 {watchHistory.length === 0 ? (
                   <div className="text-center py-12 px-4 flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-3">
+                    <div className={`w-16 h-16 rounded-full border flex items-center justify-center text-3xl mb-3 ${
+                      isDark ? 'bg-white/5 border-white/10' : 'bg-slate-100 border-slate-200'
+                    }`}>
                       🕒
                     </div>
-                    <h4 className="font-bold text-base text-white mb-1">
+                    <h4 className={`font-bold text-base mb-1 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                       Chưa có video nào trong lịch sử xem
                     </h4>
-                    <p className="text-xs text-neutral-400 max-w-md mb-4">
+                    <p className={`text-xs max-w-md mb-4 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                       Mọi video hoặc Shorts bạn thưởng thức trên hệ thống sẽ tự động được ghi nhớ tại đây để bạn có thể xem lại liền mạch bất kỳ lúc nào.
                     </p>
                     <button
                       onClick={() => handleSelectMediaTab('all')}
-                      className="px-4 py-2 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-500 text-white cursor-pointer active:scale-95 transition-all shadow-md"
+                      className={`px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer active:scale-95 transition-all shadow-md ${
+                        isDark ? 'bg-red-600 hover:bg-red-500' : 'bg-[#2563ff] hover:bg-blue-600'
+                      }`}
                     >
                       ▶ Khám phá video mới nhất ngay
                     </button>
@@ -5428,7 +5546,11 @@ export function VideoShortsModal({
                       <div
                         key={`${item.id}-${hIdx}`}
                         onClick={() => handlePlayHistoryItem(item)}
-                        className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                        className={`group relative rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col shadow-md ${
+                          isDark 
+                            ? 'bg-white/[0.04] hover:bg-white/[0.09] border-white/10 hover:border-red-500/50' 
+                            : 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 hover:border-[#2563ff]'
+                        }`}
                         title={`Xem tiếp: ${item.title}`}
                       >
                         {/* Thumbnail */}
@@ -5460,15 +5582,19 @@ export function VideoShortsModal({
 
                         {/* Info */}
                         <div className="p-3 flex flex-col flex-1">
-                          <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">
+                          <span className={`text-[10.5px] font-bold truncate mb-1 ${isDark ? 'text-red-400' : 'text-[#2563ff]'}`}>
                             {item.channel}
                           </span>
-                          <h4 className="font-bold text-[12px] text-white line-clamp-2 group-hover:text-red-400 transition-colors leading-snug">
+                          <h4 className={`font-bold text-[12px] line-clamp-2 transition-colors leading-snug ${
+                            isDark ? 'text-white group-hover:text-red-400' : 'text-[#0c0f12] group-hover:text-[#2563ff]'
+                          }`}>
                             {cleanVideoTitle(item.title)}
                           </h4>
-                          <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
-                            <span className="text-neutral-500">{formatWatchedTime(item.timestamp)}</span>
-                            <span className="text-emerald-400 font-medium">▶ Xem tiếp</span>
+                          <div className={`mt-auto pt-2 flex items-center justify-between text-[10px] border-t ${
+                            isDark ? 'text-neutral-400 border-white/5' : 'text-slate-500 border-slate-200'
+                          }`}>
+                            <span className={isDark ? 'text-neutral-500' : 'text-slate-400'}>{formatWatchedTime(item.timestamp)}</span>
+                            <span className={`font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>▶ Xem tiếp</span>
                           </div>
                         </div>
                       </div>
@@ -5481,17 +5607,21 @@ export function VideoShortsModal({
                 {activeUser.isLoggedIn ? (
                   <>
                     {/* ── 6 DEDICATED TABS NAVIGATION (MỤC 4 & MỤC 6) ── */}
-                    <div className="flex items-center gap-1.5 bg-white/[0.04] p-1.5 rounded-2xl border border-white/10 overflow-x-auto shrink-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    <div className={`flex items-center gap-1.5 p-1.5 rounded-2xl border overflow-x-auto shrink-0 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                      isDark ? 'bg-white/[0.04] border-white/10' : 'bg-slate-100 border-slate-200'
+                    }`}>
                       <button
                         onClick={() => setActiveCatalogTab('channels')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                           activeCatalogTab === 'channels'
-                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20')
+                            : (isDark ? 'text-neutral-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-black hover:bg-white')
                         }`}
                       >
                         <span>📋 Kênh đã đăng ký</span>
-                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                        <span className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded-full ${
+                          isDark ? 'bg-white/20' : 'bg-slate-200 text-slate-700'
+                        }`}>
                           {displayUserChannels.length}
                         </span>
                       </button>
@@ -5500,12 +5630,14 @@ export function VideoShortsModal({
                         onClick={() => setActiveCatalogTab('latest')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                           activeCatalogTab === 'latest'
-                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20')
+                            : (isDark ? 'text-neutral-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-black hover:bg-white')
                         }`}
                       >
                         <span>⚡ Video mới nhất</span>
-                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                        <span className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded-full ${
+                          isDark ? 'bg-white/20' : 'bg-slate-200 text-slate-700'
+                        }`}>
                           {latestVideosList.length}
                         </span>
                       </button>
@@ -5514,8 +5646,8 @@ export function VideoShortsModal({
                         onClick={() => setActiveCatalogTab('by_channel')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                           activeCatalogTab === 'by_channel'
-                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20')
+                            : (isDark ? 'text-neutral-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-black hover:bg-white')
                         }`}
                       >
                         <span>📺 Theo từng kênh</span>
@@ -5525,12 +5657,14 @@ export function VideoShortsModal({
                         onClick={() => setActiveCatalogTab('saved')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                           activeCatalogTab === 'saved'
-                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20')
+                            : (isDark ? 'text-neutral-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-black hover:bg-white')
                         }`}
                       >
                         <span>🔖 Đã lưu</span>
-                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                        <span className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded-full ${
+                          isDark ? 'bg-white/20' : 'bg-slate-200 text-slate-700'
+                        }`}>
                           {savedVideosList.length}
                         </span>
                       </button>
@@ -5539,12 +5673,14 @@ export function VideoShortsModal({
                         onClick={() => setActiveCatalogTab('history')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                           activeCatalogTab === 'history'
-                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20')
+                            : (isDark ? 'text-neutral-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-black hover:bg-white')
                         }`}
                       >
                         <span>🕒 Lịch sử xem</span>
-                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                        <span className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded-full ${
+                          isDark ? 'bg-white/20' : 'bg-slate-200 text-slate-700'
+                        }`}>
                           {historyVideosList.length}
                         </span>
                       </button>
@@ -5553,12 +5689,14 @@ export function VideoShortsModal({
                         onClick={() => setActiveCatalogTab('shorts')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11.5px] font-bold cursor-pointer transition-all shrink-0 active:scale-95 ${
                           activeCatalogTab === 'shorts'
-                            ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
-                            : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                            ? (isDark ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-[#2563ff] text-white shadow-md shadow-blue-500/20')
+                            : (isDark ? 'text-neutral-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-black hover:bg-white')
                         }`}
                       >
                         <span>📱 Shorts</span>
-                        <span className="font-mono text-[9.5px] px-1.5 py-0.2 rounded-full bg-white/20">
+                        <span className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded-full ${
+                          isDark ? 'bg-white/20' : 'bg-slate-200 text-slate-700'
+                        }`}>
                           {shortsVideosList.length}
                         </span>
                       </button>
@@ -5571,16 +5709,20 @@ export function VideoShortsModal({
                         value={channelSearchQuery}
                         onChange={(e) => setChannelSearchQuery(e.target.value)}
                         placeholder="🔍 Tìm kiếm kênh hoặc video trong tài khoản của bạn..."
-                        className="w-full px-3.5 py-2 pl-9 rounded-xl bg-white/5 border border-white/10 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-red-500 transition-colors"
+                        className={`w-full px-3.5 py-2 pl-9 rounded-xl border text-xs focus:outline-none transition-colors ${
+                          isDark 
+                            ? 'bg-white/5 border-white/10 text-white placeholder-neutral-500 focus:border-red-500' 
+                            : 'bg-slate-100 border-slate-200 text-[#0c0f12] placeholder-slate-400 focus:border-[#2563ff]'
+                        }`}
                       />
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="absolute left-3 top-2.5 text-neutral-400">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`absolute left-3 top-2.5 ${isDark ? 'text-neutral-400' : 'text-slate-400'}`}>
                         <circle cx="11" cy="11" r="8"/>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                       </svg>
                       {channelSearchQuery && (
                         <button
                           onClick={() => setChannelSearchQuery('')}
-                          className="absolute right-3 top-2 text-neutral-400 hover:text-white text-xs"
+                          className={`absolute right-3 top-2 text-xs ${isDark ? 'text-neutral-400 hover:text-white' : 'text-slate-400 hover:text-black'}`}
                         >
                           ✕
                         </button>
@@ -5598,16 +5740,18 @@ export function VideoShortsModal({
                         ) : filteredDisplayChannels.length === 0 ? (
                           <div className="text-center py-12 px-4 flex flex-col items-center">
                             <span className="text-3xl mb-2">📋</span>
-                            <h4 className="font-bold text-white text-sm mb-1">
+                            <h4 className={`font-bold text-sm mb-1 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                               {channelSearchQuery ? 'Không tìm thấy kênh phù hợp với tìm kiếm' : 'Chưa có kênh đăng ký nào'}
                             </h4>
-                            <p className="text-xs text-neutral-400 max-w-sm mb-3">
+                            <p className={`text-xs max-w-sm mb-3 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                               {channelSearchQuery ? 'Hãy thử tìm kiếm với từ khóa khác.' : 'Tài khoản Google của bạn chưa đăng ký kênh YouTube nào hoặc chưa được đồng bộ.'}
                             </p>
                             {!channelSearchQuery && (
                               <button
                                 onClick={handleSyncYouTube}
-                                className="px-4 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
+                                className={`px-4 py-1.5 rounded-xl font-bold text-xs text-white ${
+                                  isDark ? 'bg-red-600 hover:bg-red-500' : 'bg-[#2563ff] hover:bg-blue-600'
+                                }`}
                               >
                                 Đồng bộ lại ngay
                               </button>
@@ -5628,10 +5772,16 @@ export function VideoShortsModal({
                                 <div
                                   key={sub.id || sIdx}
                                   onClick={() => handleSelectSubscribedChannel(sub)}
-                                  className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-red-500/50 transition-all group cursor-pointer relative shadow-sm hover:shadow-lg"
+                                  className={`flex items-start gap-3.5 p-3.5 rounded-2xl border transition-all group cursor-pointer relative shadow-sm hover:shadow-lg ${
+                                    isDark 
+                                      ? 'bg-white/[0.04] hover:bg-white/[0.08] border-white/10 hover:border-red-500/50' 
+                                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 hover:border-[#2563ff]'
+                                  }`}
                                   title={`Xem video kênh ${title} (Phát trực tiếp)`}
                                 >
-                                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-neutral-900 shrink-0 border-2 border-white/15 group-hover:border-red-500/50 shadow-md">
+                                  <div className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full overflow-hidden shrink-0 border-2 shadow-md ${
+                                    isDark ? 'bg-neutral-900 border-white/15 group-hover:border-red-500/50' : 'bg-slate-200 border-slate-300 group-hover:border-[#2563ff]'
+                                  }`}>
                                     {thumb ? (
                                       <img 
                                         src={thumb} 
@@ -5649,27 +5799,35 @@ export function VideoShortsModal({
 
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <h4 className="font-bold text-[13.5px] sm:text-[14px] text-white group-hover:text-red-400 transition-colors truncate">
+                                      <h4 className={`font-bold text-[13.5px] sm:text-[14px] truncate transition-colors ${
+                                        isDark ? 'text-white group-hover:text-red-400' : 'text-[#0c0f12] group-hover:text-[#2563ff]'
+                                      }`}>
                                         {title}
                                       </h4>
                                       {verified && (
-                                        <span className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center text-white text-[9px] font-bold" title="Kênh đã xác minh">
+                                        <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                                          isDark ? 'bg-white/20 text-white' : 'bg-blue-100 text-[#2563ff]'
+                                        }`} title="Kênh đã xác minh">
                                           ✓
                                         </span>
                                       )}
                                     </div>
 
-                                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium mt-0.5 truncate">
-                                      {handle && <span className="text-neutral-300 font-mono">{handle}</span>}
+                                    <div className={`flex items-center gap-1.5 text-[11px] font-medium mt-0.5 truncate ${
+                                      isDark ? 'text-neutral-400' : 'text-slate-500'
+                                    }`}>
+                                      {handle && <span className={`font-mono ${isDark ? 'text-neutral-300' : 'text-slate-700'}`}>{handle}</span>}
                                       {subCount && (
                                         <>
                                           <span>•</span>
-                                          <span className="text-neutral-400">{subCount}</span>
+                                          <span>{subCount}</span>
                                         </>
                                       )}
                                     </div>
 
-                                    <p className="text-[11px] text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
+                                    <p className={`text-[11px] line-clamp-2 mt-1 leading-relaxed ${
+                                      isDark ? 'text-neutral-400' : 'text-slate-600'
+                                    }`}>
                                       {desc}
                                     </p>
 
@@ -5679,11 +5837,15 @@ export function VideoShortsModal({
                                           e.stopPropagation();
                                           handleSelectSubscribedChannel(sub);
                                         }}
-                                        className="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-bold bg-red-600 hover:bg-red-500 text-white shadow-md shadow-red-600/30 cursor-pointer active:scale-95 transition-all"
+                                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-bold text-white shadow-md cursor-pointer active:scale-95 transition-all ${
+                                          isDark ? 'bg-red-600 hover:bg-red-500 shadow-red-600/30' : 'bg-[#2563ff] hover:bg-blue-600 shadow-blue-500/20'
+                                        }`}
                                       >
                                         <span>▶ Xem video kênh</span>
                                       </button>
-                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[10.5px] font-medium bg-white/10 text-neutral-300">
+                                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[10.5px] font-medium ${
+                                        isDark ? 'bg-white/10 text-neutral-300' : 'bg-slate-200 text-slate-700'
+                                      }`}>
                                         <span>Đã đăng ký ✓</span>
                                       </span>
                                     </div>
@@ -5700,7 +5862,7 @@ export function VideoShortsModal({
                     {activeCatalogTab === 'latest' && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                         {latestVideosList.length === 0 ? (
-                          <div className="col-span-full text-center py-12 text-neutral-400 text-xs">
+                          <div className={`col-span-full text-center py-12 text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                             Không có video nào phù hợp với bộ lọc.
                           </div>
                         ) : (
@@ -5710,7 +5872,11 @@ export function VideoShortsModal({
                               <div
                                 key={vid.videoId || vIdx}
                                 onClick={() => handleSelectVideoItem(vid)}
-                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                                className={`group relative rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col shadow-md ${
+                                  isDark 
+                                    ? 'bg-white/[0.04] hover:bg-white/[0.09] border-white/10 hover:border-red-500/50' 
+                                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 hover:border-[#2563ff]'
+                                }`}
                                 title={`Xem: ${vid.videoTitle} (Phát trực tiếp)`}
                               >
                                 <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
@@ -5738,15 +5904,19 @@ export function VideoShortsModal({
                                 </div>
 
                                 <div className="p-3 flex flex-col flex-1">
-                                  <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">
+                                  <span className={`text-[10.5px] font-bold truncate mb-1 ${isDark ? 'text-red-400' : 'text-[#2563ff]'}`}>
                                     {vid.channelTitle}
                                   </span>
-                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 group-hover:text-red-400 transition-colors leading-snug">
+                                  <h4 className={`font-bold text-[12.5px] line-clamp-2 transition-colors leading-snug ${
+                                    isDark ? 'text-white group-hover:text-red-400' : 'text-[#0c0f12] group-hover:text-[#2563ff]'
+                                  }`}>
                                     {cleanVideoTitle(vid.videoTitle)}
                                   </h4>
-                                  <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
+                                  <div className={`mt-auto pt-2 flex items-center justify-between text-[10px] border-t ${
+                                    isDark ? 'text-neutral-400 border-white/5' : 'text-slate-500 border-slate-200'
+                                  }`}>
                                     <span>{vid.publishedAt ? new Date(vid.publishedAt).toLocaleDateString('vi-VN') : 'Mới'}</span>
-                                    <span className="text-emerald-400 font-medium">▶ Phát tức thì</span>
+                                    <span className={`font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>▶ Phát tức thì</span>
                                   </div>
                                 </div>
                               </div>
@@ -5765,8 +5935,8 @@ export function VideoShortsModal({
                             onClick={() => setSelectedSubChannelFilter('all')}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all border ${
                               selectedSubChannelFilter === 'all'
-                                ? 'bg-red-600 text-white border-red-400 shadow-md'
-                                : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                                ? (isDark ? 'bg-red-600 text-white border-red-400 shadow-md' : 'bg-[#2563ff] text-white border-[#2563ff] shadow-md')
+                                : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
                             }`}
                           >
                             Tất cả ({latestVideosList.length})
@@ -5781,11 +5951,11 @@ export function VideoShortsModal({
                                 onClick={() => setSelectedSubChannelFilter(chId)}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer transition-all border ${
                                   isActive
-                                    ? 'bg-red-600 text-white border-red-400 shadow-md'
-                                    : 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10'
+                                    ? (isDark ? 'bg-red-600 text-white border-red-400 shadow-md' : 'bg-[#2563ff] text-white border-[#2563ff] shadow-md')
+                                    : (isDark ? 'bg-white/5 hover:bg-white/10 text-neutral-300 border-white/10' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
                                 }`}
                               >
-                                <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                                <span className={`w-2 h-2 rounded-full ${isDark ? 'bg-red-400' : 'bg-[#2563ff]'}`}></span>
                                 <span className="max-w-[130px] truncate">{name}</span>
                               </button>
                             );
@@ -5795,7 +5965,7 @@ export function VideoShortsModal({
                         {/* Video Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                           {byChannelVideosList.length === 0 ? (
-                            <div className="col-span-full text-center py-10 text-neutral-400 text-xs">
+                            <div className={`col-span-full text-center py-10 text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                               Không có video nào từ kênh đã chọn.
                             </div>
                           ) : (
@@ -5803,7 +5973,11 @@ export function VideoShortsModal({
                               <div
                                 key={vid.videoId || vIdx}
                                 onClick={() => handleSelectVideoItem(vid)}
-                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                                className={`group relative rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col shadow-md ${
+                                  isDark 
+                                    ? 'bg-white/[0.04] hover:bg-white/[0.09] border-white/10 hover:border-red-500/50' 
+                                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200/80 hover:border-[#2563ff]'
+                                }`}
                               >
                                 <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
                                   <img 
@@ -5816,8 +5990,10 @@ export function VideoShortsModal({
                                   </span>
                                 </div>
                                 <div className="p-3 flex flex-col flex-1">
-                                  <span className="text-[10.5px] font-bold text-red-400 truncate mb-1">{vid.channelTitle}</span>
-                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 leading-snug">{cleanVideoTitle(vid.videoTitle)}</h4>
+                                  <span className={`text-[10.5px] font-bold truncate mb-1 ${isDark ? 'text-red-400' : 'text-[#2563ff]'}`}>{vid.channelTitle}</span>
+                                  <h4 className={`font-bold text-[12.5px] line-clamp-2 leading-snug transition-colors ${
+                                    isDark ? 'text-white' : 'text-[#0c0f12]'
+                                  }`}>{cleanVideoTitle(vid.videoTitle)}</h4>
                                 </div>
                               </div>
                             ))
@@ -5832,8 +6008,8 @@ export function VideoShortsModal({
                         {savedVideosList.length === 0 ? (
                           <div className="text-center py-14 px-4 flex flex-col items-center">
                             <span className="text-4xl mb-2">🔖</span>
-                            <h4 className="font-bold text-white text-sm mb-1">Chưa có video nào được lưu</h4>
-                            <p className="text-xs text-neutral-400 max-w-sm">
+                            <h4 className={`font-bold text-sm mb-1 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>Chưa có video nào được lưu</h4>
+                            <p className={`text-xs max-w-sm ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                               Nhấn biểu tượng Lưu 🔖 trên trình phát video hoặc các thẻ video để lưu xem lại bất cứ khi nào!
                             </p>
                           </div>
@@ -5843,7 +6019,11 @@ export function VideoShortsModal({
                               <div
                                 key={vid.videoId || vIdx}
                                 onClick={() => handleSelectVideoItem(vid)}
-                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-amber-500/30 hover:border-amber-400 transition-all cursor-pointer flex flex-col shadow-md"
+                                className={`group relative rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col shadow-md ${
+                                  isDark 
+                                    ? 'bg-white/[0.04] hover:bg-white/[0.09] border-amber-500/30 hover:border-amber-400' 
+                                    : 'bg-slate-50 hover:bg-slate-100 border-amber-400/50 hover:border-amber-500'
+                                }`}
                               >
                                 <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
                                   <img 
@@ -5863,11 +6043,15 @@ export function VideoShortsModal({
                                   </span>
                                 </div>
                                 <div className="p-3 flex flex-col flex-1">
-                                  <span className="text-[10.5px] font-bold text-amber-400 truncate mb-1">{vid.channelTitle}</span>
-                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 leading-snug">{cleanVideoTitle(vid.videoTitle)}</h4>
-                                  <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
-                                    <span className="text-amber-300">Đã lưu trong mục yêu thích</span>
-                                    <span className="text-emerald-400 font-medium">▶ Phát</span>
+                                  <span className={`text-[10.5px] font-bold truncate mb-1 ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>{vid.channelTitle}</span>
+                                  <h4 className={`font-bold text-[12.5px] line-clamp-2 leading-snug transition-colors ${
+                                    isDark ? 'text-white' : 'text-[#0c0f12]'
+                                  }`}>{cleanVideoTitle(vid.videoTitle)}</h4>
+                                  <div className={`mt-auto pt-2 flex items-center justify-between text-[10px] border-t ${
+                                    isDark ? 'text-neutral-400 border-white/5' : 'text-slate-500 border-slate-200'
+                                  }`}>
+                                    <span className={isDark ? "text-amber-300" : "text-amber-600"}>Đã lưu trong mục yêu thích</span>
+                                    <span className={`font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>▶ Phát</span>
                                   </div>
                                 </div>
                               </div>
@@ -5880,14 +6064,16 @@ export function VideoShortsModal({
                     {/* ── TAB 5: ĐÃ XEM GẦN ĐÂY (HISTORY) ── */}
                     {activeCatalogTab === 'history' && (
                       <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
-                          <span className="text-xs text-neutral-400">
+                        <div className={`flex items-center justify-between pb-2 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                          <span className={`text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                             Lịch sử xem gần đây ({historyVideosList.length} video)
                           </span>
                           {personalWatchHistory.length > 0 && (
                             <button
                               onClick={handleClearHistory}
-                              className="px-3 py-1 rounded-lg text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                                isDark ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10' : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                              }`}
                             >
                               🗑️ Xóa toàn bộ lịch sử
                             </button>
@@ -5897,8 +6083,8 @@ export function VideoShortsModal({
                         {historyVideosList.length === 0 ? (
                           <div className="text-center py-14 px-4 flex flex-col items-center">
                             <span className="text-4xl mb-2">🕒</span>
-                            <h4 className="font-bold text-white text-sm mb-1">Chưa có lịch sử xem video</h4>
-                            <p className="text-xs text-neutral-400 max-w-sm">
+                            <h4 className={`font-bold text-sm mb-1 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>Chưa có lịch sử xem video</h4>
+                            <p className={`text-xs max-w-sm ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                               Khi bạn phát bất kỳ clip nào, thông tin video sẽ được tự động lưu vào đây để bạn dễ dàng xem lại.
                             </p>
                           </div>
@@ -5908,7 +6094,11 @@ export function VideoShortsModal({
                               <div
                                 key={vid.videoId || vIdx}
                                 onClick={() => handleSelectVideoItem(vid)}
-                                className="group relative rounded-2xl overflow-hidden bg-white/[0.04] hover:bg-white/[0.09] border border-white/10 hover:border-red-500/50 transition-all cursor-pointer flex flex-col shadow-md"
+                                className={`group relative rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col shadow-md ${
+                                  isDark 
+                                    ? 'bg-white/[0.04] hover:bg-white/[0.09] border-white/10 hover:border-red-500/50' 
+                                    : 'bg-slate-50 hover:bg-slate-100 border-slate-200 hover:border-red-500/50'
+                                }`}
                               >
                                 <div className="relative aspect-video w-full bg-neutral-900 overflow-hidden">
                                   <img 
@@ -5921,11 +6111,13 @@ export function VideoShortsModal({
                                   </span>
                                 </div>
                                 <div className="p-3 flex flex-col flex-1">
-                                  <span className="text-[10.5px] font-bold text-neutral-400 truncate mb-1">{vid.channelTitle}</span>
-                                  <h4 className="font-bold text-[12.5px] text-white line-clamp-2 leading-snug">{cleanVideoTitle(vid.videoTitle)}</h4>
-                                  <div className="mt-auto pt-2 flex items-center justify-between text-[10px] text-neutral-400 border-t border-white/5">
+                                  <span className={`text-[10.5px] font-bold truncate mb-1 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>{vid.channelTitle}</span>
+                                  <h4 className={`font-bold text-[12.5px] line-clamp-2 leading-snug ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>{cleanVideoTitle(vid.videoTitle)}</h4>
+                                  <div className={`mt-auto pt-2 flex items-center justify-between text-[10px] border-t ${
+                                    isDark ? 'text-neutral-400 border-white/5' : 'text-slate-500 border-slate-200'
+                                  }`}>
                                     <span>{vid.watchedAt ? `Đã xem: ${new Date(vid.watchedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'Gần đây'}</span>
-                                    <span className="text-emerald-400 font-medium">▶ Xem lại</span>
+                                    <span className={`font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>▶ Xem lại</span>
                                   </div>
                                 </div>
                               </div>
@@ -5939,7 +6131,7 @@ export function VideoShortsModal({
                     {activeCatalogTab === 'shorts' && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                         {shortsVideosList.length === 0 ? (
-                          <div className="col-span-full text-center py-10 text-neutral-400 text-xs">
+                          <div className={`col-span-full text-center py-10 text-xs ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                             Không tìm thấy video Shorts nào.
                           </div>
                         ) : (
@@ -5947,7 +6139,11 @@ export function VideoShortsModal({
                             <div
                               key={vid.videoId || vIdx}
                               onClick={() => handleSelectVideoItem(vid)}
-                              className="group relative rounded-2xl overflow-hidden bg-neutral-900 aspect-[9/16] border border-white/10 hover:border-pink-500/60 transition-all cursor-pointer flex flex-col shadow-md"
+                              className={`group relative rounded-2xl overflow-hidden aspect-[9/16] border transition-all cursor-pointer flex flex-col shadow-md ${
+                                isDark 
+                                  ? 'bg-neutral-900 border-white/10 hover:border-pink-500/60' 
+                                  : 'bg-slate-100 border-slate-200 hover:border-pink-500/60'
+                              }`}
                             >
                               <img 
                                 src={vid.videoThumbnail || `https://i.ytimg.com/vi/${vid.videoId}/hqdefault.jpg`} 
@@ -5959,7 +6155,7 @@ export function VideoShortsModal({
                                 <h5 className="text-[11px] font-bold text-white line-clamp-2 leading-tight">
                                   {cleanVideoTitle(vid.videoTitle)}
                                 </h5>
-                                <span className="text-[9.5px] text-neutral-400 truncate mt-1">{vid.channelTitle}</span>
+                                <span className="text-[9.5px] text-neutral-300 truncate mt-1">{vid.channelTitle}</span>
                               </div>
                             </div>
                           ))
@@ -5973,10 +6169,10 @@ export function VideoShortsModal({
                     <div className="w-16 h-16 rounded-full bg-red-600/10 border border-red-500/30 flex items-center justify-center text-3xl mb-3 shadow-lg">
                       📺
                     </div>
-                    <h4 className="font-bold text-lg text-white mb-1">
+                    <h4 className={`font-bold text-lg mb-1 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                       Kết Nối Tài Khoản Google & YouTube Cá Nhân
                     </h4>
-                    <p className="text-sm text-neutral-400 max-w-md mb-4 leading-relaxed">
+                    <p className={`text-sm max-w-md mb-4 leading-relaxed ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
                       Đăng nhập để tự động đồng bộ tất cả kênh bạn đã đăng ký trên YouTube, xem video mới nhất, lưu video yêu thích và xem lịch sử trực tiếp trên trang web mà không bị chuyển hướng.
                     </p>
                     <button
@@ -6006,8 +6202,12 @@ export function VideoShortsModal({
                     onClick={() => handleSelectChannel(ch.id)}
                     className={`group relative p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer min-h-[105px] sm:min-h-[130px] h-full flex flex-col justify-between gap-1.5 sm:gap-2.5 ${
                       isActive
-                        ? 'bg-gradient-to-br from-red-600/30 via-red-950/40 to-neutral-900 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)] ring-1 ring-red-400/50'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-neutral-300 hover:text-white'
+                        ? (isDark 
+                            ? 'bg-gradient-to-br from-red-600/30 via-red-950/40 to-neutral-900 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.35)] ring-1 ring-red-400/50'
+                            : 'bg-gradient-to-br from-red-50 via-rose-50/50 to-white border-red-400 shadow-md ring-1 ring-red-300')
+                        : (isDark 
+                            ? 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/25 text-neutral-300 hover:text-white'
+                            : 'bg-slate-50 hover:bg-slate-100/90 border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900')
                     }`}
                   >
                     {/* Top Row: Channel number + Badge Text + Live indicator */}
@@ -6016,7 +6216,7 @@ export function VideoShortsModal({
                         <span className={`px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded-md font-mono text-[9.5px] sm:text-[10.5px] font-black tracking-wider border ${
                           isActive 
                             ? 'bg-red-600 text-white border-red-400' 
-                            : 'bg-black/60 text-neutral-300 border-white/15'
+                            : (isDark ? 'bg-black/60 text-neutral-300 border-white/15' : 'bg-slate-200 text-slate-700 border-slate-300')
                         }`}>
                           {ch.number}
                         </span>
@@ -6034,12 +6234,14 @@ export function VideoShortsModal({
                       </div>
 
                       {isActive ? (
-                        <span className="flex items-center gap-1 text-[8.5px] sm:text-[9.5px] font-black text-red-400 tracking-wider">
+                        <span className="flex items-center gap-1 text-[8.5px] sm:text-[9.5px] font-black text-red-500 tracking-wider">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
                           ĐANG PHÁT
                         </span>
                       ) : (
-                        <span className="text-[9.5px] sm:text-[10px] text-neutral-400 group-hover:text-neutral-200 transition-colors font-semibold">
+                        <span className={`text-[9.5px] sm:text-[10px] transition-colors font-semibold ${
+                          isDark ? 'text-neutral-400 group-hover:text-neutral-200' : 'text-slate-500 group-hover:text-slate-700'
+                        }`}>
                           {stats.total} clip
                         </span>
                       )}
@@ -6047,22 +6249,32 @@ export function VideoShortsModal({
 
                     {/* Middle: Channel Name & Tagline */}
                     <div className="flex-1 flex flex-col justify-start">
-                      <h4 className={`text-[12.5px] sm:text-[13.5px] font-black flex items-center gap-1.5 truncate ${isActive ? 'text-white' : 'text-neutral-100 group-hover:text-white'}`}>
+                      <h4 className={`text-[12.5px] sm:text-[13.5px] font-black flex items-center gap-1.5 truncate ${
+                        isActive 
+                          ? (isDark ? 'text-white' : 'text-red-700')
+                          : (isDark ? 'text-neutral-100 group-hover:text-white' : 'text-slate-800 group-hover:text-slate-950')
+                      }`}>
                         <span>{ch.name}</span>
-                        {isActive && <span className="text-red-400 text-xs">★</span>}
+                        {isActive && <span className="text-red-500 text-xs">★</span>}
                       </h4>
-                      <p className="text-[10px] sm:text-[11px] text-neutral-400 line-clamp-1 sm:line-clamp-2 min-h-0 sm:min-h-[30px] mt-0.5 leading-tight sm:leading-snug">
+                      <p className={`text-[10px] sm:text-[11px] line-clamp-1 sm:line-clamp-2 min-h-0 sm:min-h-[30px] mt-0.5 leading-tight sm:leading-snug ${
+                        isDark ? 'text-neutral-400' : 'text-slate-500'
+                      }`}>
                         {ch.tagline}
                       </p>
                     </div>
 
                     {/* Bottom Row: Thống kê định dạng & Trạng thái chọn */}
-                    <div className="pt-1.5 sm:pt-2 border-t border-white/10 flex items-center justify-between text-[9.5px] sm:text-[10.5px] shrink-0 mt-auto">
-                      <span className="text-neutral-400 text-[9px] sm:text-[10px] font-medium">
+                    <div className={`pt-1.5 sm:pt-2 border-t flex items-center justify-between text-[9.5px] sm:text-[10.5px] shrink-0 mt-auto ${
+                      isDark ? 'border-white/10' : 'border-slate-200'
+                    }`}>
+                      <span className={`text-[9px] sm:text-[10px] font-medium ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                         {stats.videos} video • {stats.shorts} shorts
                       </span>
                       <span className={`font-bold flex items-center gap-1 ${
-                        isActive ? 'text-red-400' : 'text-neutral-400 group-hover:text-white'
+                        isActive 
+                          ? 'text-red-500' 
+                          : (isDark ? 'text-neutral-400 group-hover:text-white' : 'text-slate-500 group-hover:text-slate-800')
                       }`}>
                         {isActive ? (
                           <span>✓ Đang chọn</span>
@@ -6081,17 +6293,21 @@ export function VideoShortsModal({
             )}
 
             {/* Footer EPG */}
-            <div className="p-3 sm:px-5 sm:py-3.5 bg-black/60 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] text-neutral-400">
+            <div className={`p-3 sm:px-5 sm:py-3.5 border-t flex flex-wrap items-center justify-between gap-2 text-[11px] ${
+              isDark ? 'bg-black/60 border-white/10 text-neutral-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+            }`}>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-neutral-300">💡 Phím tắt TV:</span>
-                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[C]</span> <span>Mở kênh</span>
-                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[↑↓]</span> <span>Chuyển clip</span>
-                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[M]</span> <span>Bật/Tắt âm</span>
-                <span className="px-1.5 py-0.2 rounded bg-white/10 text-white font-mono text-[10px]">[R]</span> <span>Quay ngang 16:9</span>
+                <span className={`font-bold ${isDark ? 'text-neutral-300' : 'text-slate-800'}`}>💡 Phím tắt TV:</span>
+                <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] ${isDark ? 'bg-white/10 text-white' : 'bg-slate-200 text-slate-800 font-semibold'}`}>[C]</span> <span>Mở kênh</span>
+                <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] ${isDark ? 'bg-white/10 text-white' : 'bg-slate-200 text-slate-800 font-semibold'}`}>[↑↓]</span> <span>Chuyển clip</span>
+                <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] ${isDark ? 'bg-white/10 text-white' : 'bg-slate-200 text-slate-800 font-semibold'}`}>[M]</span> <span>Bật/Tắt âm</span>
+                <span className={`px-1.5 py-0.2 rounded font-mono text-[10px] ${isDark ? 'bg-white/10 text-white' : 'bg-slate-200 text-slate-800 font-semibold'}`}>[R]</span> <span>Quay ngang 16:9</span>
               </div>
               <button
                 onClick={() => setShowChannelMenu(false)}
-                className="ml-auto px-3.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] cursor-pointer transition-all active:scale-95"
+                className={`ml-auto px-3.5 py-1 rounded-full font-semibold text-[11px] cursor-pointer transition-all active:scale-95 ${
+                  isDark ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+                }`}
               >
                 Quay lại video (Esc)
               </button>
@@ -6102,12 +6318,14 @@ export function VideoShortsModal({
 
       {/* ── COMMENTS DRAWER (BÌNH LUẬN THỰC TẾ & TƯƠNG TÁC TÀI KHOẢN GMAIL) ── */}
       {showComments && (
-        <div className="fixed inset-x-0 bottom-0 sm:inset-y-0 sm:right-0 sm:left-auto w-full sm:w-[400px] max-h-[82vh] sm:max-h-full bg-neutral-900/98 backdrop-blur-2xl rounded-t-3xl sm:rounded-none sm:rounded-l-3xl border-t sm:border-t-0 sm:border-l border-white/15 shadow-2xl z-50 flex flex-col p-4 animate-slideUp">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+        <div className={`fixed inset-x-0 bottom-0 sm:inset-y-0 sm:right-0 sm:left-auto w-full sm:w-[400px] max-h-[82vh] sm:max-h-full backdrop-blur-2xl rounded-t-3xl sm:rounded-none sm:rounded-l-3xl border-t sm:border-t-0 sm:border-l shadow-2xl z-50 flex flex-col p-4 animate-slideUp ${
+          isDark ? 'bg-neutral-900/98 border-white/15 text-white' : 'bg-white/98 border-slate-200 text-[#0c0f12]'
+        }`}>
+          <div className={`flex items-center justify-between pb-3 border-b shrink-0 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
-              <h4 className="font-bold text-white text-[15px] flex items-center gap-2">
+              <h4 className={`font-bold text-[15px] flex items-center gap-2 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                 <span>Bình luận</span>
-                <span className="text-[12px] text-neutral-400">({currentVideoComments.length})</span>
+                <span className={`text-[12px] ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>({currentVideoComments.length})</span>
               </h4>
               {activeUser.isLoggedIn && (
                 <span className="text-[10px] text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
@@ -6119,7 +6337,9 @@ export function VideoShortsModal({
             <button 
               onClick={() => setShowComments(false)}
               style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px', borderRadius: '50%', aspectRatio: '1 / 1', padding: 0 }}
-              className="w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 hover:bg-white/10 text-neutral-400 hover:text-white cursor-pointer"
+              className={`w-8 h-8 aspect-square rounded-full flex items-center justify-center shrink-0 cursor-pointer ${
+                isDark ? 'hover:bg-white/10 text-neutral-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'
+              }`}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="block m-auto"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -6128,7 +6348,9 @@ export function VideoShortsModal({
           {/* Danh sách bình luận */}
           <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-3 min-h-[220px] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {currentVideoComments.map((c) => (
-              <div key={c.id} className="flex items-start gap-2.5 p-2 rounded-xl bg-white/[0.03] border border-white/5">
+              <div key={c.id} className={`flex items-start gap-2.5 p-2 rounded-xl border ${
+                isDark ? 'bg-white/[0.03] border-white/5' : 'bg-slate-50 border-slate-200'
+              }`}>
                 {c.avatar ? (
                   <img src={c.avatar} alt="" className="w-7 h-7 rounded-full object-cover shrink-0 border border-white/20" />
                 ) : (
@@ -6138,24 +6360,26 @@ export function VideoShortsModal({
                 )}
                 <div className="flex flex-col min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-1">
-                    <span className="font-bold text-[12px] text-white truncate flex items-center gap-1">
+                    <span className={`font-bold text-[12px] truncate flex items-center gap-1 ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>
                       <span>{c.user}</span>
-                      {c.isSelf && <span className="text-[9px] px-1 rounded bg-red-600/30 text-red-400 font-bold">Bạn</span>}
+                      {c.isSelf && <span className="text-[9px] px-1 rounded bg-red-600/30 text-red-500 font-bold">Bạn</span>}
                     </span>
-                    <span className="text-[10px] text-neutral-400 shrink-0">{c.time}</span>
+                    <span className={`text-[10px] shrink-0 ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>{c.time}</span>
                   </div>
-                  <p className="text-[12px] text-neutral-200 mt-0.5 leading-snug">{c.text}</p>
+                  <p className={`text-[12px] mt-0.5 leading-snug ${isDark ? 'text-neutral-200' : 'text-slate-700'}`}>{c.text}</p>
                   
                   {/* Thích bình luận */}
-                  <div className="flex items-center gap-3 mt-1.5 pt-1 text-[11px] text-neutral-400">
+                  <div className={`flex items-center gap-3 mt-1.5 pt-1 text-[11px] ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
                     <button 
                       onClick={() => handleLikeComment(c.id)}
-                      className={`flex items-center gap-1 cursor-pointer transition-colors ${c.isLiked ? 'text-red-400 font-bold' : 'hover:text-white'}`}
+                      className={`flex items-center gap-1 cursor-pointer transition-colors ${
+                        c.isLiked ? 'text-red-500 font-bold' : (isDark ? 'hover:text-white' : 'hover:text-slate-900')
+                      }`}
                     >
                       <span>{c.isLiked ? '❤️' : '🤍'}</span>
                       <span>{c.likes}</span>
                     </button>
-                    <span className="hover:text-white cursor-pointer">Trả lời</span>
+                    <span className={`cursor-pointer ${isDark ? 'hover:text-white' : 'hover:text-slate-900'}`}>Trả lời</span>
                   </div>
                 </div>
               </div>
@@ -6163,11 +6387,13 @@ export function VideoShortsModal({
           </div>
 
           {/* Form bình luận */}
-          <form onSubmit={handleAddComment} className="pt-2 border-t border-white/10 flex items-center gap-2 shrink-0">
+          <form onSubmit={handleAddComment} className={`pt-2 border-t flex items-center gap-2 shrink-0 ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
             {activeUser.picture ? (
               <img src={activeUser.picture} alt="" className="w-7 h-7 rounded-full object-cover border border-white/20 shrink-0" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-white/15 text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+              <div className={`w-7 h-7 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 ${
+                isDark ? 'bg-white/15 text-white' : 'bg-slate-200 text-slate-800'
+              }`}>
                 {activeUser.name.charAt(0)}
               </div>
             )}
@@ -6176,7 +6402,11 @@ export function VideoShortsModal({
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
               placeholder={activeUser.isLoggedIn ? `Bình luận với tên ${activeUser.name}...` : 'Thêm bình luận...'}
-              className="flex-1 px-3.5 py-2 rounded-full bg-white/10 text-white text-[12px] placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+              className={`flex-1 px-3.5 py-2 rounded-full text-[12px] focus:outline-none focus:ring-1 focus:ring-red-500 ${
+                isDark 
+                  ? 'bg-white/10 text-white placeholder-neutral-400' 
+                  : 'bg-slate-100 text-[#0c0f12] placeholder-slate-400 border border-slate-200'
+              }`}
             />
             <button 
               type="submit"
@@ -6187,12 +6417,12 @@ export function VideoShortsModal({
           </form>
 
           {!activeUser.isLoggedIn && onLogin && (
-            <div className="mt-2 text-center text-[10.5px] text-neutral-400">
+            <div className={`mt-2 text-center text-[10.5px] ${isDark ? 'text-neutral-400' : 'text-slate-500'}`}>
               <span>Đăng nhập với Google để tương tác chính thức: </span>
               <button 
                 type="button" 
                 onClick={onLogin} 
-                className="text-red-400 font-bold hover:underline cursor-pointer"
+                className="text-red-500 font-bold hover:underline cursor-pointer"
               >
                 Đăng nhập ngay
               </button>
@@ -6208,24 +6438,28 @@ export function VideoShortsModal({
           onClick={() => setShowAddChannelModal(false)}
         >
           <div 
-            className="w-full max-w-md bg-neutral-900 border border-white/20 rounded-2xl p-5 shadow-2xl flex flex-col gap-4 text-white animate-scaleIn"
+            className={`w-full max-w-md border rounded-2xl p-5 shadow-2xl flex flex-col gap-4 animate-scaleIn ${
+              isDark ? 'bg-neutral-900 border-white/20 text-white' : 'bg-white border-slate-200 text-[#0c0f12]'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className={`flex items-center justify-between pb-3 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
               <div className="flex items-center gap-2">
                 <span className="text-xl">➕</span>
-                <h3 className="font-bold text-base text-white">Thêm Kênh Vào Danh Sách Của Bạn</h3>
+                <h3 className={`font-bold text-base ${isDark ? 'text-white' : 'text-[#0c0f12]'}`}>Thêm Kênh Vào Danh Sách Của Bạn</h3>
               </div>
               <button 
                 onClick={() => setShowAddChannelModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-neutral-400 hover:text-white cursor-pointer"
+                className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
+                  isDark ? 'bg-white/10 hover:bg-white/20 text-neutral-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900'
+                }`}
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-neutral-400">
-              Nhập tên kênh, đường link hoặc handle YouTube (ví dụ: <span className="text-red-400 font-mono">@vtv24</span>, <span className="text-red-400 font-mono">@tienphong</span>) để lưu vào danh sách theo dõi của bạn.
+            <p className={`text-xs ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>
+              Nhập tên kênh, đường link hoặc handle YouTube (ví dụ: <span className="text-red-500 font-mono">@vtv24</span>, <span className="text-red-500 font-mono">@tienphong</span>) để lưu vào danh sách theo dõi của bạn.
             </p>
 
             <form 
@@ -6246,7 +6480,9 @@ export function VideoShortsModal({
                 value={addChannelInput}
                 onChange={(e) => setAddChannelInput(e.target.value)}
                 placeholder="Nhập @handle, link hoặc tên kênh YouTube..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-neutral-400 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                className={`w-full px-3.5 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                  isDark ? 'bg-white/10 border border-white/20 text-white placeholder-neutral-400' : 'bg-slate-50 border border-slate-300 text-[#0c0f12] placeholder-slate-400'
+                }`}
                 autoFocus
               />
 
@@ -6254,7 +6490,9 @@ export function VideoShortsModal({
                 <button
                   type="button"
                   onClick={() => setShowAddChannelModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/15 text-neutral-300 cursor-pointer"
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer ${
+                    isDark ? 'bg-white/10 hover:bg-white/15 text-neutral-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
                 >
                   Hủy
                 </button>
@@ -6268,8 +6506,8 @@ export function VideoShortsModal({
               </div>
             </form>
 
-            <div className="pt-3 border-t border-white/10">
-              <span className="text-[11px] font-bold text-neutral-400 block mb-2">Hoặc chọn nhanh kênh uy tín:</span>
+            <div className={`pt-3 border-t ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+              <span className={`text-[11px] font-bold block mb-2 ${isDark ? 'text-neutral-400' : 'text-slate-600'}`}>Hoặc chọn nhanh kênh uy tín:</span>
               <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
                 {DEFAULT_OFFICIAL_CHANNELS.map(ch => (
                   <button
@@ -6283,7 +6521,9 @@ export function VideoShortsModal({
                         description: ch.snippet.description
                       });
                     }}
-                    className="px-2.5 py-1 rounded-lg text-[11px] bg-white/5 hover:bg-white/15 border border-white/10 text-neutral-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1"
+                    className={`px-2.5 py-1 rounded-lg text-[11px] border cursor-pointer active:scale-95 transition-all flex items-center gap-1 ${
+                      isDark ? 'bg-white/5 hover:bg-white/15 border-white/10 text-neutral-200' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700'
+                    }`}
                   >
                     <span>+</span>
                     <span>{ch.snippet.title}</span>

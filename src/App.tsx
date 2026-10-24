@@ -7222,6 +7222,7 @@ useEffect(() => {
         onLogin={handleRelogin}
         onUpdateUser={setUserRole}
         initialTab={shortsInitialTab}
+        darkMode={darkMode}
       />
 
       <InfiniteScrollTrigger onTrigger={fetchMoreNews} isLoading={isLoadingMore} hasMoreNews={hasMoreNews} />

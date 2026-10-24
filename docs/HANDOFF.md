@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.44.0`
+- **Phiên bản**: `1.46.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -779,6 +779,17 @@
       + Nếu có sự kiện thật từ Google Calendar: Hiển thị đúng ngày và đúng tiêu đề thật của người dùng.
       + Chân trang hiển thị minh bạch: `🟢 Tự động đồng bộ với Google Calendar • Dữ liệu thực tế`.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+57. **[REQ-076] Đồng Bộ Hóa Toàn Diện Giao Diện Video Shorts Theo Theme Sáng/Tối (Dark/Light) & Triệt Tiêu Lỗi Tiêu Đề Danh Sách Bản Tin Màu Đen Bị Chìm**:
+    - *Đồng Bộ Hóa Chủ Đề Thực Tế Cho Video Shorts*:
+      + Truyền prop `darkMode={darkMode}` từ `src/App.tsx` vào `<VideoShortsModal ... />`.
+      + Phân giải chủ đề an toàn: `const isDark = darkMode ?? (typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false);`.
+      + Tái thiết kế 2 tone màu chuẩn Almond cho 6 phân vùng: Khung toàn màn hình & ambient glow, Sidebar máy tính 16:9, Drawer danh sách phát (Playlist Drawer), Hướng dẫn kênh EPG & Catalog, Drawer bình luận (Comments Drawer), và Modal thêm kênh YouTube.
+    - *Triệt Tiêu Lỗi Tiêu Đề Bị Đen (Black Text on Dark Surfaces)*:
+      + Xóa bỏ khai báo `color: var(--almond-ink);` khỏi rule unlayered `h1..h6` trong `src/index.css`, ngăn CSS Cascade Layer unlayered đè class `.text-white` của Tailwind khi ở Light Mode (`--almond-ink` là `#0c0f12`).
+      + Bổ sung quy tắc scoped: `[data-testid="video-shorts-modal"] h1..h6, strong, b { color: inherit !important; }`.
+      + Thiết lập class màu tương phản rõ ràng: `isDark ? 'text-white' : 'text-[#0c0f12]'` trên toàn bộ các thẻ tiêu đề danh sách bản tin và video cards.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.

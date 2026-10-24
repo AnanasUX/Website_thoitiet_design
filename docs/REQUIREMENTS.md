@@ -383,3 +383,30 @@
      - `npm run build`: 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-076)
+
+- **Mã Yêu Cầu**: `REQ-076`
+- **Tiêu Đề**: Đồng Bộ Hóa Toàn Diện Giao Diện Video Shorts Theo Theme Sáng/Tối (Dark/Light) & Triệt Tiêu Lỗi Tiêu Đề Danh Sách Bản Tin Màu Đen Bị Chìm
+- **Nguồn Prompt**: `PROMPT-20261024-07`: *"Khi chuyển sang video shorts thì UI phải ăn theo thực tế người dùng có chỉnh Dark hoặc LIght không. Ngoài ra tiêu đề của danh sách bản tin đang màu đen không nhìn thấy thông tin nào cần kiểm tra lại UI và fix lại đồng bộ hệ thống https://anx.io.vn/#shorts"*
+- **Phân Hệ**: Video Shorts Adaptive Theme System, Dual-Tone Palette (Almond Light & Dark), Heading Cascade Fix (`src/App.tsx`, `src/components/VideoShortsModal.tsx`, `src/index.css`, `docs/DECISIONS.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Đồng bộ chế độ Dark/Light theo trạng thái thực tế của người dùng*:
+     - Truyền `darkMode={darkMode}` từ `src/App.tsx` vào `<VideoShortsModal ... />`.
+     - Phân giải chủ đề chính xác: `const isDark = darkMode ?? (typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false);`.
+     - Chuyển đổi toàn diện tất cả các phân vùng giao diện:
+       + Khung chứa toàn màn hình và hào quang ambient glow: Khung tối (`bg-neutral-950/98 border-white/10`) khi Dark; Khung sáng (`bg-slate-50/98 border-slate-200/80`) khi Light.
+       + Khung Sidebar 16:9 Desktop: Header, thanh danh sách video đề xuất, badge kênh, thời lượng và nút hành động chuyển đổi mượt mà giữa Slate/White và Neutral/Dark.
+       + Drawer Danh sách phát trên video (Playlist Drawer): Tab header, danh mục con, thẻ video thumbnail, nút chuyển kênh và điều hướng Prev/Next.
+       + Hướng dẫn kênh EPG & Catalog: Header, thanh tìm kiếm, 6 Tab danh mục (Tất cả, Video mới, Theo kênh, Đã lưu, Lịch sử, Shorts 9:16), thẻ thông tin kênh, thẻ video, lưới kênh truyền hình (`TV_CHANNELS`), và chân trang phím tắt TV.
+       + Drawer Bình luận (Comments Drawer): Nền drawer, header số lượng bình luận, thẻ bình luận người dùng, nút thích/trả lời, form nhập và nút Gửi.
+       + Modal Thêm kênh YouTube: Khung modal, form nhập URL/handle, nút Hủy, nút Thêm và danh mục kênh uy tín được thiết kế thích ứng 2 tone màu chuẩn chỉnh.
+  2. *Triệt tiêu lỗi tiêu đề bản tin màu đen (Black Text on Dark Surfaces)*:
+     - Xóa bỏ rule unlayered `color: var(--almond-ink);` cho các thẻ `h1, h2, h3, h4, h5, h6, strong, b` trong `src/index.css`. Khai báo này nằm ngoài `@layer` khiến CSS Cascade Layer ưu tiên cao hơn và đè lên class `.text-white` của Tailwind khi người dùng ở Light mode (`--almond-ink` là `#0c0f12`), làm tiêu đề trong danh sách bản tin bị đen hoàn toàn.
+     - Bổ sung quy tắc scoped: `[data-testid="video-shorts-modal"] h1..h6, strong, b { color: inherit !important; }`.
+     - Gán class màu sắc rõ ràng cho mọi tiêu đề: `isDark ? 'text-white' : 'text-[#0c0f12]'`, bảo đảm độ tương phản chuẩn WCAG 2.1 trên cả nền sáng và nền tối.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

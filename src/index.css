@@ -78,7 +78,6 @@ body {
 
 h1, h2, h3, h4, h5, h6, strong, b {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  color: var(--almond-ink);
   letter-spacing: -0.025em;
 }
 
@@ -330,3 +329,15 @@ html.dark .hero-gradient {
 
 @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .animate-slideUp { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ── VIDEO SHORTS MODAL & OVERLAY CONTRAST RULE (REQ-076) ────────────────────── */
+[data-testid="video-shorts-modal"] h1,
+[data-testid="video-shorts-modal"] h2,
+[data-testid="video-shorts-modal"] h3,
+[data-testid="video-shorts-modal"] h4,
+[data-testid="video-shorts-modal"] h5,
+[data-testid="video-shorts-modal"] h6,
+[data-testid="video-shorts-modal"] strong,
+[data-testid="video-shorts-modal"] b {
+  color: inherit !important;
+}

@@ -902,3 +902,35 @@
         + `npm run build`: Hoàn thành 0 lỗi.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
         + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+  57. **[REQ-076] Đồng Bộ Hóa Toàn Diện Giao Diện Video Shorts Theo Theme Sáng/Tối (Dark/Light) & Triệt Tiêu Lỗi Tiêu Đề Danh Sách Bản Tin Màu Đen Bị Chìm**:
+      - *Bối cảnh & Phản hồi người dùng*:
+        + Người dùng yêu cầu cụ thể: *"Khi chuyển sang video shorts thì UI phải ăn theo thực tế người dùng có chỉnh Dark hoặc LIght không. Ngoài ra tiêu đề của danh sách bản tin đang màu đen không nhìn thấy thông tin nào cần kiểm tra lại UI và fix lại đồng bộ hệ thống https://anx.io.vn/#shorts"*.
+      - *Phân tích nguyên nhân cốt lõi (Root Cause Analysis)*:
+        1. **Mất liên kết trạng thái theme giữa ứng dụng chính và Modal Video Shorts**:
+           - Trong `src/App.tsx`, component `<VideoShortsModal />` không nhận prop `darkMode`, và trong component modal này hầu hết các bề mặt (khung chứa toàn màn hình, sidebar máy tính 16:9, drawer playlist, catalog kênh EPG, drawer bình luận, modal thêm kênh) bị gán cứng (hardcoded) các màu nền tối (`bg-neutral-900`, `bg-neutral-950`, `bg-black/80`).
+           - Khi người dùng ở chế độ Sáng (Light Mode), giao diện Shorts vẫn hiển thị nền tối nhưng bị lẫn lộn các lớp viền và màu chữ, không ăn khớp với chế độ của website.
+        2. **Lỗi quy tắc CSS Typography unlayered trong `src/index.css` gây đen chữ (Heading Cascade Override)**:
+           - Trong `src/index.css`, có khai báo unlayered:
+             `h1, h2, h3, h4, h5, h6, strong, b { color: var(--almond-ink); }`.
+           - Theo đặc tả CSS Cascade Layers, các quy tắc không nằm trong `@layer` (unlayered) luôn có độ ưu tiên cao hơn mọi class tiện ích nằm trong layer của Tailwind CSS (như `.text-white` hoặc `.text-neutral-200`).
+           - Ở chế độ Sáng (Light Mode), `--almond-ink` được định nghĩa là `#0c0f12` (màu đen). Do đó, TẤT CẢ các thẻ `<h3>`, `<h4>`, `<h5>` bên trong danh sách video, thanh phát và thẻ bài báo bị cưỡng chế màu đen `#0c0f12`. Khi thẻ nằm trên nền tối hoặc nền card, chữ bị chìm thành màu đen xì không thể đọc được.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Truyền & Phân Giải Trạng Thái Theme Thực Tế Vào VideoShortsModal**:
+          * Truyền prop `darkMode={darkMode}` từ `src/App.tsx` vào `<VideoShortsModal ... />`.
+          * Phân giải an toàn: `const isDark = darkMode ?? (typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false);`.
+        + **Tái Thiết Kế Ma Trận Bề Mặt Dual-Tone Cho Toàn Bộ 6 Phân Vùng Shorts**:
+          * *Khung Root & Ambient Glow*: Chuyển đổi giữa `bg-neutral-950/98 border-white/10` (Dark) và `bg-slate-50/98 border-slate-200/80` (Light).
+          * *Sidebar 16:9 Desktop*: Tương thích sáng tối toàn diện từ thanh tiêu đề, danh sách clip đề xuất, badge thời lượng, icon chuyển chế độ.
+          * *Drawer Danh sách phát (Playlist Drawer)*: Subtabs, thẻ video active, trạng thái đang phát, danh sách cuộn mượt mà thích ứng với 2 theme.
+          * *EPG Guide & Catalog Modal*: Thẻ tài khoản Google, subcategory tabs, danh sách kênh theo dõi, lưới video mới nhất, các tab Theo Kênh, Đã Lưu, Lịch Sử, Shorts 9:16, Lưới kênh truyền hình (`TV_CHANNELS`), và chân trang phím tắt TV.
+          * *Comments Drawer*: Nền drawer, form nhập bình luận, danh sách bình luận người dùng, nút Like/Trả lời chuẩn sắc Almond.
+          * *Add Channel Modal*: Modal thêm kênh, input URL/@handle, danh mục kênh gợi ý nhanh.
+        + **Triệt Tiêu Hoàn Toàn Lỗi Tiêu Đề Đen Bằng Scoped Inheritance & Explicit Classes**:
+          * Xóa bỏ khai báo `color: var(--almond-ink);` khỏi rule unlayered `h1..h6` trong `src/index.css` (để các tiêu đề tự động kế thừa màu chữ của phần tử cha hoặc class tiện ích).
+          * Bổ sung quy tắc scoped: `[data-testid="video-shorts-modal"] h1..h6, [data-testid="video-shorts-modal"] strong, [data-testid="video-shorts-modal"] b { color: inherit !important; }`.
+          * Khai báo màu chữ tương phản rõ ràng trên từng thẻ tiêu đề: `isDark ? 'text-white' : 'text-[#0c0f12]'`.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Hoàn thành 0 lỗi.
+        + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
+        + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
