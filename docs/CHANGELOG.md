@@ -1,5 +1,26 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.44.0 (2026-10-24) - Định Vị Khu Vực Đảo Ngược Ưu Tiên Photon OSM & Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (REQ-074)
+
+### 1. Khắc Phục Tận Gốc Lỗi Định Vị Khu Vực Của Người Dùng
+- **Đảo ngược thứ tự ưu tiên phân giải tọa độ**: Đưa Photon Komoot OpenStreetMap Reverse Geocoding lên ƯU TIÊN 1 để truy vấn trực tiếp ranh giới hành chính thực tế (xã/phường, quận/huyện, tỉnh/thành phố) từ OpenStreetMap, thay vì bị thuật toán Haversine với bán kính 10km bắt nhầm vào "Quận Hoàn Kiếm".
+- **Chuẩn hóa định vị IP mạng**: Hàm `getNormalizedIpCity` tự động chuẩn hóa dữ liệu datacenter mạng và truyền trực tiếp chuỗi địa danh cấp thành phố (`Hà Nội, VN`, `TP. Hồ Chí Minh, VN`, `Đà Nẵng, VN`...) vào `doFetch`, ngăn chặn việc đoán sai quận nội thành cho người dùng truy cập qua mạng.
+- **Cơ chế định vị 2 tầng (2-Stage Geolocation Engine)**: Tầng 1 lấy nhanh Wi-Fi/mạng (timeout 4s, maximumAge 180s, phản hồi 0.3s) và Tầng 2 tinh chỉnh GPS vệ tinh độ chính xác cao, loại bỏ hiện tượng đơ lag 12 giây trên máy tính để bàn (Windows PC).
+- **Mở rộng danh mục VIETNAM_LOCATIONS**: Bao phủ toàn bộ 63 tỉnh thành và đầy đủ các quận huyện của Hà Nội, TP. Hồ Chí Minh, Đà Nẵng, Hải Phòng, Cần Thơ.
+
+### 2. Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (Zero Manual Action)
+- **Loại bỏ hoàn toàn nút đồng bộ thủ công**: Gỡ bỏ vĩnh viễn nút/đường dẫn `• Đồng bộ lịch` khỏi chân widget Lịch Calendar theo đúng chỉ thị người dùng "tự động không sử dụng đồng bộ thủ công".
+- **Đồng bộ ngầm tự động đa tầng**: Tự động tải sự kiện khi nạp trang, khi đổi tháng/năm, khi người dùng quay lại tab trình duyệt (`window focus`), và cập nhật ngầm định kỳ mỗi 90 giây.
+- **Tự động dọn dẹp hóa đơn & chỉ số quá hạn**: Hàm `isPastUtility` tự động lọc bỏ các sự kiện tiền điện, tiền nước, hóa đơn, gán số đã qua thời gian.
+- **Trạng thái chân trang minh bạch**: Hiển thị chấm xanh `🟢 Tự động đồng bộ với Google Calendar` (hoặc `Đang tự động cập nhật Lịch Google...` khi đang tải ngầm).
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 3.08s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.43.0 (2026-10-24) - Khắc Phục Tương Phản Màu Chữ Dark/Light & Hoàn Thiện Quy Trình Nhận Diện Đăng Nhập Lịch Google Calendar (REQ-073)
 
 ### 1. Khắc Phục Lỗi Tương Phản Màu Chữ Tiêu Đề Trong Dark Mode

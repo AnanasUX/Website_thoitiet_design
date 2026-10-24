@@ -333,3 +333,26 @@
      - `npm run build`: Biên dịch thành công 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-074)
+
+- **Mã Yêu Cầu**: `REQ-074`
+- **Tiêu Đề**: Khắc Phục Tận Gốc Lỗi Định Vị Khu Vực Bằng Đảo Ngược Ưu Tiên Photon OSM Reverse Geocoding & Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar Chạy Ngầm
+- **Nguồn Prompt**: `PROMPT-20261024-04`: *"Định vị khu vực đang chưa định vị đúng khu vực người dùng đang ở, ngoài ra việc đồng bộ lịch google Calendar là tự động không sử dụng đồng bộ thủ công"*
+- **Phân Hệ**: Geolocation Precision Engine, 2-Stage Positioning, Auto Background Calendar Sync (`src/App.tsx`, `src/utils/logicFlows.ts`, `docs/DECISIONS.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Định Vị Đúng Khu Vực Thực Tế Của Người Dùng (High-Precision Geolocation)*:
+     - Đảo ngược thứ tự phân giải tọa độ trong `doFetch`: Đưa Photon Komoot OpenStreetMap Reverse Geocoding lên ƯU TIÊN 1 để bóc tách ranh giới hành chính thực tế (xã/phường, quận/huyện, tỉnh/thành phố) trực tiếp từ tọa độ thiết bị, thay vì bị thuật toán Haversine với bán kính 10km bắt nhầm vào "Quận Hoàn Kiếm".
+     - Trong trường hợp định vị theo IP mạng (`fallbackToIp`, `fallbackToFreeIp`, `fallbackToIpInfo`): Chuẩn hóa tên tỉnh/thành phố (`Hà Nội, VN`, `TP. Hồ Chí Minh, VN`, `Đà Nẵng, VN`...) và truyền trực tiếp vào `doFetch` thay vì truyền `null`, ngăn chặn hoàn toàn việc gán sai quận trung tâm do tọa độ datacenter của nhà mạng.
+     - Cơ chế định vị 2 tầng (2-Stage Geolocation) khi khởi động và yêu cầu GPS: Tầng 1 lấy nhanh qua Wi-Fi/mạng (timeout 4s, maximumAge 180s), Tầng 2 tinh chỉnh độ chính xác cao bằng GPS, có cơ chế fallback mượt mà sang IP mạng, không gây treo 12 giây trên máy tính để bàn (Windows PC).
+     - Mở rộng danh mục `VIETNAM_LOCATIONS` lên đầy đủ 63 tỉnh thành và toàn bộ các quận huyện của Hà Nội, TP. Hồ Chí Minh, Đà Nẵng, Hải Phòng, Cần Thơ.
+  2. *Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (Không Thao Tác Thủ Công)*:
+     - Loại bỏ hoàn toàn nút/đường dẫn thao tác thủ công `• Đồng bộ lịch` khỏi giao diện chân trang widget Lịch Calendar.
+     - Tự động nạp và đồng bộ ngầm toàn bộ sự kiện khi mở trang, khi chuyển đổi tháng/năm, khi người dùng quay lại tab trình duyệt (`window focus`), và định kỳ tự động cập nhật ngầm mỗi 90 giây.
+     - Tự động dọn dẹp và loại bỏ các sự kiện tiền điện, tiền nước, hóa đơn, gán số đã qua thời gian theo đúng quy tắc `isPastUtility`.
+     - Chân trang hiển thị trạng thái tự động minh bạch: `🟢 Tự động đồng bộ với Google Calendar` (hoặc `Đang tự động cập nhật Lịch Google...` khi đang tải ngầm).
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Biên dịch hoàn tất 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
