@@ -2470,6 +2470,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onLogout,
   onTokenExpired,
   onRelogin,
+  onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
   isManualLocation = false
@@ -2490,6 +2491,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
     onLogout?: () => void;
     onTokenExpired?: () => void;
     onRelogin?: () => void;
+    onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
 }) {
@@ -2668,6 +2670,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onLogout,
   onTokenExpired,
   onRelogin,
+  onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
   isManualLocation = false
@@ -2688,6 +2691,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
     onLogout?: () => void;
     onTokenExpired?: () => void;
     onRelogin?: () => void;
+    onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
 }) {
@@ -2929,6 +2933,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onLogout,
   onTokenExpired,
   onRelogin,
+  onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
   isManualLocation = false
@@ -2949,6 +2954,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     onLogout?: () => void;
     onTokenExpired?: () => void;
     onRelogin?: () => void;
+    onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
 }) {
