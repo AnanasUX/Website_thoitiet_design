@@ -9,6 +9,7 @@
 
 ### 2. Đồng Bộ Tự Động Ngầm 100% Qua Google Identity Services & Hiển Thị Minh Bạch
 - **Tự động cấp phát Token ngầm**: Tự động xin access_token qua Google Identity Services (GIS Token Client `prompt: ''`) và truyền tức thì lên ứng dụng qua callback `onTokenUpdated`.
+- **Khắc phục lỗi ReferenceError: onTokenUpdated is not defined**: Bổ sung khai báo bóc tách tham số `onTokenUpdated` trong cả 3 phân hệ giao diện `MobileLayout`, `TabletLayout` và `DesktopLayout`, triệt tiêu hoàn toàn lỗi runtime khi khởi chạy ứng dụng.
 - **Hiển thị trung thực**: Nếu người dùng không có sự kiện nào trong tháng trên Google Calendar, lịch hiển thị hoàn toàn sạch sẽ, không có bất kỳ chấm tròn hay popup giả. Khi có sự kiện thật, hiển thị chính xác tiêu đề sự kiện từ Google Calendar.
 - **Trạng thái chân trang**: Hiển thị rõ ràng: `🟢 Tự động đồng bộ với Google Calendar • Dữ liệu thực tế` (hoặc `Đã đồng bộ X sự kiện thực tế` khi có dữ liệu).
 
