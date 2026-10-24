@@ -85,6 +85,7 @@
 | REQ-069 | PROMPT-20261023-05 | Hệ thống tự động định vị chuẩn xác khu vực thực tế của người dùng và đẩy dữ liệu vào, phân định rạch ròi với quyền thay đổi vị trí thủ công của người dùng | P0 | Weather / Geolocation | TC-016, TC-022 | PASS | App.tsx, testwebsite.mjs | Nominatim reverse geocode đa tầng bóc tách Quận/Huyện tiếng Việt; GPS high accuracy; phân tách user_weather_manual_location vs user_weather_auto_location; xóa hardcode Hà Đông; tôn trọng 100% lựa chọn thủ công của người dùng |
 | REQ-070 | PROMPT-20261023-06 | Triển khai hệ thống thiết kế (Design System) và bảng phối màu Almond AI SaaS (https://almond.framer.website/): Warm Alabaster Canvas (#f6f5f4), Deep Obsidian Dark Canvas (#0c0f12), Electric Royal Blue (#2563ff), Cosmic Violet (#5715d1), Flame Amber (#ff7917), Mint (#25caac), thẻ bo góc 24px viền tinh tế và tài liệu DESIGN_SYSTEM.md | P1 | Design System & Visual Theme | TC-016, TC-024 | PASS | index.css, App.tsx, DESIGN_SYSTEM.md, testwebsite.mjs | Almond AI SaaS tokens, Inter font, warm alabaster matte background, atmospheric hero mesh, category pill active state |
 | REQ-071 | PROMPT-20261024-01 | Khắc phục triệt để lỗi định vị sai lệch, nâng cấp hệ thống định vị siêu chính xác cấp quận/huyện đa tầng: Thuật toán Haversine đối chiếu mạng lưới địa danh Việt Nam (0ms, 100% chuẩn tiếng Việt), Photon Komoot OSM reverse geocode có CORS thay thế Nominatim bị 403, bộ ba IP HTTPS native (ipwho.is, freeipapi, ipinfo), tăng timeout GPS lên 12s và hiển thị cảnh báo hướng dẫn cấp quyền rõ ràng khi bị chặn | P0 | Weather / Precision Geolocation | TC-016, TC-022, TC-024 | PASS | App.tsx, logicFlows.ts, test-logic-flows.mjs, testwebsite.mjs | Haversine 0ms local match, Photon Komoot CORS, HTTPS IP fallbacks, GPS permission guide, 427/427 logic tests PASS, 47/47 E2E PASS |
+| REQ-072 | PROMPT-20261024-02 | Chuẩn hóa toàn diện ngôn ngữ thiết kế khung viền (Frame & Surface Architecture), khắc phục triệt để lỗi chuyển đổi màu sắc Dark/Light mode: Thêm @custom-variant dark vào Tailwind CSS v4, đồng bộ thẻ trắng #ffffff viền #e2e4e8 ở Light mode, Deep Obsidian #151921 viền trắng 8% ở Dark mode, làm mịn dải màu cảnh báo pastel/glow và chuyển sắc mượt mà 0.25s cubic-bezier | P1 | UI/UX & Theme Engine | TC-016, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs | @custom-variant dark loại bỏ kích hoạt nhầm dark:, thẻ bài viết & widget đồng bộ Almond Noir/Porcelain, chuyển sắc mượt 250ms, 47/47 E2E PASS |
 
 ## Prompt intake log
 
@@ -144,6 +145,9 @@
 | PROMPT-20261023-03 | 2026-10-23 | Hiện tại định vị trí trí đang sai kiểm tra lại | REQ-067 | Resolved | Approved |
 | PROMPT-20261023-04 | 2026-10-23 | Bỏ thanh tìm kiếm nhanh trên mobile (div w-full flex items-center justify-between gap-2...) | REQ-068 | Resolved | Approved |
 | PROMPT-20261023-05 | 2026-10-23 | Về việc định vị hệ thống sẽ phải định vị đúng vị trí của người dùng đang ở khu vực nào thì sẽ đẩy vào, còn việc thay đổi sẽ là do người dùng thay đổi. | REQ-069 | Resolved | Approved |
+| PROMPT-20261023-06 | 2026-10-23 | Về phối màu sẽ sử dụng trang này và lên design system cho website này https://almond.framer.website/ | REQ-070 | Resolved | Approved |
+| PROMPT-20261024-01 | 2026-10-24 | Hiện tại hệ thống đang định vị sai vị trí của người dùng kiểm tra lại. | REQ-071 | Resolved | Approved |
+| PROMPT-20261024-02 | 2026-10-24 | Về giao diện Dark và Light về chuyển đổi màu sắc khung đang rất xấu cần điều chỉnh chỉnh sửa lại | REQ-072 | Resolved | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -279,3 +283,28 @@
      - `npm run build`: Thành công 100% không lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS), bổ sung 4 bài test Haversine & Geolocation vào Luồng 8.
      - `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-072)
+
+- **Mã Yêu Cầu**: `REQ-072`
+- **Tiêu Đề**: Chuẩn Hóa Ngôn Ngữ Khung Viền & Bề Mặt Giao Diện (Frame & Surface Architecture), Triệt Tiêu Lỗi Kích Hoạt Nhầm Dark Mode & Chuyển Đổi Màu Sắc Mượt Mà Chuẩn Almond AI SaaS
+- **Nguồn Prompt**: `PROMPT-20261024-02`: *"Về giao diện Dark và Light về chuyển đổi màu sắc khung đang rất xấu cần điều chỉnh chỉnh sửa lại"*
+- **Phân Hệ**: UI/UX Theme Engine, Frame Architecture & Design System (`src/index.css`, `src/App.tsx`, `docs/DESIGN_SYSTEM.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu Lỗi Kích Hoạt Nhầm `dark:` Biến Thẻ Thành Màu Đen Khi Ở Light Mode*:
+     - Khai báo `@custom-variant dark (&:where(.dark, .dark *));` trong `src/index.css` theo chuẩn Tailwind CSS v4, buộc biến thể `dark:` chỉ được kích hoạt khi thẻ `<html>` có class `.dark`, chấm dứt việc kích hoạt tự động theo `@media (prefers-color-scheme: dark)` của hệ điều hành máy khách khi người dùng đang xem Light mode.
+  2. *Đồng Bộ Bề Mặt Thẻ (Card Surfaces) Chuẩn Almond AI SaaS*:
+     - **Chế độ Sáng (Light Mode)**: Bề mặt thẻ trắng tinh khiết `#ffffff`, đường viền hairline thanh mảnh tinh tế `#e2e4e8` (thay thế cho viền xám thô), đổ bóng dịu mắt `0 2px 14px -2px rgba(12, 15, 18, 0.05)`, tiêu đề màu mực `#0c0f12`, văn bản `#4e5b6d`.
+     - **Chế độ Tối (Dark Mode)**: Bề mặt thẻ Deep Obsidian Noir `#151921` đồng nhất toàn trang (loại bỏ hoàn toàn các lớp phủ cộc cằn `slate-900` `#0f172a`), viền mờ cao cấp `rgba(255, 255, 255, 0.08)`, đổ bóng khối sâu thẳm `0 8px 30px -6px rgba(0, 0, 0, 0.55)`, tiêu đề sáng `#f8fafc`, văn bản `#94a3b8`.
+     - Các khối phần tử con bên trong (thẻ giá vàng, hộp biểu đồ, thẻ lời khuyên trợ lý khí tượng, danh sách địa điểm): Sử dụng nền `bg-[#f8f9fa]` viền `#e9ecef` ở Light mode và nền `bg-[#1c222d]` viền `rgba(255, 255, 255, 0.06)` ở Dark mode.
+  3. *Làm Mịn Dải Màu Khung Cảnh Báo & Gợi Ý Chuyên Biệt*:
+     - Khung Cảnh báo trọng tâm: Light mode mang sắc hổ phách nhạt ấm áp `#fff9f0` viền `#fed7aa` text `#9a3412`; Dark mode phủ lớp glow bán trong suốt `rgba(255, 121, 23, 0.12)` viền `rgba(255, 121, 23, 0.25)` text `#fdba74`.
+     - Khung Gợi ý lịch trình: Light mode ngọc bích tươi tắn `#f2fcf6` viền `#bbf7d0` text `#166534`; Dark mode phát quang xanh bạc hà `rgba(37, 202, 172, 0.1)` viền `rgba(37, 202, 172, 0.25)` text `#5eead4`.
+     - Khung Khuyến cáo lộ trình: Light mode xanh thiên thanh `#f0f7ff` viền `#bfdbfe` text `#1e40af`; Dark mode ánh xanh hoàng gia `rgba(37, 99, 255, 0.1)` viền `rgba(37, 99, 255, 0.25)` text `#93c5fd`.
+  4. *Kích Hoạt Hiệu Ứng Chuyển Đổi Màu Sắc Toàn Hệ Thống (Smooth Morphing)*:
+     - Tích hợp hiệu ứng chuyển sắc `transition: background-color, border-color, color, box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1)` cho toàn bộ các phần tử khung thẻ, nút bấm và tiêu đề, đảm bảo khi bấm đổi Dark/Light mode các khung thẻ chuyển đổi màu sắc êm ái, liền mạch, không giật cục hay chớp nháy.
+  5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Biên dịch thành công 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).

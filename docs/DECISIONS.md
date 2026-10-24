@@ -765,3 +765,30 @@
         + `npm run test:logic`: 427/427 assertions đạt (100% PASS), bao gồm 4 ca kiểm thử Haversine & Geolocation trong Luồng 8.
         + `npm run build`: Thành công 100% trong 3.97s, 0 lỗi TypeScript.
         + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+
+  53. **[REQ-072] Chuẩn Hóa Toàn Diện Ngôn Ngữ Khung Viền & Bề Mặt Giao Diện (Frame & Surface Architecture), Triệt Tiêu Lỗi Kích Hoạt Nhầm Dark Mode & Chuyển Đổi Màu Sắc Mượt Mà Chuẩn Almond AI SaaS**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng phản hồi: *"Về giao diện Dark và Light về chuyển đổi màu sắc khung đang rất xấu cần điều chỉnh chỉnh sửa lại"* kèm hình ảnh minh chứng giao diện đang ở chế độ Sáng (icon Mặt trời hiển thị trên Header, nền trang sáng, cột thời tiết màu trắng) nhưng các thẻ tin tức bên phải lại bị biến thành màu đen xì (`#0f172a` / `#131927`) với chữ trắng.
+        + *Phân tích nguyên nhân cốt lõi (Root Cause Analysis)*:
+          1. **Lỗi hành vi mặc định của Tailwind CSS v4 đối với biến thể `dark:`**: Trong Tailwind CSS v4, nếu không khai báo quy tắc tùy chỉnh `@custom-variant dark`, mọi lớp có tiền tố `dark:` (ví dụ `dark:bg-slate-900`, `dark:text-slate-100`, `dark:border-slate-800`) sẽ tự động biên dịch sang truy vấn media `@media (prefers-color-scheme: dark)`. Khi hệ điều hành của người dùng (Windows Dark Theme) hoặc trình duyệt được cấu hình ưu tiên nền tối, các lớp `dark:` này LẬP TỨC ĐƯỢC ÁP DỤNG cho các thẻ tin tức dù cờ React state `darkMode` đang là `false` và class `.dark` đã bị gỡ khỏi thẻ `<html>`. Trong khi đó, các thẻ ở cột bên trái sử dụng lớp `.bg-white` được điều khiển bằng selector CSS `html.dark .bg-white`, dẫn tới hiện tượng "nửa sáng nửa tối" cọc cạch, xấu xí.
+          2. **Bất nhất màu sắc bề mặt trong Dark Mode**: Một số thẻ sử dụng `#151921` (Almond Obsidian), một số thẻ dùng `#0f172a` (`slate-900`), các phần tử con dùng `#1a202c`, khiến giao diện tối bị vụn vặt và mất đi tính cao cấp.
+          3. **Khung cảnh báo và gợi ý bị bẹp màu trong Dark Mode**: Các khung `Cảnh báo trọng tâm` (`.bg-[#fff7ed]`), `Gợi ý lịch trình` (`.bg-[#f0fdf4]`), `Khuyến cáo lộ trình` (`.bg-[#eff6ff]`) bị ép đồng loạt thành nền xám `#1a202c`, làm mất đi hoàn toàn tính nhận diện sắc thái khí tượng (Hổ phách - Ngọc bích - Thiên thanh).
+          4. **Thiếu hiệu ứng chuyển sắc mềm (Color Morphing Transitions)**: Khi người dùng bấm nút toggle chuyển đổi giao diện, các màu nền, viền và văn bản thay đổi tức thì đột ngột, gây cảm giác giật cục, nhấp nháy khó chịu cho mắt.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Khai Báo Chuẩn `@custom-variant dark (&:where(.dark, .dark *));`**:
+          * Thêm chỉ thị `@custom-variant dark` vào đầu `src/index.css`, bắt buộc Tailwind CSS v4 chỉ kích hoạt các lớp `dark:` khi và chỉ khi thẻ `<html>` mang class `.dark`. Triệt tiêu hoàn toàn lỗi hiển thị thẻ đen trong Light mode khi chạy trên hệ điều hành Dark mode.
+        + **Đồng Bộ Kiến Trúc Bề Mặt Thẻ (Card Surfaces) Chuẩn Almond AI SaaS**:
+          * Thẻ Sáng (Light): Nền trắng tinh khôi `#ffffff`, đường viền hairline `#e2e4e8` siêu mỏng mềm mại, bóng đổ dịu mắt `0 2px 14px -2px rgba(12, 15, 18, 0.05)`, tiêu đề `#0c0f12`, thân bài `#4e5b6d`.
+          * Thẻ Tối (Dark): Nền Deep Obsidian Noir `#151921` thống nhất toàn trang, đường viền `rgba(255, 255, 255, 0.08)`, bóng đổ khối sâu `0 8px 30px -6px rgba(0, 0, 0, 0.55)`, tiêu đề `#f8fafc`, thân bài `#94a3b8`.
+          * Khối phần tử con (Sub-cards): Nền `bg-[#f8f9fa]` viền `#e9ecef` ở Light mode; nền `bg-[#1c222d]` viền `rgba(255, 255, 255, 0.06)` ở Dark mode.
+        + **Khung Cảnh Báo Khí Tượng Đa Tầng Tinh Tế**:
+          * Khung Cảnh báo trọng tâm: Light mode `#fff9f0` viền `#fed7aa` text `#9a3412`; Dark mode phủ lớp glow hổ phách `rgba(255, 121, 23, 0.12)` viền `rgba(255, 121, 23, 0.25)` text `#fdba74`.
+          * Khung Gợi ý lịch trình: Light mode `#f2fcf6` viền `#bbf7d0` text `#166534`; Dark mode phát quang xanh ngọc `rgba(37, 202, 172, 0.1)` viền `rgba(37, 202, 172, 0.25)` text `#5eead4`.
+          * Khung Khuyến cáo lộ trình: Light mode `#f0f7ff` viền `#bfdbfe` text `#1e40af`; Dark mode ánh xanh hoàng gia `rgba(37, 99, 255, 0.1)` viền `rgba(37, 99, 255, 0.25)` text `#93c5fd`.
+        + **Kích Hoạt Hiệu Ứng Chuyển Đổi Màu Sắc 0.25s Mượt Mà**:
+          * Tích hợp `transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease` cho toàn bộ các phần tử khung thẻ, nút bấm và tiêu đề, mang lại trải nghiệm đổi giao diện êm ái, mượt mà như các ứng dụng native cao cấp.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Hoàn thành trong 2.48s, 0 lỗi biên dịch.
+        + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
+        + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED) trên cả Desktop, Tablet và Mobile.

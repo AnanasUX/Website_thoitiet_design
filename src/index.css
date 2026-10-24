@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 @source "./src";
 
 @theme {
@@ -108,11 +109,70 @@ button {
 }
 
 .border-\[\#e3e7ef\] {
-  border-color: #d8dbdf !important;
+  border-color: #e2e4e8 !important;
 }
 
 .hero-gradient {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #5715d1 100%) !important;
+}
+
+/* Light Theme Frame & Card Elevation */
+.bg-white {
+  background-color: #ffffff;
+  border-color: #e2e4e8;
+}
+
+.bg-\[\#f8fafc\] {
+  background-color: #f8f9fa !important;
+  border-color: #e9ecef !important;
+}
+
+.bg-\[\#fff7ed\] {
+  background-color: #fff9f0 !important;
+  border-color: #fed7aa !important;
+}
+
+.bg-\[\#f0fdf4\] {
+  background-color: #f2fcf6 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.bg-\[\#eff6ff\] {
+  background-color: #f0f7ff !important;
+  border-color: #bfdbfe !important;
+}
+
+.bg-\[\#ffe8ee\] {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+.bg-\[\#fff4e5\] {
+  background-color: #fff9ed !important;
+  border-color: #fed7aa !important;
+}
+
+.shadow-\[0px_4px_12px_0px_rgba\(23\,33\,51\,0\.1\)\],
+.shadow-\[0px_4px_12px_0px_rgba\(23\,33\,51\,0\.06\)\] {
+  box-shadow: 0 2px 14px -2px rgba(12, 15, 18, 0.05), 0 1px 3px 0 rgba(12, 15, 18, 0.03) !important;
+}
+
+/* ── SMOOTH THEME MORPHING TRANSITION ────────────────────────────────────────── */
+body,
+header,
+.bg-white,
+.bg-\[\#f4f6fa\],
+.bg-\[\#f8fafc\],
+.bg-\[\#fff7ed\],
+.bg-\[\#f0fdf4\],
+.bg-\[\#eff6ff\],
+.border-\[\#e3e7ef\],
+[data-testid="news-card"],
+button {
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* ── ALMOND DARK MODE (DEEP OBSIDIAN NOIR & COSMIC VIOLET) ───────────────────── */
@@ -127,6 +187,7 @@ html.dark body {
 
 html.dark .bg-white {
   background-color: #151921 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 html.dark .bg-\[\#f4f6fa\] {
@@ -138,7 +199,7 @@ html.dark .hover\:bg-\[\#f4f6fa\]:hover {
 }
 
 html.dark .text-\[\#182033\] {
-  color: #ffffff !important;
+  color: #f8fafc !important;
 }
 
 html.dark .text-\[\#5f687b\] {
@@ -154,7 +215,8 @@ html.dark .border-white {
 }
 
 html.dark .bg-\[\#f8fafc\] {
-  background-color: #1a202c !important;
+  background-color: #1c222d !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 html.dark .bg-\[\#e3e7ef\] {
@@ -166,35 +228,51 @@ html.dark .hover\:bg-\[\#e3e7ef\]:hover {
 }
 
 html.dark .hover\:bg-\[\#fafafa\]:hover {
-  background-color: #1a202c !important;
+  background-color: #1c222d !important;
 }
 
-html.dark .shadow-\[0px_4px_12px_0px_rgba\(23\,33\,51\,0\.1\)\] {
-  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.6) !important;
+html.dark .shadow-\[0px_4px_12px_0px_rgba\(23\,33\,51\,0\.1\)\],
+html.dark .shadow-\[0px_4px_12px_0px_rgba\(23\,33\,51\,0\.06\)\] {
+  box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.55) !important;
 }
 
 html.dark .bg-gradient-to-r.from-\[\#f0f4ff\].to-\[\#f8fafc\] {
-  background: linear-gradient(135deg, #1a202c, #151921) !important;
+  background: linear-gradient(135deg, #1c222d, #151921) !important;
 }
 
+/* Atmospheric Tinted Frames in Dark Mode */
 html.dark .bg-\[\#fff7ed\] {
-  background-color: #1a202c !important;
+  background-color: rgba(255, 121, 23, 0.12) !important;
+  border-color: rgba(255, 121, 23, 0.25) !important;
+}
+html.dark .bg-\[\#fff7ed\] p {
+  color: #fdba74 !important;
 }
 
 html.dark .bg-\[\#f0fdf4\] {
-  background-color: #1a202c !important;
+  background-color: rgba(37, 202, 172, 0.1) !important;
+  border-color: rgba(37, 202, 172, 0.25) !important;
+}
+html.dark .bg-\[\#f0fdf4\] p {
+  color: #5eead4 !important;
 }
 
 html.dark .bg-\[\#eff6ff\] {
-  background-color: #1a202c !important;
+  background-color: rgba(37, 99, 255, 0.1) !important;
+  border-color: rgba(37, 99, 255, 0.25) !important;
+}
+html.dark .bg-\[\#eff6ff\] p {
+  color: #93c5fd !important;
 }
 
 html.dark .bg-\[\#ffe8ee\] {
-  background-color: #242c3d !important;
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
 }
 
 html.dark .bg-\[\#fff4e5\] {
-  background-color: #242c3d !important;
+  background-color: rgba(255, 121, 23, 0.15) !important;
+  border-color: rgba(255, 121, 23, 0.3) !important;
 }
 
 html.dark .hero-gradient {

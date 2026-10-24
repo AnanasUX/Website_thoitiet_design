@@ -1,5 +1,26 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.42.0 (2026-10-24) - Chuẩn Hóa Khung Viền & Bề Mặt Giao Diện, Khắc Phục Lỗi Chuyển Đổi Dark/Light Mode (REQ-072)
+
+### 1. Khắc Phục Triệt Để Lỗi Chuyển Đổi Màu Sắc Khung Giao Diện Dark/Light Mode
+- **Triệt tiêu lỗi kích hoạt nhầm dark: trong Light Mode**: Khai báo @custom-variant dark (&:where(.dark, .dark *)); trong Tailwind CSS v4, chấm dứt việc các thẻ tin tức tự động biến thành màu đen khi chạy trên hệ điều hành đang bật chế độ nền tối (Windows Dark Mode).
+- **Đồng bộ hóa kiến trúc bề mặt thẻ (Card Surfaces) chuẩn Almond AI SaaS**:
+  + Chế độ Sáng: Nền thẻ trắng tinh khôi #ffffff, đường viền hairline #e2e4e8 thanh lịch, bóng đổ dịu nhẹ 0 2px 14px -2px rgba(12, 15, 18, 0.05), văn bản tương phản cao (#0c0f12 cho tiêu đề, #4e5b6d cho nội dung).
+  + Chế độ Tối: Nền thẻ Deep Obsidian Noir #151921 đồng nhất toàn trang, đường viền rgba(255, 255, 255, 0.08), bóng đổ khối sâu 0 8px 30px -6px rgba(0, 0, 0, 0.55), tiêu đề #f8fafc, văn bản #94a3b8.
+  + Khối phần tử con (Sub-cards): Nền bg-[#f8f9fa] viền #e9ecef ở Light mode; nền bg-[#1c222d] viền rgba(255, 255, 255, 0.06) ở Dark mode.
+- **Tinh chỉnh dải màu các khung cảnh báo & gợi ý chuyên biệt**:
+  + Khung Cảnh báo trọng tâm: Nền hổ phách ấm #fff9f0 viền #fed7aa (Light) / Glow hổ phách rgba(255, 121, 23, 0.12) viền rgba(255, 121, 23, 0.25) (Dark).
+  + Khung Gợi ý lịch trình: Nền ngọc bích tươi #f2fcf6 viền #bbf7d0 (Light) / Glow bạc hà rgba(37, 202, 172, 0.1) viền rgba(37, 202, 172, 0.25) (Dark).
+  + Khung Khuyến cáo lộ trình: Nền thiên thanh #f0f7ff viền #bfdbfe (Light) / Glow hoàng gia rgba(37, 99, 255, 0.1) viền rgba(37, 99, 255, 0.25) (Dark).
+- **Kích hoạt hiệu ứng chuyển đổi màu sắc 0.25s mượt mà (Smooth Morphing)**: Toàn bộ thẻ, khung, đường viền và chữ chuyển màu mượt mà theo đường cong cubic-bezier(0.4, 0, 0.2, 1), triệt tiêu hoàn toàn hiện tượng nhấp nháy, giật cục khi bấm chuyển chế độ Sáng / Tối.
+
+### 2. Kết Quả Kiểm Thử Toàn Diện
+- npm run build: Thành công 100% trong 2.48s, 0 lỗi biên dịch.
+- npm run test:logic: 427/427 assertions đạt (100% PASS).
+- npm run testwebsite: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên Desktop, Tablet, Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.41.0 (2026-10-24) - Nâng Cấp Hệ Thống Định Vị Đa Tầng Siêu Chính Xác Cấp Quận/Huyện (REQ-071)
 
 ### 1. Khắc Phục Triệt Để Lỗi Định Vị Sai Lệch

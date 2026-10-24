@@ -480,13 +480,13 @@ function SmartWeatherAssistant({
     : { icon: "🏃", title: "Hoạt động", desc: "Rất thích hợp chạy bộ, tập luyện thể thao ngoài trời" };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50/95 via-blue-50/70 to-purple-50/60 dark:from-slate-800/90 dark:via-indigo-950/40 dark:to-slate-900/90 border border-indigo-200/80 dark:border-indigo-800/60 rounded-3xl p-4 shadow-sm w-full flex flex-col gap-3 backdrop-blur-xs">
+    <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] rounded-3xl p-4 shadow-sm w-full flex flex-col gap-3 transition-colors duration-250">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="size-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center text-xs shadow-xs font-bold">
             ✨
           </div>
-          <span className="font-bold text-[13.5px] text-[#182033] dark:text-slate-100 tracking-tight">Trợ Lý Khí Tượng AI</span>
+          <span className="font-bold text-[13.5px] text-[#0c0f12] dark:text-[#f8fafc] tracking-tight">Trợ Lý Khí Tượng AI</span>
         </div>
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-700/60 shadow-2xs">
           <span className="size-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse"></span>
@@ -496,9 +496,9 @@ function SmartWeatherAssistant({
 
       <div className="grid grid-cols-2 gap-2.5 w-full text-[12px]">
         {[outfitAdvice, commuteAdvice, healthAdvice, activityAdvice].map((item, i) => (
-          <div key={i} className="bg-white/95 dark:bg-slate-800/95 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl p-3 flex flex-col gap-1 transition-all shadow-2xs hover:shadow-xs">
+          <div key={i} className="bg-[#f8f9fa] dark:bg-[#1c222d] border border-[#e9ecef] dark:border-white/[0.06] rounded-2xl p-3 flex flex-col gap-1 transition-all shadow-2xs hover:shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-[#182033] dark:text-slate-100 flex items-center gap-1.5 text-[11.5px]">
+              <span className="font-bold text-[#0c0f12] dark:text-[#f8fafc] flex items-center gap-1.5 text-[11.5px]">
                 <span>{item.icon}</span>
                 <span>{item.title}</span>
               </span>
@@ -508,7 +508,7 @@ function SmartWeatherAssistant({
                 </span>
               )}
             </div>
-            <p className="text-[#5f687b] dark:text-slate-400 text-[11px] leading-snug line-clamp-2">
+            <p className="text-[#4e5b6d] dark:text-[#94a3b8] text-[11px] leading-snug line-clamp-2">
               {item.desc}
             </p>
           </div>
@@ -2618,7 +2618,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
 
           {((isFetchingCategory || isLoading) && newsFeed.length === 0) ? <NewsSkeleton /> : (<>
           {newsFeed.map((item, i) => (
-              <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+              <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-[14px] items-start overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="flex flex-col gap-2 items-start w-full">
                   <div className="flex gap-[10px] items-center w-full flex-wrap">
@@ -2837,7 +2837,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           {((isFetchingCategory || isLoading) && (!featured || newsFeed.length === 0)) ? <NewsSkeleton /> : (<>
           {/* Featured article */}
           {featured && (
-            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden rounded-[var(--card-radius)] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="h-[180px] relative rounded-tl-2xl rounded-tr-2xl w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
@@ -2879,7 +2879,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
           {/* Remaining articles */}
           {rest.map((item, i) => (
-            <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.1)] hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(23,33,51,0.2)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading="lazy" decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
@@ -3125,9 +3125,9 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {((isFetchingCategory || isLoading) && (!featured || newsFeed.length === 0)) ? <NewsSkeleton /> : (<>
           {/* Featured feed card - Modern Editorial Magazine Card */}
           {featured && (
-            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 flex flex-col gap-3.5 items-start overflow-hidden p-5 rounded-3xl shadow-[0_4px_24px_-4px_rgba(23,33,51,0.08)] hover:-translate-y-1 hover:shadow-[0_16px_36px_-6px_rgba(23,33,51,0.16)] transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-3.5 items-start overflow-hidden p-5 rounded-3xl shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
             >
-              <div className="h-[210px] sm:h-[240px] relative rounded-2xl w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+              <div className="h-[210px] sm:h-[240px] relative rounded-2xl w-full overflow-hidden bg-slate-100 dark:bg-[#1c222d]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-700 ease-out" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#2563ff] to-[#5715d1] text-white text-[10.5px] font-black uppercase tracking-wider shadow-md">
@@ -3143,7 +3143,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                 )}
               </div>
               <div className="flex gap-2.5 items-center w-full flex-wrap">
-                <div className="size-7 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
+                <div className="size-7 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
                   <img alt="" className="size-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} loading="lazy" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
                 </div>
                 <span className="font-bold text-[#ff315f] text-[12.5px]">{featured.src}</span>
@@ -3158,11 +3158,11 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                   </span>
                 )}
               </div>
-              <h3 className="font-black text-[#182033] dark:text-slate-100 text-[18px] sm:text-[20px] leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors w-full line-clamp-2">
+              <h3 className="font-black text-[#0c0f12] dark:text-[#f8fafc] text-[18px] sm:text-[20px] leading-snug group-hover:text-[#2563ff] dark:group-hover:text-[#3b82f6] transition-colors w-full line-clamp-2">
                 {featured.author}
               </h3>
               {featured.body && (
-                <p className="font-normal text-[#5f687b] dark:text-slate-400 text-[14px] leading-relaxed line-clamp-2">{featured.body}</p>
+                <p className="font-normal text-[#4e5b6d] dark:text-[#94a3b8] text-[14px] leading-relaxed line-clamp-2">{featured.body}</p>
               )}
             </div>
           )}
@@ -3170,9 +3170,9 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {/* News grid */}
             <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
               {grid.map((item, i) => (
-                <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 flex flex-col items-start overflow-hidden rounded-2xl shadow-xs hover:-translate-y-1.5 hover:shadow-xl transition-all duration-300 w-full no-underline group cursor-pointer"
+                <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden rounded-2xl shadow-sm hover:-translate-y-1.5 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
-                <div className="h-[150px] relative w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="h-[150px] relative w-full overflow-hidden bg-slate-100 dark:bg-[#1c222d]">
                   <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i < 4 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                   {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
                     <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold backdrop-blur-md shadow-md">
@@ -3192,10 +3192,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
                         </span>
                       )}
                     </div>
-                    <p className="font-bold text-[#182033] dark:text-slate-100 text-[14.5px] leading-snug w-full line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{item.author}</p>
-                    <p className="font-normal text-[#5f687b] dark:text-slate-400 text-[12.5px] leading-relaxed line-clamp-2">{item.body}</p>
+                    <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] text-[14.5px] leading-snug w-full line-clamp-2 group-hover:text-[#2563ff] dark:group-hover:text-[#3b82f6] transition-colors">{item.author}</p>
+                    <p className="font-normal text-[#4e5b6d] dark:text-[#94a3b8] text-[12.5px] leading-relaxed line-clamp-2">{item.body}</p>
                   </div>
-                  <div className="flex items-center justify-between w-full pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-[#5f687b] dark:text-slate-400">
+                  <div className="flex items-center justify-between w-full pt-2 border-t border-[#f1f3f5] dark:border-white/[0.06] text-[11px] text-[#5f687b] dark:text-[#94a3b8]">
                     <span className="font-medium">⏱️ {getReadingTime(item.body || item.author)}</span>
                     {getArticleFreshness(item.pubDate).isFresh && (
                       <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
@@ -3457,7 +3457,7 @@ function LocationSelectorModal({
       data-testid="location-selector-modal"
     >
       <div
-        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] transition-all"
+        className="bg-white dark:bg-[#151921] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] transition-all"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -3514,7 +3514,7 @@ function LocationSelectorModal({
         )}
 
         {/* GPS Quick Action Card */}
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="p-4 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-[#1c222d]/50">
           <button
             type="button"
             onClick={onRequestGps}
