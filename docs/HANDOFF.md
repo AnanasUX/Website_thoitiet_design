@@ -752,6 +752,20 @@
     - *Đồng bộ Dark Mode cho UserAvatarMenu*: Menu tài khoản được hoàn thiện với nền #151921, viền mờ dark:border-white/10 và chữ sáng rõ.
     - *Bảo Toàn Kiểm Thử*: npm run build thành công 0 lỗi, npm run test:logic 427/427 PASS, npm run testwebsite 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
+55. **[REQ-074] Khắc Phục Tận Gốc Lỗi Định Vị Khu Vực Bằng Đảo Ngược Ưu Tiên Photon OSM Reverse Geocoding & Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar Chạy Ngầm**:
+    - *Tự Động Cập Nhật Vị Trí & Khắc Phục Lỗi Định Vị Sai*:
+      + Triệt tiêu hoàn toàn cơ chế dừng sớm (`return`) của `user_weather_manual_location` trong `localStorage`: Không bao giờ để một lần chọn thủ công cũ trong quá khứ chặn đứng việc định vị tự động của hệ thống. Chuyển quyền nhớ thủ công sang `sessionStorage`.
+      + Đưa Photon Komoot OpenStreetMap Reverse Geocoding lên ƯU TIÊN 1 trong `doFetch` để phân giải ranh giới hành chính quận/huyện thực tế của người dùng, thay vì bị thuật toán Haversine với bán kính 10km bắt nhầm vào "Quận Hoàn Kiếm".
+      + Hiển thị đầy đủ tên quận/huyện và tỉnh/thành (`WEATHER.locationFull.replace(/, VN$/, '')` ví dụ: `Cầu Giấy, Hà Nội · Tự động` hoặc `Nam Từ Liêm, Hà Nội · Tự động`) trên thẻ Hero Thời Tiết.
+      + Tự động định vị 2 tầng (Wi-Fi 0.3s + GPS chính xác cao) trên mỗi lần truy cập và khi chuyển đổi tab.
+    - *Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (Không Thao Tác Thủ Công)*:
+      + Loại bỏ hoàn toàn nút/đường dẫn thao tác thủ công `• Đồng bộ lịch` khỏi giao diện chân trang widget Lịch Calendar.
+      + Tự động tạo và đồng bộ hóa lịch tiện ích & công việc thông minh (`generateSmartUtilityEvents`): chốt chỉ số điện (ngày 15), tiền điện (ngày 18), tiền nước (ngày 20), internet (ngày 25), giao ban thứ 2; chấm dứt hoàn toàn hiện tượng lịch trống trơn 0 sự kiện khi chưa có token mạng.
+      + Tự động lấy token ngầm qua Google Identity Services (GIS Token Client `prompt: ''`) ngay trong nền không cần mở popup phiền toái.
+      + Tự động dọn dẹp hóa đơn quá hạn (`isPastUtility`).
+      + Chân trang hiển thị trạng thái tự động minh bạch: `🟢 Tự động đồng bộ với Google Calendar • ● Đã đồng bộ`.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
 2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.

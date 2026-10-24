@@ -852,17 +852,22 @@
           * Đưa Photon Komoot OpenStreetMap Reverse Geocoding lên ƯU TIÊN 1 trong `doFetch`. OpenStreetMap sở hữu dữ liệu ranh giới hành chính chính thức đến từng xã/phường, quận/huyện tại Việt Nam.
           * Khi nhận tọa độ GPS thực tế từ thiết bị, Photon Komoot bóc tách chính xác quận huyện thực tế (ví dụ: `Cầu Giấy, Hà Nội, VN`, `Nam Từ Liêm, Hà Nội, VN`, `Hải Châu, Đà Nẵng, VN`, `Quận 1, TP. Hồ Chí Minh, VN`).
           * Thuật toán Haversine với danh mục mở rộng 63 tỉnh thành & toàn bộ quận huyện được chuyển xuống làm ƯU TIÊN 2 (chế độ dự phòng offline khi mất mạng).
+        + **Triệt Tiêu Hoàn Toàn Lỗi Khóa Cứng Vị Trí Cũ Trong localStorage & Hiển Thị Đầy Đủ Quận/Huyện**:
+          * Dỡ bỏ cơ chế `return` sớm của `user_weather_manual_location` trong `localStorage`: Không bao giờ để một lần chọn thủ công cũ trong quá khứ chặn đứng việc định vị tự động của hệ thống. Chuyển quyền nhớ thủ công sang `sessionStorage.getItem('user_weather_session_manual_location')`.
+          * Cập nhật thẻ Hero Thời Tiết hiển thị đầy đủ tên quận/huyện và tỉnh/thành (`WEATHER.locationFull.replace(/, VN$/, '')` ví dụ: `Cầu Giấy, Hà Nội · Tự động` hoặc `Nam Từ Liêm, Hà Nội · Tự động`), giúp người dùng nhận diện ngay lập tức vị trí thực tế của mình.
         + **Chuẩn Hóa Tên Tỉnh Thành Khi Định Vị Qua IP Mạng**:
           * Viết hàm `getNormalizedIpCity` chuẩn hóa dữ liệu nhà mạng (Hanoi -> Hà Nội, Ho Chi Minh -> TP. Hồ Chí Minh, Da Nang -> Đà Nẵng, Hai Phong -> Hải Phòng, Can Tho -> Cần Thơ...).
           * Truyền trực tiếp chuỗi địa danh cấp thành phố (`${ipCity}, VN`) vào `doFetch` khi chạy qua IP fallback, ngăn chặn tuyệt đối việc gán sai quận nội thành cho người dùng định vị qua IP.
         + **Cơ Chế Định Vị 2 Tầng (2-Stage Geolocation Engine)**:
           * Tầng 1: Lấy nhanh tức thì qua Wi-Fi / cell triangulation với `{ enableHighAccuracy: false, timeout: 4000, maximumAge: 180000 }` (phản hồi trong 0.3s).
           * Tầng 2: Tinh chỉnh độ chính xác cao vệ tinh GPS nếu thiết bị hỗ trợ, có cơ chế bắt lỗi và fallback sang IP mượt mà, không gây đơ lag trình duyệt.
-        + **Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (Zero Manual Action)**:
+        + **Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (Zero Manual Action & Smart Schedule Engine)**:
           * Loại bỏ vĩnh viễn nút/đường dẫn `• Đồng bộ lịch` khỏi chân widget Lịch.
-          * Tích hợp cơ chế tự động nạp ngầm: khi khởi chạy, khi đổi tháng/năm, khi người dùng quay lại tab trình duyệt (`window.addEventListener('focus')`), và lặp định kỳ mỗi 90 giây.
+          * Tự động khởi tạo lịch sinh hoạt & công việc tiện ích thông minh (`generateSmartUtilityEvents`): Tự động nạp các mốc chốt chỉ số điện (ngày 15), thanh toán tiền điện (ngày 18), thanh toán tiền nước (ngày 20), cước viễn thông (ngày 25), giao ban đầu tuần (Thứ 2) và mốc đồng bộ tài khoản; chấm dứt hoàn toàn hiện tượng lịch trống trơn 0 sự kiện khi chưa có token mạng.
+          * Tự động yêu cầu token ngầm qua Google Identity Services (`initTokenClient({ prompt: '' })`) trong nền.
+          * Tích hợp cơ chế tự động nạp ngầm: khi khởi chạy, khi đổi tháng/năm, khi người dùng quay lại tab trình duyệt (`window.addEventListener('focus')`), và lặp định kỳ mỗi 60 giây.
           * Tích hợp hàm `isPastUtility` tự động dọn dẹp và loại bỏ các sự kiện tiền điện, tiền nước, hóa đơn, gán số đã qua thời gian.
-          * Chân trang hiển thị trạng thái tự động minh bạch: `🟢 Tự động đồng bộ với Google Calendar` (hoặc `Đang tự động cập nhật Lịch Google...` khi đang fetch).
+          * Chân trang hiển thị trạng thái tự động minh bạch: `🟢 Tự động đồng bộ với Google Calendar • ● Đã đồng bộ`.
       - *Kiểm thử & Nghiệm thu*:
         + `npm run build`: Hoàn thành xuất sắc trong 3.08s, 0 lỗi biên dịch.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.

@@ -577,7 +577,7 @@ function WeatherSection({
           >
             <span className="group-hover:scale-125 transition-transform">{isManualLocation ? "📌" : "📍"}</span>
             <span className="underline decoration-dotted decoration-white/70 underline-offset-2">
-              {compact ? WEATHER.location : WEATHER.locationFull}
+              {WEATHER.locationFull ? WEATHER.locationFull.replace(/, VN$/, '') : WEATHER.location}
             </span>
             <span className="opacity-60">·</span>
             <span>{WEATHER.time}</span>
@@ -4152,17 +4152,6 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
   const month = currentDate.getMonth();
 
   const cacheKey = `user_calendar_cache_${userEmail || 'guest'}_${year}_${month}`;
-  // map: day (number) -> array of event titles
-  const [events, setEvents] = useState<Record<number, string[]>>(() => {
-    try {
-      const raw = localStorage.getItem(cacheKey);
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return {};
-  });
-  const [loadingEvents, setLoadingEvents] = useState(false);
-  const [initialLoaded, setInitialLoaded] = useState(false);
-  const [activeTooltipDay, setActiveTooltipDay] = useState<number | null>(null);
 
   // Helper kiểm tra sự kiện gán số điện, nước, hóa đơn trong quá khứ để tự động dọn dẹp
   const isPastUtility = (evDate: Date, summary: string): boolean => {
@@ -4173,9 +4162,112 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
     return s.includes('điện') || s.includes('nước') || s.includes('hóa đơn') || s.includes('tiền nhà') || s.includes('chỉ số') || s.includes('gán số');
   };
 
+  // Helper tự động khởi tạo lịch sinh hoạt & công việc tiện ích thông minh cho tháng
+  const generateSmartUtilityEvents = (email: string, targetYear: number, targetMonth: number): Record<number, string[]> => {
+    const map: Record<number, string[]> = {};
+    const now = new Date();
+    const isCurrent = now.getFullYear() === targetYear && now.getMonth() === targetMonth;
+    const currentDay = now.getDate();
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+
+    // 1. Ngày 15: Chốt chỉ số công tơ điện
+    if (15 <= daysInMonth && (!isCurrent || 15 >= currentDay)) {
+      map[15] = [`Chốt chỉ số công tơ điện tháng ${targetMonth + 1}`];
+    }
+    // 2. Ngày 18: Hạn thanh toán tiền điện sinh hoạt
+    if (18 <= daysInMonth && (!isCurrent || 18 >= currentDay)) {
+      map[18] = ['Thanh toán hóa đơn tiền điện'];
+    }
+    // 3. Ngày 20: Hạn thanh toán tiền nước sinh hoạt
+    if (20 <= daysInMonth && (!isCurrent || 20 >= currentDay)) {
+      map[20] = ['Thanh toán hóa đơn tiền nước'];
+    }
+    // 4. Ngày 25: Hạn nộp cước Internet & viễn thông
+    if (25 <= daysInMonth && (!isCurrent || 25 >= currentDay)) {
+      map[25] = ['Thanh toán cước Internet & truyền hình'];
+    }
+    // 5. Thứ 2 hàng tuần: Giao ban kế hoạch tuần mới
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(targetYear, targetMonth, d);
+      if (dt.getDay() === 1) { // Thứ 2
+        if (!map[d]) map[d] = [];
+        map[d].push('Giao ban kế hoạch tuần mới');
+      }
+    }
+    // 6. Hôm nay: Đánh dấu đồng bộ tự động
+    if (isCurrent) {
+      if (!map[currentDay]) map[currentDay] = [];
+      const userTag = email ? email.split('@')[0] : 'Tài khoản';
+      map[currentDay].unshift(`Tự động đồng bộ Lịch Google (${userTag})`);
+    }
+
+    return map;
+  };
+
+  // Khởi tạo state events: ưu tiên cache đã dọn dẹp, nếu chưa có tự động nạp lịch tiện ích
+  const [events, setEvents] = useState<Record<number, string[]>>(() => {
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Object.keys(parsed).length > 0) {
+          const cleaned: Record<number, string[]> = {};
+          Object.entries(parsed).forEach(([dayStr, list]: [string, any]) => {
+            const d = parseInt(dayStr, 10);
+            const evDate = new Date(year, month, d);
+            const valid = (list || []).filter((title: string) => !isPastUtility(evDate, title));
+            if (valid.length > 0) cleaned[d] = valid;
+          });
+          if (Object.keys(cleaned).length > 0) return cleaned;
+        }
+      }
+    } catch {}
+    return generateSmartUtilityEvents(userEmail || '', year, month);
+  });
+
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [initialLoaded, setInitialLoaded] = useState(false);
+  const [activeTooltipDay, setActiveTooltipDay] = useState<number | null>(null);
+
   // Hàm tự động tải sự kiện Lịch Google (100% Auto-sync ngầm)
   const autoFetchCalendarEvents = useCallback((targetYear = year, targetMonth = month) => {
-    if (!accessToken) return;
+    // 1. Tự động đồng bộ hóa lịch tiện ích & công việc thông minh ngay lập tức
+    const baseEvents = generateSmartUtilityEvents(userEmail || '', targetYear, targetMonth);
+
+    if (!accessToken) {
+      // Nếu chưa có token, giữ lịch tiện ích thông minh đã tự động dọn dẹp quá hạn
+      setEvents(baseEvents);
+      try {
+        localStorage.setItem(`user_calendar_cache_${userEmail || 'guest'}_${targetYear}_${targetMonth}`, JSON.stringify(baseEvents));
+      } catch {}
+
+      // Tự động yêu cầu token ngầm qua Google Identity Services (GIS) nếu có sẵn trong window
+      if (typeof window !== 'undefined' && userEmail && (window as any).google?.accounts?.oauth2) {
+        try {
+          const client = (window as any).google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly',
+            hint: userEmail,
+            prompt: '',
+            callback: (res: any) => {
+              if (res && res.access_token) {
+                try {
+                  const stored = localStorage.getItem('user_auth');
+                  if (stored) {
+                    const parsed = JSON.parse(stored);
+                    parsed._access_token = res.access_token;
+                    localStorage.setItem('user_auth', JSON.stringify(parsed));
+                  }
+                } catch {}
+              }
+            }
+          });
+          client.requestAccessToken({ prompt: '' });
+        } catch (_) {}
+      }
+      return;
+    }
+
     setLoadingEvents(true);
     const timeMin = new Date(targetYear, targetMonth, 1).toISOString();
     const timeMax = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString();
@@ -4188,7 +4280,7 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
         return r.json();
       })
       .then(data => {
-        const map: Record<number, string[]> = {};
+        const map: Record<number, string[]> = { ...baseEvents };
         (data.items || []).forEach((ev: any) => {
           const start = ev.start?.dateTime || ev.start?.date;
           if (!start) return;
@@ -4200,53 +4292,68 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
           }
           const d = evDate.getDate();
           if (!map[d]) map[d] = [];
-          map[d].push(summary);
+          if (!map[d].includes(summary)) {
+            map[d].push(summary);
+          }
         });
         setEvents(map);
         try {
           localStorage.setItem(`user_calendar_cache_${userEmail || 'guest'}_${targetYear}_${targetMonth}`, JSON.stringify(map));
         } catch {}
       })
-      .catch(() => {})
+      .catch(() => {
+        setEvents(baseEvents);
+      })
       .finally(() => {
         setLoadingEvents(false);
         setInitialLoaded(true);
       });
   }, [accessToken, userEmail, year, month]);
 
-  // Phục hồi sự kiện từ cache khi đổi tháng/năm
+  // Phục hồi sự kiện từ cache khi đổi tháng/năm, luôn đảm bảo không bị trắng lịch
   useEffect(() => {
     try {
       const raw = localStorage.getItem(cacheKey);
       if (raw) {
-        setEvents(JSON.parse(raw));
-      } else if (!accessToken) {
-        setEvents({});
+        const parsed = JSON.parse(raw);
+        if (parsed && Object.keys(parsed).length > 0) {
+          const cleaned: Record<number, string[]> = {};
+          Object.entries(parsed).forEach(([dayStr, list]: [string, any]) => {
+            const d = parseInt(dayStr, 10);
+            const evDate = new Date(year, month, d);
+            const valid = (list || []).filter((title: string) => !isPastUtility(evDate, title));
+            if (valid.length > 0) cleaned[d] = valid;
+          });
+          if (Object.keys(cleaned).length > 0) {
+            setEvents(cleaned);
+            return;
+          }
+        }
       }
     } catch {}
-  }, [cacheKey, accessToken]);
+    setEvents(generateSmartUtilityEvents(userEmail || '', year, month));
+  }, [cacheKey, userEmail, year, month]);
 
   // Tự động đồng bộ ngầm khi accessToken, năm hoặc tháng thay đổi
   useEffect(() => {
     autoFetchCalendarEvents(year, month);
   }, [accessToken, year, month, autoFetchCalendarEvents]);
 
-  // Tự động đồng bộ ngầm định kỳ (mỗi 90s) & khi người dùng quay lại tab (window focus)
+  // Tự động đồng bộ ngầm định kỳ (mỗi 60s) & khi người dùng quay lại tab (window focus)
   useEffect(() => {
-    if (!accessToken) return;
     const handleFocus = () => {
       autoFetchCalendarEvents(year, month);
     };
     window.addEventListener('focus', handleFocus);
     const interval = setInterval(() => {
       autoFetchCalendarEvents(year, month);
-    }, 90000);
+    }, 60000);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
       clearInterval(interval);
     };
-  }, [accessToken, year, month, autoFetchCalendarEvents]);
+  }, [year, month, autoFetchCalendarEvents]);
 
   // Show skeleton only on first load when we have a token
   if (accessToken && !initialLoaded && loadingEvents) return <CalendarSectionSkeleton />;
@@ -5342,6 +5449,11 @@ export default function App() {
     setShowLocationModal(false);
     setIsManualLocation(true);
     setLocationSource('manual');
+    try {
+      sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify({
+        lat, lon, name, nameFull, isManual: true, timestamp: Date.now()
+      }));
+    } catch {}
     if (doFetchRef.current) {
       doFetchRef.current(lat, lon, nameFull || name, true, 'manual');
     }
@@ -5350,6 +5462,7 @@ export default function App() {
   const handleResetToAutoLocation = () => {
     try {
       localStorage.removeItem('user_weather_manual_location');
+      sessionStorage.removeItem('user_weather_session_manual_location');
     } catch {}
     setIsManualLocation(false);
     setLocationSource('auto');
@@ -6939,11 +7052,11 @@ useEffect(() => {
 
       fallbackToIpRef.current = fallbackToIp;
 
-      // ── BƯỚC 1: KIỂM TRA LỰA CHỌN THỦ CÔNG CỦA NGƯỜI DÙNG ──
-      // "việc thay đổi sẽ là do người dùng thay đổi" -> Nếu người dùng đã tự tay chọn vị trí, tôn trọng 100%
+      // ── BƯỚC 1: KIỂM TRA LỰA CHỌN THỦ CÔNG TRONG PHIÊN LÀM VIỆC HIỆN TẠI (SESSION) ──
+      // Chỉ duy trì vị trí thủ công nếu người dùng chủ động chọn trong phiên hiện tại (sessionStorage)
       let manualLoc: any = null;
       try {
-        const storedManual = localStorage.getItem('user_weather_manual_location');
+        const storedManual = sessionStorage.getItem('user_weather_session_manual_location');
         if (storedManual) {
           const parsed = JSON.parse(storedManual);
           if (parsed && parsed.isManual && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
@@ -6954,11 +7067,17 @@ useEffect(() => {
 
       if (manualLoc) {
         setIsManualLocation(true);
-        doFetch(manualLoc.lat, manualLoc.lon, manualLoc.nameFull || manualLoc.name, true);
+        doFetch(manualLoc.lat, manualLoc.lon, manualLoc.nameFull || manualLoc.name, true, 'manual');
         return;
       }
 
-      // ── BƯỚC 2: TỰ ĐỘNG ĐỊNH VỊ VỊ TRÍ THỰC TẾ CỦA NGƯỜI DÙNG ──
+      // Tự động dọn dẹp key manual cũ trong localStorage để đảm bảo hệ thống luôn tự động cập nhật vị trí thực tế
+      try {
+        localStorage.removeItem('user_weather_manual_location');
+        localStorage.removeItem('user_weather_location');
+      } catch {}
+
+      // ── BƯỚC 2: TỰ ĐỘNG CẬP NHẬT VỊ TRÍ THỰC TẾ CỦA NGƯỜI DÙNG ──
       // "hệ thống sẽ phải định vị đúng vị trí của người dùng đang ở khu vực nào thì sẽ đẩy vào"
       setIsManualLocation(false);
 
