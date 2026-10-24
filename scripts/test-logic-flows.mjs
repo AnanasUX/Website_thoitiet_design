@@ -52,6 +52,9 @@ import {
   VIETNAM_PROVINCES,
   searchProvinces,
   calculateNOAAHeatIndex,
+  haversineDistanceKm,
+  findNearestVietnamLocation,
+  formatVietnamLocationName,
   getHeatIndexSeverity,
   PROXY_PROVIDERS,
   buildProxyUrlWithFailover,
@@ -571,7 +574,21 @@ export function runAllLogicFlowTests() {
   assert(Math.abs(hi2 - 22) <= 2, `Chỉ số nhiệt NOAA tại 22°C 60% ẩm mát mẻ gần bằng nhiệt độ thường (${hi2}°C)`);
   assert(getHeatIndexSeverity(42).level === 'DANGER', "Chỉ số 42°C thuộc diện DANGER nguy hiểm");
   assert(getHeatIndexSeverity(25).level === 'SAFE', "Chỉ số 25°C thuộc diện SAFE an toàn");
-  console.log(`    ${colors.green}✓ Luồng Thời Tiết 4 Miền: Đạt 12/12 kiểm tra trạm quan trắc & công thức NOAA Heat Index${colors.reset}`);
+
+  // Haversine distance & nearest location match
+  const testDist = haversineDistanceKm(21.0362, 105.7906, 21.0307, 105.8524);
+  assert(testDist >= 6.0 && testDist <= 7.0, `Khoảng cách Haversine Cầu Giấy - Hoàn Kiếm chuẩn xác (~6.44 km, thực tế: ${testDist.toFixed(2)} km)`);
+  const sampleLocs = [
+    { id: 'hn-cau-giay', name: 'Cầu Giấy', nameFull: 'Cầu Giấy, Hà Nội, VN', lat: 21.0362, lon: 105.7906 },
+    { id: 'hcm-q1', name: 'Quận 1', nameFull: 'Quận 1, TP. Hồ Chí Minh, VN', lat: 10.7769, lon: 106.7009 }
+  ];
+  const nearestCg = findNearestVietnamLocation(21.0370, 105.7920, sampleLocs, 10);
+  assert(nearestCg && nearestCg.id === 'hn-cau-giay', "Thuật toán Haversine phát hiện chính xác Quận Cầu Giấy trong bán kính 10km");
+  const nearestQ1 = findNearestVietnamLocation(10.7750, 106.7020, sampleLocs, 10);
+  assert(nearestQ1 && nearestQ1.id === 'hcm-q1', "Thuật toán Haversine phát hiện chính xác Quận 1 TP.HCM");
+  const formattedName = formatVietnamLocationName("Quận Cầu Giấy", "Thành phố Hà Nội");
+  assert(formattedName === "Cầu Giấy, Hà Nội, VN", `Chuẩn hóa địa danh tiếng Việt bóc tách: ${formattedName}`);
+  console.log(`    ${colors.green}✓ Luồng Thời Tiết 4 Miền: Đạt 16/16 kiểm tra trạm quan trắc, Haversine định vị & NOAA Heat Index${colors.reset}`);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LUỒNG 9: RSS HEALTH MONITOR & PROXY AUTO-FAILOVER (REQ-032)

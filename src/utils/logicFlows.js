@@ -892,6 +892,65 @@ export function getHeatIndexSeverity(heatIndexC) {
         return { level: 'DANGER', label: 'Nguy hiểm: Nguy cơ sốc nhiệt cao', color: '#ef4444' };
     return { level: 'EXTREME_DANGER', label: 'Cực kỳ nguy hiểm: Đột quỵ nhiệt', color: '#7f1d1d' };
 }
+/**
+ * Tính khoảng cách đường chim bay (Haversine formula) giữa 2 tọa độ GPS (km).
+ */
+export function haversineDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+/**
+ * Tìm địa điểm Việt Nam gần nhất trong danh mục với khoảng cách tối đa maxKm (mặc định 12km).
+ */
+export function findNearestVietnamLocation(lat, lon, locations, maxKm = 12) {
+    if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon) || !Array.isArray(locations) || locations.length === 0) {
+        return null;
+    }
+    let nearest = null;
+    let minDist = Infinity;
+    for (const loc of locations) {
+        const d = haversineDistanceKm(lat, lon, loc.lat, loc.lon);
+        if (d < minDist) {
+            minDist = d;
+            nearest = loc;
+        }
+    }
+    if (nearest && minDist <= maxKm) {
+        return Object.assign(Object.assign({}, nearest), { distanceKm: minDist });
+    }
+    return null;
+}
+/**
+ * Chuẩn hóa và làm sạch tên địa danh bóc tách từ reverse geocoding theo chuẩn tiếng Việt.
+ */
+export function formatVietnamLocationName(districtRaw, cityRaw) {
+    let district = (districtRaw || '').replace(/^(Phường|Xã|Thị trấn|Quận|Huyện|Thị xã)\s+/i, '').trim();
+    let city = (cityRaw || '').replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+    if (/Hồ Chí Minh|Sai Gon|Sài Gòn/i.test(city) || /Hồ Chí Minh|Sai Gon|Sài Gòn/i.test(district)) {
+        city = 'TP. Hồ Chí Minh';
+    }
+    if (district.toLowerCase() === 'từ liêm') {
+        district = 'Nam Từ Liêm';
+    }
+    if (district && city) {
+        return district.toLowerCase() === city.toLowerCase()
+            ? `${city}, VN`
+            : `${district}, ${city}, VN`;
+    }
+    else if (city) {
+        return `${city}, VN`;
+    }
+    else if (district) {
+        return `${district}, VN`;
+    }
+    return 'Hà Nội, VN';
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // LUỒNG 9: RSS HEALTH MONITOR & PROXY AUTO-FAILOVER (REQ-032)
 // ─────────────────────────────────────────────────────────────────────────────

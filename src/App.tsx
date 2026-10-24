@@ -59,7 +59,10 @@ import {
   VIENEU_SPEED_OPTIONS,
   VIENEU_CENTRAL_CONFIG,
   VieNeuTTSController,
-  type VieNeuPlayerState
+  type VieNeuPlayerState,
+  haversineDistanceKm,
+  findNearestVietnamLocation,
+  formatVietnamLocationName
 } from "./utils/logicFlows";
 
 export {
@@ -3302,29 +3305,41 @@ interface LocationItem {
 }
 
 const VIETNAM_LOCATIONS: LocationItem[] = [
-  // Hà Nội & các quận nội ngoại thành
+  // Hà Nội & toàn bộ các quận huyện
   { id: 'hn-center', name: 'Hà Nội (Trung tâm)', nameFull: 'Hà Nội, VN', lat: 21.0285, lon: 105.8542, region: 'Hà Nội', isPopular: true },
-  { id: 'hn-cau-giay', name: 'Quận Cầu Giấy', nameFull: 'Cầu Giấy, Hà Nội', lat: 21.0362, lon: 105.7906, region: 'Hà Nội', isPopular: true },
-  { id: 'hn-hoan-kiem', name: 'Quận Hoàn Kiếm', nameFull: 'Hoàn Kiếm, Hà Nội', lat: 21.0307, lon: 105.8524, region: 'Hà Nội', isPopular: true },
-  { id: 'hn-dong-da', name: 'Quận Đống Đa', nameFull: 'Đống Đa, Hà Nội', lat: 21.0166, lon: 105.8249, region: 'Hà Nội', isPopular: true },
-  { id: 'hn-ba-dinh', name: 'Quận Ba Đình', nameFull: 'Ba Đình, Hà Nội', lat: 21.0341, lon: 105.8239, region: 'Hà Nội', isPopular: true },
-  { id: 'hn-nam-tu-liem', name: 'Quận Nam Từ Liêm', nameFull: 'Nam Từ Liêm, Hà Nội', lat: 21.0163, lon: 105.7656, region: 'Hà Nội', isPopular: true },
-  { id: 'hn-bac-tu-liem', name: 'Quận Bắc Từ Liêm', nameFull: 'Bắc Từ Liêm, Hà Nội', lat: 21.0667, lon: 105.7600, region: 'Hà Nội' },
-  { id: 'hn-tay-ho', name: 'Quận Tây Hồ', nameFull: 'Tây Hồ, Hà Nội', lat: 21.0718, lon: 105.8248, region: 'Hà Nội' },
-  { id: 'hn-thanh-xuan', name: 'Quận Thanh Xuân', nameFull: 'Thanh Xuân, Hà Nội', lat: 20.9937, lon: 105.8122, region: 'Hà Nội' },
-  { id: 'hn-ha-dong', name: 'Quận Hà Đông', nameFull: 'Hà Đông, Hà Nội', lat: 20.9716, lon: 105.7725, region: 'Hà Nội' },
-  { id: 'hn-long-bien', name: 'Quận Long Biên', nameFull: 'Long Biên, Hà Nội', lat: 21.0364, lon: 105.8951, region: 'Hà Nội' },
-  { id: 'hn-hoang-mai', name: 'Quận Hoàng Mai', nameFull: 'Hoàng Mai, Hà Nội', lat: 20.9760, lon: 105.8524, region: 'Hà Nội' },
-  { id: 'hn-hai-ba-trung', name: 'Quận Hai Bà Trưng', nameFull: 'Hai Bà Trưng, Hà Nội', lat: 21.0076, lon: 105.8544, region: 'Hà Nội' },
+  { id: 'hn-cau-giay', name: 'Quận Cầu Giấy', nameFull: 'Cầu Giấy, Hà Nội, VN', lat: 21.0362, lon: 105.7906, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-hoan-kiem', name: 'Quận Hoàn Kiếm', nameFull: 'Hoàn Kiếm, Hà Nội, VN', lat: 21.0307, lon: 105.8524, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-dong-da', name: 'Quận Đống Đa', nameFull: 'Đống Đa, Hà Nội, VN', lat: 21.0166, lon: 105.8249, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-ba-dinh', name: 'Quận Ba Đình', nameFull: 'Ba Đình, Hà Nội, VN', lat: 21.0341, lon: 105.8239, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-nam-tu-liem', name: 'Quận Nam Từ Liêm', nameFull: 'Nam Từ Liêm, Hà Nội, VN', lat: 21.0163, lon: 105.7656, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-bac-tu-liem', name: 'Quận Bắc Từ Liêm', nameFull: 'Bắc Từ Liêm, Hà Nội, VN', lat: 21.0667, lon: 105.7600, region: 'Hà Nội' },
+  { id: 'hn-tay-ho', name: 'Quận Tây Hồ', nameFull: 'Tây Hồ, Hà Nội, VN', lat: 21.0718, lon: 105.8248, region: 'Hà Nội' },
+  { id: 'hn-thanh-xuan', name: 'Quận Thanh Xuân', nameFull: 'Thanh Xuân, Hà Nội, VN', lat: 20.9937, lon: 105.8122, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-ha-dong', name: 'Quận Hà Đông', nameFull: 'Hà Đông, Hà Nội, VN', lat: 20.9716, lon: 105.7725, region: 'Hà Nội', isPopular: true },
+  { id: 'hn-long-bien', name: 'Quận Long Biên', nameFull: 'Long Biên, Hà Nội, VN', lat: 21.0364, lon: 105.8951, region: 'Hà Nội' },
+  { id: 'hn-hoang-mai', name: 'Quận Hoàng Mai', nameFull: 'Hoàng Mai, Hà Nội, VN', lat: 20.9760, lon: 105.8524, region: 'Hà Nội' },
+  { id: 'hn-hai-ba-trung', name: 'Quận Hai Bà Trưng', nameFull: 'Hai Bà Trưng, Hà Nội, VN', lat: 21.0076, lon: 105.8544, region: 'Hà Nội' },
+  { id: 'hn-gia-lam', name: 'Huyện Gia Lâm', nameFull: 'Gia Lâm, Hà Nội, VN', lat: 21.0238, lon: 105.9452, region: 'Hà Nội' },
+  { id: 'hn-dong-anh', name: 'Huyện Đông Anh', nameFull: 'Đông Anh, Hà Nội, VN', lat: 21.1444, lon: 105.8458, region: 'Hà Nội' },
+  { id: 'hn-thanh-tri', name: 'Huyện Thanh Trì', nameFull: 'Thanh Trì, Hà Nội, VN', lat: 20.9406, lon: 105.8528, region: 'Hà Nội' },
+  { id: 'hn-hoai-duc', name: 'Huyện Hoài Đức', nameFull: 'Hoài Đức, Hà Nội, VN', lat: 21.0167, lon: 105.7167, region: 'Hà Nội' },
+  { id: 'hn-son-tay', name: 'Thị xã Sơn Tây', nameFull: 'Sơn Tây, Hà Nội, VN', lat: 21.1378, lon: 105.5075, region: 'Hà Nội' },
 
-  // TP. Hồ Chí Minh
+  // TP. Hồ Chí Minh & các quận huyện
   { id: 'hcm-center', name: 'TP. Hồ Chí Minh (Trung tâm)', nameFull: 'TP. Hồ Chí Minh, VN', lat: 10.8231, lon: 106.6297, region: 'TP. Hồ Chí Minh', isPopular: true },
-  { id: 'hcm-q1', name: 'Quận 1, TP. HCM', nameFull: 'Quận 1, TP. Hồ Chí Minh', lat: 10.7769, lon: 106.7009, region: 'TP. Hồ Chí Minh', isPopular: true },
-  { id: 'hcm-thu-duc', name: 'TP. Thủ Đức, TP. HCM', nameFull: 'Thủ Đức, TP. Hồ Chí Minh', lat: 10.8494, lon: 106.7716, region: 'TP. Hồ Chí Minh', isPopular: true },
-  { id: 'hcm-q3', name: 'Quận 3, TP. HCM', nameFull: 'Quận 3, TP. Hồ Chí Minh', lat: 10.7844, lon: 106.6844, region: 'TP. Hồ Chí Minh' },
-  { id: 'hcm-q7', name: 'Quận 7, TP. HCM', nameFull: 'Quận 7, TP. Hồ Chí Minh', lat: 10.7380, lon: 106.7266, region: 'TP. Hồ Chí Minh' },
-  { id: 'hcm-binh-thanh', name: 'Quận Bình Thạnh, TP. HCM', nameFull: 'Bình Thạnh, TP. Hồ Chí Minh', lat: 10.8034, lon: 106.6997, region: 'TP. Hồ Chí Minh' },
-  { id: 'hcm-tan-binh', name: 'Quận Tân Bình, TP. HCM', nameFull: 'Tân Bình, TP. Hồ Chí Minh', lat: 10.8015, lon: 106.6548, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-q1', name: 'Quận 1, TP. HCM', nameFull: 'Quận 1, TP. Hồ Chí Minh, VN', lat: 10.7769, lon: 106.7009, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-thu-duc', name: 'TP. Thủ Đức, TP. HCM', nameFull: 'Thủ Đức, TP. Hồ Chí Minh, VN', lat: 10.8494, lon: 106.7716, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-q3', name: 'Quận 3, TP. HCM', nameFull: 'Quận 3, TP. Hồ Chí Minh, VN', lat: 10.7844, lon: 106.6844, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-q4', name: 'Quận 4, TP. HCM', nameFull: 'Quận 4, TP. Hồ Chí Minh, VN', lat: 10.7600, lon: 106.7030, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-q5', name: 'Quận 5, TP. HCM', nameFull: 'Quận 5, TP. Hồ Chí Minh, VN', lat: 10.7553, lon: 106.6667, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-q7', name: 'Quận 7, TP. HCM', nameFull: 'Quận 7, TP. Hồ Chí Minh, VN', lat: 10.7380, lon: 106.7266, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-q10', name: 'Quận 10, TP. HCM', nameFull: 'Quận 10, TP. Hồ Chí Minh, VN', lat: 10.7746, lon: 106.6670, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-binh-thanh', name: 'Quận Bình Thạnh, TP. HCM', nameFull: 'Bình Thạnh, TP. Hồ Chí Minh, VN', lat: 10.8034, lon: 106.6997, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-tan-binh', name: 'Quận Tân Bình, TP. HCM', nameFull: 'Tân Bình, TP. Hồ Chí Minh, VN', lat: 10.8015, lon: 106.6548, region: 'TP. Hồ Chí Minh', isPopular: true },
+  { id: 'hcm-go-vap', name: 'Quận Gò Vấp, TP. HCM', nameFull: 'Gò Vấp, TP. Hồ Chí Minh, VN', lat: 10.8386, lon: 106.6653, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-phu-nhuan', name: 'Quận Phú Nhuận, TP. HCM', nameFull: 'Phú Nhuận, TP. Hồ Chí Minh, VN', lat: 10.7992, lon: 106.6806, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-tan-phu', name: 'Quận Tân Phú, TP. HCM', nameFull: 'Tân Phú, TP. Hồ Chí Minh, VN', lat: 10.7900, lon: 106.6283, region: 'TP. Hồ Chí Minh' },
+  { id: 'hcm-binh-tan', name: 'Quận Bình Tân, TP. HCM', nameFull: 'Bình Tân, TP. Hồ Chí Minh, VN', lat: 10.7653, lon: 106.6039, region: 'TP. Hồ Chí Minh' },
 
   // Miền Bắc
   { id: 'hai-phong', name: 'Hải Phòng', nameFull: 'Hải Phòng, VN', lat: 20.8449, lon: 106.6881, region: 'Miền Bắc', isPopular: true },
@@ -3332,29 +3347,48 @@ const VIETNAM_LOCATIONS: LocationItem[] = [
   { id: 'lao-cai', name: 'Sa Pa (Lào Cai)', nameFull: 'Sa Pa, Lào Cai, VN', lat: 22.3364, lon: 103.8438, region: 'Miền Bắc', isPopular: true },
   { id: 'lang-son', name: 'Lạng Sơn', nameFull: 'Lạng Sơn, VN', lat: 21.8533, lon: 106.7615, region: 'Miền Bắc' },
   { id: 'thai-nguyen', name: 'Thái Nguyên', nameFull: 'Thái Nguyên, VN', lat: 21.5942, lon: 105.8482, region: 'Miền Bắc' },
-  { id: 'bac-ninh', name: 'Bắc Ninh', nameFull: 'Bắc Ninh, VN', lat: 21.1861, lon: 106.0763, region: 'Miền Bắc' },
+  { id: 'bac-ninh', name: 'Bắc Ninh', nameFull: 'Bắc Ninh, VN', lat: 21.1861, lon: 106.0763, region: 'Miền Bắc', isPopular: true },
+  { id: 'bac-giang', name: 'Bắc Giang', nameFull: 'Bắc Giang, VN', lat: 21.2731, lon: 106.1946, region: 'Miền Bắc' },
+  { id: 'hai-duong', name: 'Hải Dương', nameFull: 'Hải Dương, VN', lat: 20.9386, lon: 106.3314, region: 'Miền Bắc' },
+  { id: 'hung-yen', name: 'Hưng Yên', nameFull: 'Hưng Yên, VN', lat: 20.6464, lon: 106.0511, region: 'Miền Bắc' },
   { id: 'nam-dinh', name: 'Nam Định', nameFull: 'Nam Định, VN', lat: 20.4344, lon: 106.1774, region: 'Miền Bắc' },
+  { id: 'ninh-binh', name: 'Ninh Bình', nameFull: 'Ninh Bình, VN', lat: 20.2506, lon: 105.9744, region: 'Miền Bắc', isPopular: true },
+  { id: 'thai-binh', name: 'Thái Bình', nameFull: 'Thái Bình, VN', lat: 20.4464, lon: 106.3364, region: 'Miền Bắc' },
+  { id: 'vinh-phuc', name: 'Vĩnh Yên (Vĩnh Phúc)', nameFull: 'Vĩnh Phúc, VN', lat: 21.3089, lon: 105.6049, region: 'Miền Bắc' },
+  { id: 'phu-tho', name: 'Việt Trì (Phú Thọ)', nameFull: 'Phú Thọ, VN', lat: 21.3228, lon: 105.3283, region: 'Miền Bắc' },
+  { id: 'hoa-binh', name: 'Hòa Bình', nameFull: 'Hòa Bình, VN', lat: 20.8172, lon: 105.3378, region: 'Miền Bắc' },
 
   // Miền Trung
   { id: 'da-nang', name: 'Đà Nẵng', nameFull: 'Đà Nẵng, VN', lat: 16.0544, lon: 108.2022, region: 'Miền Trung', isPopular: true },
   { id: 'hue', name: 'Thừa Thiên Huế', nameFull: 'Huế, VN', lat: 16.4637, lon: 107.5909, region: 'Miền Trung', isPopular: true },
+  { id: 'hoi-an', name: 'Hội An (Quảng Nam)', nameFull: 'Hội An, Quảng Nam, VN', lat: 15.8801, lon: 108.3380, region: 'Miền Trung', isPopular: true },
   { id: 'nha-trang', name: 'Nha Trang (Khánh Hòa)', nameFull: 'Nha Trang, Khánh Hòa, VN', lat: 12.2388, lon: 109.1967, region: 'Miền Trung', isPopular: true },
   { id: 'vinh', name: 'Vinh (Nghệ An)', nameFull: 'Vinh, Nghệ An, VN', lat: 18.6796, lon: 105.6813, region: 'Miền Trung' },
   { id: 'thanh-hoa', name: 'Thanh Hóa', nameFull: 'Thanh Hóa, VN', lat: 19.8067, lon: 105.7852, region: 'Miền Trung' },
-  { id: 'quy-nhon', name: 'Quy Nhơn (Bình Định)', nameFull: 'Quy Nhơn, Bình Định, VN', lat: 13.7830, lon: 109.2197, region: 'Miền Trung' },
+  { id: 'ha-tinh', name: 'Hà Tĩnh', nameFull: 'Hà Tĩnh, VN', lat: 18.3428, lon: 105.9058, region: 'Miền Trung' },
+  { id: 'dong-hoi', name: 'Đồng Hới (Quảng Bình)', nameFull: 'Đồng Hới, Quảng Bình, VN', lat: 17.4764, lon: 106.6006, region: 'Miền Trung' },
+  { id: 'quy-nhon', name: 'Quy Nhơn (Bình Định)', nameFull: 'Quy Nhơn, Bình Định, VN', lat: 13.7830, lon: 109.2197, region: 'Miền Trung', isPopular: true },
+  { id: 'tuy-hoa', name: 'Tuy Hòa (Phú Yên)', nameFull: 'Tuy Hòa, Phú Yên, VN', lat: 13.0881, lon: 109.3086, region: 'Miền Trung' },
+  { id: 'phan-thiet', name: 'Phan Thiết (Bình Thuận)', nameFull: 'Phan Thiết, Bình Thuận, VN', lat: 10.9333, lon: 108.1000, region: 'Miền Trung', isPopular: true },
 
   // Tây Nguyên
   { id: 'da-lat', name: 'Đà Lạt (Lâm Đồng)', nameFull: 'Đà Lạt, Lâm Đồng, VN', lat: 11.9404, lon: 108.4583, region: 'Tây Nguyên', isPopular: true },
-  { id: 'buon-ma-thuot', name: 'Buôn Ma Thuột (Đắk Lắk)', nameFull: 'Buôn Ma Thuột, Đắk Lắk, VN', lat: 12.6667, lon: 108.0383, region: 'Tây Nguyên' },
+  { id: 'buon-ma-thuot', name: 'Buôn Ma Thuột (Đắk Lắk)', nameFull: 'Buôn Ma Thuột, Đắk Lắk, VN', lat: 12.6667, lon: 108.0383, region: 'Tây Nguyên', isPopular: true },
   { id: 'pleiku', name: 'Pleiku (Gia Lai)', nameFull: 'Pleiku, Gia Lai, VN', lat: 13.9833, lon: 108.0000, region: 'Tây Nguyên' },
+  { id: 'kon-tum', name: 'Kon Tum', nameFull: 'Kon Tum, VN', lat: 14.3500, lon: 108.0000, region: 'Tây Nguyên' },
+  { id: 'gia-nghia', name: 'Gia Nghĩa (Đắk Nông)', nameFull: 'Gia Nghĩa, Đắk Nông, VN', lat: 11.9908, lon: 107.6936, region: 'Tây Nguyên' },
 
   // Miền Nam
   { id: 'can-tho', name: 'Cần Thơ', nameFull: 'Cần Thơ, VN', lat: 10.0452, lon: 105.7469, region: 'Miền Nam', isPopular: true },
   { id: 'vung-tau', name: 'Bà Rịa - Vũng Tàu', nameFull: 'Vũng Tàu, VN', lat: 10.3460, lon: 107.0843, region: 'Miền Nam', isPopular: true },
   { id: 'phu-quoc', name: 'Phú Quốc (Kiên Giang)', nameFull: 'Phú Quốc, Kiên Giang, VN', lat: 10.2899, lon: 103.9840, region: 'Miền Nam', isPopular: true },
   { id: 'ca-mau', name: 'Cà Mau', nameFull: 'Cà Mau, VN', lat: 9.1769, lon: 105.1524, region: 'Miền Nam' },
-  { id: 'binh-duong', name: 'Bình Dương (Thủ Dầu Một)', nameFull: 'Bình Dương, VN', lat: 10.9804, lon: 106.6519, region: 'Miền Nam' },
-  { id: 'dong-nai', name: 'Đồng Nai (Biên Hòa)', nameFull: 'Biên Hòa, Đồng Nai, VN', lat: 10.9574, lon: 106.8427, region: 'Miền Nam' },
+  { id: 'binh-duong', name: 'Bình Dương (Thủ Dầu Một)', nameFull: 'Bình Dương, VN', lat: 10.9804, lon: 106.6519, region: 'Miền Nam', isPopular: true },
+  { id: 'dong-nai', name: 'Đồng Nai (Biên Hòa)', nameFull: 'Biên Hòa, Đồng Nai, VN', lat: 10.9574, lon: 106.8427, region: 'Miền Nam', isPopular: true },
+  { id: 'tay-ninh', name: 'Tây Ninh', nameFull: 'Tây Ninh, VN', lat: 11.3100, lon: 106.0983, region: 'Miền Nam' },
+  { id: 'my-tho', name: 'Mỹ Tho (Tiền Giang)', nameFull: 'Tiền Giang, VN', lat: 10.3600, lon: 106.3600, region: 'Miền Nam' },
+  { id: 'ben-tre', name: 'Bến Tre', nameFull: 'Bến Tre, VN', lat: 10.2415, lon: 106.3759, region: 'Miền Nam' },
+  { id: 'long-xuyen', name: 'Long Xuyên (An Giang)', nameFull: 'An Giang, VN', lat: 10.3833, lon: 105.4333, region: 'Miền Nam' },
 ];
 
 function LocationSelectorModal({
@@ -3362,19 +3396,25 @@ function LocationSelectorModal({
   onClose,
   currentLocation,
   isManualLocation = false,
+  locationSource = 'auto',
   onSelectLocation,
   onRequestGps,
   onResetToAutoLocation,
   isGpsLoading,
+  gpsErrorMessage,
+  onClearGpsError,
 }: {
   isOpen: boolean;
   onClose: () => void;
   currentLocation?: string;
   isManualLocation?: boolean;
+  locationSource?: 'gps' | 'ip' | 'manual' | 'auto';
   onSelectLocation: (lat: number, lon: number, name: string, nameFull: string) => void;
   onRequestGps: () => void;
   onResetToAutoLocation?: () => void;
   isGpsLoading?: boolean;
+  gpsErrorMessage?: string | null;
+  onClearGpsError?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'popular' | 'Hà Nội' | 'TP. Hồ Chí Minh' | 'khac'>('all');
@@ -3453,6 +3493,23 @@ function LocationSelectorModal({
                 Bật lại tự động
               </button>
             )}
+          </div>
+        )}
+
+        {/* Cảnh báo khi GPS bị từ chối hoặc lỗi */}
+        {gpsErrorMessage && (
+          <div className="mx-4 mt-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-[12.5px] text-rose-900 dark:text-rose-200 animate-fadeIn" data-testid="gps-error-alert">
+            <div className="flex items-start gap-2.5">
+              <span className="text-lg shrink-0 mt-0.5">⚠️</span>
+              <div className="flex-1">
+                <p className="font-semibold text-rose-700 dark:text-rose-300">Không thể lấy tọa độ GPS tự động</p>
+                <p className="text-[12px] text-rose-600 dark:text-rose-400 mt-0.5 leading-relaxed">{gpsErrorMessage}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 italic">Gợi ý: Bạn có thể chọn nhanh địa phương của mình trong danh sách bên dưới.</p>
+              </div>
+              {onClearGpsError && (
+                <button type="button" onClick={onClearGpsError} className="text-slate-400 hover:text-slate-600 text-sm p-1 cursor-pointer">✕</button>
+              )}
+            </div>
           </div>
         )}
 
@@ -5166,10 +5223,12 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
 
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
-  const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean) => void) | null>(null);
+  const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean, source?: 'gps' | 'ip' | 'manual' | 'auto') => void) | null>(null);
   const fallbackToIpRef = useRef<(() => void) | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
+  const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null);
+  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | 'auto'>('auto');
   const [isManualLocation, setIsManualLocation] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem('user_weather_manual_location');
@@ -5182,10 +5241,12 @@ export default function App() {
   });
 
   const handleSelectLocation = (lat: number, lon: number, name: string, nameFull: string) => {
+    setGpsErrorMessage(null);
     setShowLocationModal(false);
     setIsManualLocation(true);
+    setLocationSource('manual');
     if (doFetchRef.current) {
-      doFetchRef.current(lat, lon, nameFull || name, true);
+      doFetchRef.current(lat, lon, nameFull || name, true, 'manual');
     }
   };
 
@@ -5194,17 +5255,19 @@ export default function App() {
       localStorage.removeItem('user_weather_manual_location');
     } catch {}
     setIsManualLocation(false);
-    setShowLocationModal(false);
+    setLocationSource('auto');
+    setGpsErrorMessage(null);
     handleRequestGps();
   };
 
   const handleRequestGps = () => {
+    setGpsErrorMessage(null);
     try {
       localStorage.removeItem('user_weather_manual_location');
     } catch {}
     setIsManualLocation(false);
     if (!navigator.geolocation) {
-      alert("Trình duyệt không hỗ trợ định vị GPS. Hệ thống sẽ xác định theo vị trí IP mạng.");
+      setGpsErrorMessage("Trình duyệt không hỗ trợ Geolocation. Hệ thống đã tự động định vị theo IP mạng.");
       if (fallbackToIpRef.current) fallbackToIpRef.current();
       return;
     }
@@ -5212,22 +5275,33 @@ export default function App() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setIsGpsLocating(false);
+        setGpsErrorMessage(null);
+        setLocationSource('gps');
         setShowLocationModal(false);
         if (doFetchRef.current) {
-          doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null, false);
+          doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
         }
       },
       (err) => {
-        console.warn("GPS request error, falling back to IP:", err);
+        console.warn("GPS request error:", err);
         setIsGpsLocating(false);
-        setShowLocationModal(false);
+        let msg = "Không thể lấy tọa độ GPS của thiết bị. Hệ thống chuyển sang ước tính theo IP mạng.";
+        if (err.code === 1) { // PERMISSION_DENIED
+          msg = "Quyền vị trí đang bị chặn trên trình duyệt. Vui lòng bấm vào biểu tượng cài đặt/ổ khóa 🔒 trên thanh địa chỉ trình duyệt, chọn 'Cho phép' quyền Vị trí và bấm lại nút này, hoặc chọn nhanh địa phương bên dưới.";
+        } else if (err.code === 2) { // POSITION_UNAVAILABLE
+          msg = "Dịch vụ vị trí của thiết bị hiện không khả dụng (Location Services có thể đang tắt). Hệ thống đã ước tính vị trí theo IP mạng.";
+        } else if (err.code === 3) { // TIMEOUT
+          msg = "Hết thời gian chờ phản hồi GPS (12 giây). Bạn có thể bấm lại để thử lại hoặc chọn địa phương trong danh sách.";
+        }
+        setGpsErrorMessage(msg);
+        setLocationSource('ip');
         if (fallbackToIpRef.current) {
           fallbackToIpRef.current();
         } else if (doFetchRef.current) {
-          doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false);
+          doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
         }
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   };
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -6379,8 +6453,9 @@ useEffect(() => {
     if (!cData && !rawData && !apiUrl) {
         setApiStatus("loading");
         
-        const doFetch = (lat: number, lon: number, locationNameStr: string | null = null, isManualSelection = false) => {
+        const doFetch = (lat: number, lon: number, locationNameStr: string | null = null, isManualSelection = false, source: 'gps' | 'ip' | 'manual' | 'auto' = 'auto') => {
           const apiKey = "a201c471567522a7d0b7a0567ad245fe";
+          setLocationSource(source);
 
           Promise.all([
             fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`).then(r => r.json()),
@@ -6390,9 +6465,13 @@ useEffect(() => {
               .then(r => r.json())
               .then(data => data.items || [])
               .catch(() => []),
-            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi`, {
-              headers: { 'User-Agent': 'AnxWeatherApp/1.0' }
-            }).then(r => r.json()).catch(() => null),
+            fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=default`)
+              .then(async r => {
+                if (!r.ok) return null;
+                const text = await r.text();
+                try { return JSON.parse(text); } catch { return null; }
+              })
+              .catch(() => null),
             fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`).then(r => r.json()).catch(() => ({ value: 0 })),
             fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`).then(r => r.json()).catch(() => [])
           ]).then(([weather, forecast, aqi, weatherNewsRaw, geoReverse, uviRes, owmGeo]) => {
@@ -6469,35 +6548,22 @@ useEffect(() => {
 
           let resolvedLocation = locationNameStr;
           if (!resolvedLocation) {
-            // Nguồn 1: Nominatim OpenStreetMap (Chi tiết cấp Quận/Huyện/Thị xã & Tỉnh/Thành tiếng Việt)
-            if (geoReverse && geoReverse.address) {
-              const addr = geoReverse.address;
-              const districtRaw = addr.city_district || addr.district || addr.suburb || addr.quarter || addr.town || addr.county || '';
-              const cityRaw = addr.city || addr.state || addr.province || '';
-              let district = districtRaw
-                .replace(/^Phường\s+/i, '')
-                .replace(/^Xã\s+/i, '')
-                .replace(/^Thị trấn\s+/i, '')
-                .trim();
-              let city = cityRaw
-                .replace(/^Thành phố\s+/i, '')
-                .replace(/^Tỉnh\s+/i, '')
-                .trim();
-              if (/Hồ Chí Minh/i.test(city) || /Sai Gon|Sài Gòn/i.test(city)) {
-                city = 'TP. Hồ Chí Minh';
-              }
-              if (district && city) {
-                resolvedLocation = district.toLowerCase() === city.toLowerCase()
-                  ? `${city}, VN`
-                  : `${district}, ${city}, VN`;
-              } else if (city) {
-                resolvedLocation = `${city}, VN`;
-              } else if (district) {
-                resolvedLocation = `${district}, VN`;
+            // Nguồn 1: Thuật toán khoảng cách Haversine đối chiếu mạng lưới địa danh Việt Nam (0ms, 100% chuẩn xác tiếng Việt)
+            const nearestLoc = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 10);
+            if (nearestLoc) {
+              resolvedLocation = nearestLoc.nameFull;
+            }
+
+            // Nguồn 2: Photon Komoot OpenStreetMap Reverse Geocoding (Bóc tách quận huyện & tỉnh thành tiếng Việt)
+            if (!resolvedLocation && geoReverse && geoReverse.features && geoReverse.features.length > 0) {
+              const p = geoReverse.features[0].properties || {};
+              const formatted = formatVietnamLocationName(p.district || p.suburb || p.locality || p.county, p.city || p.state);
+              if (formatted && formatted !== 'Hà Nội, VN') {
+                resolvedLocation = formatted;
               }
             }
 
-            // Nguồn 2: OpenWeatherMap Geocoding API
+            // Nguồn 3: OpenWeatherMap Geocoding API
             if (!resolvedLocation && Array.isArray(owmGeo) && owmGeo.length > 0) {
               const item = owmGeo[0];
               const viName = item.local_names?.vi || item.name;
@@ -6506,12 +6572,12 @@ useEffect(() => {
               }
             }
 
-            // Nguồn 3: OpenWeatherMap Current Weather name
+            // Nguồn 4: OpenWeatherMap Current Weather name
             if (!resolvedLocation && weather?.name) {
               resolvedLocation = `${weather.name}, VN`;
             }
 
-            // Nguồn 4: Fallback mặc định
+            // Nguồn 5: Fallback mặc định
             if (!resolvedLocation) {
               resolvedLocation = "Hà Nội, VN";
             }
@@ -6625,9 +6691,11 @@ useEffect(() => {
                 name: resolvedLocation.split(',')[0].trim(),
                 nameFull: resolvedLocation,
                 isManual: true,
+                source: 'manual',
                 timestamp: Date.now()
               }));
               setIsManualLocation(true);
+              setLocationSource('manual');
             } else {
               localStorage.setItem('user_weather_auto_location', JSON.stringify({
                 lat,
@@ -6635,9 +6703,11 @@ useEffect(() => {
                 name: resolvedLocation.split(',')[0].trim(),
                 nameFull: resolvedLocation,
                 isManual: false,
+                source: source,
                 timestamp: Date.now()
               }));
               setIsManualLocation(false);
+              setLocationSource(source);
             }
             // Dọn dẹp key cũ không phân định để tránh khóa cứng vị trí cũ
             localStorage.removeItem('user_weather_location');
@@ -6652,7 +6722,7 @@ useEffect(() => {
       doFetchRef.current = doFetch;
 
       const fallbackToIp = () => {
-        // Tầng 1: Sử dụng ipwho.is (Rất chính xác tại VN, không rate limit)
+        // Tầng 1: Sử dụng ipwho.is (HTTPS native, độ chính xác cao tại VN, không rate limit)
         fetch("https://ipwho.is/")
           .then(res => res.json())
           .then(data => {
@@ -6663,39 +6733,57 @@ useEffect(() => {
                   document.cookie = `user_session_ip=${data.ip}; path=/; max-age=31536000`;
                 } catch {}
               }
-              const cityName = data.city ? `${data.city}, VN` : "Hà Nội, VN";
-              doFetch(data.latitude, data.longitude, cityName, false);
+              // Truyền locationNameStr = null để doFetch dùng Haversine + Photon Komoot phân tích quận huyện chính xác
+              doFetch(data.latitude, data.longitude, null, false, 'ip');
             } else {
-              fallbackToIpApi();
+              fallbackToFreeIp();
             }
           })
           .catch(() => {
-            fallbackToIpApi();
+            fallbackToFreeIp();
           });
       };
 
-      const fallbackToIpApi = () => {
-        // Tầng 2: Dự phòng ip-api.com
-        fetch("http://ip-api.com/json/?fields=status,message,country,city,regionName,lat,lon,query")
+      const fallbackToFreeIp = () => {
+        // Tầng 2: Dự phòng freeipapi.com (HTTPS native, không bị chặn Mixed Content)
+        fetch("https://freeipapi.com/api/json")
           .then(res => res.json())
           .then(data => {
-            if (data && data.status === "success" && data.lat && data.lon) {
-              if (data.query) {
+            if (data && data.latitude && data.longitude) {
+              if (data.ipAddress) {
                 try {
-                  localStorage.setItem('user_session_ip', data.query);
-                  document.cookie = `user_session_ip=${data.query}; path=/; max-age=31536000`;
+                  localStorage.setItem('user_session_ip', data.ipAddress);
+                  document.cookie = `user_session_ip=${data.ipAddress}; path=/; max-age=31536000`;
                 } catch {}
               }
-              const cityName = data.city ? `${data.city}, VN` : "Hà Nội, VN";
-              doFetch(data.lat, data.lon, cityName, false);
+              doFetch(data.latitude, data.longitude, null, false, 'ip');
             } else {
-              // Tầng 3: Tọa độ trung tâm Thủ đô Hà Nội
-              doFetch(21.0285, 105.8542, "Hà Nội, VN", false);
+              fallbackToIpInfo();
             }
           })
           .catch(() => {
-            // Tầng 3: Tọa độ trung tâm Thủ đô Hà Nội
-            doFetch(21.0285, 105.8542, "Hà Nội, VN", false);
+            fallbackToIpInfo();
+          });
+      };
+
+      const fallbackToIpInfo = () => {
+        // Tầng 3: Dự phòng ipinfo.io (HTTPS native)
+        fetch("https://ipinfo.io/json")
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.loc) {
+              const [latStr, lonStr] = data.loc.split(',');
+              const lat = parseFloat(latStr);
+              const lon = parseFloat(lonStr);
+              if (!isNaN(lat) && !isNaN(lon)) {
+                doFetch(lat, lon, null, false, 'ip');
+                return;
+              }
+            }
+            doFetch(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
+          })
+          .catch(() => {
+            doFetch(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
           });
       };
 
@@ -6737,24 +6825,20 @@ useEffect(() => {
         }
       } catch {}
 
-      // Luôn kích hoạt định vị vị trí thực tế của thiết bị để phát hiện đúng khu vực hiện tại (maximumAge: 0)
+      // Luôn kích hoạt định vị vị trí thực tế của thiết bị để phát hiện đúng khu vực hiện tại (maximumAge: 0, timeout: 12s)
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            doFetch(pos.coords.latitude, pos.coords.longitude, null, false);
+            doFetch(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
           },
           (err) => {
             console.warn("Geolocation prompt or timeout, falling back to IP:", err);
-            if (!autoCacheLoc) {
-              fallbackToIp();
-            }
+            fallbackToIp();
           },
-          { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
       } else {
-        if (!autoCacheLoc) {
-          fallbackToIp();
-        }
+        fallbackToIp();
       }
       return;
     }
@@ -6850,13 +6934,16 @@ useEffect(() => {
       {/* Modal chọn vị trí thời tiết tương tác */}
       <LocationSelectorModal
         isOpen={showLocationModal}
-        onClose={() => setShowLocationModal(false)}
+        onClose={() => { setShowLocationModal(false); setGpsErrorMessage(null); }}
         currentLocation={(liveData ?? DEFAULT_WEATHER_DATA)[condKey]?.location}
         isManualLocation={isManualLocation}
+        locationSource={locationSource}
         onSelectLocation={handleSelectLocation}
         onRequestGps={handleRequestGps}
         onResetToAutoLocation={handleResetToAutoLocation}
         isGpsLoading={isGpsLocating}
+        gpsErrorMessage={gpsErrorMessage}
+        onClearGpsError={() => setGpsErrorMessage(null)}
       />
 
       {/* Video Shorts Modal (Trải nghiệm TikTok / YouTube Shorts) */}

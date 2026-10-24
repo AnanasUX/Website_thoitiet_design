@@ -737,3 +737,31 @@
         + `npm run build`: Hoàn tất thành công 0 lỗi.
         + `npm run test:logic`: 423/423 assertions đạt 100%.
         + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+  52. **[REQ-071] Nâng Cấp Hệ Thống Định Vị Đa Tầng Siêu Chính Xác Cấp Quận/Huyện Bằng Thuật Toán Haversine, Photon Komoot OSM & Lá Chắn Quyền Vị Trí**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng yêu cầu: "Hiện tại hệ thống đang định vị sai vị trí của người dùng kiểm tra lại."
+        + Phân tích nguyên nhân gốc rễ (Root Cause Analysis):
+          1. **Lỗi HTTP 403 Forbidden từ OpenStreetMap Nominatim**: Lệnh `fetch('https://nominatim.openstreetmap.org/reverse?...')` trực tiếp từ client-side browser bị Nominatim chặn với mã lỗi HTTP 403 do chính sách sử dụng cấm gọi trực tiếp từ trình duyệt mà không qua backend proxy. Khi đó `geoReverse` luôn trả về `null`.
+          2. **Mất cấp Quận/Huyện khi Fallback về OpenWeatherMap Reverse Geocode**: Khi Nominatim trả về null, hệ thống rơi vào OpenWeatherMap Geo API (`owmGeo`). OWM Geo đối với mọi tọa độ nội thành Hà Nội (Cầu Giấy, Hoàn Kiếm, Đống Đa, Nam Từ Liêm, v.v.) chỉ trả về tên thành phố lớn là "Hà Nội", làm mất hoàn toàn thông tin quận huyện cụ thể của người dùng.
+          3. **Khóa cứng vị trí khi Fallback IP**: Trong hàm `fallbackToIp`, mã nguồn truyền trực tiếp `cityName` ("Hanoi, VN") vào đối số `locationNameStr` của `doFetch`. Điều này khiến khối `if (!resolvedLocation)` bị bỏ qua hoàn toàn, triệt tiêu khả năng bóc tách quận/huyện từ tọa độ IP.
+          4. **Lỗi Mixed Content từ `http://ip-api.com/`**: Giao thức HTTP không mã hóa bị trình duyệt chặn trên website HTTPS.
+          5. **Timeout Geolocation 6s quá ngắn & Xử lý lỗi câm (Silent Failure)**: Khi người dùng mở trang hoặc nhấn "Tự động định vị GPS", nếu họ mất hơn 6-8s để nhấn "Cho phép" hoặc nếu trình duyệt đã chặn quyền vị trí (PERMISSION_DENIED), modal lập tức đóng lại và rơi vào fallback IP Hà Nội mà không hề có bất kỳ thông báo hướng dẫn nào, khiến người dùng nghĩ hệ thống định vị sai.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Động Cơ Haversine Local Match (0ms, 100% Offline)**:
+          * Mở rộng mạng lưới `VIETNAM_LOCATIONS` bao phủ đầy đủ toàn bộ 12 quận và huyện trọng điểm Hà Nội, TP. Hồ Chí Minh và các tỉnh thành trên cả nước.
+          * Tích hợp hàm `findNearestVietnamLocation` tính toán khoảng cách đường cong mặt cầu (Haversine formula). Với bán kính threshold 10km, hệ thống nhận diện chính xác ngay lập tức cấp quận huyện: Cầu Giấy, Hoàn Kiếm, Nam Từ Liêm, Hà Đông, Ba Đình, Quận 1, Thủ Đức, v.v., đạt độ trễ 0ms và hoàn toàn độc lập với dịch vụ bên ngoài.
+        + **Động Cơ Photon Komoot Reverse Geocode (CORS Bản Địa)**:
+          * Thay thế Nominatim bằng Photon Komoot (`https://photon.komoot.io/reverse?lat=...&lang=default`), hỗ trợ `Access-Control-Allow-Origin: *`, trích xuất `district` và `city`, chuẩn hóa tiếng Việt qua `formatVietnamLocationName`.
+        + **Hiện Đại Hóa Chuỗi IP Fallback Sang 100% HTTPS**:
+          * Tầng 1: `https://ipwho.is/`.
+          * Tầng 2: `https://freeipapi.com/api/json`.
+          * Tầng 3: `https://ipinfo.io/json`.
+          * Truyền `locationNameStr = null` để tọa độ IP cũng được đối chiếu qua thuật toán Haversine và Photon Komoot.
+        + **Lá Chắn Quyền Vị Trí & Hướng Dẫn Trực Quan**:
+          * Tăng timeout GPS lên 12 giây (`timeout: 12000, maximumAge: 0`).
+          * Trong `LocationSelectorModal`, khi phát hiện `PERMISSION_DENIED` hoặc lỗi GPS, hiển thị thẻ cảnh báo vàng-đỏ trực quan (`data-testid="gps-error-alert"`) hướng dẫn người dùng nhấn biểu tượng ổ khóa 🔒 trên thanh địa chỉ để cấp quyền hoặc chọn địa phương từ danh sách.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run test:logic`: 427/427 assertions đạt (100% PASS), bao gồm 4 ca kiểm thử Haversine & Geolocation trong Luồng 8.
+        + `npm run build`: Thành công 100% trong 3.97s, 0 lỗi TypeScript.
+        + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).

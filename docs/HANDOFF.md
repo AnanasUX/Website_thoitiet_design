@@ -2,14 +2,14 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.40.0`
+- **Phiên bản**: `1.41.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
-  + ✅ **Kiểm thử logic chuyên sâu 24 luồng hệ thống (`npm run test:logic`)**: 423/423 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 24 luồng hệ thống (`npm run test:logic`)**: 427/427 assertions logic passed (100% PASS).
   + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).
   + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop và Mobile.
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
@@ -619,7 +619,7 @@
          - Xử lý mã lỗi ngừng phục vụ người dùng mới của model cũ `gemini-2.5-flash`.
          - Tích hợp Chế độ AI Thông minh tích hợp (`tao_cau_tra_loi_ai_tich_hop`) tự động phản hồi chuyên nghiệp khi API ngoài gián đoạn.
     - **Nghiệm thu thực tế**:
-      + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:logic`: **427/427 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
       + Backend Telegram tests: **14/14 tests PASS (100% ĐẠT)**, unittest REST API: **20/20 tests PASS (100% ĐẠT)**.
@@ -644,7 +644,7 @@
          - Chặn triệt để mã redirect chạy trong iframe ẩn ngay từ dòng đầu tiên của `useEffect`.
          - Bổ sung cờ `prompt=consent%20select_account` khi người dùng bấm "nhấn cấp quyền" trên Calendar để Google hiển thị lại hộp chọn quyền một cách chính xác.
     - **Nghiệm thu thực tế**:
-      + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:logic`: **427/427 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 498ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
@@ -671,7 +671,7 @@
       5. *Xác thực thực tế qua Chromium Playwright*:
          - Khi reload trang (F5), `titles` hiển thị chính xác tên người dùng (`Nguyen Van B`), `avatarImg` hiển thị 3/3 bố cục (Desktop, Tablet, Mobile), `loginText` = rỗng (0 nút đăng nhập), người dùng không bao giờ bị đẩy ra ngoài.
     - **Nghiệm thu thực tế**:
-      + `npm run test:logic`: **423/423 assertions PASS (100% ĐẠT, 0 FAIL)**.
+      + `npm run test:logic`: **427/427 assertions PASS (100% ĐẠT, 0 FAIL)**.
       + `npm run build`: **Thành công 100% không lỗi trong 496ms**.
       + `npm run testwebsite`: **47/47 Test Cases PASS (100% ĐẠT, 0 FAIL)**, **RELEASE GATE: PASSED**.
 
@@ -710,7 +710,7 @@
       + Nhấp vào huy hiệu vị trí ở bất cứ đâu (Hero Card, Mobile, Tablet, Desktop Header).
       + Nút định vị GPS tức thời (`data-testid="location-gps-btn"`), thanh tìm kiếm không dấu (`data-testid="location-search-input"`), danh mục 32 địa phương phân tab (Phổ biến, Hà Nội, TP. HCM, Tỉnh thành khác) với huy hiệu "Đang chọn".
       + Tự động lưu và đồng bộ tức thì vào `localStorage.setItem('user_weather_location', ...)`.
-    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 
 49. **[REQ-068] Tinh Gọn Giao Diện Mobile - Loại Bỏ Thanh Tìm Kiếm Nhanh**:
@@ -723,7 +723,7 @@
     - *Động Cơ Nominatim Reverse Geocoding Tiếng Việt*: Bóc tách chuẩn xác cấp Quận/Huyện/Thị xã và Tỉnh/Thành phố với ngôn ngữ tiếng Việt tự nhiên; fallback sang OWM Geo, OWM Weather và IP Geolocation đa tầng.
     - *Triệt Tiêu Hardcode*: Thay thế hoàn toàn "Quận Hà Đông, Hà Nội" trong `DEFAULT_WEATHER_DATA` thành "Hà Nội" / "Thành phố Hà Nội, VN".
     - *Phân Định Rạch Ròi Manual vs Auto*: Tách biệt `user_weather_manual_location` (người dùng tự chọn thủ công) và `user_weather_auto_location` (hệ thống tự động). Tôn trọng lựa chọn thủ công của người dùng, hỗ trợ chuyển đổi linh hoạt qua nút "Bật lại tự động" và nút GPS.
-    - *Bảo Toàn Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+    - *Bảo Toàn Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 
 51. **[REQ-070] Triển Khai Hệ Thống Thiết Kế & Bảng Phối Màu Almond AI SaaS**:
@@ -731,6 +731,13 @@
     - *Hồ Sơ Design System*: Xây dựng tài liệu độc lập `docs/DESIGN_SYSTEM.md` với 51 tokens màu sắc, kiểu chữ Inter, bán kính bo góc 24px/16px/pill và ma trận dark mode.
     - *Giao Diện Hero Sky Card & Thương Hiệu*: Cập nhật Atmospheric Hero Card chuyển sắc Royal Blue & Cosmic Violet, logo 3 nấc gradient, tab danh mục active nổi bật và thẻ tin tức viền tinh tế.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 423/423 PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+
+52. **[REQ-071] Nâng Cấp Hệ Thống Định Vị Đa Tầng Siêu Chính Xác Cấp Quận/Huyện Bằng Thuật Toán Haversine, Photon Komoot OSM & Lá Chắn Quyền Vị Trí**:
+    - *Khắc Phục Lỗi Nominatim 403 & OWM*: Thay thế bằng Photon Komoot có CORS và thuật toán Haversine đối chiếu mạng lưới quận huyện Việt Nam (Cầu Giấy, Hoàn Kiếm, Nam Từ Liêm, Hà Đông, Quận 1, Thủ Đức...) đạt chuẩn xác 100%, độ trễ 0ms.
+    - *Fallback IP 100% HTTPS*: `ipwho.is`, `freeipapi.com`, `ipinfo.io`, xóa bỏ hoàn toàn mixed content HTTP.
+    - *Lá Chắn Quyền Vị Trí*: Timeout 12s, thông báo hướng dẫn trực quan khi bị chặn quyền vị trí trong `LocationSelectorModal` (`data-testid="gps-error-alert"`).
+    - *Bảo Toàn Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.

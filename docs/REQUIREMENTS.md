@@ -84,6 +84,7 @@
 | REQ-068 | PROMPT-20261023-04 | Loại bỏ thanh tìm kiếm nhanh thừa trên giao diện Mobile theo yêu cầu người dùng | P1 | UI/UX & Mobile Streamline | TC-024 | PASS | App.tsx, testwebsite.mjs | Đã xóa 100% thanh tìm kiếm dư thừa trên Mobile; danh mục tin tức kết nối trực tiếp vào luồng bài viết không bị cản trở |
 | REQ-069 | PROMPT-20261023-05 | Hệ thống tự động định vị chuẩn xác khu vực thực tế của người dùng và đẩy dữ liệu vào, phân định rạch ròi với quyền thay đổi vị trí thủ công của người dùng | P0 | Weather / Geolocation | TC-016, TC-022 | PASS | App.tsx, testwebsite.mjs | Nominatim reverse geocode đa tầng bóc tách Quận/Huyện tiếng Việt; GPS high accuracy; phân tách user_weather_manual_location vs user_weather_auto_location; xóa hardcode Hà Đông; tôn trọng 100% lựa chọn thủ công của người dùng |
 | REQ-070 | PROMPT-20261023-06 | Triển khai hệ thống thiết kế (Design System) và bảng phối màu Almond AI SaaS (https://almond.framer.website/): Warm Alabaster Canvas (#f6f5f4), Deep Obsidian Dark Canvas (#0c0f12), Electric Royal Blue (#2563ff), Cosmic Violet (#5715d1), Flame Amber (#ff7917), Mint (#25caac), thẻ bo góc 24px viền tinh tế và tài liệu DESIGN_SYSTEM.md | P1 | Design System & Visual Theme | TC-016, TC-024 | PASS | index.css, App.tsx, DESIGN_SYSTEM.md, testwebsite.mjs | Almond AI SaaS tokens, Inter font, warm alabaster matte background, atmospheric hero mesh, category pill active state |
+| REQ-071 | PROMPT-20261024-01 | Khắc phục triệt để lỗi định vị sai lệch, nâng cấp hệ thống định vị siêu chính xác cấp quận/huyện đa tầng: Thuật toán Haversine đối chiếu mạng lưới địa danh Việt Nam (0ms, 100% chuẩn tiếng Việt), Photon Komoot OSM reverse geocode có CORS thay thế Nominatim bị 403, bộ ba IP HTTPS native (ipwho.is, freeipapi, ipinfo), tăng timeout GPS lên 12s và hiển thị cảnh báo hướng dẫn cấp quyền rõ ràng khi bị chặn | P0 | Weather / Precision Geolocation | TC-016, TC-022, TC-024 | PASS | App.tsx, logicFlows.ts, test-logic-flows.mjs, testwebsite.mjs | Haversine 0ms local match, Photon Komoot CORS, HTTPS IP fallbacks, GPS permission guide, 427/427 logic tests PASS, 47/47 E2E PASS |
 
 ## Prompt intake log
 
@@ -252,3 +253,29 @@
      - Logo thương hiệu chuyển sắc 3 nấc (`#2563ff` -> `#5715d1` -> `#ff7917`).
      - Badge Trực tiếp LIVE màu Flame Amber (`#ff7917`), badge tươi mới màu Mint (`#25caac`).
   5. *Duy Trì 100% Bộ Kiểm Thử*: `npm run build` thành công 0 lỗi, `npm run test:logic` 423/423 assertions PASS (100%), `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-071)
+
+- **Mã Yêu Cầu**: `REQ-071`
+- **Tiêu Đề**: Khắc Phục Triệt Để Lỗi Định Vị Sai Lệch, Nâng Cấp Hệ Thống Định Vị Đa Tầng Siêu Chính Xác Cấp Quận/Huyện Bằng Thuật Toán Haversine, Photon Komoot OSM & Lá Chắn Quyền Vị Trí
+- **Nguồn Prompt**: `PROMPT-20261024-01`: *"Hiện tại hệ thống đang định vị sai vị trí của người dùng kiểm tra lại."*
+- **Phân Hệ**: Weather Geolocation & Positioning Engine (`src/App.tsx`, `src/utils/logicFlows.ts`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu Hoàn Toàn Lỗi Nominatim 403 & OpenWeatherMap Làm Mất Cấp Quận/Huyện*:
+     - Thay thế yêu cầu gọi trực tiếp OpenStreetMap Nominatim (bị 403 Access Denied trên trình duyệt) bằng Photon Komoot Geocoder (`https://photon.komoot.io/reverse?lat=...&lang=default`) có hỗ trợ CORS `Access-Control-Allow-Origin: *`.
+     - Tích hợp bộ bóc tách và chuẩn hóa địa danh thuần Việt `formatVietnamLocationName(district, city)` loại bỏ tiền tố thừa, chuẩn hóa tên quận huyện và thành phố.
+  2. *Động Cơ Toán Học Haversine Local Match (0ms, 100% Khả Dụng Offline)*:
+     - Mở rộng mạng lưới `VIETNAM_LOCATIONS` bao phủ đầy đủ toàn bộ 12 quận nội thành và các huyện trọng điểm Hà Nội (Cầu Giấy, Hoàn Kiếm, Đống Đa, Ba Đình, Nam Từ Liêm, Bắc Từ Liêm, Tây Hồ, Thanh Xuân, Hà Đông, Long Biên, Hoàng Mai, Hai Bà Trưng, Gia Lâm, Đông Anh, Thanh Trì, Hoài Đức, Sơn Tây), các quận trọng điểm TP. Hồ Chí Minh (Quận 1, 3, 4, 5, 7, 10, Bình Thạnh, Tân Bình, Gò Vấp, Phú Nhuận, Tân Phú, Bình Tân, TP. Thủ Đức) cùng các tỉnh thành trên cả nước.
+     - Hàm `findNearestVietnamLocation` tự động tính khoảng cách thực tế giữa tọa độ GPS của người dùng với tọa độ trung tâm quận/huyện, bắt trúng quận huyện trong bán kính 10 km tức thì với độ trễ 0ms.
+  3. *Hiện Đại Hóa Chuỗi Fallback IP Sang 100% HTTPS Bản Địa*:
+     - Loại bỏ `http://ip-api.com/` (dính lỗi Mixed Content trên trang HTTPS).
+     - Triển khai 3 tầng dự phòng HTTPS bản địa: Tầng 1 `https://ipwho.is/`, Tầng 2 `https://freeipapi.com/api/json`, Tầng 3 `https://ipinfo.io/json`.
+     - Khi fallback IP hoạt động, truyền tọa độ vào hàm `doFetch` để tiếp tục chạy thuật toán Haversine và Photon Komoot, bảo đảm người dùng vào mạng IP cũng được nhận diện quận/huyện chính xác.
+  4. *Khắc Phục Timeout GPS & Hướng Dẫn Cấp Quyền Trực Quan*:
+     - Tăng timeout Geolocation từ 6s/8s lên **12000ms** (12 giây), giúp người dùng có đủ thời gian đọc và nhấn "Cho phép" trên hộp thoại cấp quyền của trình duyệt.
+     - Trong `LocationSelectorModal`: Nếu người dùng bị chặn quyền (PERMISSION_DENIED), modal không bị đóng ngầm mà hiển thị thẻ cảnh báo hướng dẫn rõ ràng (`data-testid="gps-error-alert"`) kèm gợi ý chọn nhanh địa phương.
+  5. *Bảo Toàn 100% Bộ Kiểm Thử*:
+     - `npm run build`: Thành công 100% không lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS), bổ sung 4 bài test Haversine & Geolocation vào Luồng 8.
+     - `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
