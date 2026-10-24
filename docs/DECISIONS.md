@@ -792,3 +792,39 @@
         + `npm run build`: Hoàn thành trong 2.48s, 0 lỗi biên dịch.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
         + `npm run testwebsite`: 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED) trên cả Desktop, Tablet và Mobile.
+
+
+  54. **[REQ-073] Khắc Phục Tương Phản Màu Chữ Tiêu Đề Dark/Light & Hoàn Thiện Quy Trình Nhận Diện Đăng Nhập Liền Mạch Cho Lịch Google Calendar**:
+      - *Bối cảnh & Động lực*:
+        + Người dùng phản hồi kèm 2 hình ảnh minh chứng:
+          1. Ảnh 1: Tiêu đề bài báo nổi bật `Quân đội Israel phá dỡ nhiều công trình tại Bờ Tây` trong Dark Mode bị mang màu đen xì `#0c0f12`, chìm hoàn toàn vào nền thẻ tối `#151921` và không thể đọc được.
+          2. Ảnh 2: Người dùng chỉ ra rằng tài khoản đã đăng nhập rõ ràng (hiển thị ảnh đại diện avatar ở góc trên bên phải, hiển thị email `mrkun28@gmail.com` và danh sách kênh YouTube), nhưng phần chân widget Lịch Google Calendar lại hiển thị: `• Lịch ngoại tuyến, kết nối Google Calendar` với liên kết đòi người dùng bấm đăng nhập lại. Người dùng khẳng định: *"rõ ràng đã có logo của người dùng nhưng vẫn bắt đăng nhập việc này sai quy trình check lại thông tin"*.
+        + *Phân tích nguyên nhân cốt lõi (Root Cause Analysis)*:
+          1. **Lỗi biến màu Typography & Độ ưu tiên CSS trong Dark Mode**:
+             - Trong `src/index.css`, quy tắc toàn cục `h1, h2, h3, h4, h5, h6, strong, b { color: var(--almond-ink); }` được khai báo, trong đó `--almond-ink` được gán cố định là `#0c0f12` trong `:root`. Khi chuyển sang Dark Mode (`html.dark`), biến `--almond-ink` KHÔNG được gán lại giá trị sáng, và cũng không có quy tắc `html.dark h1..h6` nào với độ ưu tiên đủ lớn. Dẫn đến mọi thẻ `<h3>` hoặc tiêu đề bài báo bị ép màu chữ đen `#0c0f12` trên nền thẻ tối `#151921`.
+             - Tương tự, lớp `.text-[#182033] { color: #0c0f12 !important; }` không được bao quát hết các phần tử mang lớp `.text-[#0c0f12]`.
+          2. **Lỗi quy trình nhận diện phiên đăng nhập ở widget Lịch Calendar**:
+             - Khi người dùng đăng nhập qua Google One-Tap (`useGoogleOneTapLogin`), Google chỉ cấp ID token (JWT) chứa thông tin định danh (`email`, `name`, `picture`, `sub`), mà không cấp sẵn OAuth2 `access_token` phục vụ gọi trực tiếp API Google Calendar.
+             - Khi thiếu `_access_token`, mã nguồn cũ trong `CalendarSection` đã đối chiếu lỏng lẻo: `!accessToken ? (<p>Lịch ngoại tuyến, kết nối Google Calendar</p>)` kèm nút `onRelogin` mở popup Google đòi đăng nhập lại.
+             - Điều này tạo ra trải nghiệm sai quy trình nghiêm trọng: Người dùng đã thấy mình đăng nhập thành công (avatar và email hiện diện đầy đủ trên website), nhưng widget Lịch lại thông báo như thể họ chưa kết nối tài khoản và ép họ phải đăng nhập lại.
+             - Đồng thời, khi chưa có `_access_token`, `events` bị gán rỗng `{}` làm trắng trơn lịch ngay cả khi trước đó người dùng đã từng đồng bộ sự kiện.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Tái Định Nghĩa Biến Màu Almond & Typography Override Toàn Cục Trong Dark Mode**:
+          * Khai báo lại biến màu trong `html.dark`: `--almond-ink: #f8fafc;`, `--almond-body: #94a3b8;`, `--almond-muted: #64748b;`.
+          * Bổ sung quy tắc toàn cục: `html.dark h1..h6, html.dark strong, html.dark b { color: #f8fafc !important; }`.
+          * Đồng bộ toàn diện: `html.dark .text-[#0c0f12], html.dark .text-[#182033], html.dark .text-slate-900, html.dark .text-gray-900 { color: #f8fafc !important; }` và các lớp văn bản phụ thành `#94a3b8 !important`.
+          * Đảm bảo 100% tiêu đề, thẻ bài báo và chữ viết trên toàn website sáng rõ, tương phản hoàn hảo chuẩn WCAG AAA trên nền tối `#151921`.
+        + **Chuẩn Hóa Quy Trình Trạng Thái Lịch Theo Phiên Đăng Nhập Của Người Dùng**:
+          * Khi `userEmail` tồn tại (người dùng đã đăng nhập Google): Widget Lịch Calendar công nhận ngay lập tức danh tính người dùng: hiển thị chấm xanh kết nối `🟢` kèm dòng trạng thái: `Đã kết nối tài khoản ${userEmail} • Đồng bộ lịch`.
+          * Tuyệt đối không bao giờ hiển thị thông điệp "Lịch ngoại tuyến, kết nối Google Calendar" hay ép người dùng phải đăng nhập lại từ đầu.
+          * Khi `accessToken` còn hiệu lực và API trả về thành công: hiển thị `🟢 Đã đồng bộ với Google Calendar`.
+          * Khi người dùng cần chủ động làm mới sự kiện hoặc cấp quyền đọc lịch nâng cao: giữ liên kết `(Đồng bộ lịch)` gọn gàng và tự nhiên.
+        + **Bộ Nhớ Đệm Lịch Bền Vững Theo Tài Khoản (Per-User Calendar Cache)**:
+          * Lưu trữ các sự kiện lịch vào `localStorage` theo khóa định danh `user_calendar_cache_${userEmail}_${year}_${month}`.
+          * Khi mở trang hoặc chuyển tháng, hệ thống nạp tức thì từ cache giúp lịch hiển thị sự kiện ngay frame đầu tiên mà không bao giờ bị trắng lịch.
+        + **Đồng Bộ Dark Mode Cho Menu Avatar Người Dùng (`UserAvatarMenu`)**:
+          * Thêm nền tối `#151921`, viền mờ `dark:border-white/10`, chữ sáng và hover êm ái cho toàn bộ menu tài khoản.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Thành công 100% trong 6.34s, 0 lỗi biên dịch.
+        + `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+        + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).

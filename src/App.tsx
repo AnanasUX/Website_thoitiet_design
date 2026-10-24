@@ -2632,9 +2632,9 @@ function MobileLayout({ activeCategory, setActiveCategory,
                       )}
                     </p>
                   </div>
-                  <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
+                  <p className="font-semibold text-[#182033] dark:text-[#f8fafc] text-[length:var(--font-h4)] line-clamp-3 w-full leading-snug">{item.author}</p>
                 </div>
-              <p className="font-normal text-[#182033] text-[length:var(--font-body)] mt-2">{item.body}</p>
+              <p className="font-normal text-[#4e5b6d] dark:text-[#94a3b8] text-[length:var(--font-body)] mt-2">{item.body}</p>
               <div className="h-[180px] relative rounded-[10px] w-full overflow-hidden">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" src={item.img} loading={i === 0 ? "eager" : "lazy"} decoding="async" data-fallback={item.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 {(item.isVideo || item.link?.includes('/video/') || item.link?.includes('video.') || item.isShort) && (
@@ -2853,10 +2853,10 @@ function TabletLayout({ activeCategory, setActiveCategory,
                 )}
               </div>
               <div className="flex flex-col gap-2 items-start p-[14px] w-full">
-                <p className="font-bold leading-[22px] text-[#182033] text-[15px] w-full line-clamp-2">
+                <p className="font-bold leading-[22px] text-[#182033] dark:text-[#f8fafc] text-[15px] w-full line-clamp-2">
                   {featured.author}
                 </p>
-                <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
+                <p className="font-normal text-[#5f687b] dark:text-[#94a3b8] text-[length:var(--font-caption)] w-full line-clamp-2 mt-1">
                   {featured.body}
                 </p>
                 <div className="flex items-center justify-between pt-1 w-full flex-wrap gap-1">
@@ -2903,8 +2903,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
                     </>
                   )}
                 </div>
-                <p className="font-semibold text-[#182033] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
-                <p className="font-normal text-[#5f687b] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
+                <p className="font-semibold text-[#182033] dark:text-[#f8fafc] text-[length:var(--font-h4)] line-clamp-2 w-full">{item.author}</p>
+                <p className="font-normal text-[#5f687b] dark:text-[#94a3b8] text-[length:var(--font-caption)] line-clamp-1 w-full mt-1">{item.body}</p>
               </div>
             </div>
           ))}
@@ -3760,7 +3760,7 @@ function LiveTimelineSection({ news, onArticleClick }: { news: LiveNewsItem[], o
                 <p className="text-[length:var(--font-caption)] font-semibold text-[#0055D4]">{time}</p>
                 <p className="text-[length:var(--font-caption)] text-[#5f687b] opacity-80">{item.src}</p>
               </div>
-              <h3 className="text-[length:var(--font-small)] font-medium text-[#182033] leading-[1.4] group-hover/item:text-[#0055D4] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
+              <h3 className="text-[length:var(--font-small)] font-medium text-[#182033] dark:text-[#f8fafc] leading-[1.4] group-hover/item:text-[#0055D4] dark:group-hover/item:text-[#38bdf8] transition-colors line-clamp-2" title={item.author}>{item.author}</h3>
             </div>
           );
         })}
@@ -3954,7 +3954,7 @@ function MarketSectionSkeleton() {
 
 function CalendarSectionSkeleton() {
   return (
-    <div className="w-full min-h-[300px] bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col lg:h-[400px]">
+    <div className="w-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[400px]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-2">
           <SkeletonBox className="w-28 h-5" />
@@ -4097,15 +4097,34 @@ function ScrollToTop() {
 
 function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: { userEmail: string; accessToken?: string; onTokenExpired?: () => void; onRelogin?: () => void }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  // map: day (number) -> array of event titles
-  const [events, setEvents] = useState<Record<number, string[]>>({});
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const cacheKey = `user_calendar_cache_${userEmail || 'guest'}_${year}_${month}`;
+  // map: day (number) -> array of event titles with persistent user caching
+  const [events, setEvents] = useState<Record<number, string[]>>(() => {
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return {};
+  });
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [hasScopeError, setHasScopeError] = useState(false);
   const [activeTooltipDay, setActiveTooltipDay] = useState<number | null>(null);
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  // Restore cached calendar events when month/year changes or token is missing
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        setEvents(JSON.parse(raw));
+      } else if (!accessToken) {
+        setEvents({});
+      }
+    } catch {}
+  }, [cacheKey, accessToken]);
 
   // Fetch Google Calendar events whenever month/year or token changes
   useEffect(() => {
@@ -4120,11 +4139,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
     )
       .then(r => {
         if (!r.ok) {
-          if (r.status === 401) {
-            setHasScopeError(true);
-            // Lỗi 401 Calendar là lỗi thiếu scope/quyền, KHÔNG PHẢI phiên đăng nhập hết hạn.
-            // Tuyệt đối KHÔNG xóa token của user tại đây để giữ vững phiên đăng nhập khi F5 reload.
-          } else if (r.status === 403) {
+          if (r.status === 401 || r.status === 403) {
             setHasScopeError(true);
           }
           throw new Error('API Error');
@@ -4141,10 +4156,13 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
           map[d].push(ev.summary || '(Không có tiêu đề)');
         });
         setEvents(map);
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(map));
+        } catch {}
       })
       .catch(() => {})
       .finally(() => { setLoadingEvents(false); setInitialLoaded(true); });
-  }, [accessToken, year, month]);
+  }, [accessToken, year, month, cacheKey]);
 
   // Show skeleton only on first load when we have a token
   if (accessToken && !initialLoaded && loadingEvents) return <CalendarSectionSkeleton />;
@@ -4162,21 +4180,21 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   return (
-    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] bg-white p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
+    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="font-semibold text-[#182033] text-[15px]">{monthNames[month]}, {year}</h2>
-          <p className="text-[#5f687b] text-[11px] truncate max-w-[160px]" title={userEmail}>{userEmail}</p>
+          <h2 className="font-semibold text-[#182033] dark:text-[#f8fafc] text-[15px]">{monthNames[month]}, {year}</h2>
+          <p className="text-[#5f687b] dark:text-[#94a3b8] text-[11px] truncate max-w-[160px]" title={userEmail}>{userEmail}</p>
         </div>
         <div className="flex gap-1 items-center">
           {loadingEvents && (
             <div className="w-3 h-3 rounded-full border-2 border-[#3a7bd5] border-t-transparent animate-spin mr-1"></div>
           )}
-          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month - 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
+          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month - 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] dark:hover:bg-[#1a202c] rounded-lg text-[#5f687b] dark:text-[#94a3b8] transition-colors" title="Tháng trước">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month + 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] rounded-lg text-[#5f687b] transition-colors">
+          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month + 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] dark:hover:bg-[#1a202c] rounded-lg text-[#5f687b] dark:text-[#94a3b8] transition-colors" title="Tháng sau">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
@@ -4185,7 +4203,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
       {/* Day-of-week header */}
       <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
         {['T2','T3','T4','T5','T6','T7','CN'].map(d => (
-          <div key={d} className="text-[#94a3b8] text-[11px] font-semibold py-1">{d}</div>
+          <div key={d} className="text-[#94a3b8] dark:text-slate-400 text-[11px] font-semibold py-1">{d}</div>
         ))}
       </div>
 
@@ -4205,17 +4223,17 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
                    }
                  }}
                  className={`relative flex flex-col items-center justify-center rounded-lg min-h-[36px] transition-colors group
-              ${day ? 'cursor-pointer hover:bg-[#f4f6fa]' : ''}
-              ${isToday ? 'bg-[#3a7bd5] hover:bg-[#2b68c2] font-bold' : ''}
+              ${day ? 'cursor-pointer hover:bg-[#f4f6fa] dark:hover:bg-[#1c222d]' : ''}
+              ${isToday ? 'bg-[#3a7bd5] hover:bg-[#2b68c2] font-bold text-white' : ''}
             `}>
-              <span className={`text-[13px] leading-none ${isToday ? 'text-white' : 'text-[#182033]'}`}>{day || ''}</span>
+              <span className={`text-[13px] leading-none ${isToday ? 'text-white' : 'text-[#182033] dark:text-[#f8fafc]'}`}>{day || ''}</span>
               {hasEvent && (
                 <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isToday ? 'bg-white' : 'bg-[#f7a928]'}`}></div>
               )}
               {/* Tooltip */}
               {hasEvent && (
                 <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 ${activeTooltipDay === day ? 'flex' : 'hidden md:group-hover:flex'} flex-col items-center z-50 w-max max-w-[200px]`}>
-                  <div className="bg-[#182033] text-white text-[11px] py-2 px-3 rounded-lg shadow-xl flex flex-col gap-1 text-left pointer-events-auto" style={{ fontFamily: 'inherit' }}>
+                  <div className="bg-[#182033] dark:bg-[#0c0f12] text-white text-[11px] py-2 px-3 rounded-lg shadow-xl flex flex-col gap-1 text-left pointer-events-auto border border-transparent dark:border-white/10" style={{ fontFamily: 'inherit' }}>
                     {dayEvents.map((title, ti) => (
                       <div key={ti} className="flex items-start gap-1.5">
                         <span className="text-[#f7a928] mt-0.5 shrink-0">•</span>
@@ -4223,7 +4241,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
                       </div>
                     ))}
                   </div>
-                  <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-[#182033]"></div>
+                  <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-[#182033] dark:border-t-[#0c0f12]"></div>
                 </div>
               )}
             </div>
@@ -4232,7 +4250,7 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
       </div>
 
       {/* Footer: Calendar Sync Status */}
-      <div className="mt-3 pt-3 border-t border-[#f1f5f9] flex items-center gap-2">
+      <div className="mt-3 pt-3 border-t border-[#f1f5f9] dark:border-white/10 flex items-center gap-2">
         {!userEmail ? (
           <>
             <div className="w-1.5 h-1.5 rounded-full bg-[#94a3b8] shrink-0"></div>
@@ -4240,14 +4258,16 @@ function CalendarSection({ userEmail, accessToken, onTokenExpired, onRelogin }: 
           </>
         ) : !accessToken ? (
           <>
-            <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] shrink-0"></div>
-            <p className="text-[#94a3b8] text-[11px] leading-tight">Lịch ngoại tuyến, <span onClick={onRelogin} className="font-semibold text-[#3a7bd5] cursor-pointer hover:underline">kết nối Google Calendar</span></p>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0"></div>
+            <p className="text-[#5f687b] dark:text-[#94a3b8] text-[11px] leading-tight truncate">
+              Đã kết nối tài khoản <span className="font-semibold text-[#0c0f12] dark:text-[#f8fafc]">{userEmail}</span> • <span onClick={onRelogin} className="font-semibold text-[#2563ff] dark:text-[#68dbff] cursor-pointer hover:underline" title="Đồng bộ trực tiếp các sự kiện từ Google Calendar">Đồng bộ lịch</span>
+            </p>
           </>
         ) : hasScopeError ? (
           <>
             <div className="w-1.5 h-1.5 rounded-full bg-[#f7a928] animate-pulse shrink-0"></div>
             <p className="text-[#94a3b8] text-[11px] leading-tight">
-              Đồng bộ Lịch — <span className="text-[#f7a928] font-semibold">chưa cấp quyền</span> (<span onClick={onRelogin} className="font-semibold text-[#3a7bd5] cursor-pointer hover:underline">nhấn cấp quyền</span>)
+              Lịch tài khoản — <span className="text-[#f7a928] font-semibold">cần cấp quyền đọc</span> (<span onClick={onRelogin} className="font-semibold text-[#3a7bd5] cursor-pointer hover:underline">cấp quyền</span>)
             </p>
           </>
         ) : (
@@ -4978,10 +4998,10 @@ function UserAvatarMenu({ userRole, onLogout, onOpenSubscriptions }: { userRole:
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[400]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-[#e3e7ef] py-2 z-[500] flex flex-col overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-[#e3e7ef] flex flex-col mb-1 bg-slate-50/70">
-              <span className="text-[13px] font-bold text-[#182033] line-clamp-1">{userRole.name}</span>
-              <span className="text-[11px] text-[#5f687b] line-clamp-1 font-mono">{userRole.email}</span>
+          <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#151921] rounded-xl shadow-xl border border-[#e3e7ef] dark:border-white/10 py-2 z-[500] flex flex-col overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-[#e3e7ef] dark:border-white/10 flex flex-col mb-1 bg-slate-50/70 dark:bg-white/[0.04]">
+              <span className="text-[13px] font-bold text-[#182033] dark:text-[#f8fafc] line-clamp-1">{userRole.name}</span>
+              <span className="text-[11px] text-[#5f687b] dark:text-[#94a3b8] line-clamp-1 font-mono">{userRole.email}</span>
               <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Tài khoản đã liên kết</span>
@@ -5021,7 +5041,7 @@ function UserAvatarMenu({ userRole, onLogout, onOpenSubscriptions }: { userRole:
                 setIsOpen(false);
                 if (onOpenSubscriptions) onOpenSubscriptions();
               }}
-              className="px-4 py-2 text-left text-[12.5px] text-slate-700 hover:bg-slate-50 font-medium transition-colors w-full flex items-center justify-between border-b border-[#e3e7ef]"
+              className="px-4 py-2 text-left text-[12.5px] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04] font-medium transition-colors w-full flex items-center justify-between border-b border-[#e3e7ef] dark:border-white/10"
             >
               <div className="flex items-center gap-2">
                 <span>🔴</span>

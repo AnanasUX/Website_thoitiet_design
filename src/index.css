@@ -178,11 +178,28 @@ button {
 /* ── ALMOND DARK MODE (DEEP OBSIDIAN NOIR & COSMIC VIOLET) ───────────────────── */
 html.dark {
   color-scheme: dark;
+  --almond-canvas: #0c0f12;
+  --almond-card: #151921;
+  --almond-border: rgba(255, 255, 255, 0.08);
+  --almond-ink: #f8fafc;
+  --almond-body: #94a3b8;
+  --almond-muted: #64748b;
 }
 
 html.dark body {
   background-color: #0c0f12 !important;
-  color: #f4f4f4 !important;
+  color: #f8fafc !important;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark strong,
+html.dark b {
+  color: #f8fafc !important;
 }
 
 html.dark .bg-white {
@@ -198,16 +215,36 @@ html.dark .hover\:bg-\[\#f4f6fa\]:hover {
   background-color: #1a202c !important;
 }
 
-html.dark .text-\[\#182033\] {
+html.dark .text-\[\#0c0f12\],
+html.dark .text-\[\#182033\],
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
   color: #f8fafc !important;
 }
 
-html.dark .text-\[\#5f687b\] {
+html.dark .text-\[\#4e5b6d\],
+html.dark .text-\[\#5f687b\],
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
   color: #94a3b8 !important;
 }
 
-html.dark .border-\[\#e3e7ef\] {
+html.dark .border-\[\#e2e4e8\],
+html.dark .border-\[\#e3e7ef\],
+html.dark .border-slate-200,
+html.dark .border-gray-200 {
   border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark .border-\[\#f1f3f5\],
+html.dark .border-\[\#f1f5f9\],
+html.dark .border-slate-100,
+html.dark .border-gray-100 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 html.dark .border-white {
@@ -229,6 +266,10 @@ html.dark .hover\:bg-\[\#e3e7ef\]:hover {
 
 html.dark .hover\:bg-\[\#fafafa\]:hover {
   background-color: #1c222d !important;
+}
+
+html.dark [class*="from-\[\#e3e7ef\]"] {
+  background-image: linear-gradient(to right, #1c222d, #242c3d, #1c222d) !important;
 }
 
 html.dark .shadow-\[0px_4px_12px_0px_rgba\(23\,33\,51\,0\.1\)\],

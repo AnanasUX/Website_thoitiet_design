@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.42.0`
+- **Phiên bản**: `1.43.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -738,6 +738,19 @@
     - *Fallback IP 100% HTTPS*: `ipwho.is`, `freeipapi.com`, `ipinfo.io`, xóa bỏ hoàn toàn mixed content HTTP.
     - *Lá Chắn Quyền Vị Trí*: Timeout 12s, thông báo hướng dẫn trực quan khi bị chặn quyền vị trí trong `LocationSelectorModal` (`data-testid="gps-error-alert"`).
     - *Bảo Toàn Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
+53. **[REQ-072] Chuẩn Hóa Khung Viền & Bề Mặt Giao Diện (Frame & Surface Architecture), Triệt Tiêu Lỗi Kích Hoạt Nhầm Dark Mode & Chuyển Đổi Màu Sắc Mượt Mà**:
+    - *Triệt tiêu lỗi dark: trong Light mode*: Khai báo @custom-variant dark (&:where(.dark, .dark *)); trong Tailwind CSS v4, ngăn ngừa tự động kích hoạt dark theme theo hệ điều hành khách.
+    - *Đồng bộ bề mặt thẻ chuẩn Almond AI SaaS*: Sáng dùng nền trắng #ffffff viền #e2e4e8; Tối dùng Deep Obsidian Noir #151921 viền rgba(255, 255, 255, 0.08) và bóng khối sâu thẳm.
+    - *Khung cảnh báo & gợi ý chuyên biệt*: Tinh chỉnh dải màu ấm áp cho Cảnh báo trọng tâm (#fff7ed / rgba(255,121,23,0.12)), Gợi ý lịch trình (#f2fcf6 / rgba(37,202,172,0.1)) và Khuyến cáo (#f0f7ff / rgba(37,99,255,0.1)).
+    - *Hiệu ứng chuyển đổi màu sắc 0.25s*: transition êm ái cho toàn bộ khung thẻ, nút bấm và tiêu đề.
+
+54. **[REQ-073] Khắc Phục Tương Phản Màu Chữ Tiêu Đề Dark/Light & Hoàn Thiện Quy Trình Nhận Diện Đăng Nhập Liền Mạch Cho Lịch Google Calendar**:
+    - *Khắc phục lỗi chữ đen trên nền tối trong Dark Mode*: Tái định nghĩa biến màu --almond-ink: #f8fafc; trong html.dark, bổ sung quy tắc toàn cục html.dark h1..h6, strong, b { color: #f8fafc !important; } và đồng bộ các lớp chữ tối (.text-[#0c0f12], .text-[#182033], .text-slate-900), triệt tiêu hoàn toàn lỗi tiêu đề bài báo mang màu đen trên nền thẻ tối.
+    - *Chuẩn hóa quy trình nhận diện tài khoản ở widget Lịch Calendar*: Khi người dùng đã đăng nhập Google (có avatar và email), widget không còn hiển thị "Lịch ngoại tuyến, kết nối Google Calendar" hay ép đăng nhập lại. Thay vào đó, widget xác nhận rõ ràng 🟢 Đã kết nối tài khoản (${userEmail}) • Đồng bộ lịch.
+    - *Bộ nhớ đệm lịch bền vững theo từng tài khoản (Per-User Caching)*: Lưu và nạp tức thì sự kiện từ localStorage theo khóa user_calendar_cache_${userEmail}_${year}_${month}, bảo đảm hiển thị sự kiện ngay frame đầu tiên mà không bị trắng lịch.
+    - *Đồng bộ Dark Mode cho UserAvatarMenu*: Menu tài khoản được hoàn thiện với nền #151921, viền mờ dark:border-white/10 và chữ sáng rõ.
+    - *Bảo Toàn Kiểm Thử*: npm run build thành công 0 lỗi, npm run test:logic 427/427 PASS, npm run testwebsite 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.

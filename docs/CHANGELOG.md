@@ -1,5 +1,25 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.43.0 (2026-10-24) - Khắc Phục Tương Phản Màu Chữ Dark/Light & Hoàn Thiện Quy Trình Nhận Diện Đăng Nhập Lịch Google Calendar (REQ-073)
+
+### 1. Khắc Phục Lỗi Tương Phản Màu Chữ Tiêu Đề Trong Dark Mode
+- **Triệt tiêu lỗi chữ đen trên nền tối**: Tái định nghĩa các biến màu `--almond-ink: #f8fafc;`, `--almond-body: #94a3b8;`, `--almond-muted: #64748b;` trong selector `html.dark` của `src/index.css`.
+- **Typography Override toàn cục**: Bổ sung quy tắc `html.dark h1..h6, html.dark strong, html.dark b { color: #f8fafc !important; }`, bảo đảm 100% tiêu đề bài báo (`Quân đội Israel phá dỡ nhiều công trình tại Bờ Tây`...) và các thẻ heading sáng rõ, tương phản sắc nét trên nền tối `#151921`.
+- **Đồng bộ hóa các lớp chữ màu tối**: Các lớp `.text-[#0c0f12]`, `.text-[#182033]`, `.text-slate-900`, `.text-gray-900` tự động chuyển sang `#f8fafc !important` ở Dark Mode; các lớp văn bản phụ `.text-[#4e5b6d]`, `.text-[#5f687b]` chuyển sang `#94a3b8 !important`.
+
+### 2. Hoàn Thiện Quy Trình Nhận Diện Đăng Nhập Liền Mạch Cho Lịch Google Calendar
+- **Nhận diện chính xác phiên tài khoản đã đăng nhập**: Khi người dùng đã đăng nhập Google (hiển thị avatar và email trên header), widget Lịch Calendar không còn hiển thị thông báo sai lệch "Lịch ngoại tuyến, kết nối Google Calendar" hay ép đăng nhập lại.
+- **Trạng thái kết nối minh bạch & tôn trọng người dùng**: Widget xác nhận rõ ràng `🟢 Đã kết nối tài khoản (${userEmail})` hoặc `🟢 Đã đồng bộ với Google Calendar`, kèm đường dẫn `(Đồng bộ lịch)` thuận tiện để người dùng chủ động làm mới quyền và cập nhật sự kiện thời gian thực mà không gây gián đoạn phiên làm việc.
+- **Bộ nhớ đệm lịch bền vững theo từng tài khoản (Per-User Caching)**: Lưu trữ và nạp tức thì sự kiện từ `localStorage` theo khóa `user_calendar_cache_${userEmail}_${year}_${month}`, bảo đảm lịch luôn hiển thị sự kiện ngay frame đầu tiên mà không bị trắng lịch khi chưa có token mạng.
+- **Đồng bộ Dark Mode cho UserAvatarMenu**: Menu tài khoản người dùng được hoàn thiện với nền `#151921`, viền mờ `dark:border-white/10` và văn bản sáng rõ.
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 6.34s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.42.0 (2026-10-24) - Chuẩn Hóa Khung Viền & Bề Mặt Giao Diện, Khắc Phục Lỗi Chuyển Đổi Dark/Light Mode (REQ-072)
 
 ### 1. Khắc Phục Triệt Để Lỗi Chuyển Đổi Màu Sắc Khung Giao Diện Dark/Light Mode

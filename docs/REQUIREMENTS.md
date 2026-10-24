@@ -308,3 +308,28 @@
      - `npm run build`: Biên dịch thành công 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-073)
+
+- **Mã Yêu Cầu**: `REQ-073`
+- **Tiêu Đề**: Khắc Phục Tương Phản Màu Chữ Tiêu Đề Dark/Light & Hoàn Thiện Quy Trình Nhận Diện Đăng Nhập Liền Mạch Cho Lịch Google Calendar
+- **Nguồn Prompt**: `PROMPT-20261024-03`: *"Kiểm tra các phân màu trong Darl Light hiện tại tôi thấy đang chưa đúng màu đâu khi chuyển chế độ ví dụ rõ ràng đã có logo của người dùng nhưng vẫn bắt đăng nhập việc này sai quy trình check lại thông tin."*
+- **Phân Hệ**: UI/UX Theme Engine, Typography Contrast & Google Calendar Auth Flow (`src/index.css`, `src/App.tsx`, `docs/DESIGN_SYSTEM.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu Hoàn Toàn Lỗi Chữ Đen Trên Nền Tối (Black Heading on Dark Card Surface)*:
+     - Tái định nghĩa các biến màu `--almond-ink: #f8fafc;`, `--almond-body: #94a3b8;`, `--almond-muted: #64748b;` trong selector `html.dark` của `src/index.css`.
+     - Bổ sung quy tắc toàn cục `html.dark h1..h6, html.dark strong, html.dark b { color: #f8fafc !important; }` để triệt tiêu hoàn toàn tình trạng thẻ `<h3>` hoặc tiêu đề bài báo mang thuộc tính mặc định `color: var(--almond-ink)` bị giữ màu đen mực `#0c0f12` khi chuyển sang Dark Mode.
+     - Đồng bộ toàn diện các lớp chữ tối `.text-[#0c0f12]`, `.text-[#182033]`, `.text-slate-900`, `.text-gray-900` tự động chuyển sang `#f8fafc !important` ở Dark Mode; các lớp chữ phụ `.text-[#4e5b6d]`, `.text-[#5f687b]`, `.text-slate-600` chuyển sang `#94a3b8 !important`.
+  2. *Sửa Đổi Chuẩn Quy Trình Nhận Diện Phiên Tài Khoản Đã Đăng Nhập Ở Lịch Calendar*:
+     - Khi `userEmail` tồn tại (người dùng đã đăng nhập Google bằng One-Tap hoặc OAuth, có avatar hiển thị trên thanh điều hướng): widget Lịch Calendar **tuyệt đối không hiển thị thông báo "Lịch ngoại tuyến, kết nối Google Calendar"** kèm nút bắt đăng nhập lại.
+     - Thay vào đó, widget xác nhận rõ ràng trạng thái liên kết: `🟢 Đã kết nối tài khoản (${userEmail})` hoặc `🟢 Đã đồng bộ với Google Calendar` (khi token còn hiệu lực).
+     - Giữ đường dẫn `(Đồng bộ lịch)` tinh tế và thuận tiện cho phép người dùng chủ động làm mới quyền và cập nhật sự kiện thời gian thực khi cần, mà không gây hiểu nhầm là hệ thống bị mất đăng nhập hay bắt đăng nhập lại từ đầu.
+  3. *Bộ Nhớ Đệm Lịch Thông Minh Theo Từng Tài Khoản (Per-User Calendar Event Caching)*:
+     - Tích hợp bộ đệm `localStorage` theo từng tài khoản (`user_calendar_cache_${userEmail}_${year}_${month}`) giúp hiển thị tức thì các sự kiện đã đồng bộ ngay khi mở ứng dụng hoặc khi ngoại tuyến mà không bị màn hình trắng hay trống lịch.
+  4. *Đồng Bộ Giao Diện Menu Avatar Người Dùng Trong Dark Mode*:
+     - Cập nhật menu `UserAvatarMenu` hỗ trợ đầy đủ Dark Mode với nền `#151921`, viền mờ `rgba(255, 255, 255, 0.1)`, chữ sáng và các mục kênh liên kết YouTube tương thích cao.
+  5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Biên dịch thành công 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
