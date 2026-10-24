@@ -766,6 +766,20 @@
       + Chân trang hiển thị trạng thái tự động minh bạch: `🟢 Tự động đồng bộ với Google Calendar • ● Đã đồng bộ`.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
 
+56. **[REQ-075] Tuyệt Đối Không Giả Lập/Bịa Đặt Sự Kiện Trên Lịch Người Dùng — Chỉ Hiển Thị 100% Dữ Liệu Thực Tế Từ Google Calendar API**:
+    - *Triệt Tiêu Hoàn Toàn Sự Kiện Giả Lập*:
+      + Xóa bỏ 100% hàm `generateSmartUtilityEvents` và `isPastUtility`. Tuyệt đối không tự ý bịa đặt bất kỳ sự kiện nào (như "Giao ban kế hoạch tuần mới", "Chốt chỉ số điện", "Tiền điện", "Tiền nước", "Cước internet") vào lịch cá nhân của người dùng.
+      + Lịch của người dùng BẮT BUỘC chỉ hiển thị đúng các sự kiện có thực trên Google Calendar của tài khoản (`https://www.googleapis.com/calendar/v3/calendars/primary/events`).
+    - *Làm Sạch Triệt Để Bộ Nhớ Đệm Cache Cũ*:
+      + Hàm `sanitizeRealCalendarEvents` tự động lọc bỏ toàn bộ các từ khóa mock khỏi `localStorage`.
+      + Tự động quét và xóa sạch các khóa `user_calendar_cache_*` cũ chứa dữ liệu giả lập ngay khi người dùng nạp trang.
+    - *Đồng Bộ Token Ngầm GIS & Hiển Thị Minh Bạch*:
+      + Tự động yêu cầu token ngầm qua Google Identity Services Token Client (`initTokenClient({ prompt: '' })`) và truyền token tức thì lên state cha qua `onTokenUpdated`.
+      + Nếu tháng đó người dùng không có sự kiện nào: Lịch hiển thị sạch sẽ 100%, không có chấm tròn và không có popup/tooltip giả.
+      + Nếu có sự kiện thật từ Google Calendar: Hiển thị đúng ngày và đúng tiêu đề thật của người dùng.
+      + Chân trang hiển thị minh bạch: `🟢 Tự động đồng bộ với Google Calendar • Dữ liệu thực tế`.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 PASS, `npm run testwebsite` 47/47 ca kiểm thử PASS (RELEASE GATE: PASSED).
+
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
 2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.

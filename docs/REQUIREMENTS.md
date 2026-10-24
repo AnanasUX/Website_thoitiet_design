@@ -360,3 +360,26 @@
      - `npm run build`: Biên dịch hoàn tất 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-075)
+
+- **Mã Yêu Cầu**: `REQ-075`
+- **Tiêu Đề**: Tuyệt Đối Không Giả Lập/Bịa Đặt Sự Kiện Trên Lịch Người Dùng — Chỉ Hiển Thị 100% Dữ Liệu Thực Tế Từ Google Calendar API
+- **Nguồn Prompt**: `PROMPT-20261024-05`: *"Tại sao cái này lại có trên lịch của người dùng thực tế dữ liệu phải lấy theo dữ liệu thực tế của người dùng trên Google Calendar chứ"*
+- **Phân Hệ**: Google Calendar Real Data Sync, Cache Sanitizer, GIS Token Auto-Handler (`src/App.tsx`, `docs/DECISIONS.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu 100% Dữ Liệu Giả Lập & Mock Events*:
+     - Xóa bỏ hoàn toàn hàm `generateSmartUtilityEvents` và `isPastUtility`. Tuyệt đối không tự ý gán bất kỳ sự kiện bịa đặt nào (ví dụ: "Giao ban kế hoạch tuần mới", "Chốt chỉ số công tơ điện", "Thanh toán hóa đơn tiền điện", "Thanh toán hóa đơn tiền nước", "Cước Internet", "Tự động đồng bộ Lịch Google") vào lịch cá nhân của người dùng.
+     - Lịch của người dùng BẮT BUỘC chỉ hiển thị đúng các sự kiện thực tế do chính người dùng tạo hoặc nhận trên Google Calendar cá nhân (`https://www.googleapis.com/calendar/v3/calendars/primary/events`).
+  2. *Dọn Dẹp Triệt Để Bộ Đệm Cache Cũ*:
+     - Viết hàm `sanitizeRealCalendarEvents` lọc bỏ hoàn toàn các từ khóa mock (`giao ban`, `chốt chỉ số`, `tiền điện`, `tiền nước`, `cước internet`, `tự động đồng bộ lịch`) khỏi `localStorage`.
+     - Tự động quét và xóa sạch các khóa `user_calendar_cache_*` cũ chứa dữ liệu giả lập ngay khi người dùng nạp trang.
+  3. *Hiển Thị Minh Bạch & Trung Thực*:
+     - Khi tháng đó người dùng không có sự kiện nào trên Google Calendar, lịch hiển thị sạch sẽ 100%, không có chấm tròn và không có tooltip popup giả.
+     - Khi có sự kiện thực tế từ Google Calendar: hiển thị đúng ngày, đúng tiêu đề thực tế (`ev.summary`).
+     - Chân trang hiển thị minh bạch: `🟢 Tự động đồng bộ với Google Calendar • Dữ liệu thực tế` (hoặc `Đã đồng bộ X sự kiện thực tế` khi có dữ liệu).
+  4. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

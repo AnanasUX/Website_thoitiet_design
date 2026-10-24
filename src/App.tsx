@@ -2552,7 +2552,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email && (
             <div className="w-full">
-              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
             </div>
           )}
 
@@ -2781,7 +2781,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           <MarketSection />
           {userRole && userRole.email && (
             <div className="w-full">
-              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+              <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
             </div>
           )}
 
@@ -3058,7 +3058,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
         {userRole && userRole.email && (
           <div className="flex-[3] min-w-[250px]">
-            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} />
+            <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
           </div>
         )}
       </div>
@@ -4146,101 +4146,64 @@ function ScrollToTop() {
 
 
 
-function CalendarSection({ userEmail, accessToken }: { userEmail: string; accessToken?: string; onTokenExpired?: () => void; onRelogin?: () => void }) {
+function CalendarSection({ 
+  userEmail, 
+  accessToken, 
+  onTokenExpired, 
+  onRelogin, 
+  onTokenUpdated 
+}: { 
+  userEmail: string; 
+  accessToken?: string; 
+  onTokenExpired?: () => void; 
+  onRelogin?: () => void;
+  onTokenUpdated?: (token: string) => void;
+}) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   const cacheKey = `user_calendar_cache_${userEmail || 'guest'}_${year}_${month}`;
 
-  // Helper kiểm tra sự kiện gán số điện, nước, hóa đơn trong quá khứ để tự động dọn dẹp
-  const isPastUtility = (evDate: Date, summary: string): boolean => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    if (evDate.getTime() >= now.getTime()) return false;
-    const s = (summary || '').toLowerCase();
-    return s.includes('điện') || s.includes('nước') || s.includes('hóa đơn') || s.includes('tiền nhà') || s.includes('chỉ số') || s.includes('gán số');
+  // Hàm lọc bỏ 100% các dữ liệu mẫu/giả lập cũ khỏi bộ đệm, chỉ giữ lại dữ liệu thực tế
+  const sanitizeRealCalendarEvents = (raw: any): Record<number, string[]> => {
+    if (!raw || typeof raw !== 'object') return {};
+    const clean: Record<number, string[]> = {};
+    const mockKeywords = ['giao ban', 'chốt chỉ số', 'tiền điện', 'tiền nước', 'cước internet', 'tự động đồng bộ lịch'];
+    Object.entries(raw).forEach(([dayStr, list]: [string, any]) => {
+      const d = parseInt(dayStr, 10);
+      if (isNaN(d) || !Array.isArray(list)) return;
+      const valid = list.filter((title: string) => {
+        if (typeof title !== 'string') return false;
+        const s = title.toLowerCase();
+        return !mockKeywords.some(kw => s.includes(kw));
+      });
+      if (valid.length > 0) clean[d] = valid;
+    });
+    return clean;
   };
 
-  // Helper tự động khởi tạo lịch sinh hoạt & công việc tiện ích thông minh cho tháng
-  const generateSmartUtilityEvents = (email: string, targetYear: number, targetMonth: number): Record<number, string[]> => {
-    const map: Record<number, string[]> = {};
-    const now = new Date();
-    const isCurrent = now.getFullYear() === targetYear && now.getMonth() === targetMonth;
-    const currentDay = now.getDate();
-    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-
-    // 1. Ngày 15: Chốt chỉ số công tơ điện
-    if (15 <= daysInMonth && (!isCurrent || 15 >= currentDay)) {
-      map[15] = [`Chốt chỉ số công tơ điện tháng ${targetMonth + 1}`];
-    }
-    // 2. Ngày 18: Hạn thanh toán tiền điện sinh hoạt
-    if (18 <= daysInMonth && (!isCurrent || 18 >= currentDay)) {
-      map[18] = ['Thanh toán hóa đơn tiền điện'];
-    }
-    // 3. Ngày 20: Hạn thanh toán tiền nước sinh hoạt
-    if (20 <= daysInMonth && (!isCurrent || 20 >= currentDay)) {
-      map[20] = ['Thanh toán hóa đơn tiền nước'];
-    }
-    // 4. Ngày 25: Hạn nộp cước Internet & viễn thông
-    if (25 <= daysInMonth && (!isCurrent || 25 >= currentDay)) {
-      map[25] = ['Thanh toán cước Internet & truyền hình'];
-    }
-    // 5. Thứ 2 hàng tuần: Giao ban kế hoạch tuần mới
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dt = new Date(targetYear, targetMonth, d);
-      if (dt.getDay() === 1) { // Thứ 2
-        if (!map[d]) map[d] = [];
-        map[d].push('Giao ban kế hoạch tuần mới');
-      }
-    }
-    // 6. Hôm nay: Đánh dấu đồng bộ tự động
-    if (isCurrent) {
-      if (!map[currentDay]) map[currentDay] = [];
-      const userTag = email ? email.split('@')[0] : 'Tài khoản';
-      map[currentDay].unshift(`Tự động đồng bộ Lịch Google (${userTag})`);
-    }
-
-    return map;
-  };
-
-  // Khởi tạo state events: ưu tiên cache đã dọn dẹp, nếu chưa có tự động nạp lịch tiện ích
+  // Khởi tạo state events: CHỈ nạp sự kiện thực tế từ cache sạch, nếu chưa có thì để rỗng {} (tuyệt đối không bịa đặt sự kiện)
   const [events, setEvents] = useState<Record<number, string[]>>(() => {
     try {
       const raw = localStorage.getItem(cacheKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && Object.keys(parsed).length > 0) {
-          const cleaned: Record<number, string[]> = {};
-          Object.entries(parsed).forEach(([dayStr, list]: [string, any]) => {
-            const d = parseInt(dayStr, 10);
-            const evDate = new Date(year, month, d);
-            const valid = (list || []).filter((title: string) => !isPastUtility(evDate, title));
-            if (valid.length > 0) cleaned[d] = valid;
-          });
-          if (Object.keys(cleaned).length > 0) return cleaned;
-        }
+        return sanitizeRealCalendarEvents(parsed);
       }
     } catch {}
-    return generateSmartUtilityEvents(userEmail || '', year, month);
+    return {};
   });
 
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [activeTooltipDay, setActiveTooltipDay] = useState<number | null>(null);
 
-  // Hàm tự động tải sự kiện Lịch Google (100% Auto-sync ngầm)
+  // Tự động tải sự kiện thực tế từ Google Calendar API (100% Real Data)
   const autoFetchCalendarEvents = useCallback((targetYear = year, targetMonth = month) => {
-    // 1. Tự động đồng bộ hóa lịch tiện ích & công việc thông minh ngay lập tức
-    const baseEvents = generateSmartUtilityEvents(userEmail || '', targetYear, targetMonth);
+    const currentKey = `user_calendar_cache_${userEmail || 'guest'}_${targetYear}_${targetMonth}`;
 
     if (!accessToken) {
-      // Nếu chưa có token, giữ lịch tiện ích thông minh đã tự động dọn dẹp quá hạn
-      setEvents(baseEvents);
-      try {
-        localStorage.setItem(`user_calendar_cache_${userEmail || 'guest'}_${targetYear}_${targetMonth}`, JSON.stringify(baseEvents));
-      } catch {}
-
       // Tự động yêu cầu token ngầm qua Google Identity Services (GIS) nếu có sẵn trong window
       if (typeof window !== 'undefined' && userEmail && (window as any).google?.accounts?.oauth2) {
         try {
@@ -4257,8 +4220,11 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
                     const parsed = JSON.parse(stored);
                     parsed._access_token = res.access_token;
                     localStorage.setItem('user_auth', JSON.stringify(parsed));
+                    try { sessionStorage.setItem('user_auth', JSON.stringify(parsed)); } catch {}
+                    saveUserAuthCookie(parsed);
                   }
                 } catch {}
+                if (onTokenUpdated) onTokenUpdated(res.access_token);
               }
             }
           });
@@ -4276,63 +4242,51 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
       { headers: { Authorization: `Bearer ${accessToken}` } }
     )
       .then(r => {
-        if (!r.ok) throw new Error('API Error');
+        if (!r.ok) {
+          if (r.status === 401 && onTokenExpired) onTokenExpired();
+          throw new Error('Google Calendar API Error');
+        }
         return r.json();
       })
       .then(data => {
-        const map: Record<number, string[]> = { ...baseEvents };
+        const realMap: Record<number, string[]> = {};
         (data.items || []).forEach((ev: any) => {
           const start = ev.start?.dateTime || ev.start?.date;
           if (!start) return;
           const evDate = new Date(start);
-          const summary = ev.summary || '(Không có tiêu đề)';
-          // Tự động xóa/lọc bỏ các sự kiện tiền điện nước, gán số đã qua thời gian theo đúng yêu cầu
-          if (isPastUtility(evDate, summary)) {
-            return;
-          }
           const d = evDate.getDate();
-          if (!map[d]) map[d] = [];
-          if (!map[d].includes(summary)) {
-            map[d].push(summary);
+          const summary = ev.summary?.trim() || '(Không có tiêu đề)';
+          if (!realMap[d]) realMap[d] = [];
+          if (!realMap[d].includes(summary)) {
+            realMap[d].push(summary);
           }
         });
-        setEvents(map);
+        setEvents(realMap);
         try {
-          localStorage.setItem(`user_calendar_cache_${userEmail || 'guest'}_${targetYear}_${targetMonth}`, JSON.stringify(map));
+          localStorage.setItem(currentKey, JSON.stringify(realMap));
         } catch {}
       })
-      .catch(() => {
-        setEvents(baseEvents);
+      .catch(err => {
+        console.warn('[Google Calendar Sync]:', err);
       })
       .finally(() => {
         setLoadingEvents(false);
         setInitialLoaded(true);
       });
-  }, [accessToken, userEmail, year, month]);
+  }, [accessToken, userEmail, year, month, onTokenExpired, onTokenUpdated]);
 
-  // Phục hồi sự kiện từ cache khi đổi tháng/năm, luôn đảm bảo không bị trắng lịch
+  // Phục hồi sự kiện thực tế từ cache sạch khi đổi tháng/năm
   useEffect(() => {
     try {
       const raw = localStorage.getItem(cacheKey);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed && Object.keys(parsed).length > 0) {
-          const cleaned: Record<number, string[]> = {};
-          Object.entries(parsed).forEach(([dayStr, list]: [string, any]) => {
-            const d = parseInt(dayStr, 10);
-            const evDate = new Date(year, month, d);
-            const valid = (list || []).filter((title: string) => !isPastUtility(evDate, title));
-            if (valid.length > 0) cleaned[d] = valid;
-          });
-          if (Object.keys(cleaned).length > 0) {
-            setEvents(cleaned);
-            return;
-          }
-        }
+        setEvents(sanitizeRealCalendarEvents(parsed));
+        return;
       }
     } catch {}
-    setEvents(generateSmartUtilityEvents(userEmail || '', year, month));
-  }, [cacheKey, userEmail, year, month]);
+    setEvents({});
+  }, [cacheKey]);
 
   // Tự động đồng bộ ngầm khi accessToken, năm hoặc tháng thay đổi
   useEffect(() => {
@@ -4421,7 +4375,7 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
               {hasEvent && (
                 <div className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isToday ? 'bg-white' : 'bg-[#f7a928]'}`}></div>
               )}
-              {/* Tooltip */}
+              {/* Tooltip: CHỈ hiển thị sự kiện thực tế từ Google Calendar của người dùng */}
               {hasEvent && (
                 <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 ${activeTooltipDay === day ? 'flex' : 'hidden md:group-hover:flex'} flex-col items-center z-50 w-max max-w-[200px]`}>
                   <div className="bg-[#182033] dark:bg-[#0c0f12] text-white text-[11px] py-2 px-3 rounded-lg shadow-xl flex flex-col gap-1 text-left pointer-events-auto border border-transparent dark:border-white/10" style={{ fontFamily: 'inherit' }}>
@@ -4440,7 +4394,7 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
         })}
       </div>
 
-      {/* Footer: Calendar Sync Status - 100% TỰ ĐỘNG KHÔNG CẦN THAO TÁC THỦ CÔNG */}
+      {/* Footer: Calendar Sync Status - 100% DỮ LIỆU THỰC TẾ TỪ GOOGLE CALENDAR */}
       <div className="mt-3 pt-3 border-t border-[#f1f5f9] dark:border-white/10 flex items-center justify-between gap-2">
         {!userEmail ? (
           <div className="flex items-center gap-2">
@@ -4449,15 +4403,19 @@ function CalendarSection({ userEmail, accessToken }: { userEmail: string; access
           </div>
         ) : (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse shrink-0"></div>
+            <div className={`w-1.5 h-1.5 rounded-full ${loadingEvents ? 'bg-[#3a7bd5] animate-spin' : 'bg-[#10b981] animate-pulse'} shrink-0`}></div>
             <p className="text-[#10b981] dark:text-[#34d399] text-[11px] leading-tight font-medium truncate">
-              {loadingEvents ? 'Đang tự động cập nhật Lịch Google...' : 'Tự động đồng bộ với Google Calendar'}
+              {loadingEvents ? 'Đang tự động cập nhật Lịch Google...' : (
+                Object.keys(events).length > 0
+                  ? `Đã đồng bộ ${Object.values(events).flat().length} sự kiện thực tế`
+                  : 'Tự động đồng bộ với Google Calendar'
+              )}
             </p>
           </div>
         )}
         {userEmail && (
           <span className="text-[10px] text-[#64748b] dark:text-[#94a3b8] font-mono shrink-0">
-            {loadingEvents ? 'Đang tải...' : 'Tự động ngầm'}
+            {loadingEvents ? 'Đang tải...' : 'Dữ liệu thực tế'}
           </span>
         )}
       </div>
@@ -5942,6 +5900,32 @@ export default function App() {
     setUserRole(null);
   };
 
+  const handleTokenUpdated = useCallback((newToken: string) => {
+    setUserRole(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, _access_token: newToken };
+      try { localStorage.setItem('user_auth', JSON.stringify(updated)); } catch {}
+      try { sessionStorage.setItem('user_auth', JSON.stringify(updated)); } catch {}
+      saveUserAuthCookie(updated);
+      return updated;
+    });
+  }, []);
+
+  // Tự động dọn dẹp triệt để mọi dữ liệu sự kiện mẫu/bịa đặt cũ trong localStorage
+  useEffect(() => {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('user_calendar_cache_')) {
+          const val = localStorage.getItem(key);
+          if (val && (val.includes('Giao ban') || val.includes('Ch\u1ed1t ch\u1ec9 s\u1ed1') || val.includes('ti\u1ec1n \u0111i\u1ec7n') || val.includes('ti\u1ec1n n\u01b0\u1edbc') || val.includes('t\u1ef1 \u0111\u1ed9ng \u0111\u1ed3ng b\u1ed9'))) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    } catch {}
+  }, []);
+
   const handleTokenExpired = () => {
     if (userRole) {
       const updated = { ...userRole };
@@ -5970,42 +5954,39 @@ export default function App() {
     }
   }, [userRole]);
   
-  // Làm mới token Google ngầm (Silent Refresh) bằng iframe ẩn - TUYỆT ĐỐI KHÔNG redirect top-level để tránh đẩy người dùng về trang chủ hoặc đóng Shorts
+  // Tự động yêu cầu OAuth2 token ngầm cho Google Calendar qua Google Identity Services (GIS)
   useEffect(() => {
-    // Tuyệt đối không tạo iframe bên trong iframe (ngăn chặn đệ quy / infinite iframe loop)
     if (typeof window === 'undefined' || window.self !== window.top) return;
 
     if (userRole && userRole.email && !userRole._access_token) {
-      if (sessionStorage.getItem('google_silent_failed')) return;
+      if (sessionStorage.getItem('google_gis_token_failed')) return;
 
-      const isCustomDomain = window.location.hostname === 'anx.io.vn' || !window.location.pathname.includes('/Website_thoitiet_design');
-      const basePath = isCustomDomain ? '/' : '/Website_thoitiet_design/';
-      const redirectUri = window.location.origin + basePath;
-      const scope = 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly';
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=none&login_hint=${encodeURIComponent(userRole.email)}`;
-
-      // Sử dụng iframe ẩn: URL top-level và các modal (Shorts, chi tiết bài viết) hoàn toàn không bị ảnh hưởng
-      const silentIframe = document.createElement('iframe');
-      silentIframe.style.display = 'none';
-      silentIframe.src = authUrl;
-      document.body.appendChild(silentIframe);
-
-      const timeout = setTimeout(() => {
+      if ((window as any).google?.accounts?.oauth2) {
         try {
-          if (silentIframe.parentNode) silentIframe.parentNode.removeChild(silentIframe);
-        } catch {}
-        sessionStorage.setItem('google_silent_failed', '1');
-      }, 5000);
-
-      return () => {
-        clearTimeout(timeout);
-        try {
-          if (silentIframe.parentNode) silentIframe.parentNode.removeChild(silentIframe);
-        } catch {}
-      };
+          const client = (window as any).google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'openid email profile https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/calendar.readonly',
+            hint: userRole.email,
+            prompt: '',
+            callback: (res: any) => {
+              if (res && res.access_token) {
+                sessionStorage.removeItem('google_gis_token_failed');
+                handleTokenUpdated(res.access_token);
+              } else {
+                sessionStorage.setItem('google_gis_token_failed', '1');
+              }
+            },
+            error_callback: () => {
+              sessionStorage.setItem('google_gis_token_failed', '1');
+            }
+          });
+          client.requestAccessToken({ prompt: '' });
+        } catch {
+          sessionStorage.setItem('google_gis_token_failed', '1');
+        }
+      }
     }
-  }, [userRole]);
-
+  }, [userRole?.email, userRole?._access_token, handleTokenUpdated]);
 
   const handleRelogin = () => {
     doGoogleLogin(setUserRole, userRole?.email, true);
@@ -7201,13 +7182,13 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
       </div>
 
 

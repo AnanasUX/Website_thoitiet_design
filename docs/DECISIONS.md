@@ -872,3 +872,33 @@
         + `npm run build`: Hoàn thành xuất sắc trong 3.08s, 0 lỗi biên dịch.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
         + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+  56. **[REQ-075] Tuyệt Đối Không Giả Lập/Bịa Đặt Sự Kiện Trên Lịch Người Dùng — Chỉ Hiển Thị 100% Dữ Liệu Thực Tế Từ Google Calendar API**:
+      - *Bối cảnh & Phản hồi người dùng*:
+        + Người dùng gửi ảnh chụp màn hình widget Lịch Google với tài khoản `mrkun28@gmail.com`, trên đó ngày 26 hiển thị tooltip "• Giao ban kế hoạch tuần mới".
+        + Người dùng phản ánh rõ ràng: *"Tại sao cái này lại có trên lịch của người dùng thực tế dữ liệu phải lấy theo dữ liệu thực tế của người dùng trên Google Calendar chứ"*.
+      - *Phân tích nguyên nhân cốt lõi (Root Cause Analysis)*:
+        1. **Hàm giả lập sự kiện `generateSmartUtilityEvents` tự ý tạo sự kiện mock**:
+           - Để tránh việc lịch bị trắng khi chưa có token hoặc chưa có mạng, hàm `generateSmartUtilityEvents` đã tự động sinh các sự kiện: Chốt chỉ số công tơ điện (ngày 15), Thanh toán tiền điện (ngày 18), Tiền nước (ngày 20), Cước Internet (ngày 25), và đặc biệt là "Giao ban kế hoạch tuần mới" vào tất cả các ngày Thứ 2 trong tháng (ngày 5, 12, 19, 26)!
+           - Các sự kiện này được trộn thẳng vào mảng sự kiện (`map = { ...baseEvents }`), hiển thị chấm tròn trên lịch và bật tooltip giả lập khi người dùng hover/click.
+           - Điều này vi phạm nghiêm trọng tính chính xác và tôn trọng dữ liệu cá nhân của người dùng: người dùng không hề tạo hay có lịch "Giao ban" hay các hóa đơn này trên Google Calendar của họ!
+        2. **Bộ nhớ đệm lưu trữ dữ liệu giả lập**:
+           - Khóa `user_calendar_cache_*` trong `localStorage` đã lưu lại các sự kiện giả lập này, khiến chúng tiếp tục hiển thị sau mỗi lần tải lại trang.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Xóa bỏ 100% mã nguồn giả lập sự kiện**:
+          * Loại bỏ hoàn toàn `generateSmartUtilityEvents` và `isPastUtility`.
+          * Tuyệt đối không tự ý gán bất kỳ sự kiện nào ngoài dữ liệu thực tế do Google Calendar API trả về.
+        + **Làm sạch triệt để bộ nhớ đệm (Cache Sanitizer)**:
+          * Viết hàm `sanitizeRealCalendarEvents` lọc bỏ toàn bộ các chuỗi mock chứa 'giao ban', 'chốt chỉ số', 'tiền điện', 'tiền nước', 'cước internet', 'tự động đồng bộ lịch'.
+          * Bổ sung quy trình tự động quét và thanh lọc các khóa `user_calendar_cache_*` cũ trong `localStorage` khi nạp trang.
+        + **100% Dữ Liệu Thực Tế Từ Google Calendar API**:
+          * State `events` chỉ được nạp từ các item thực tế (`data.items`) của Google Calendar API (`https://www.googleapis.com/calendar/v3/calendars/primary/events`).
+          * Nếu người dùng không có sự kiện nào trong tháng đó trên Google Calendar: Lịch hiển thị hoàn toàn sạch sẽ, không có bất kỳ chấm tròn hay sự kiện nào.
+          * Nếu người dùng có sự kiện thật: Hiển thị chấm tròn và tooltip với đúng tiêu đề thực tế của sự kiện đó.
+        + **Cơ chế cập nhật Token ngầm qua GIS Token Client**:
+          * Thêm callback `onTokenUpdated` truyền từ `App` xuống `CalendarSection`. Khi Google Identity Services trả về token ngầm, `userRole._access_token` được cập nhật tức thì và gọi API lấy sự kiện thực tế.
+          * Chân trang hiển thị trạng thái chuẩn xác: `🟢 Tự động đồng bộ với Google Calendar • Dữ liệu thực tế`.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Hoàn thành 0 lỗi.
+        + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
+        + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).

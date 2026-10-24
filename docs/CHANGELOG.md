@@ -1,5 +1,24 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.45.0 (2026-10-24) - Xóa Bỏ Hoàn Toàn Dữ Liệu Giả Lập, Chỉ Hiển Thị 100% Dữ Liệu Thực Tế Từ Google Calendar Của Người Dùng (REQ-075)
+
+### 1. Triệt Tiêu 100% Dữ Liệu Giả Lập/Bịa Đặt Trên Lịch Người Dùng
+- **Xóa bỏ hàm giả lập sự kiện**: Loại bỏ hoàn toàn `generateSmartUtilityEvents` và `isPastUtility`. Tuyệt đối không tự ý gán các sự kiện giả lập (như "Giao ban kế hoạch tuần mới" vào các ngày Thứ 2, "Chốt chỉ số công tơ điện", "Thanh toán tiền điện", "Thanh toán tiền nước", "Cước Internet", "Tự động đồng bộ Lịch Google") vào lịch cá nhân của người dùng.
+- **Tôn trọng dữ liệu thực tế**: Lịch của người dùng BẮT BUỘC chỉ hiển thị đúng các sự kiện thực tế có trong Google Calendar của chính tài khoản người dùng (`mrkun28@gmail.com`).
+- **Làm sạch bộ nhớ đệm cũ**: Hàm `sanitizeRealCalendarEvents` tự động lọc bỏ toàn bộ các từ khóa mock khỏi `localStorage`. Hệ thống tự động quét và làm sạch mọi khóa `user_calendar_cache_*` cũ khi nạp trang.
+
+### 2. Đồng Bộ Tự Động Ngầm 100% Qua Google Identity Services & Hiển Thị Minh Bạch
+- **Tự động cấp phát Token ngầm**: Tự động xin access_token qua Google Identity Services (GIS Token Client `prompt: ''`) và truyền tức thì lên ứng dụng qua callback `onTokenUpdated`.
+- **Hiển thị trung thực**: Nếu người dùng không có sự kiện nào trong tháng trên Google Calendar, lịch hiển thị hoàn toàn sạch sẽ, không có bất kỳ chấm tròn hay popup giả. Khi có sự kiện thật, hiển thị chính xác tiêu đề sự kiện từ Google Calendar.
+- **Trạng thái chân trang**: Hiển thị rõ ràng: `🟢 Tự động đồng bộ với Google Calendar • Dữ liệu thực tế` (hoặc `Đã đồng bộ X sự kiện thực tế` khi có dữ liệu).
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 0.64s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.44.0 (2026-10-24) - Định Vị Khu Vực Đảo Ngược Ưu Tiên Photon OSM & Tự Động Hóa 100% Đồng Bộ Lịch Google Calendar (REQ-074)
 
 ### 1. Khắc Phục Tận Gốc Lỗi Định Vị Khu Vực Của Người Dùng
