@@ -560,10 +560,11 @@ function WeatherSection({
           darkMode ? 'hero-morph-gradient-dark' : 'hero-morph-gradient-light'
         }`}
       >
-        {/* Ambient decorative aura (Almond Frost & Sky Glow Morphing Blobs) */}
-        <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-[#b8ccff]/25 blur-3xl pointer-events-none animate-morph-blob-1"></div>
-        <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-[#68dbff]/20 blur-3xl pointer-events-none animate-morph-blob-2"></div>
-        <div className="absolute right-1/4 bottom-1/4 w-52 h-52 rounded-full bg-[#a855f7]/15 blur-3xl pointer-events-none animate-morph-blob-3"></div>
+        {/* Ambient decorative aura (CSS Morphing Gradients Liquid Blobs) */}
+        <div className={`absolute -right-16 -top-16 w-80 h-80 rounded-full bg-[#2563ff]/70 blur-3xl pointer-events-none animate-morph-blob-1 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
+        <div className={`absolute -left-12 -bottom-12 w-72 h-72 rounded-full bg-[#a855f7]/70 blur-3xl pointer-events-none animate-morph-blob-2 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
+        <div className={`absolute right-1/4 bottom-1/4 w-64 h-64 rounded-full bg-[#06b6d4]/65 blur-3xl pointer-events-none animate-morph-blob-3 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
+        <div className={`absolute left-1/3 top-10 w-56 h-56 rounded-full bg-[#f59e0b]/55 blur-3xl pointer-events-none animate-morph-blob-4 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
 
         <div className="flex items-center justify-between w-full z-10">
           <button
@@ -5387,6 +5388,63 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
   );
 }
 
+interface PreviouslyAcquiredLocation {
+  lat: number;
+  lon: number;
+  name: string;
+  nameFull?: string;
+  isManual?: boolean;
+  source?: 'gps' | 'ip' | 'manual' | 'auto';
+  timestamp?: number;
+}
+
+const getPreviouslyAcquiredLocation = (): PreviouslyAcquiredLocation | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    // 1. Kiểm tra vị trí thủ công trong phiên làm việc hiện tại
+    const sManual = sessionStorage.getItem('user_weather_session_manual_location');
+    if (sManual) {
+      const p = JSON.parse(sManual);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return { ...p, isManual: true, source: 'manual' };
+      }
+    }
+    // 2. Kiểm tra vị trí thủ công đã lưu bền vững
+    const lManual = localStorage.getItem('user_weather_manual_location');
+    if (lManual) {
+      const p = JSON.parse(lManual);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return { ...p, isManual: true, source: 'manual' };
+      }
+    }
+    // 3. Kiểm tra vị trí gần nhất hệ thống đã lấy được
+    const lastLoc = localStorage.getItem('user_weather_last_location');
+    if (lastLoc) {
+      const p = JSON.parse(lastLoc);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return p;
+      }
+    }
+    // 4. Kiểm tra vị trí tự động đã lưu trước đó
+    const autoLoc = localStorage.getItem('user_weather_auto_location');
+    if (autoLoc) {
+      const p = JSON.parse(autoLoc);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return p;
+      }
+    }
+    // 5. Kiểm tra key tương thích ngược
+    const legacyLoc = localStorage.getItem('user_weather_location');
+    if (legacyLoc) {
+      const p = JSON.parse(legacyLoc);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return p;
+      }
+    }
+  } catch {}
+  return null;
+};
+
 export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean, source?: 'gps' | 'ip' | 'manual' | 'auto') => void) | null>(null);
@@ -5395,16 +5453,13 @@ export default function App() {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null);
-  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | 'auto'>('auto');
+  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | 'auto'>(() => {
+    const prev = getPreviouslyAcquiredLocation();
+    return (prev && prev.source) ? prev.source : (prev?.isManual ? 'manual' : 'auto');
+  });
   const [isManualLocation, setIsManualLocation] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem('user_weather_manual_location');
-      if (stored) {
-        const p = JSON.parse(stored);
-        return !!(p && p.isManual);
-      }
-    } catch {}
-    return false;
+    const prev = getPreviouslyAcquiredLocation();
+    return !!(prev && prev.isManual);
   });
 
   const handleSelectLocation = (lat: number, lon: number, name: string, nameFull: string) => {
@@ -5412,10 +5467,19 @@ export default function App() {
     setShowLocationModal(false);
     setIsManualLocation(true);
     setLocationSource('manual');
+    const locObj = {
+      lat,
+      lon,
+      name,
+      nameFull: nameFull || `${name}, VN`,
+      isManual: true,
+      source: 'manual' as const,
+      timestamp: Date.now()
+    };
     try {
-      sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify({
-        lat, lon, name, nameFull, isManual: true, timestamp: Date.now()
-      }));
+      localStorage.setItem('user_weather_manual_location', JSON.stringify(locObj));
+      localStorage.setItem('user_weather_last_location', JSON.stringify(locObj));
+      sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify(locObj));
     } catch {}
     if (doFetchRef.current) {
       doFetchRef.current(lat, lon, nameFull || name, true, 'manual');
@@ -6109,7 +6173,19 @@ useEffect(() => {
 
   const [condKey, setCondKey] = useState<ConditionKey>("mua-nho");
   const [panelOpen, setPanelOpen] = useState(false);
-  const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
+  const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(() => {
+    const prevLoc = getPreviouslyAcquiredLocation();
+    if (prevLoc && (prevLoc.name || prevLoc.nameFull)) {
+      const locName = prevLoc.name || (prevLoc.nameFull ? prevLoc.nameFull.split(',')[0].trim() : 'Vị trí của bạn');
+      const locFull = prevLoc.nameFull || `${locName}, VN`;
+      const initial: Record<ConditionKey, WeatherEntry> = { ...DEFAULT_WEATHER_DATA };
+      (Object.keys(initial) as ConditionKey[]).forEach(k => {
+        initial[k] = { ...initial[k], location: locName, locationFull: locFull };
+      });
+      return initial;
+    }
+    return undefined;
+  });
   const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
   const preCrawledRef = useRef<Map<string, any>>(new Map());
   const [activeCategory, setActiveCategory] = useState("Tất cả");
@@ -6924,33 +7000,26 @@ useEffect(() => {
           
           processJson(jsonPayload);
           try {
+            const saveObj = {
+              lat,
+              lon,
+              name: resolvedLocation.split(',')[0].trim(),
+              nameFull: resolvedLocation,
+              isManual: isManualSelection,
+              source: source,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('user_weather_last_location', JSON.stringify(saveObj));
             if (isManualSelection) {
-              localStorage.setItem('user_weather_manual_location', JSON.stringify({
-                lat,
-                lon,
-                name: resolvedLocation.split(',')[0].trim(),
-                nameFull: resolvedLocation,
-                isManual: true,
-                source: 'manual',
-                timestamp: Date.now()
-              }));
+              localStorage.setItem('user_weather_manual_location', JSON.stringify(saveObj));
+              sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify(saveObj));
               setIsManualLocation(true);
               setLocationSource('manual');
             } else {
-              localStorage.setItem('user_weather_auto_location', JSON.stringify({
-                lat,
-                lon,
-                name: resolvedLocation.split(',')[0].trim(),
-                nameFull: resolvedLocation,
-                isManual: false,
-                source: source,
-                timestamp: Date.now()
-              }));
+              localStorage.setItem('user_weather_auto_location', JSON.stringify(saveObj));
               setIsManualLocation(false);
               setLocationSource(source);
             }
-            // Dọn dẹp key cũ không phân định để tránh khóa cứng vị trí cũ
-            localStorage.removeItem('user_weather_location');
           } catch {}
           
         }).catch((e: any) => {
@@ -6979,6 +7048,18 @@ useEffect(() => {
       };
 
       const fallbackToIp = () => {
+        // Nếu hệ thống ĐÃ TỪNG LẤY ĐƯỢC vị trí hợp lệ trước đó (không phải IP Hà Nội mặc định),
+        // thì tuyệt đối giữ nguyên và cập nhật lại theo vị trí đó, không đè IP Hà Nội lên!
+        const prev = getPreviouslyAcquiredLocation();
+        if (prev && typeof prev.lat === 'number' && typeof prev.lon === 'number' && prev.name) {
+          const isGenericHanoi = (prev.source === 'ip' && (prev.name === 'Hà Nội' || prev.nameFull === 'Hà Nội, VN'));
+          if (!isGenericHanoi) {
+            console.log("[Geolocation] Preserving previously acquired location over IP fallback:", prev.nameFull || prev.name);
+            doFetch(prev.lat, prev.lon, prev.nameFull || prev.name, !!prev.isManual, prev.source || 'auto');
+            return;
+          }
+        }
+
         // Tầng 1: Sử dụng ipwho.is (HTTPS native, độ chính xác cao tại VN, không rate limit)
         fetch("https://ipwho.is/")
           .then(res => res.json())
@@ -7051,46 +7132,20 @@ useEffect(() => {
 
       fallbackToIpRef.current = fallbackToIp;
 
-      // ── BƯỚC 1: KIỂM TRA LỰA CHỌN THỦ CÔNG TRONG PHIÊN LÀM VIỆC HIỆN TẠI (SESSION) ──
-      // Chỉ duy trì vị trí thủ công nếu người dùng chủ động chọn trong phiên hiện tại (sessionStorage)
-      let manualLoc: any = null;
-      try {
-        const storedManual = sessionStorage.getItem('user_weather_session_manual_location');
-        if (storedManual) {
-          const parsed = JSON.parse(storedManual);
-          if (parsed && parsed.isManual && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
-            manualLoc = parsed;
-          }
-        }
-      } catch {}
-
-      if (manualLoc) {
-        setIsManualLocation(true);
-        doFetch(manualLoc.lat, manualLoc.lon, manualLoc.nameFull || manualLoc.name, true, 'manual');
-        return;
+      // ── BƯỚC 1: TỰ ĐỘNG CẬP NHẬT THEO VỊ TRÍ TRƯỚC ĐÓ HỆ THỐNG ĐÃ LẤY ĐƯỢC ──
+      const previouslyAcquired = getPreviouslyAcquiredLocation();
+      if (previouslyAcquired && typeof previouslyAcquired.lat === 'number' && typeof previouslyAcquired.lon === 'number') {
+        console.log("[Geolocation] Restoring and updating according to previously acquired location:", previouslyAcquired.nameFull || previouslyAcquired.name);
+        setIsManualLocation(!!previouslyAcquired.isManual);
+        setLocationSource(previouslyAcquired.source || (previouslyAcquired.isManual ? 'manual' : 'auto'));
+        doFetch(
+          previouslyAcquired.lat,
+          previouslyAcquired.lon,
+          previouslyAcquired.nameFull || previouslyAcquired.name,
+          !!previouslyAcquired.isManual,
+          previouslyAcquired.source || 'auto'
+        );
       }
-
-      // Tự động dọn dẹp key manual cũ trong localStorage để đảm bảo hệ thống luôn tự động cập nhật vị trí thực tế
-      try {
-        localStorage.removeItem('user_weather_manual_location');
-        localStorage.removeItem('user_weather_location');
-      } catch {}
-
-      // ── BƯỚC 2: TỰ ĐỘNG CẬP NHẬT VỊ TRÍ THỰC TẾ CỦA NGƯỜI DÙNG ──
-      // "hệ thống sẽ phải định vị đúng vị trí của người dùng đang ở khu vực nào thì sẽ đẩy vào"
-      setIsManualLocation(false);
-
-      // Nếu có cache tự động trước đó, load tức thì (0ms) để không bị giật lag giao diện
-      try {
-        const storedAuto = localStorage.getItem('user_weather_auto_location');
-        if (storedAuto) {
-          const parsed = JSON.parse(storedAuto);
-          if (parsed && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
-            const isGenericHanoi = parsed.nameFull === 'Hà Nội, VN' || parsed.name === 'Hà Nội';
-            doFetch(parsed.lat, parsed.lon, isGenericHanoi ? null : (parsed.nameFull || parsed.name), false, parsed.source || 'auto');
-          }
-        }
-      } catch {}
 
       // Hàm kích hoạt lấy tọa độ GPS chính xác thực tế
       const requestGpsPosition = (onFail?: () => void) => {

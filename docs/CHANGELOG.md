@@ -1,20 +1,18 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
-## Phiên bản 1.47.0 (2026-10-28) - Hiệu Ứng Nền Động CSS Morphing Gradients Cho Thẻ Thời Tiết Hero & Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì Theo Quyền Trình Duyệt (REQ-077)
+## Phiên bản 1.47.0 (2026-10-28) - Tự Động Cập Nhật Theo Vị Trí Trước Đó Đã Lấy Được & Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp (REQ-077)
 
-### 1. Hiệu Ứng Nền Động CSS Morphing Gradients Animated Background
-- **Chuyển sắc mượt mà không gian vũ trụ & hoàng gia**: Khai báo `@keyframes morphGradientDark` và `@keyframes morphGradientLight` (15s liên tục, vô tận) tạo dòng chảy gradient đa điểm dừng sống động, thay thế hoàn toàn nền inline tĩnh cũ.
-- **3 Khối Aura Hữu Cơ Biến Hình Độc Lập**: Triển khai `.animate-morph-blob-1`, `.animate-morph-blob-2`, `.animate-morph-blob-3` biến dạng liên tục với bán kính bo góc không đối xứng và xoay chuyển nhẹ, tạo độ sâu không gian 3D ấn tượng.
-- **Tối ưu phần cứng GPU**: Tận dụng `will-change: transform, background-position;` và `transform: translate3d(0, 0, 0);` bảo đảm khung hình đạt 60fps mượt mà trên cả điện thoại và máy tính.
-- **Tương thích hoàn hảo Dark/Light Mode**: `.hero-morph-gradient-dark` (sắc chàm không gian) và `.hero-morph-gradient-light` (sắc xanh đại dương tươi mát).
+### 1. Tự Động Cập Nhật & Bảo Toàn Vị Trí Trước Đó Hệ Thống Đã Lấy Được
+- **Khởi tạo tức thì (0ms) từ bộ nhớ vị trí**: Triển khai hàm `getPreviouslyAcquiredLocation()` khôi phục tức thời vị trí từ `sessionStorage` -> `user_weather_manual_location` -> `user_weather_last_location` -> `user_weather_auto_location`.
+- **Khởi tạo state `liveData` tại Frame 0**: Gán trực tiếp địa danh trước đó vào `liveData` ngay khi mount component, chấm dứt hoàn toàn hiện tượng hiển thị mặc định "Hà Nội" rồi mới nhảy sang vị trí khác.
+- **Bảo toàn bộ nhớ vĩnh viễn**: Xóa bỏ hoàn toàn mã lệnh `localStorage.removeItem('user_weather_manual_location')` trong `loadData()`, không bao giờ tự ý xóa vị trí người dùng đã từng lưu.
+- **Lá chắn bảo vệ IP Fallback**: Trong `fallbackToIp()`, nếu hệ thống đã từng lấy được vị trí hợp lệ trước đó (không phải IP Hà Nội mặc định), hệ thống giữ nguyên và fetch lại thời tiết cho vị trí đó, không ghi đè IP Hà Nội lên khi GPS timeout hoặc chưa cấp quyền.
+- **Cập nhật tức thì khi có GPS hoặc di chuyển**: Tiếp tục theo dõi qua `watchPosition` và `permissions.onchange` để cập nhật tọa độ thực tế tức thì.
 
-### 2. Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì (Reactive Geolocation Engine)
-- **Triệt tiêu lỗi khóa cứng Hà Nội (Hanoi Lock Fallback)**: Trong `doFetch`, khai báo `let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;` bảo đảm khi ở chế độ tự động, hệ thống LUÔN LUÔN giải mã tọa độ ngược qua Photon Komoot OSM và Haversine, ngăn IP fallback Hà Nội đè mất vị trí thực.
-- **Lọc bộ nhớ đệm mặc định**: Khi nạp trang (`loadData`), nếu giá trị lưu tạm là chuỗi thô "Hà Nội", truyền `locationNameStr = null` để ép buộc giải mã lại tọa độ.
-- **Lắng nghe sự kiện quyền trình duyệt (Permissions API)**: Tích hợp `navigator.permissions.query({ name: 'geolocation' })` với `permissionStatus.onchange`. Ngay khi người dùng nhấp "Cho phép" trên popup trình duyệt, ứng dụng tự động lấy GPS và cập nhật thời tiết ngay tức thì (0ms trễ) mà không cần tải lại trang.
-- **Theo dõi vị trí liên tục (`watchPosition`)**: Tích hợp `navigator.geolocation.watchPosition` với ngưỡng lệch 400m (`haversineKm > 0.4`), tự động cập nhật thời tiết khi người dùng di chuyển giữa các địa phương.
-- **Lắng nghe Tab Focus**: `window.addEventListener('focus')` tự động kiểm tra và làm mới vị trí khi người dùng quay lại tab làm việc.
-- **Nâng thời gian chờ GPS**: Tăng timeout lên 12s cho GPS độ chính xác cao và 8s cho GPS tiêu chuẩn, triệt tiêu việc vội vã rơi vào IP fallback trên PC/laptop.
+### 2. Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp
+- **Triệt tiêu lỗi cú pháp minifier**: Xóa bỏ `filter: hue-rotate(0deg)` trong keyframes (vốn bị trình biên dịch Vite rút gọn thành `hue-rotate()` không có đối số gây lỗi cú pháp CSS trên trình duyệt).
+- **Animation chuẩn mực `@keyframes morphGradientBackground`**: Sử dụng `background-position` từ 0% đến 100% với `background-size: 300% 300%` chuyển động mượt mà (12s / 15s vô tận).
+- **4 Khối Morphing Blobs Tan Chảy Bắt Mắt**: 4 khối mầm màu kích thước lớn (w-80, w-72, w-64, w-56) với dải màu sắc nét (Royal Blue `#2563ff/70`, Cosmic Violet `#a855f7/70`, Vibrant Cyan `#06b6d4/65`, Sunset Amber `#f59e0b/55`), làm mờ `blur-3xl`, kết hợp `mix-blend-screen` (Dark Mode) và `mix-blend-hard-light` (Light Mode) tạo dòng chảy gradient tan chảy liên tục, bắt mắt và mượt mà 60fps.
 
 ### 3. Kết Quả Kiểm Thử Toàn Diện
 - `npm run build`: Hoàn thành 100% trong 1.95s, 0 lỗi biên dịch.

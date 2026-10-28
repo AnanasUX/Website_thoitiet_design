@@ -791,19 +791,16 @@
       + Thiết lập class màu tương phản rõ ràng: `isDark ? 'text-white' : 'text-[#0c0f12]'` trên toàn bộ các thẻ tiêu đề danh sách bản tin và video cards.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
 
-58. **[REQ-077] Hiệu Ứng Nền Động CSS Morphing Gradients Cho Thẻ Thời Tiết Hero & Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì Theo Quyền Trình Duyệt**:
-    - *Hiệu Ứng Nền Động CSS Morphing Gradients Animated Background*:
-      + Khai báo `@keyframes morphGradientDark` và `@keyframes morphGradientLight` (15s liên tục, vô tận) tạo làn sóng chuyển sắc mượt mà giữa các điểm dừng màu sắc hoàng gia và vũ trụ.
-      + Triển khai 3 khối aura hữu cơ chuyển động biến hình độc lập (`.animate-morph-blob-1`, `.animate-morph-blob-2`, `.animate-morph-blob-3`) với `border-radius` biến thiên không đối xứng, dịch chuyển 2D đa trục và xoay tròn nhẹ nhàng.
-      + Tối ưu hiệu năng phần cứng GPU tối đa bằng `will-change: transform, background-position;` và `transform: translate3d(0, 0, 0);`.
-      + Hỗ trợ tương thích 2 chế độ Sáng/Tối: `.hero-morph-gradient-dark` cho Dark mode và `.hero-morph-gradient-light` cho Light mode.
-    - *Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì (Reactive Real-Time Geolocation)*:
-      + *Ưu Tiên Tuyệt Đối Cho Reverse Geocoding Tọa Độ*: Trong `doFetch`, khai báo `let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;` bảo đảm khi ở chế độ tự động, hệ thống LUÔN LUÔN giải mã tọa độ ngược qua Photon Komoot OSM và Haversine, loại bỏ việc IP fallback Hà Nội đè mất vị trí thực.
-      + *Lọc Bộ Nhớ Đệm Mặc Định*: Khi nạp trang (`loadData`), nếu giá trị lưu tạm là chuỗi thô "Hà Nội", truyền `locationNameStr = null` để ép buộc giải mã lại tọa độ.
-      + *Lắng Nghe Sự Kiện Quyền Trình Duyệt (Permissions API)*: Sử dụng `navigator.permissions.query({ name: 'geolocation' })` và bắt sự kiện `permissionStatus.onchange`. Ngay khi người dùng nhấp "Cho phép" trên popup trình duyệt, ứng dụng tự động lấy GPS và cập nhật thời tiết ngay tức thì (0ms độ trễ) mà không cần tải lại trang.
-      + *Theo Dõi Vị Trí Liên Tục (`watchPosition`)*: Tích hợp `navigator.geolocation.watchPosition` với ngưỡng lệch 400m (`haversineKm > 0.4`), tự động cập nhật thời tiết khi người dùng di chuyển giữa các địa điểm.
-      + *Lắng Nghe Tab Focus*: `window.addEventListener('focus')` tự động kiểm tra và làm mới vị trí khi người dùng quay lại tab làm việc.
-      + *Nâng Thời Gian Chờ GPS*: Tăng timeout lên 12s cho GPS độ chính xác cao và 8s cho GPS tiêu chuẩn, triệt tiêu việc vội vã rơi vào IP fallback trên PC/laptop.
+58. **[REQ-077] Tự Động Cập Nhật Theo Vị Trí Trước Đó Đã Lấy Được & Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp**:
+    - *Tự Động Cập Nhật & Bảo Toàn Vị Trí Trước Đó Đã Lấy Được*:
+      + Khởi tạo `liveData` ngay ở frame đầu tiên (0ms) từ hàm `getPreviouslyAcquiredLocation()`, loại bỏ 100% hiện tượng chớp nháy hoặc nhảy về "Hà Nội" khi mở trang.
+      + Đồng bộ đa tầng từ `sessionStorage` -> `localStorage.user_weather_manual_location` -> `user_weather_last_location` -> `user_weather_auto_location`.
+      + Tuyệt đối không xóa key lưu trữ vị trí của người dùng trong `loadData()`.
+      + Thiết lập lá chắn bảo vệ IP fallback: Nếu hệ thống đã có vị trí hợp lệ trước đó, bảo toàn và cập nhật thời tiết theo vị trí đó, không ghi đè IP Hà Nội lên khi GPS timeout.
+      + Tiếp tục lắng nghe Permissions API và `watchPosition` để cập nhật tọa độ thực tế khi có quyền GPS hoặc khi di chuyển.
+    - *Nền Động CSS Morphing Gradients Hoàn Thiện Không Lỗi Minifier*:
+      + Triệt tiêu lỗi cú pháp minifier `filter: hue-rotate()` (loại bỏ `0deg` khỏi keyframes), chuyển sang `@keyframes morphGradientBackground` chuẩn mực (0% -> 100% background-position) với `background-size: 300% 300%`.
+      + 4 khối mầm màu chuyển động độc lập (`morphBlob1` đến `4`) với sắc màu tương phản cao (Royal Blue, Cosmic Violet, Cyan, Sunset Amber), làm mờ `blur-3xl`, kết hợp `mix-blend-screen` (Dark Mode) và `mix-blend-hard-light` (Light Mode) tạo dòng chảy gradient tan chảy liên tục, bắt mắt và mượt mà 60fps.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
