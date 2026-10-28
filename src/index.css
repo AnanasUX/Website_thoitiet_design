@@ -392,17 +392,19 @@ html.dark .hero-gradient {
 }
 
 .hero-morph-gradient-light {
-  background: linear-gradient(135deg, #1e40af 0%, #2563ff 25%, #7c3aed 50%, #0284c7 75%, #1d4ed8 100%);
-  background-size: 300% 300%;
-  animation: morphGradientBackground 12s ease-in-out infinite;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #3b82f6 100%);
+  background-size: 200% 200%;
+  animation: morphGradientBackground 18s ease-in-out infinite;
   will-change: background-position;
+  box-shadow: 0 16px 36px -8px rgba(37, 99, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .hero-morph-gradient-dark {
-  background: linear-gradient(135deg, #0c0f12 0%, #150a33 25%, #1e1b4b 50%, #172554 75%, #0c0f12 100%);
-  background-size: 300% 300%;
-  animation: morphGradientBackground 15s ease-in-out infinite;
+  background: linear-gradient(135deg, #0d1117 0%, #151922 40%, #1a2233 75%, #0f131c 100%);
+  background-size: 200% 200%;
+  animation: morphGradientBackground 20s ease-in-out infinite;
   will-change: background-position;
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .animate-morph-blob-1 {

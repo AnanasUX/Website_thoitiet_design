@@ -963,3 +963,49 @@
         + `npm run build`: Hoàn thành 0 lỗi.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
         + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### QUYẾT ĐỊNH 59: TINH CHỈNH & ĐỒNG BỘ BẢNG MÀU CAO CẤP CHUẨN ALMOND AI SAAS CHO TOÀN BỘ PHÂN HỆ THỜI TIẾT TRONG CẢ HAI CHẾ ĐỘ DARK VÀ LIGHT MODE (REQ-078)
+
+- **Mã Quyết Định**: `DEC-059`
+- **Mã Yêu Cầu Liên Quan**: `REQ-078`
+- **Ngày Phê Duyệt**: 28/10/2026
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Thực Tế
+Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, người dùng phản hồi giao diện phân hệ thời tiết:
+- *"Hệ thống đang phối màu rất xấu kiểm tra lại kể cả Dark và Light"* kèm ảnh chụp màn hình khu vực Hero Weather Card.
+- Nguyên nhân cốt lõi qua phân tích giao diện thực tế:
+  1. *Lỗi vệt sáng neon loang lổ (Bleaching & Clashing Artifacts)*: 4 khối aura cũ dùng các màu chói gắt (vàng hoàng hôn, tím đậm, xanh lơ) với độ mờ quá lớn và thuộc tính `mix-blend-screen`. Ở Dark Mode, `mix-blend-screen` làm biến dạng nền đen thành một mảng sáng xỉn nhờ nhờ ở nửa phải thẻ, trong khi nửa trái vẫn tối, tạo cảm giác chắp vá, thiếu đồng nhất.
+  2. *Thẻ thông số kính mờ bị đục và chìm chữ*: 4 pill thông số (Gió, Độ ẩm, Bụi PM2.5, Tầm nhìn) dùng `bg-white/15` kết hợp viền mờ khiến chúng biến thành những vệt xám đục nhòe nhoẹt trên nền neon, nhãn chữ bị chìm, khó đọc.
+  3. *Lệch tông thiết kế của Đồ thị nhiệt độ (`HourlyTemperatureChart`)*: Đồ thị SVG dùng đường vẽ màu hồng rực `#ff315f`, xung đột hoàn toàn với hệ thống màu Royal Blue / Obsidian Noir của Almond SaaS.
+  4. *Khối thông tin phụ chưa thích ứng Dark Mode*: Các thẻ Dự báo hàng giờ, Dự báo tuần, Bảng điểm đen ngập úng bị gán cứng nền trắng `bg-white` và chữ tối `text-[#182033]`, trở thành những mảng trắng chói chang đối lập với nền tối xung quanh.
+
+#### 2. Giải Pháp Kiến Trúc & Thiết Kế Đã Chọn
+1. **Thiết kế lại Thẻ Hero Thời Tiết theo chuẩn Almond AI SaaS Design System**:
+   - **Dark Mode**: Sử dụng tông nền Deep Cosmic Obsidian Noir (`linear-gradient(135deg, #0d1117 0%, #151922 40%, #1a2233 75%, #0f131c 100%)`), hòa quyện 100% với nền các thẻ SaaS xung quanh (`#151921` và `#0c0f12`).
+   - Tối giản số lượng aura xuống 3 khối tinh tế, hạ độ mờ xuống 12% - 18%, loại bỏ `mix-blend-screen`. Chỉ sử dụng dải màu quý phái: Royal Blue (`#2563ff`), Soft Indigo (`#6366f1`), Sky Cyan (`#38bdf8`).
+   - **Light Mode**: Sử dụng tông nền Royal Electric Blue to Sky Azure (`linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #3b82f6 100%)`), mang lại cảm giác bầu trời trong lành, tươi sáng nhưng không chói lọi.
+2. **Nâng cấp 4 thẻ thông số thành Luxury Glass Pills**:
+   - Dark Mode: `bg-white/[0.06] border-white/[0.08] hover:bg-white/[0.10]`, nhãn `text-slate-300`, giá trị `text-white font-bold`.
+   - Light Mode: `bg-white/15 border-white/25 hover:bg-white/25`, nhãn `text-white/85`, giá trị `text-white font-bold`.
+3. **Đồng bộ Đồ thị nhiệt độ `HourlyTemperatureChart`**:
+   - Đổi đường cong sang màu Almond Royal Blue `#2563ff`.
+   - Đổi vùng tô gradient bên dưới sang dải xanh trong suốt `rgba(37, 99, 255, 0.08)`.
+   - Chấm tròn nhiệt độ tự thích ứng theme (`fill="currentColor" className="text-white dark:text-[#151921]"`).
+   - Thêm lớp tương phản màu chữ `text-[#0c0f12] dark:text-[#f8fafc]`.
+4. **Đồng bộ hóa Dark Mode toàn diện cho các thẻ phụ**:
+   - Thêm `dark:bg-[#151921] dark:border-white/[0.08] text-[#0c0f12] dark:text-[#f8fafc]` cho:
+     + DỰ BÁO HÀNG GIỜ
+     + DỰ BÁO THỜI TIẾT TUẦN (thanh tiến trình nhiệt độ chuyển sang dải xanh - hổ phách tinh tế)
+     + DỰ BÁO 3 GIỜ TỚI
+     + BẢNG ĐIỂM ĐEN NGẬP ÚNG
+     + CẢNH BÁO KHÍ TƯỢNG (`dark:bg-amber-950/20 dark:border-amber-800/30`)
+     + GỢI Ý CHĂM SÓC SỨC KHỎE (`dark:bg-emerald-950/20 dark:border-emerald-800/30`)
+
+#### 3. Kết Quả Nghiệm Thu & Kiểm Chứng Thực Tế
+- `npm run build`: Biên dịch thành công 100% trong 1.69s.
+- `npm run test:logic`: 427/427 assertions logic passed (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt chuẩn (RELEASE GATE: PASSED).

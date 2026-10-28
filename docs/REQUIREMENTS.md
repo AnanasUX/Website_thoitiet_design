@@ -435,3 +435,31 @@
      - `npm run build`: 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-078)
+
+- **Mã Yêu Cầu**: `REQ-078`
+- **Tiêu Đề**: Đồng Bộ & Tinh Chỉnh Bảng Màu Cao Cấp Chuẩn Almond AI SaaS Cho Toàn Bộ Phân Hệ Thời Tiết (Hero Weather Card, Hourly Temperature Chart & Weather Sub-cards) Trong Cả Hai Chế Độ Sáng & Tối (Light & Dark Mode)
+- **Nguồn Prompt**: `PROMPT-20261028-02`: *"Hệ thống đang phối màu rất xấu kiểm tra lại"* & *"Hệ thống đang phối màu rất xấu kiểm tra lại kể cả Dark và Light"* kèm ảnh chụp màn hình định vị thẻ Hero thời tiết.
+- **Phân Hệ**: Atmospheric Hero Weather Card, Hourly Temperature Chart, Weather Sub-cards, Unified Almond Design System (`src/App.tsx`, `src/index.css`, `docs/DECISIONS.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt tiêu hoàn toàn sự pha tạp màu chói gắt & hiện tượng vệt màu neon loang lổ trên Thẻ Hero Thời Tiết*:
+     - **Chế độ Dark Mode**: Thay thế hoàn toàn dải màu cũ bằng Deep Cosmic Obsidian Noir (`#0d1117` -> `#151922` -> `#1a2233` -> `#0f131c`), đồng bộ tuyệt đối với tông bề mặt SaaS của các thẻ lân cận (`#151921` và `#0c0f12`). Tinh chỉnh 3 khối aura khí quyển mượt mà (`opacity: 12% - 18%`, Royal Blue, Soft Indigo, Cyan) với chu kỳ 18s - 24s êm dịu, loại bỏ triệt để `mix-blend-screen` gây cháy sáng/loang lổ mảng màu.
+     - **Chế độ Light Mode**: Chuyển sang dải màu xanh biển cao cấp Royal Electric Blue to Sky Azure (`#1d4ed8` -> `#2563ff` -> `#3b82f6`) với ánh hào quang trắng tinh khôi mờ nhẹ, loại bỏ các vệt màu tím chói gắt.
+     - **Huy hiệu vị trí (Location Badge)**: Tinh chỉnh đường viền kính phản quang cao cấp, badge "Tự động" với độ tương phản sắc nét, nhãn thời gian và icon ghim định vị nổi bật trên cả 2 nền.
+  2. *Nâng cấp 4 thẻ chỉ số khí quyển (Gió, Độ ẩm, Bụi PM2.5, Tầm nhìn) thành Luxury Frosted Glass Cards*:
+     - **Dark Mode**: Sử dụng lớp phủ kính đen sang trọng `bg-white/[0.06] border-white/[0.08] hover:bg-white/[0.10]`, nhãn phân loại `text-slate-300 text-[11.5px]`, giá trị `text-white font-bold text-[14px]`. Loại bỏ hoàn toàn cảm giác kính đục mờ xám tím.
+     - **Light Mode**: Sử dụng kính sương mờ trắng tuyết `bg-white/15 border-white/25 hover:bg-white/25`, nhãn `text-white/85`, giá trị `text-white font-bold`.
+  3. *Chuẩn hóa Đồ thị nhiệt độ hàng giờ (`HourlyTemperatureChart`)*:
+     - Thay thế triệt để đường cong màu hồng neon `#ff315f` bằng sắc xanh thương hiệu Almond Royal Blue `#2563ff`.
+     - Vùng đổ bóng nhiệt độ chuyển sang dải gradient xanh dương trong suốt `rgba(37, 99, 255, 0.08)`.
+     - Điểm chấm tròn giá trị nhiệt độ đồng bộ tương thích Dark/Light (`fill="currentColor" className="text-white dark:text-[#151921]" stroke="#2563ff"`).
+     - Typography nhãn giờ và nhiệt độ tương thích theme `text-[#0c0f12] dark:text-[#f8fafc]`.
+  4. *Đồng bộ Dark Mode cho toàn bộ các khối phụ phân hệ thời tiết*:
+     - Các khối: "DỰ BÁO HÀNG GIỜ", "DỰ BÁO THỜI TIẾT TUẦN", "DỰ BÁO 3 GIỜ TỚI", "BẢNG ĐIỂM ĐEN NGẬP ÚNG", "CẢNH BÁO KHÍ TƯỢNG", "GỢI Ý CHĂM SÓC SỨC KHỎE" được bổ sung đầy đủ các lớp `bg-white dark:bg-[#151921] border-[#e2e4e8] dark:border-white/[0.08] text-[#0c0f12] dark:text-[#f8fafc]`.
+     - Loại bỏ hoàn toàn tình trạng thẻ phụ bị giữ nền trắng chói mắt hoặc chữ đen bị chìm khi người dùng bật Dark Mode.
+  5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

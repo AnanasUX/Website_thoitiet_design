@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.47.0`
+- **Phiên bản**: `1.48.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -18,6 +18,13 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+7. **[REQ-078] Đồng Bộ & Tinh Chỉnh Bảng Màu Cao Cấp Chuẩn Almond AI SaaS Cho Toàn Bộ Phân Hệ Thời Tiết**:
+   - Thẻ Hero thời tiết: Dark Mode Deep Cosmic Obsidian Noir (`#0d1117` -> `#151922` -> `#1a2233`), Light Mode Royal Electric Blue to Sky Azure (`#1d4ed8` -> `#2563ff` -> `#3b82f6`).
+   - Triệt tiêu hoàn toàn vệt sáng neon loang lổ và biến dạng `mix-blend-screen`, giảm số lượng aura xuống 3 khối tinh tế (12% - 18% opacity).
+   - 4 thẻ thông số Gió, Độ ẩm, Bụi PM2.5, Tầm nhìn chuẩn hóa Luxury Glass Cards (`bg-white/[0.06] border-white/[0.08]` Dark, `bg-white/15 border-white/25` Light).
+   - Đồ thị `HourlyTemperatureChart`: Chuyển đường vẽ từ hồng rực `#ff315f` sang Almond Royal Blue `#2563ff`, nền đổ bóng xanh mờ `rgba(37, 99, 255, 0.08)`.
+   - Đồng bộ Dark Mode toàn diện cho 6 khối phụ (Dự báo hàng giờ, tuần, 3 giờ tới, ngập úng, cảnh báo, gợi ý sức khỏe) với `dark:bg-[#151921] dark:border-white/[0.08]`.
 
 1. **[REQ-001 -> REQ-011] Toàn Bộ Phân Hệ Video Shorts & Smart TV Player**:
    - 97 video YouTube thực tế đã xác minh qua oEmbed trên 10 kênh báo đài lớn Việt Nam.

@@ -388,19 +388,19 @@ function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
     <div className="w-full overflow-x-auto scrollbar-hide pb-2">
       <div className="relative" style={{ width: `${width}px`, height: `${height}px` }}>
         <svg width={width} height={height} className="absolute top-0 left-0 overflow-visible z-0">
-          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="rgba(255, 49, 95, 0.08)" />
-          <path d={pathD} fill="none" stroke="#ff315f" strokeWidth="2.5" strokeLinecap="round" />
+          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="rgba(37, 99, 255, 0.08)" />
+          <path d={pathD} fill="none" stroke="#2563ff" strokeWidth="2.5" strokeLinecap="round" />
           {points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="#fff" stroke="#ff315f" strokeWidth="2.5" />
+            <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="currentColor" className="text-white dark:text-[#151921]" stroke="#2563ff" strokeWidth="2.5" />
           ))}
         </svg>
         
         {points.map((p, i) => (
           <div key={i} className="absolute flex flex-col items-center justify-start w-[65px] z-10" style={{ left: `${p.x - 32.5}px`, top: '10px' }}>
-            <p className="font-semibold text-[#182033] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
+            <p className="font-semibold text-[#0c0f12] dark:text-[#f8fafc] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
             <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" loading="lazy" decoding="async" />
-            <p className="font-semibold text-[#0a84ff] text-[11px] whitespace-nowrap">{p.pop}%</p>
-            <p className="font-bold text-[#182033] text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
+            <p className="font-semibold text-[#2563ff] dark:text-[#60a5fa] text-[11px] whitespace-nowrap">{p.pop}%</p>
+            <p className="font-bold text-[#0c0f12] dark:text-white text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
           </div>
         ))}
       </div>
@@ -556,21 +556,30 @@ function WeatherSection({
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
       {/* Hero card - Modern Atmospheric Glass Card with CSS Morphing Gradients Animated Background */}
       <div
-        className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20 ${
-          darkMode ? 'hero-morph-gradient-dark' : 'hero-morph-gradient-light'
+        className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border ${
+          darkMode ? 'hero-morph-gradient-dark border-white/10' : 'hero-morph-gradient-light border-white/20'
         }`}
       >
-        {/* Ambient decorative aura (CSS Morphing Gradients Liquid Blobs) */}
-        <div className={`absolute -right-16 -top-16 w-80 h-80 rounded-full bg-[#2563ff]/70 blur-3xl pointer-events-none animate-morph-blob-1 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
-        <div className={`absolute -left-12 -bottom-12 w-72 h-72 rounded-full bg-[#a855f7]/70 blur-3xl pointer-events-none animate-morph-blob-2 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
-        <div className={`absolute right-1/4 bottom-1/4 w-64 h-64 rounded-full bg-[#06b6d4]/65 blur-3xl pointer-events-none animate-morph-blob-3 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
-        <div className={`absolute left-1/3 top-10 w-56 h-56 rounded-full bg-[#f59e0b]/55 blur-3xl pointer-events-none animate-morph-blob-4 ${darkMode ? 'mix-blend-screen' : 'mix-blend-hard-light'}`}></div>
+        {/* Subtle Atmospheric Ambient Glow (Almond Sky & Electric Blue Depth) */}
+        <div className={`absolute -right-12 -top-12 w-64 h-64 rounded-full pointer-events-none blur-3xl animate-morph-blob-1 ${
+          darkMode ? 'bg-[#2563ff]/18' : 'bg-white/20'
+        }`}></div>
+        <div className={`absolute -left-10 -bottom-10 w-56 h-56 rounded-full pointer-events-none blur-3xl animate-morph-blob-2 ${
+          darkMode ? 'bg-[#38bdf8]/14' : 'bg-[#68dbff]/20'
+        }`}></div>
+        <div className={`absolute right-1/4 bottom-1/4 w-48 h-48 rounded-full pointer-events-none blur-3xl animate-morph-blob-3 ${
+          darkMode ? 'bg-[#6366f1]/12' : 'bg-[#b8ccff]/15'
+        }`}></div>
 
         <div className="flex items-center justify-between w-full z-10">
           <button
             type="button"
             onClick={onOpenLocationSelector}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md border border-white/25 text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group active:scale-95 ${
+              darkMode
+                ? 'bg-white/[0.08] hover:bg-white/[0.14] border-white/[0.12]'
+                : 'bg-white/20 hover:bg-white/30 border-white/30'
+            }`}
             title={isManualLocation ? "Vị trí do bạn tự chọn thủ công (Nhấp để đổi hoặc bật lại tự động định vị)" : "Vị trí tự động định vị theo khu vực thực tế của bạn (Nhấp để thay đổi)"}
             data-testid="hero-location-badge"
           >
@@ -580,7 +589,9 @@ function WeatherSection({
             </span>
             <span className="opacity-60">·</span>
             <span>{WEATHER.time}</span>
-            <span className="text-[10px] bg-white/25 hover:bg-white/35 font-bold px-1.5 py-0.5 rounded-full ml-1">
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 ${
+              darkMode ? 'bg-blue-500/25 text-blue-200 border border-blue-400/30' : 'bg-white/25 text-white'
+            }`}>
               {isManualLocation ? "Đã chọn" : "Tự động"}
             </span>
           </button>
@@ -594,7 +605,7 @@ function WeatherSection({
             <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span>
             <span>{WEATHER.conditionLabel}</span>
           </p>
-          <p className="font-medium text-[13.5px] text-white/80">
+          <p className="font-medium text-[13.5px] text-white/85">
             Cảm nhận {WEATHER.feelsLike}
           </p>
         </div>
@@ -606,9 +617,16 @@ function WeatherSection({
             { label: "🌫️ Bụi PM2.5", value: WEATHER.pm25 },
             { label: "👁️ Tầm nhìn", value: WEATHER.visibility }
           ].map((stat, idx) => (
-            <div key={idx} className="bg-white/15 backdrop-blur-md border border-white/25 flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-2xl hover:bg-white/25 transition-all duration-300 shadow-xs">
-              <p className="font-medium text-white/90 text-[11.5px] whitespace-nowrap">{stat.label}</p>
-              <p className="font-bold leading-5 text-white text-[14px]">{stat.value}</p>
+            <div
+              key={idx}
+              className={`flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-2xl backdrop-blur-md transition-all duration-300 shadow-2xs border ${
+                darkMode
+                  ? 'bg-white/[0.06] hover:bg-white/[0.1] border-white/[0.08]'
+                  : 'bg-white/15 hover:bg-white/25 border-white/25'
+              }`}
+            >
+              <p className={`font-medium text-[11.5px] whitespace-nowrap ${darkMode ? 'text-slate-300' : 'text-white/85'}`}>{stat.label}</p>
+              <p className="font-bold leading-5 text-white text-[14.5px]">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -618,39 +636,39 @@ function WeatherSection({
       <SmartWeatherAssistant weather={WEATHER} condKey={condKey} />
 
       {/* Forecast */}
-      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ</p>
+      <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+        <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <HourlyTemperatureChart hourlyData={WEATHER.hourlyForecast || []} />
           ) : (
-            <p className="text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
+            <p className="text-[12px] text-[#4e5b6d] dark:text-slate-400 italic">Đang tải dữ liệu...</p>
           )}
         </div>
 
         
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
-          <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
+          <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full mt-0 shadow-xs transition-colors duration-250">
             <div className="flex flex-col gap-1 w-full">
-              <p className="font-bold text-[#182033] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
-              {WEATHER.weekRange && <p className="font-medium text-[#5f687b] text-[12px]">{WEATHER.weekRange}</p>}
+              <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
+              {WEATHER.weekRange && <p className="font-medium text-[#4e5b6d] dark:text-slate-400 text-[12px]">{WEATHER.weekRange}</p>}
             </div>
             <div className="flex flex-col w-full gap-4">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between w-full">
-                  <p className="font-semibold text-[#182033] w-[70px] shrink-0 text-left">{day.day}</p>
+                  <p className="font-semibold text-[#0c0f12] dark:text-[#f8fafc] w-[70px] shrink-0 text-left">{day.day}</p>
                   
                   <div className="flex items-center gap-2 w-[110px] shrink-0">
                     <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-9 h-9 drop-shadow-sm" loading="lazy" decoding="async" alt="" />
                     <div className="flex flex-col items-start leading-tight">
-                      <span className="text-[#182033] text-[12px] font-bold">{getConditionLabel(day.icon)}</span>
-                      {day.pop > 0 && <span className="text-[#0a84ff] text-[10px] font-bold tracking-tight">Mưa {day.pop}%</span>}
+                      <span className="text-[#0c0f12] dark:text-[#f8fafc] text-[12px] font-bold">{getConditionLabel(day.icon)}</span>
+                      {day.pop > 0 && <span className="text-[#2563ff] dark:text-[#60a5fa] text-[10px] font-bold tracking-tight">Mưa {day.pop}%</span>}
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2 justify-end flex-1 ml-2">
-                    <span className="text-[#5f687b] font-medium text-[13px]">{day.tempMin}°</span>
-                    <div className="flex-1 h-1.5 bg-gradient-to-r from-blue-400 to-red-400 rounded-full opacity-70"></div>
-                    <span className="text-[#182033] font-bold text-[13px]">{day.tempMax}°</span>
+                    <span className="text-[#4e5b6d] dark:text-slate-400 font-medium text-[13px]">{day.tempMin}°</span>
+                    <div className="flex-1 h-1.5 bg-gradient-to-r from-blue-400 to-amber-400 rounded-full opacity-70"></div>
+                    <span className="text-[#0c0f12] dark:text-white font-bold text-[13px]">{day.tempMax}°</span>
                   </div>
                 </div>
               ))}
@@ -659,20 +677,20 @@ function WeatherSection({
         )}
 
 
-      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
-        <p className="font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
+      <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+        <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-normal leading-5 text-[#4e5b6d] dark:text-slate-300 w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
       {warningText && (
-        <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
+        <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30 flex flex-col gap-2 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+          <p className="font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
           <div className="flex flex-col gap-1 w-full">
               {warningText.split('\n').map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 const text = line.replace(/^[└├]\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-amber-800/90 dark:text-amber-300/80 w-full">{prefix}{text}</p>;
               })}
             </div>
         </div>
@@ -680,41 +698,41 @@ function WeatherSection({
 
       {/* Suggestion – only show when we have items */}
       {suggestionItems && suggestionItems.length > 0 && (
-        <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/30 flex flex-col gap-2 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+          <p className="font-bold text-emerald-900 dark:text-emerald-200 whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
           <div className="flex flex-col gap-1 w-full mt-1">
             {suggestionItems.map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
                 const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-emerald-800/90 dark:text-emerald-300/80 w-full">{prefix}{text}</p>;
             })}
           </div>
         </div>
       )}
 
       {/* Combined Flood & Weather News */}
-      <div className="bg-white border border-[#e3e7ef] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+      <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
         {/* Flood Section */}
-        <p className="font-bold text-[#182033] whitespace-nowrap mb-2 uppercase">
+        <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap mb-2 uppercase">
           BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
         </p>
         <div className="flex flex-col gap-0 w-full mb-1">
           {showFlood && floodItems && floodItems.length > 0 ? (
             floodItems.map((line, i) => (
-              <p key={i} className="font-normal leading-5 text-[#5f687b]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#4e5b6d] dark:text-slate-400">{line}</p>
             ))
           ) : (
-            <p className="font-normal leading-5 text-[#5f687b]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
+            <p className="font-normal leading-5 text-[#4e5b6d] dark:text-slate-400">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
           )}
         </div>
 
         {/* Divider & Weather News */}
         {liveOverrides?.weatherNews && liveOverrides.weatherNews.length > 0 && (
           <>
-            <div className="w-full border-t border-[#e3e7ef] my-3"></div>
+            <div className="w-full border-t border-[#e2e4e8] dark:border-white/[0.08] my-3"></div>
             
-            <p className="font-bold text-[#182033] flex items-center gap-2 mb-3">
+            <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] flex items-center gap-2 mb-3">
               📰 Bài viết liên quan
             </p>
             <div className="flex flex-col gap-3 w-full">

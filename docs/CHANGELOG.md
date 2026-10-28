@@ -1,5 +1,39 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.48.0 (2026-10-28) - Đồng Bộ & Tinh Chỉnh Bảng Màu Cao Cấp Chuẩn Almond AI SaaS Cho Toàn Bộ Phân Hệ Thời Tiết (Hero Weather Card, Hourly Temperature Chart & Weather Sub-cards) Trong Cả Hai Chế Độ Sáng & Tối (REQ-078)
+
+### 1. Tinh Chỉnh Thẻ Hero Thời Tiết (Hero Weather Card) Chuẩn Bảng Màu Almond AI SaaS
+- **Dark Mode (Deep Cosmic Obsidian Noir)**: Thay thế dải màu cũ bằng gradient `linear-gradient(135deg, #0d1117 0%, #151922 40%, #1a2233 75%, #0f131c 100%)`, đồng điệu tuyệt đối với mã màu `#151921` và `#0c0f12` của hệ thống SaaS Almond xung quanh.
+- **Triệt tiêu vệt màu neon loang lổ (Bleaching Artifacts)**: Tối giản số lượng aura khí quyển từ 4 khối màu chói gắt xuống 3 khối mượt mà (Royal Blue `#2563ff`, Soft Indigo `#6366f1`, Sky Cyan `#38bdf8`) với độ mờ nhẹ dịu (12% - 18%), loại bỏ hoàn toàn `mix-blend-screen` gây cháy sáng và lệch màu ở nửa phải thẻ.
+- **Light Mode (Royal Electric Blue to Sky Azure)**: Chuyển sang `linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #3b82f6 100%)` cùng hiệu ứng đổ bóng mờ xanh dương cao cấp (`box-shadow: 0 16px 36px -8px rgba(37, 99, 255, 0.28)`), loại bỏ các vệt màu tím chói gắt.
+- **Huy hiệu vị trí (Location Badge)**: Tinh chỉnh đường viền kính phản quang cao cấp, badge "Tự động" với độ tương phản sắc nét, nhãn thời gian và icon ghim định vị nổi bật trên cả 2 nền.
+
+### 2. Nâng Cấp 4 Thẻ Chỉ Số Khí Quyển (Gió, Độ Ẩm, Bụi PM2.5, Tầm Nhìn) Thành Luxury Glass Cards
+- **Dark Mode**: Sử dụng lớp phủ kính đen sang trọng `bg-white/[0.06] border-white/[0.08] hover:bg-white/[0.10]`, nhãn phân loại `text-slate-300 text-[11.5px]`, giá trị `text-white font-bold text-[14px]`. Loại bỏ hoàn toàn cảm giác kính đục mờ xám tím.
+- **Light Mode**: Sử dụng kính sương mờ trắng tuyết `bg-white/15 border-white/25 hover:bg-white/25`, nhãn `text-white/85`, giá trị `text-white font-bold`.
+
+### 3. Chuẩn Hóa Đồ Thị Nhiệt Độ Hàng Giờ (`HourlyTemperatureChart`)
+- **Loại bỏ đường cong hồng rực `#ff315f`**: Thay bằng sắc xanh thương hiệu Almond Royal Blue `#2563ff`.
+- **Đổ bóng mượt mà**: Vùng tô gradient bên dưới chuyển sang dải xanh trong suốt `rgba(37, 99, 255, 0.08)`.
+- **Chấm tròn nhiệt độ đa theme**: Sử dụng `fill="currentColor" className="text-white dark:text-[#151921]" stroke="#2563ff"` kết hợp typography tương thích `text-[#0c0f12] dark:text-[#f8fafc]`.
+
+### 4. Đồng Bộ Dark Mode Toàn Diện Cho Toàn Bộ Các Thẻ Phụ Phân Hệ Thời Tiết
+- Bổ sung `dark:bg-[#151921] dark:border-white/[0.08] text-[#0c0f12] dark:text-[#f8fafc]` cho:
+  + DỰ BÁO HÀNG GIỜ
+  + DỰ BÁO THỜI TIẾT TUẦN (thanh tiến trình nhiệt độ chuyển sang dải xanh - hổ phách tinh tế)
+  + DỰ BÁO 3 GIỜ TỚI
+  + BẢNG ĐIỂM ĐEN NGẬP ÚNG
+  + CẢNH BÁO KHÍ TƯỢNG (`dark:bg-amber-950/20 dark:border-amber-800/30`)
+  + GỢI Ý CHĂM SÓC SỨC KHỎE (`dark:bg-emerald-950/20 dark:border-emerald-800/30`)
+- Loại bỏ hoàn toàn tình trạng thẻ phụ bị giữ nền trắng chói mắt hoặc chữ đen bị chìm khi người dùng bật Dark Mode.
+
+### 5. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 1.69s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.47.0 (2026-10-28) - Tự Động Cập Nhật Theo Vị Trí Trước Đó Đã Lấy Được & Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp (REQ-077)
 
 ### 1. Tự Động Cập Nhật & Bảo Toàn Vị Trí Trước Đó Hệ Thống Đã Lấy Được
