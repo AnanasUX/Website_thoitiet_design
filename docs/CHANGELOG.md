@@ -1,5 +1,28 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.47.0 (2026-10-28) - Hiệu Ứng Nền Động CSS Morphing Gradients Cho Thẻ Thời Tiết Hero & Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì Theo Quyền Trình Duyệt (REQ-077)
+
+### 1. Hiệu Ứng Nền Động CSS Morphing Gradients Animated Background
+- **Chuyển sắc mượt mà không gian vũ trụ & hoàng gia**: Khai báo `@keyframes morphGradientDark` và `@keyframes morphGradientLight` (15s liên tục, vô tận) tạo dòng chảy gradient đa điểm dừng sống động, thay thế hoàn toàn nền inline tĩnh cũ.
+- **3 Khối Aura Hữu Cơ Biến Hình Độc Lập**: Triển khai `.animate-morph-blob-1`, `.animate-morph-blob-2`, `.animate-morph-blob-3` biến dạng liên tục với bán kính bo góc không đối xứng và xoay chuyển nhẹ, tạo độ sâu không gian 3D ấn tượng.
+- **Tối ưu phần cứng GPU**: Tận dụng `will-change: transform, background-position;` và `transform: translate3d(0, 0, 0);` bảo đảm khung hình đạt 60fps mượt mà trên cả điện thoại và máy tính.
+- **Tương thích hoàn hảo Dark/Light Mode**: `.hero-morph-gradient-dark` (sắc chàm không gian) và `.hero-morph-gradient-light` (sắc xanh đại dương tươi mát).
+
+### 2. Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì (Reactive Geolocation Engine)
+- **Triệt tiêu lỗi khóa cứng Hà Nội (Hanoi Lock Fallback)**: Trong `doFetch`, khai báo `let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;` bảo đảm khi ở chế độ tự động, hệ thống LUÔN LUÔN giải mã tọa độ ngược qua Photon Komoot OSM và Haversine, ngăn IP fallback Hà Nội đè mất vị trí thực.
+- **Lọc bộ nhớ đệm mặc định**: Khi nạp trang (`loadData`), nếu giá trị lưu tạm là chuỗi thô "Hà Nội", truyền `locationNameStr = null` để ép buộc giải mã lại tọa độ.
+- **Lắng nghe sự kiện quyền trình duyệt (Permissions API)**: Tích hợp `navigator.permissions.query({ name: 'geolocation' })` với `permissionStatus.onchange`. Ngay khi người dùng nhấp "Cho phép" trên popup trình duyệt, ứng dụng tự động lấy GPS và cập nhật thời tiết ngay tức thì (0ms trễ) mà không cần tải lại trang.
+- **Theo dõi vị trí liên tục (`watchPosition`)**: Tích hợp `navigator.geolocation.watchPosition` với ngưỡng lệch 400m (`haversineKm > 0.4`), tự động cập nhật thời tiết khi người dùng di chuyển giữa các địa phương.
+- **Lắng nghe Tab Focus**: `window.addEventListener('focus')` tự động kiểm tra và làm mới vị trí khi người dùng quay lại tab làm việc.
+- **Nâng thời gian chờ GPS**: Tăng timeout lên 12s cho GPS độ chính xác cao và 8s cho GPS tiêu chuẩn, triệt tiêu việc vội vã rơi vào IP fallback trên PC/laptop.
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 1.95s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.46.0 (2026-10-24) - Đồng Bộ Hóa Toàn Diện Giao Diện Video Shorts Theo Theme Sáng/Tối (Dark/Light) & Triệt Tiêu Lỗi Tiêu Đề Danh Sách Bản Tin Màu Đen Bị Chìm (REQ-076)
 
 ### 1. Đồng Bộ Hóa Toàn Diện Chủ Đề Dark/Light Cho Phân Hệ Video Shorts

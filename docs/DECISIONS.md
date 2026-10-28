@@ -934,3 +934,33 @@
         + `npm run build`: Hoàn thành 0 lỗi.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
         + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+  58. **[REQ-077] Hiệu Ứng Nền Động CSS Morphing Gradients Cho Thẻ Thời Tiết Hero & Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì Theo Quyền Trình Duyệt**:
+      - *Bối cảnh & Phản hồi người dùng*:
+        + Người dùng yêu cầu: *"Nếu có cập nhât tiến hành thực hiện hệ thống vẫn đẩy là Hà Nội và không tự cập nhập vị trí hiện tại của người dùng <div class=\"relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20\" style=\"background: linear-gradient(135deg, rgb(12, 15, 18) 0%, rgb(20, 6, 45) 50%, rgb(37, 99, 255) 100%);\">...<span class=\"underline decoration-dotted decoration-white/70 underline-offset-2\">Hà Nội</span><span class=\"opacity-60\">·</span><span>13:56</span><span class=\"text-[10px] bg-white/25 hover:bg-white/35 font-bold px-1.5 py-0.5 rounded-full ml-1\">Tự động</span>... ngoài ra ở khung này áp dụng hiệu ứng 'CSS Morphing Gradients Animated Background' để sinh động hơn"*.
+      - *Phân tích nguyên nhân cốt lõi (Root Cause Analysis)*:
+        1. **Hiện tượng "Khóa cứng Hà Nội" (Hanoi Lock Fallback)**:
+           - Các dải IP mạng 4G/5G và băng thông rộng cáp quang tại Việt Nam (Viettel, VNPT, FPT) thường đặt DNS/Datacenter Gateway tại Hà Nội, khiến các dịch vụ IP Geolocation trả về thành phố mặc định là "Hanoi".
+           - Hàm `fallbackToIp` truyền trực tiếp `cityName` ("Hà Nội, VN") vào đối số `locationNameStr` của `doFetch`.
+           - Trong `doFetch`, biểu thức `let resolvedLocation = locationNameStr;` chấp nhận ngay chuỗi "Hà Nội, VN", dẫn đến việc khối reverse geocoding (Photon Komoot OSM & Haversine) bị bỏ qua hoàn toàn kể cả khi tọa độ thực tế là ở TP.HCM, Đà Nẵng hay các quận/huyện khác.
+           - Khóa `user_weather_auto_location` trong `localStorage` tiếp tục lưu lại "Hà Nội, VN", khiến mỗi lần tải lại trang hệ thống lập tức hiển thị Hà Nội.
+           - `getCurrentPosition` ban đầu chỉ có timeout ngắn 4s và không có cơ chế bắt sự kiện khi người dùng nhấn "Cho phép" (Allow) trên thanh quyền vị trí của trình duyệt sau 4s đó.
+        2. **Nền thẻ Hero Weather Card tĩnh (Static Inline Gradient)**:
+           - Khung thẻ sử dụng thuộc tính inline tĩnh `style={{ background: 'linear-gradient(135deg, rgb(12, 15, 18) 0%, rgb(20, 6, 45) 50%, rgb(37, 99, 255) 100%)' }}` cố định, thiếu chiều sâu chuyển động hữu cơ.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Hiệu Ứng Nền Động CSS Morphing Gradients Animated Background (`src/index.css`)**:
+          * Khai báo `@keyframes morphGradientDark` và `@keyframes morphGradientLight` (15s liên tục, vô tận) tạo làn sóng chuyển sắc mượt mà giữa các điểm dừng màu sắc hoàng gia và vũ trụ.
+          * Triển khai 3 khối aura hữu cơ chuyển động biến hình độc lập (`.animate-morph-blob-1`, `.animate-morph-blob-2`, `.animate-morph-blob-3`) với `border-radius` biến thiên không đối xứng, dịch chuyển 2D đa trục và xoay tròn nhẹ nhàng.
+          * Tối ưu hiệu năng phần cứng GPU tối đa bằng `will-change: transform, background-position;` và `transform: translate3d(0, 0, 0);`.
+          * Hỗ trợ tương thích 2 chế độ Sáng/Tối: `.hero-morph-gradient-dark` cho Dark mode và `.hero-morph-gradient-light` cho Light mode.
+        + **Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì (Reactive Real-Time Geolocation)**:
+          * *Ưu Tiên Tuyệt Đối Cho Reverse Geocoding Tọa Độ*: Trong `doFetch`, khai báo `let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;` bảo đảm khi ở chế độ tự động, hệ thống LUÔN LUÔN giải mã tọa độ ngược qua Photon Komoot OSM và Haversine, loại bỏ việc IP fallback Hà Nội đè mất vị trí thực.
+          * *Lọc Bộ Nhớ Đệm Mặc Định*: Khi nạp trang (`loadData`), nếu giá trị lưu tạm là chuỗi thô "Hà Nội", truyền `locationNameStr = null` để ép buộc giải mã lại tọa độ.
+          * *Lắng Nghe Sự Kiện Quyền Trình Duyệt (Permissions API)*: Sử dụng `navigator.permissions.query({ name: 'geolocation' })` và bắt sự kiện `permissionStatus.onchange`. Ngay khi người dùng nhấp "Cho phép" trên popup trình duyệt, ứng dụng tự động lấy GPS và cập nhật thời tiết ngay tức thì (0ms độ trễ) mà không cần tải lại trang.
+          * *Theo Dõi Vị Trí Liên Tục (`watchPosition`)*: Tích hợp `navigator.geolocation.watchPosition` với ngưỡng lệch 400m (`haversineKm > 0.4`), tự động cập nhật thời tiết khi người dùng di chuyển giữa các địa điểm.
+          * *Lắng Nghe Tab Focus*: `window.addEventListener('focus')` tự động kiểm tra và làm mới vị trí khi người dùng quay lại tab làm việc.
+          * *Nâng Thời Gian Chờ GPS*: Tăng timeout lên 12s cho GPS độ chính xác cao và 8s cho GPS tiêu chuẩn, triệt tiêu việc vội vã rơi vào IP fallback trên PC/laptop.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Hoàn thành 0 lỗi.
+        + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
+        + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).

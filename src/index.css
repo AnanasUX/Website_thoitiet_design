@@ -330,6 +330,103 @@ html.dark .hero-gradient {
 @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 .animate-slideUp { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
+/* ── CSS MORPHING GRADIENTS ANIMATED BACKGROUND ───────────────────────────── */
+@keyframes morphGradientLight {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(18deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+}
+
+@keyframes morphGradientDark {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(-22deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+}
+
+@keyframes morphBlob1 {
+  0%, 100% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+  33% {
+    border-radius: 70% 30% 46% 54% / 30% 29% 71% 70%;
+    transform: translate(35px, -22px) rotate(120deg) scale(1.15);
+  }
+  66% {
+    border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
+    transform: translate(-25px, 20px) rotate(240deg) scale(0.92);
+  }
+}
+
+@keyframes morphBlob2 {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    transform: translate(-40px, -28px) rotate(-180deg) scale(1.2);
+  }
+}
+
+@keyframes morphBlob3 {
+  0%, 100% {
+    border-radius: 35% 65% 60% 40% / 50% 40% 60% 50%;
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    border-radius: 55% 45% 35% 65% / 35% 65% 45% 55%;
+    transform: translate(28px, 30px) scale(1.18);
+  }
+}
+
+.hero-morph-gradient-light {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563ff 25%, #7c3aed 50%, #0284c7 75%, #1e40af 100%);
+  background-size: 280% 280%;
+  animation: morphGradientLight 14s ease-in-out infinite;
+  will-change: background-position;
+}
+
+.hero-morph-gradient-dark {
+  background: linear-gradient(135deg, #0c0f12 0%, #14062d 25%, #2563ff 50%, #5715d1 75%, #0c0f12 100%);
+  background-size: 280% 280%;
+  animation: morphGradientDark 16s ease-in-out infinite;
+  will-change: background-position;
+}
+
+.animate-morph-blob-1 {
+  animation: morphBlob1 18s ease-in-out infinite;
+  will-change: transform, border-radius;
+}
+
+.animate-morph-blob-2 {
+  animation: morphBlob2 15s ease-in-out infinite reverse;
+  will-change: transform, border-radius;
+}
+
+.animate-morph-blob-3 {
+  animation: morphBlob3 22s ease-in-out infinite;
+  will-change: transform, border-radius;
+}
+
 /* ── VIDEO SHORTS MODAL & OVERLAY CONTRAST RULE (REQ-076) ────────────────────── */
 [data-testid="video-shorts-modal"] h1,
 [data-testid="video-shorts-modal"] h2,

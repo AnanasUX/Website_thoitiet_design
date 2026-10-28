@@ -554,18 +554,16 @@ function WeatherSection({
 
   return (
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
-      {/* Hero card - Modern Atmospheric Glass Card */}
+      {/* Hero card - Modern Atmospheric Glass Card with CSS Morphing Gradients Animated Background */}
       <div
-        className="relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20"
-        style={{
-          background: darkMode
-            ? "linear-gradient(135deg, #0c0f12 0%, #14062d 50%, #2563ff 100%)"
-            : "linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #5715d1 100%)",
-        }}
+        className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20 ${
+          darkMode ? 'hero-morph-gradient-dark' : 'hero-morph-gradient-light'
+        }`}
       >
-        {/* Ambient decorative aura (Almond Frost & Sky Glow) */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#b8ccff]/25 blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-12 -bottom-12 w-56 h-56 rounded-full bg-[#68dbff]/20 blur-3xl pointer-events-none"></div>
+        {/* Ambient decorative aura (Almond Frost & Sky Glow Morphing Blobs) */}
+        <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-[#b8ccff]/25 blur-3xl pointer-events-none animate-morph-blob-1"></div>
+        <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full bg-[#68dbff]/20 blur-3xl pointer-events-none animate-morph-blob-2"></div>
+        <div className="absolute right-1/4 bottom-1/4 w-52 h-52 rounded-full bg-[#a855f7]/15 blur-3xl pointer-events-none animate-morph-blob-3"></div>
 
         <div className="flex items-center justify-between w-full z-10">
           <button
@@ -5393,6 +5391,7 @@ export default function App() {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean, source?: 'gps' | 'ip' | 'manual' | 'auto') => void) | null>(null);
   const fallbackToIpRef = useRef<(() => void) | null>(null);
+  const watchIdRef = useRef<number | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null);
@@ -5479,7 +5478,7 @@ export default function App() {
                 doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
               }
             },
-            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
           );
           return;
         }
@@ -5502,7 +5501,7 @@ export default function App() {
           doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
         }
       },
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   };
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -6770,7 +6769,7 @@ useEffect(() => {
             };
           });
 
-          let resolvedLocation = locationNameStr;
+          let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;
           if (!resolvedLocation) {
             // ƯU TIÊN 1: Photon Komoot OpenStreetMap Reverse Geocoding (Bóc tách chính xác từng xã/phường, quận/huyện theo ranh giới hành chính OSM)
             if (geoReverse && geoReverse.features && geoReverse.features.length > 0) {
@@ -6778,20 +6777,33 @@ useEffect(() => {
               const district = p.district || p.suburb || p.locality || p.county;
               const city = p.city || p.state;
               const formatted = formatVietnamLocationName(district, city);
-              if (formatted) {
+              if (formatted && formatted !== 'Hà Nội, VN') {
                 resolvedLocation = formatted;
+              } else if (formatted === 'Hà Nội, VN') {
+                // Nếu Photon chỉ trả về chung chung "Hà Nội", kiểm tra xem tọa độ có khớp quận huyện cụ thể không
+                const nearestDistrict = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 10);
+                if (nearestDistrict && nearestDistrict.nameFull !== 'Hà Nội, VN') {
+                  resolvedLocation = nearestDistrict.nameFull;
+                } else {
+                  resolvedLocation = formatted;
+                }
               }
             }
 
             // ƯU TIÊN 2: Thuật toán khoảng cách Haversine đối chiếu mạng lưới 63 tỉnh thành & toàn bộ quận huyện (0ms, offline fallback)
             if (!resolvedLocation) {
-              const nearestLoc = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 15);
+              const nearestLoc = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 25);
               if (nearestLoc) {
                 resolvedLocation = nearestLoc.nameFull;
               }
             }
 
-            // ƯU TIÊN 3: OpenWeatherMap Geocoding API
+            // ƯU TIÊN 3: OpenWeatherMap Weather station name (e.g., "Son Tay", "Da Nang", "Nha Trang")
+            if (!resolvedLocation && weather?.name) {
+              resolvedLocation = `${weather.name}, VN`;
+            }
+
+            // ƯU TIÊN 4: OpenWeatherMap Geocoding API
             if (!resolvedLocation && Array.isArray(owmGeo) && owmGeo.length > 0) {
               const item = owmGeo[0];
               const viName = item.local_names?.vi || item.name;
@@ -6800,12 +6812,12 @@ useEffect(() => {
               }
             }
 
-            // ƯU TIÊN 4: OpenWeatherMap Current Weather name
-            if (!resolvedLocation && weather?.name) {
-              resolvedLocation = `${weather.name}, VN`;
+            // ƯU TIÊN 5: locationNameStr gợi ý từ IP fallback (nếu có)
+            if (!resolvedLocation && locationNameStr) {
+              resolvedLocation = locationNameStr;
             }
 
-            // ƯU TIÊN 5: Fallback mặc định
+            // ƯU TIÊN 6: Fallback mặc định
             if (!resolvedLocation) {
               resolvedLocation = "Hà Nội, VN";
             }
@@ -7069,44 +7081,94 @@ useEffect(() => {
       setIsManualLocation(false);
 
       // Nếu có cache tự động trước đó, load tức thì (0ms) để không bị giật lag giao diện
-      let autoCacheLoc: any = null;
       try {
         const storedAuto = localStorage.getItem('user_weather_auto_location');
         if (storedAuto) {
           const parsed = JSON.parse(storedAuto);
           if (parsed && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
-            autoCacheLoc = parsed;
-            doFetch(parsed.lat, parsed.lon, parsed.nameFull || parsed.name, false);
+            const isGenericHanoi = parsed.nameFull === 'Hà Nội, VN' || parsed.name === 'Hà Nội';
+            doFetch(parsed.lat, parsed.lon, isGenericHanoi ? null : (parsed.nameFull || parsed.name), false, parsed.source || 'auto');
           }
         }
       } catch {}
 
-      // Kích hoạt định vị 2 tầng: Tầng 1 Lấy nhanh vị trí mạng/Wi-Fi (0.3s), Tầng 2 Tinh chỉnh vệ tinh GPS chính xác cao
-      if (navigator.geolocation) {
+      // Hàm kích hoạt lấy tọa độ GPS chính xác thực tế
+      const requestGpsPosition = (onFail?: () => void) => {
+        if (!navigator.geolocation) {
+          if (onFail) onFail();
+          else fallbackToIp();
+          return;
+        }
+
         let hasResolved = false;
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             hasResolved = true;
+            console.log("[Geolocation] Real GPS fix acquired:", pos.coords.latitude, pos.coords.longitude);
             doFetch(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
           },
-          () => {
+          (err) => {
+            console.warn("[Geolocation] High-accuracy GPS timeout or error, trying standard accuracy:", err);
             navigator.geolocation.getCurrentPosition(
               (pos2) => {
                 hasResolved = true;
+                console.log("[Geolocation] Standard position fix acquired:", pos2.coords.latitude, pos2.coords.longitude);
                 doFetch(pos2.coords.latitude, pos2.coords.longitude, null, false, 'gps');
               },
               (err2) => {
-                console.warn("Geolocation prompt or timeout, falling back to IP:", err2);
-                if (!hasResolved) fallbackToIp();
+                console.warn("[Geolocation] Standard position error, falling back to IP:", err2);
+                if (!hasResolved) {
+                  if (onFail) onFail();
+                  else fallbackToIp();
+                }
               },
-              { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+              { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
             );
           },
-          { enableHighAccuracy: false, timeout: 4000, maximumAge: 180000 }
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
-      } else {
-        fallbackToIp();
+      };
+
+      // 1. Kích hoạt lấy GPS thực tế ngay lập tức
+      requestGpsPosition();
+
+      // 2. Lắng nghe Permissions API: Ngay khi người dùng nhấn "Cho phép" (Allow) trên trình duyệt, lập tức tự động cập nhật vị trí thực tế
+      if (typeof navigator !== 'undefined' && navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((pStatus) => {
+          pStatus.onchange = () => {
+            if (pStatus.state === 'granted') {
+              console.log("[Geolocation] Location permission granted by user! Re-fetching real GPS position...");
+              requestGpsPosition();
+            }
+          };
+          if (pStatus.state === 'granted') {
+            requestGpsPosition();
+          }
+        }).catch(() => {});
       }
+
+      // 3. Theo dõi vị trí di chuyển thực tế (Continuous Watcher)
+      if (typeof navigator !== 'undefined' && navigator.geolocation && navigator.geolocation.watchPosition) {
+        let lastWatchLat = 0;
+        let lastWatchLon = 0;
+        const wid = navigator.geolocation.watchPosition(
+          (pos) => {
+            const wLat = pos.coords.latitude;
+            const wLon = pos.coords.longitude;
+            const dist = haversineDistanceKm(wLat, wLon, lastWatchLat, lastWatchLon);
+            if (dist > 0.4 || lastWatchLat === 0) {
+              lastWatchLat = wLat;
+              lastWatchLon = wLon;
+              console.log("[Geolocation Watcher] Fresh position fix:", wLat, wLon);
+              doFetch(wLat, wLon, null, false, 'gps');
+            }
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 30000, timeout: 25000 }
+        );
+        watchIdRef.current = wid;
+      }
+
       return;
     }
 
@@ -7121,6 +7183,25 @@ useEffect(() => {
     }; // end loadData
 
     loadData();
+
+    const handleWindowFocus = () => {
+      try {
+        const isManual = sessionStorage.getItem('user_weather_session_manual_location');
+        if (!isManual && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (doFetchRef.current) {
+                doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
+              }
+            },
+            () => {},
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+          );
+        }
+      } catch {}
+    };
+    window.addEventListener('focus', handleWindowFocus);
+
     const intervalId = setInterval(() => {
       const isUserBusy = isShortsOpenRef.current || selectedArticleRef.current || (Date.now() - lastActivityRef.current < 45000);
       if (isUserBusy) {
@@ -7130,7 +7211,14 @@ useEffect(() => {
       // Không có tác động gì mới load dữ liệu định kỳ theo logic cũ
       loadData();
     }, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleWindowFocus);
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
   }, []);
 
   // ── Pre-fetch bài viết chi tiết từ News Bot Worker ──

@@ -410,3 +410,28 @@
      - `npm run build`: 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-077)
+
+- **Mã Yêu Cầu**: `REQ-077`
+- **Tiêu Đề**: Hiệu Ứng Nền Động CSS Morphing Gradients Cho Thẻ Thời Tiết Hero & Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì Theo Quyền Trình Duyệt
+- **Nguồn Prompt**: `PROMPT-20261028-01`: *"Nếu có cập nhât tiến hành thực hiện hệ thống vẫn đẩy là Hà Nội và không tự cập nhập vị trí hiện tại của người dùng <div class=\"relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20\" style=\"background: linear-gradient(135deg, rgb(12, 15, 18) 0%, rgb(20, 6, 45) 50%, rgb(37, 99, 255) 100%);\">...<span class=\"underline decoration-dotted decoration-white/70 underline-offset-2\">Hà Nội</span><span class=\"opacity-60\">·</span><span>13:56</span><span class=\"text-[10px] bg-white/25 hover:bg-white/35 font-bold px-1.5 py-0.5 rounded-full ml-1\">Tự động</span>... ngoài ra ở khung này áp dụng hiệu ứng 'CSS Morphing Gradients Animated Background' để sinh động hơn"*
+- **Phân Hệ**: Atmospheric Hero Weather Card, Dynamic CSS Animation System, Reactive Geolocation Watcher & Permissions API (`src/App.tsx`, `src/index.css`, `docs/DECISIONS.md`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Hiệu ứng chuyển động CSS Morphing Gradients Animated Background*:
+     - Loại bỏ hoàn toàn thuộc tính inline `style={{ background: 'linear-gradient(...)' }}` tĩnh trên thẻ Hero Weather Card.
+     - Triển khai animation `@keyframes morphGradientDark` và `@keyframes morphGradientLight` đa điểm dừng màu sắc biến chuyển mượt mà (15s liên tục, `ease-in-out`, vô tận).
+     - Bổ sung 3 khối mầm màu hữu cơ chuyển động biến hình độc lập (`.animate-morph-blob-1`, `.animate-morph-blob-2`, `.animate-morph-blob-3`) sử dụng `border-radius` biến thiên tự nhiên, dịch chuyển tọa độ 2D đa trục và xoay tròn nhẹ với GPU acceleration (`will-change: transform, background-position; transform: translate3d(0, 0, 0);`).
+     - Tương thích hoàn hảo 2 chế độ Sáng / Tối: `.hero-morph-gradient-dark` (sắc chàm không gian `#0c0f12`, `#14062d`, `#1d2f80`, `#2563ff`) và `.hero-morph-gradient-light` (sắc xanh đại dương tươi mát `#2563ff`, `#3b82f6`, `#60a5fa`, `#1d4ed8`).
+  2. *Động cơ định vị địa lý phản ứng tức thì (Reactive High-Precision Geolocation)*:
+     - Triệt tiêu lỗi "Hà Nội lock": Trong hàm `doFetch`, khi chế độ là tự động (`!isManualSelection`), hệ thống KHÔNG sử dụng tên thô từ IP fallback ("Hà Nội, VN") làm kết quả chốt chặn, mà LUÔN LUÔN kích hoạt phân giải tọa độ ngược cấp quận/huyện qua Photon Komoot OSM và bảng Haversine khoảng cách địa lý.
+     - Khi nạp trang (`loadData`), nếu bộ nhớ đệm mang giá trị mặc định thô "Hà Nội", hệ thống không tái sử dụng chuỗi này mà buộc định vị lại tọa độ thực tế.
+     - Tích hợp `navigator.permissions.query({ name: 'geolocation' })` với sự kiện `permissionStatus.onchange`: Khi người dùng nhấp "Cho phép" (Allow) trên thanh thông báo quyền của trình duyệt, hệ thống lập tức tự động định vị lại ngay (0ms trễ) mà không cần người dùng phải F5 tải lại trang.
+     - Tích hợp `navigator.geolocation.watchPosition`: Theo dõi tọa độ liên tục khi người dùng di chuyển; tự động cập nhật vị trí thời tiết khi khoảng cách lệch > 400m.
+     - Lắng nghe sự kiện `window.addEventListener('focus')` để tái kiểm tra vị trí khi người dùng quay lại tab trình duyệt.
+     - Kéo dài timeout `handleRequestGps`: 12s cho GPS chính xác cao và 8s cho GPS tiêu chuẩn, triệt tiêu tình trạng vội vã timeout rơi vào IP Hà Nội trên máy tính để bàn.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.46.0`
+- **Phiên bản**: `1.47.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -789,6 +789,21 @@
       + Xóa bỏ khai báo `color: var(--almond-ink);` khỏi rule unlayered `h1..h6` trong `src/index.css`, ngăn CSS Cascade Layer unlayered đè class `.text-white` của Tailwind khi ở Light Mode (`--almond-ink` là `#0c0f12`).
       + Bổ sung quy tắc scoped: `[data-testid="video-shorts-modal"] h1..h6, strong, b { color: inherit !important; }`.
       + Thiết lập class màu tương phản rõ ràng: `isDark ? 'text-white' : 'text-[#0c0f12]'` trên toàn bộ các thẻ tiêu đề danh sách bản tin và video cards.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+58. **[REQ-077] Hiệu Ứng Nền Động CSS Morphing Gradients Cho Thẻ Thời Tiết Hero & Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì Theo Quyền Trình Duyệt**:
+    - *Hiệu Ứng Nền Động CSS Morphing Gradients Animated Background*:
+      + Khai báo `@keyframes morphGradientDark` và `@keyframes morphGradientLight` (15s liên tục, vô tận) tạo làn sóng chuyển sắc mượt mà giữa các điểm dừng màu sắc hoàng gia và vũ trụ.
+      + Triển khai 3 khối aura hữu cơ chuyển động biến hình độc lập (`.animate-morph-blob-1`, `.animate-morph-blob-2`, `.animate-morph-blob-3`) với `border-radius` biến thiên không đối xứng, dịch chuyển 2D đa trục và xoay tròn nhẹ nhàng.
+      + Tối ưu hiệu năng phần cứng GPU tối đa bằng `will-change: transform, background-position;` và `transform: translate3d(0, 0, 0);`.
+      + Hỗ trợ tương thích 2 chế độ Sáng/Tối: `.hero-morph-gradient-dark` cho Dark mode và `.hero-morph-gradient-light` cho Light mode.
+    - *Động Cơ Định Vị Địa Lý Phản Ứng Tức Thì (Reactive Real-Time Geolocation)*:
+      + *Ưu Tiên Tuyệt Đối Cho Reverse Geocoding Tọa Độ*: Trong `doFetch`, khai báo `let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;` bảo đảm khi ở chế độ tự động, hệ thống LUÔN LUÔN giải mã tọa độ ngược qua Photon Komoot OSM và Haversine, loại bỏ việc IP fallback Hà Nội đè mất vị trí thực.
+      + *Lọc Bộ Nhớ Đệm Mặc Định*: Khi nạp trang (`loadData`), nếu giá trị lưu tạm là chuỗi thô "Hà Nội", truyền `locationNameStr = null` để ép buộc giải mã lại tọa độ.
+      + *Lắng Nghe Sự Kiện Quyền Trình Duyệt (Permissions API)*: Sử dụng `navigator.permissions.query({ name: 'geolocation' })` và bắt sự kiện `permissionStatus.onchange`. Ngay khi người dùng nhấp "Cho phép" trên popup trình duyệt, ứng dụng tự động lấy GPS và cập nhật thời tiết ngay tức thì (0ms độ trễ) mà không cần tải lại trang.
+      + *Theo Dõi Vị Trí Liên Tục (`watchPosition`)*: Tích hợp `navigator.geolocation.watchPosition` với ngưỡng lệch 400m (`haversineKm > 0.4`), tự động cập nhật thời tiết khi người dùng di chuyển giữa các địa điểm.
+      + *Lắng Nghe Tab Focus*: `window.addEventListener('focus')` tự động kiểm tra và làm mới vị trí khi người dùng quay lại tab làm việc.
+      + *Nâng Thời Gian Chờ GPS*: Tăng timeout lên 12s cho GPS độ chính xác cao và 8s cho GPS tiêu chuẩn, triệt tiêu việc vội vã rơi vào IP fallback trên PC/laptop.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
 
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
