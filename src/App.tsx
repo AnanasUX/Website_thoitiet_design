@@ -610,118 +610,6 @@ export function AmbientAuroraBackground({ darkMode = false }: { darkMode?: boole
   );
 }
 
-export function OSDynamicIslandDock({
-  WEATHER,
-  darkMode,
-  setDarkMode,
-  onOpenAdmin,
-  onOpenLocation,
-}: {
-  WEATHER: any;
-  darkMode: boolean;
-  setDarkMode: (d: boolean) => void;
-  onOpenAdmin: () => void;
-  onOpenLocation: () => void;
-}) {
-  const [currentTime, setCurrentTime] = useState("");
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-
-  useEffect(() => {
-    const update = () => {
-      const d = new Date();
-      setCurrentTime(
-        `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`
-      );
-    };
-    update();
-    const timer = setInterval(update, 1000);
-
-    const checkAudio = () => {
-      const audioEl = document.getElementById("vieneu-audio-engine") as HTMLAudioElement | null;
-      if (audioEl) {
-        setIsPlayingAudio(!audioEl.paused && !audioEl.ended);
-      }
-    };
-    const audioTimer = setInterval(checkAudio, 1000);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(audioTimer);
-    };
-  }, []);
-
-  return (
-    <aside
-      aria-label="Thanh điều khiển nhanh"
-      className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full floating-island-dock bg-white/80 dark:bg-[#151921]/80 text-[#182033] dark:text-white text-[12px] font-semibold border border-white/50 dark:border-white/10 shadow-lg shadow-black/5 transition-all duration-300 hover:scale-[1.02]"
-    >
-      {/* Live Indicator */}
-      <div className="flex items-center gap-1.5 pl-1 pr-1.5 border-r border-[#e3e7ef] dark:border-white/10">
-        <span className="relative flex size-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
-        </span>
-        <span className="font-mono text-[11px] tracking-tight text-[#4e5b6d] dark:text-slate-300 hidden sm:inline">
-          LIVE
-        </span>
-        <span className="font-mono text-[11px] font-bold text-[#182033] dark:text-slate-100">
-          {currentTime || "12:00:00"}
-        </span>
-      </div>
-
-      {/* Weather Pill */}
-      {WEATHER && (
-        <button
-          type="button"
-          onClick={onOpenLocation}
-          className="flex items-center gap-1 px-2 py-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer text-[11.5px]"
-          title="Nhấp để thay đổi vị trí thời tiết"
-        >
-          <span>📍</span>
-          <span className="font-bold text-[#2563ff] dark:text-blue-400">
-            {WEATHER.location || "Hà Nội"}
-          </span>
-          <span className="text-[#5f687b] dark:text-slate-300 font-bold">
-            {WEATHER.temp || "28°"}
-          </span>
-        </button>
-      )}
-
-      {/* Equalizer Sound Waves (Audio Status) */}
-      <div
-        className="flex items-center gap-0.5 h-3.5 px-1.5 border-l border-[#e3e7ef] dark:border-white/10"
-        title={isPlayingAudio ? "Đang đọc bản tin bằng giọng AI VieNeu-TTS" : "Trình phát âm thanh AI sẵn sàng"}
-      >
-        <span className={`w-[2.5px] rounded-full bg-blue-500 ${isPlayingAudio ? 'animate-eq-1' : 'h-1.5'}`} />
-        <span className={`w-[2.5px] rounded-full bg-indigo-500 ${isPlayingAudio ? 'animate-eq-2' : 'h-2.5'}`} />
-        <span className={`w-[2.5px] rounded-full bg-violet-500 ${isPlayingAudio ? 'animate-eq-3' : 'h-1'}`} />
-        <span className={`w-[2.5px] rounded-full bg-pink-500 ${isPlayingAudio ? 'animate-eq-4' : 'h-2'}`} />
-      </div>
-
-      {/* Dark / Light Toggle */}
-      <button
-        type="button"
-        onClick={() => setDarkMode(!darkMode)}
-        className="size-7 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-[13px] transition-transform active:scale-90 cursor-pointer"
-        title={darkMode ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-      >
-        {darkMode ? "☀️" : "🌙"}
-      </button>
-
-      {/* Quick Admin Portal Button */}
-      <button
-        type="button"
-        onClick={onOpenAdmin}
-        className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#ff315f] to-[#f97316] text-white text-[11px] font-extrabold shadow-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
-        title="Truy cập Bảng Quản Trị Hệ Thống (anx.io.vn/admin_board)"
-      >
-        <span>🛡️</span>
-        <span className="hidden sm:inline">Admin</span>
-      </button>
-    </aside>
-  );
-}
-
 function WeatherSection({
   compact = false,
   condKey,
@@ -7582,15 +7470,6 @@ useEffect(() => {
       {/* Ambient Aurora Canvas & Tech Grid Background */}
       <AmbientAuroraBackground darkMode={darkMode} />
 
-      {/* Floating Dynamic Island Quick Dock (VisionOS Style) */}
-      <OSDynamicIslandDock
-        WEATHER={(liveData ?? DEFAULT_WEATHER_DATA)[condKey]}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        onOpenAdmin={onOpenAdmin}
-        onOpenLocation={() => setShowLocationModal(true)}
-      />
-
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
@@ -7677,13 +7556,6 @@ useEffect(() => {
               🛡️ QA Dashboard
             </a>
           )}
-          <button
-            onClick={onOpenAdmin}
-            className="flex items-center gap-1 font-semibold text-[#ff315f] hover:text-[#e02050] bg-[#fff0f3] px-2.5 py-0.5 rounded-full border border-[#ffccd5] transition-colors text-[11px] cursor-pointer"
-            title="Mở Bảng Quản Trị Hệ Thống (anx.io.vn/admin_board)"
-          >
-            <span>🛡️</span> Quản Trị [ADMIN]
-          </button>
           <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
             Chính sách Bảo mật
           </button>

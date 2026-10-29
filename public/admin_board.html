@@ -66,7 +66,7 @@
                         name="admin_user_field" 
                         autocomplete="off" 
                         value="" 
-                        placeholder="Nhập tên đăng nhập (mặc định: admin)" 
+                        placeholder="Nhập tên đăng nhập..." 
                         required 
                         class="w-full text-xs bg-[#f4f6fa] border border-[#e3e7ef] focus:border-[#ff315f] focus:bg-white rounded-xl px-4 py-3 text-[#182033] placeholder-[#5f687b]/60 focus:outline-none transition-all"
                     >
@@ -80,36 +80,18 @@
                         name="admin_pass_field" 
                         autocomplete="new-password" 
                         value="" 
-                        placeholder="Nhập mật khẩu (mặc định: admin)" 
+                        placeholder="••••••••" 
                         required 
                         class="w-full text-xs bg-[#f4f6fa] border border-[#e3e7ef] focus:border-[#ff315f] focus:bg-white rounded-xl px-4 py-3 text-[#182033] placeholder-[#5f687b]/60 focus:outline-none transition-all"
                     >
                 </div>
 
-                <!-- Helper Badge thông báo tài khoản mặc định -->
-                <div class="p-3 rounded-xl bg-slate-50 border border-[#e3e7ef] text-[11px] text-[#5f687b] flex items-center justify-between">
-                    <div>
-                        <span>💡 Tài khoản: <b>admin</b> | Mật khẩu: <b>admin</b></span>
-                    </div>
-                    <button type="button" onclick="fillTestCredentials()" class="text-[11px] text-[#ff315f] font-bold hover:underline cursor-pointer">
-                        Điền mẫu
-                    </button>
-                </div>
-
                 <button 
                     type="submit" 
                     id="loginSubmitBtn" 
-                    class="w-full py-3 bg-gradient-to-r from-[#ff315f] via-[#f72585] to-[#f97316] hover:opacity-95 text-white font-bold text-xs rounded-xl shadow-md shadow-[#ff315f]/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    class="w-full py-3 bg-gradient-to-r from-[#ff315f] via-[#f72585] to-[#f97316] hover:opacity-95 text-white font-bold text-xs rounded-xl shadow-md shadow-[#ff315f]/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
                 >
                     <span id="loginBtnText">Đăng Nhập Vào Bảng Quản Trị</span>
-                </button>
-
-                <button 
-                    type="button" 
-                    onclick="handleDirectGuestLogin()" 
-                    class="w-full py-2.5 bg-[#f4f6fa] hover:bg-slate-200/60 text-[#182033] font-semibold text-xs rounded-xl border border-[#e3e7ef] transition-all cursor-pointer"
-                >
-                    ⚡ Vào Xem Quản Trị Trực Tiếp (1 Click)
                 </button>
             </form>
 
@@ -787,12 +769,6 @@
             }, 3000);
         }
 
-        function fillTestCredentials() {
-            document.getElementById('loginUsername').value = 'admin';
-            document.getElementById('loginPassword').value = 'admin';
-            showToast('Đã điền tài khoản: admin / admin', 'info');
-        }
-
         function checkInitialAuth() {
             if (currentAdminToken) {
                 showDashboard();
@@ -827,15 +803,8 @@
                 showToast('Đăng nhập thành công!', 'success');
                 showDashboard();
             } else {
-                showToast('Sai tên đăng nhập hoặc mật khẩu! Mặc định: admin / admin', 'error');
+                showToast('Sai tên đăng nhập hoặc mật khẩu!', 'error');
             }
-        }
-
-        function handleDirectGuestLogin() {
-            currentAdminToken = 'auth_token_' + Date.now();
-            sessionStorage.setItem('admin_token', currentAdminToken);
-            showToast('Đã mở Bảng Quản Trị hệ thống!', 'success');
-            showDashboard();
         }
 
         function handleLogout() {

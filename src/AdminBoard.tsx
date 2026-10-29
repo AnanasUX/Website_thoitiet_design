@@ -680,14 +680,8 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
       setLoginError("");
       showToast("Đăng nhập quản trị thành công!", "success");
     } else {
-      setLoginError("Tên đăng nhập hoặc mật khẩu không chính xác! (Mặc định: admin / admin)");
+      setLoginError("Tên đăng nhập hoặc mật khẩu không chính xác!");
     }
-  };
-
-  const handleGuestBypass = () => {
-    setIsAuthenticated(true);
-    sessionStorage.setItem("anx_admin_auth", "true");
-    showToast("Đã mở Bảng Quản Trị hệ thống!", "success");
   };
 
   const handleLogout = () => {
@@ -752,7 +746,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                 autoComplete="off"
                 value={loginUser}
                 onChange={(e) => setLoginUser(e.target.value)}
-                placeholder="Nhập tên đăng nhập (mặc định: admin)"
+                placeholder="Nhập tên đăng nhập..."
                 required
                 className="w-full text-xs bg-[#f4f6fa] border border-[#e3e7ef] focus:border-[#ff315f] focus:bg-white rounded-xl px-4 py-3 text-[#182033] placeholder-[#5f687b]/60 focus:outline-none transition-all"
               />
@@ -768,7 +762,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                 autoComplete="new-password"
                 value={loginPass}
                 onChange={(e) => setLoginPass(e.target.value)}
-                placeholder="Nhập mật khẩu (mặc định: admin)"
+                placeholder="••••••••"
                 required
                 className="w-full text-xs bg-[#f4f6fa] border border-[#e3e7ef] focus:border-[#ff315f] focus:bg-white rounded-xl px-4 py-3 text-[#182033] placeholder-[#5f687b]/60 focus:outline-none transition-all"
               />
@@ -780,36 +774,11 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
               </div>
             )}
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-[#e3e7ef] text-[11px] text-[#5f687b] flex items-center justify-between">
-              <div>
-                <span>💡 Tài khoản: <b>admin</b> | Mật khẩu: <b>admin</b></span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginUser("admin");
-                  setLoginPass("admin");
-                  showToast("Đã điền tài khoản: admin / admin", "info");
-                }}
-                className="text-[11px] text-[#ff315f] font-bold hover:underline cursor-pointer"
-              >
-                Điền mẫu
-              </button>
-            </div>
-
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-[#ff315f] via-[#f72585] to-[#f97316] hover:opacity-95 text-white font-bold text-xs rounded-xl shadow-md shadow-[#ff315f]/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3 bg-gradient-to-r from-[#ff315f] via-[#f72585] to-[#f97316] hover:opacity-95 text-white font-bold text-xs rounded-xl shadow-md shadow-[#ff315f]/20 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
             >
               <span>Đăng Nhập Vào Bảng Quản Trị</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleGuestBypass}
-              className="w-full py-2.5 bg-[#f4f6fa] hover:bg-slate-200/60 text-[#182033] font-semibold text-xs rounded-xl border border-[#e3e7ef] transition-all cursor-pointer"
-            >
-              ⚡ Vào Xem Quản Trị Trực Tiếp (1 Click)
             </button>
           </form>
 
