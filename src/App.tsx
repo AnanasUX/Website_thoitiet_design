@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { VideoShortsModal } from "./components/VideoShortsModal";
+import { AdminBoard } from "./AdminBoard";
 import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT, DEFAULT_OFFICIAL_CHANNELS } from "./constants/userYouTubeSubscriptions";
 import {
   type ConditionKey,
@@ -5464,6 +5465,38 @@ const getPreviouslyAcquiredLocation = (): PreviouslyAcquiredLocation | null => {
 };
 
 export default function App() {
+  const [isAdminView, setIsAdminView] = useState(() => {
+    if (typeof window !== "undefined") {
+      const p = window.location.pathname.toLowerCase();
+      const s = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      return p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin");
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const p = window.location.pathname.toLowerCase();
+      const s = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      setIsAdminView(p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin"));
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  if (isAdminView) {
+    return (
+      <AdminBoard
+        onBackToSite={() => {
+          setIsAdminView(false);
+          window.history.pushState(null, "", "/");
+        }}
+      />
+    );
+  }
+
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean, source?: 'gps' | 'ip' | 'manual' | 'auto') => void) | null>(null);
   const fallbackToIpRef = useRef<(() => void) | null>(null);
@@ -7415,6 +7448,16 @@ useEffect(() => {
               🛡️ QA Dashboard
             </a>
           )}
+          <button
+            onClick={() => {
+              setIsAdminView(true);
+              window.history.pushState(null, '', '/admin_board');
+            }}
+            className="flex items-center gap-1 font-semibold text-[#ff315f] hover:text-[#e02050] bg-[#fff0f3] px-2.5 py-0.5 rounded-full border border-[#ffccd5] transition-colors text-[11px] cursor-pointer"
+            title="Mở Bảng Quản Trị Hệ Thống (anx.io.vn/admin_board)"
+          >
+            <span>🛡️</span> Quản Trị [ADMIN]
+          </button>
           <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
             Chính sách Bảo mật
           </button>
