@@ -5696,17 +5696,24 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
+  const handleOpenAdmin = useCallback(() => {
+    setIsAdminView(true);
+    window.history.pushState(null, "", "/admin_board");
+  }, []);
+
+  const handleBackToSite = useCallback(() => {
+    setIsAdminView(false);
+    window.history.pushState(null, "", "/");
+  }, []);
+
   if (isAdminView) {
-    return (
-      <AdminBoard
-        onBackToSite={() => {
-          setIsAdminView(false);
-          window.history.pushState(null, "", "/");
-        }}
-      />
-    );
+    return <AdminBoard onBackToSite={handleBackToSite} />;
   }
 
+  return <MainSiteApp onOpenAdmin={handleOpenAdmin} />;
+}
+
+function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean, source?: 'gps' | 'ip' | 'manual' | 'auto') => void) | null>(null);
   const fallbackToIpRef = useRef<(() => void) | null>(null);
@@ -7580,10 +7587,7 @@ useEffect(() => {
         WEATHER={(liveData ?? DEFAULT_WEATHER_DATA)[condKey]}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
-        onOpenAdmin={() => {
-          setIsAdminView(true);
-          window.history.pushState(null, '', '/admin_board');
-        }}
+        onOpenAdmin={onOpenAdmin}
         onOpenLocation={() => setShowLocationModal(true)}
       />
 
@@ -7674,10 +7678,7 @@ useEffect(() => {
             </a>
           )}
           <button
-            onClick={() => {
-              setIsAdminView(true);
-              window.history.pushState(null, '', '/admin_board');
-            }}
+            onClick={onOpenAdmin}
             className="flex items-center gap-1 font-semibold text-[#ff315f] hover:text-[#e02050] bg-[#fff0f3] px-2.5 py-0.5 rounded-full border border-[#ffccd5] transition-colors text-[11px] cursor-pointer"
             title="Mở Bảng Quản Trị Hệ Thống (anx.io.vn/admin_board)"
           >
