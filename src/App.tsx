@@ -519,6 +519,209 @@ function SmartWeatherAssistant({
   );
 }
 
+// ── Visual Atmospheric & Ambient Effects Suite ───────────────────────────
+
+export function WeatherAtmosphereEffects({ condKey }: { condKey: ConditionKey }) {
+  const isRain = condKey === "mua-nho" || condKey === "mua-dong";
+  const isSun = condKey === "nang" || condKey === "nang-gat";
+  const isCloudy = condKey === "am-u" || condKey === "binh-thuong";
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-3xl">
+      {/* Rain Particles */}
+      {isRain && (
+        <div className="absolute inset-0">
+          {[...Array(16)].map((_, i) => (
+            <span
+              key={i}
+              className="rain-particle absolute w-[1.5px] h-8 bg-gradient-to-b from-transparent via-cyan-200/50 to-white/70 rounded-full"
+              style={{
+                left: `${(i * 6.25) + (Math.sin(i) * 2)}%`,
+                top: `${(i % 4) * -20}%`,
+                animationDelay: `${(i * 0.12) % 0.85}s`,
+                animationDuration: `${0.65 + ((i % 5) * 0.1)}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Sun Flares & Golden Sparkles */}
+      {isSun && (
+        <div className="absolute inset-0">
+          <div className="absolute -top-10 -right-10 w-44 h-44 bg-amber-300/25 rounded-full blur-2xl animate-pulse" />
+          {[...Array(8)].map((_, i) => (
+            <span
+              key={i}
+              className="sun-sparkle absolute rounded-full bg-amber-200/60 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+              style={{
+                width: `${4 + (i % 3) * 3}px`,
+                height: `${4 + (i % 3) * 3}px`,
+                left: `${20 + (i * 9)}%`,
+                top: `${25 + (i * 7)}%`,
+                animationDelay: `${i * 0.4}s`,
+                animationDuration: `${2.8 + (i % 3)}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Atmospheric Mist Clouds */}
+      {isCloudy && (
+        <div className="absolute inset-0">
+          <div
+            className="cloud-drift absolute -bottom-10 -left-10 w-80 h-32 bg-white/10 rounded-full blur-3xl pointer-events-none"
+            style={{ animationDuration: '18s' }}
+          />
+          <div
+            className="cloud-drift absolute top-10 right-0 w-72 h-28 bg-sky-200/10 rounded-full blur-3xl pointer-events-none"
+            style={{ animationDuration: '22s', animationDirection: 'reverse' }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function AmbientAuroraBackground({ darkMode = false }: { darkMode?: boolean }) {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
+      {/* High-tech micro-dots matrix grid */}
+      <div className="absolute inset-0 bg-tech-grid opacity-75" />
+
+      {/* Glowing Aurora Orbs */}
+      <div
+        className={`animate-aurora-1 absolute -top-[15%] -left-[10%] w-[55vw] h-[55vw] max-w-[700px] max-h-[700px] rounded-full blur-[110px] pointer-events-none transition-colors duration-1000 ${
+          darkMode ? 'bg-indigo-600/15' : 'bg-blue-400/18'
+        }`}
+      />
+      <div
+        className={`animate-aurora-2 absolute top-[25%] -right-[12%] w-[50vw] h-[50vw] max-w-[650px] max-h-[650px] rounded-full blur-[120px] pointer-events-none transition-colors duration-1000 ${
+          darkMode ? 'bg-violet-600/14' : 'bg-violet-400/16'
+        }`}
+      />
+      <div
+        className={`animate-aurora-3 absolute -bottom-[10%] left-[20%] w-[60vw] h-[50vw] max-w-[750px] max-h-[650px] rounded-full blur-[130px] pointer-events-none transition-colors duration-1000 ${
+          darkMode ? 'bg-cyan-600/12' : 'bg-amber-300/15'
+        }`}
+      />
+    </div>
+  );
+}
+
+export function OSDynamicIslandDock({
+  WEATHER,
+  darkMode,
+  setDarkMode,
+  onOpenAdmin,
+  onOpenLocation,
+}: {
+  WEATHER: any;
+  darkMode: boolean;
+  setDarkMode: (d: boolean) => void;
+  onOpenAdmin: () => void;
+  onOpenLocation: () => void;
+}) {
+  const [currentTime, setCurrentTime] = useState("");
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      const d = new Date();
+      setCurrentTime(
+        `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`
+      );
+    };
+    update();
+    const timer = setInterval(update, 1000);
+
+    const checkAudio = () => {
+      const audioEl = document.getElementById("vieneu-audio-engine") as HTMLAudioElement | null;
+      if (audioEl) {
+        setIsPlayingAudio(!audioEl.paused && !audioEl.ended);
+      }
+    };
+    const audioTimer = setInterval(checkAudio, 1000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(audioTimer);
+    };
+  }, []);
+
+  return (
+    <aside
+      aria-label="Thanh điều khiển nhanh"
+      className="fixed top-3 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full floating-island-dock bg-white/80 dark:bg-[#151921]/80 text-[#182033] dark:text-white text-[12px] font-semibold border border-white/50 dark:border-white/10 shadow-lg shadow-black/5 transition-all duration-300 hover:scale-[1.02]"
+    >
+      {/* Live Indicator */}
+      <div className="flex items-center gap-1.5 pl-1 pr-1.5 border-r border-[#e3e7ef] dark:border-white/10">
+        <span className="relative flex size-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
+        </span>
+        <span className="font-mono text-[11px] tracking-tight text-[#4e5b6d] dark:text-slate-300 hidden sm:inline">
+          LIVE
+        </span>
+        <span className="font-mono text-[11px] font-bold text-[#182033] dark:text-slate-100">
+          {currentTime || "12:00:00"}
+        </span>
+      </div>
+
+      {/* Weather Pill */}
+      {WEATHER && (
+        <button
+          type="button"
+          onClick={onOpenLocation}
+          className="flex items-center gap-1 px-2 py-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer text-[11.5px]"
+          title="Nhấp để thay đổi vị trí thời tiết"
+        >
+          <span>📍</span>
+          <span className="font-bold text-[#2563ff] dark:text-blue-400">
+            {WEATHER.location || "Hà Nội"}
+          </span>
+          <span className="text-[#5f687b] dark:text-slate-300 font-bold">
+            {WEATHER.temp || "28°"}
+          </span>
+        </button>
+      )}
+
+      {/* Equalizer Sound Waves (Audio Status) */}
+      <div
+        className="flex items-center gap-0.5 h-3.5 px-1.5 border-l border-[#e3e7ef] dark:border-white/10"
+        title={isPlayingAudio ? "Đang đọc bản tin bằng giọng AI VieNeu-TTS" : "Trình phát âm thanh AI sẵn sàng"}
+      >
+        <span className={`w-[2.5px] rounded-full bg-blue-500 ${isPlayingAudio ? 'animate-eq-1' : 'h-1.5'}`} />
+        <span className={`w-[2.5px] rounded-full bg-indigo-500 ${isPlayingAudio ? 'animate-eq-2' : 'h-2.5'}`} />
+        <span className={`w-[2.5px] rounded-full bg-violet-500 ${isPlayingAudio ? 'animate-eq-3' : 'h-1'}`} />
+        <span className={`w-[2.5px] rounded-full bg-pink-500 ${isPlayingAudio ? 'animate-eq-4' : 'h-2'}`} />
+      </div>
+
+      {/* Dark / Light Toggle */}
+      <button
+        type="button"
+        onClick={() => setDarkMode(!darkMode)}
+        className="size-7 rounded-full flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/10 text-[13px] transition-transform active:scale-90 cursor-pointer"
+        title={darkMode ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+      >
+        {darkMode ? "☀️" : "🌙"}
+      </button>
+
+      {/* Quick Admin Portal Button */}
+      <button
+        type="button"
+        onClick={onOpenAdmin}
+        className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#ff315f] to-[#f97316] text-white text-[11px] font-extrabold shadow-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+        title="Truy cập Bảng Quản Trị Hệ Thống (anx.io.vn/admin_board)"
+      >
+        <span>🛡️</span>
+        <span className="hidden sm:inline">Admin</span>
+      </button>
+    </aside>
+  );
+}
+
 function WeatherSection({
   compact = false,
   condKey,
@@ -571,6 +774,9 @@ function WeatherSection({
         <div className={`absolute right-1/4 bottom-1/4 w-48 h-48 rounded-full pointer-events-none blur-3xl animate-morph-blob-3 ${
           darkMode ? 'bg-[#6366f1]/12' : 'bg-[#b8ccff]/15'
         }`}></div>
+
+        {/* Dynamic Weather Atmosphere Particles (Rain streaks / Sun flares / Mist) */}
+        <WeatherAtmosphereEffects condKey={condKey} />
 
         <div className="flex items-center justify-between w-full z-10">
           <button
@@ -2520,8 +2726,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
+    <div className="bg-transparent flex flex-col items-start w-full relative z-10">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100] transition-colors">
         <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
         <div className="flex items-center">
           <div className="flex flex-col items-end">
@@ -2733,8 +2939,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+    <div className="bg-transparent flex flex-col items-start w-full relative z-10">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100] transition-colors">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
           <button
@@ -2995,8 +3201,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100]">
+    <div className="bg-transparent flex flex-col items-start w-full relative z-10">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100] transition-colors">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <div className="flex items-center gap-2 group cursor-pointer">
             <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">Anx.</span>
@@ -3774,10 +3980,14 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
   if (!news.length) return null;
 
   return (
-    <div className="w-full bg-white text-[#182033] flex items-center h-[32px] overflow-hidden border-b border-[#e3e7ef] z-20 shrink-0 select-none">
-      <div className="bg-[#ff315f] text-white font-bold text-[11px] px-3 py-1 flex items-center justify-center shrink-0 z-10 h-full tracking-wider uppercase shadow-xs">
-        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-1.5"></div>
-        Tin nóng
+    <div className="w-full bg-white/85 dark:bg-[#151921]/90 backdrop-blur-md text-[#182033] dark:text-white flex items-center h-[34px] overflow-hidden border-b border-[#e3e7ef] dark:border-white/10 z-20 shrink-0 select-none shadow-2xs">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#ff315f] to-[#f97316] text-white font-extrabold text-[11px] px-3.5 py-1 flex items-center justify-center shrink-0 z-10 h-full tracking-wider uppercase shadow-xs">
+        <span className="absolute inset-0 bg-white/25 animate-shimmer-sweep pointer-events-none" />
+        <span className="relative flex size-2 mr-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full size-2 bg-white"></span>
+        </span>
+        <span>TIN NÓNG 24H</span>
       </div>
       <div className="flex-1 overflow-hidden h-full flex items-center relative pl-2" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 1%, black 99%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 1%, black 99%, transparent)' }}>
         <div className="animate-marquee whitespace-nowrap flex items-center gap-6 text-[12.5px] font-medium min-w-full hover:[animation-play-state:paused]">
@@ -7361,7 +7571,22 @@ useEffect(() => {
     const theme = WEATHER_THEMES[condKey];
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f6fa] pb-[40px]">
+    <div className="min-h-screen w-full bg-[#f4f6fa] dark:bg-[#0c0f12] pb-[40px] relative">
+      {/* Ambient Aurora Canvas & Tech Grid Background */}
+      <AmbientAuroraBackground darkMode={darkMode} />
+
+      {/* Floating Dynamic Island Quick Dock (VisionOS Style) */}
+      <OSDynamicIslandDock
+        WEATHER={(liveData ?? DEFAULT_WEATHER_DATA)[condKey]}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        onOpenAdmin={() => {
+          setIsAdminView(true);
+          window.history.pushState(null, '', '/admin_board');
+        }}
+        onOpenLocation={() => setShowLocationModal(true)}
+      />
+
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">

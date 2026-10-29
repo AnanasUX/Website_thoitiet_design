@@ -438,3 +438,150 @@ html.dark .hero-gradient {
 [data-testid="video-shorts-modal"] b {
   color: inherit !important;
 }
+
+/* ── FUTURISTIC OS & AMBIENT VISUAL EFFECTS SUITE ──────────────────────────── */
+
+/* 1. Tech Dot Matrix Grid Overlay */
+.bg-tech-grid {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+html.dark .bg-tech-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* 2. Ambient Aurora Animated Glows */
+@keyframes auroraPulse1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(60px, -40px) scale(1.25);
+    opacity: 0.8;
+  }
+}
+@keyframes auroraPulse2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate(-50px, 50px) scale(1.2);
+    opacity: 0.75;
+  }
+}
+@keyframes auroraPulse3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(40px, 30px) scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+.animate-aurora-1 {
+  animation: auroraPulse1 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.animate-aurora-2 {
+  animation: auroraPulse2 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.animate-aurora-3 {
+  animation: auroraPulse3 22s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* 3. Glassmorphic Specular Highlight & Hover Lift */
+.glass-specular-card {
+  position: relative;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-specular-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  pointer-events: none;
+}
+html.dark .glass-specular-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+.glass-specular-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -15px rgba(37, 99, 255, 0.16), 0 0 0 1px rgba(37, 99, 255, 0.25);
+}
+html.dark .glass-specular-card:hover {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(56, 189, 248, 0.3);
+}
+
+/* 4. Live Audio Equalizer Wave Animation */
+@keyframes eqBar1 { 0%, 100% { height: 25%; } 50% { height: 95%; } }
+@keyframes eqBar2 { 0%, 100% { height: 80%; } 50% { height: 30%; } }
+@keyframes eqBar3 { 0%, 100% { height: 45%; } 50% { height: 100%; } }
+@keyframes eqBar4 { 0%, 100% { height: 90%; } 50% { height: 40%; } }
+
+.animate-eq-1 { animation: eqBar1 0.75s ease-in-out infinite; }
+.animate-eq-2 { animation: eqBar2 0.65s ease-in-out infinite 0.15s; }
+.animate-eq-3 { animation: eqBar3 0.85s ease-in-out infinite 0.3s; }
+.animate-eq-4 { animation: eqBar4 0.7s ease-in-out infinite 0.2s; }
+
+/* 5. Shimmer Sweep Animation */
+@keyframes shimmerSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.animate-shimmer-sweep {
+  animation: shimmerSweep 2.5s infinite;
+}
+
+/* 6. Dynamic Weather Weather Atmosphere Effects */
+@keyframes rainStreak {
+  0% { transform: translateY(-120%) rotate(15deg); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translateY(220%) rotate(15deg); opacity: 0; }
+}
+.rain-particle {
+  animation: rainStreak 0.85s linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes sunFloat {
+  0%, 100% { transform: translateY(0px) scale(1); opacity: 0.4; }
+  50% { transform: translateY(-16px) scale(1.3); opacity: 0.85; }
+}
+.sun-sparkle {
+  animation: sunFloat 3.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes cloudDriftSlow {
+  0% { transform: translateX(-30px); }
+  50% { transform: translateX(30px); }
+  100% { transform: translateX(-30px); }
+}
+.cloud-drift {
+  animation: cloudDriftSlow 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* 7. Floating OS Dock / Dynamic Island Capsule */
+.floating-island-dock {
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: 0 16px 36px -6px rgba(12, 15, 18, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+html.dark .floating-island-dock {
+  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
