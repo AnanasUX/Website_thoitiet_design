@@ -1,5 +1,40 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.50.0 (2026-10-30) - Phóng To Mã VietQR Quét Thanh Toán Bằng Popup Modal Căn Giữa Màn Hình (REQ-080) & Nền Động Animated Mesh Gradient Khí Quyển (REQ-079)
+
+### 1. Phân Hệ Quét Mã VietQR Thanh Toán Hóa Đơn Tiền Phòng & Điện Nước AnX (REQ-080)
+- **Khởi tạo Component `VietQRModal.tsx`**:
+  + Hiển thị popup modal căn giữa tuyệt đối (`fixed inset-0 z-[999] flex items-center justify-center`) với hiệu ứng làm mờ nền cao cấp (`backdrop-blur-sm`).
+  + Hiển thị ảnh mã QR kích thước lớn, sắc nét, tối ưu cho camera điện thoại quét từ xa (`https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4860500&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN`).
+  + Bảng thông tin thanh toán chi tiết:
+    * Số tiền: `4.860.500 ₫` kèm nút "Sao chép" 1 chạm và phản hồi "✓ Đã chép".
+    * Ngân hàng: `BIDV` (Ngân hàng TMCP Đầu tư và Phát triển Việt Nam).
+    * Số tài khoản: `8817398313` kèm nút "Sao chép" 1 chạm.
+    * Chủ tài khoản: `TRAN THI THUY HUYEN` (TRẦN THỊ THÚY HUYỀN).
+    * Nội dung CK: `TIEN PHONG Phòng Thuê T10` kèm nút "Sao chép" 1 chạm.
+  + Hỗ trợ nút "Lưu ảnh QR", nút đóng (X), phím tắt `Escape` và đóng khi nhấp ngoài vùng backdrop (Click outside).
+- **Thẻ Hóa Đơn & Mã Thumbnail VietQR (`VietQRPaymentCard`)**:
+  + Hiển thị chính xác thẻ chứa mã HTML theo đặc tả người dùng: `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative">...</div>`.
+  + Tích hợp đồng bộ trên cả 3 giao diện Mobile, Tablet, Desktop và nút truy cập nhanh "QR Hóa đơn" trên Header.
+- **Lắng Nghe Toàn Cục (Universal DOM Event Delegation)**:
+  + Lắng nghe ở cấp độ `document` với capture phase (`true`).
+  + Bắt mọi lượt click vào bất kỳ phần tử nào trên toàn trang có chứa ảnh VietQR hoặc khớp với thẻ thumbnail, tự động bóc tách tham số URL và mở popup tương ứng ngay lập tức.
+- **Kháng Lỗi Ảnh Hỏng (`FALLBACK_QR_SVG`)**:
+  + Tích hợp sẵn vector QR nội suy an toàn (Inline Data URI), đảm bảo khi không có mạng hoặc API VietQR chậm, ảnh mã QR không bao giờ bị vỡ và `brokenImages` luôn bằng 0.
+
+### 2. Nền Động "Animated Mesh Gradient Background" & Động Cơ Hiệu Ứng Thời Tiết Thời Gian Thực (REQ-079)
+- **Multi-node Animated Mesh Gradient**: Gradient chuyển động đa điểm cực bằng GPU (`meshGradientShift`, `meshNode1..4`), tối ưu hóa cả Light Mode (`hero-mesh-gradient-light`) và Dark Mode (`hero-mesh-gradient-dark`).
+- **Động cơ `WeatherBackgroundEffect`**: Tự động phản hồi theo điều kiện thời tiết thực tế (mây đen trôi đa tầng `am-u`, mưa rơi 3D `mua-nho`, dông sét phát quang `mua-dong`, ánh dương lấp lánh `nang`, sóng nhiệt shimmer `nang-gat`, sương mù lững lờ `suong-mu`).
+- **Chuẩn hóa Emoji Thời Tiết**: Đồng bộ chính xác biểu tượng cảm xúc theo trạng thái thực tế ("mây đen u ám" hiển thị ☁️ thay vì biểu tượng lửa 🔥).
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 475ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 435/435 assertions logic đạt chuẩn (100% PASS - Bổ sung Luồng 25 VietQR).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile.
+- **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
+
+---
+
 ## Phiên bản 1.48.0 (2026-10-28) - Đồng Bộ & Tinh Chỉnh Bảng Màu Cao Cấp Chuẩn Almond AI SaaS Cho Toàn Bộ Phân Hệ Thời Tiết (Hero Weather Card, Hourly Temperature Chart & Weather Sub-cards) Trong Cả Hai Chế Độ Sáng & Tối (REQ-078)
 
 ### 1. Tinh Chỉnh Thẻ Hero Thời Tiết (Hero Weather Card) Chuẩn Bảng Màu Almond AI SaaS

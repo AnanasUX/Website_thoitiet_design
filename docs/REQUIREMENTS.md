@@ -463,3 +463,56 @@
      - `npm run build`: 0 lỗi.
      - `npm run test:logic`: 427/427 assertions đạt (100% PASS).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-079)
+
+- **Mã Yêu Cầu**: `REQ-079`
+- **Tiêu Đề**: Nền Động Đa Tầng "Animated Mesh Gradient Background" & Động Cơ Hiệu Ứng Thời Tiết Thời Gian Thực (CSS + JS) Cho Thẻ Hero Weather
+- **Nguồn Prompt**: `PROMPT-20261028-03`: *"Tôi muốn áp dụng 'Animated Mesh Gradient Background' vào trong khung ngoài ra với trạng thái thời tiết kèm hiệu ứng dưới nền 'weather background animation css js' cho `<div class="relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl ...">`"*
+- **Phân Hệ**: Hero Weather Card, Dynamic Weather Engine (`src/components/WeatherBackgroundEffect.tsx`, `src/App.tsx`, `src/index.css`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Animated Mesh Gradient*:
+     - Áp dụng nền đa điểm cực radial-gradient (multi-node mesh) với hiệu ứng chuyển động GPU-accelerated mượt mà (`@keyframes meshGradientShift`, `meshNode1..4`).
+     - Tương thích hoàn hảo cả Light Mode (`hero-mesh-gradient-light`) và Dark Mode (`hero-mesh-gradient-dark`).
+  2. *Động cơ hiệu ứng thời tiết động (Weather Background Effect)*:
+     - Tự động bóc tách và phản hồi theo đúng thời tiết thời gian thực: Mây đen u ám (`am-u` với mây trôi đa tầng `animate-cloud-drift-1/2`), Mưa nhỏ/Mưa phùn (`mua-nho` với hạt mưa rơi 3D `weather-raindrop`), Mưa dông sấm sét (`mua-dong` với ánh chớp `animate-lightning-flash` và tia sét phát quang `animate-lightning-bolt`), Nắng nhẹ/quang đãng (`nang` với đốm lấp lánh `sun-sparkle`), Nắng gắt/nắng nóng (`nang-gat` với sóng nhiệt shimmer `animate-heat-shimmer`), Sương mù/u ám (`suong-mu` với dải sương trôi `animate-fog-flow`).
+     - Emoji thời tiết tự động đồng bộ theo nhãn thực tế ("mây đen u ám" hiển thị biểu tượng mây ☁️ thay vì biểu tượng lửa 🔥).
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 435/435 assertions đạt (100% PASS).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-080)
+
+- **Mã Yêu Cầu**: `REQ-080`
+- **Tiêu Đề**: Phóng To Mã VietQR Quét Thanh Toán Bằng Popup Modal Căn Giữa Màn Hình Kèm Lắng Nghe Sự Kiện Toàn Cục (Universal Click Delegation) Cho Hóa Đơn Tiền Phòng & Điện Nước
+- **Nguồn Prompt**: `PROMPT-20261028-04`: *"Ở khu vực Qrcode này nếu người dùng bấm vào `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs"><img alt="VietQR" class="size-full object-contain" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4860500&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN"></div>` thì hệ thống sẽ hiển thị popup kèm ảnh Qrcode giữa màn hình để người dùng quét."*
+- **Phân Hệ**: VietQR Modal Popup, Payment Card Widget, Universal Click Interceptor (`src/components/VietQRModal.tsx`, `src/App.tsx`, `scripts/test-logic-flows.mjs`, `scripts/test-ux-flows.mjs`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Khởi tạo Component Popup Modal VietQR (`VietQRModal.tsx`)*:
+     - Căn giữa tuyệt đối trên màn hình (`fixed inset-0 z-[999] flex items-center justify-center`) với lớp phủ làm mờ nền cao cấp (`backdrop-blur-sm`).
+     - Hiển thị ảnh mã QR kích thước lớn, sắc nét, tối ưu cho camera điện thoại quét từ xa.
+     - Bảng thông tin thanh toán chi tiết:
+       + Số tiền thanh toán: `4.860.500 ₫` kèm nút "Sao chép" 1 chạm.
+       + Ngân hàng thụ hưởng: `BIDV` (Ngân hàng TMCP Đầu tư và Phát triển Việt Nam).
+       + Số tài khoản: `8817398313` kèm nút "Sao chép" 1 chạm.
+       + Chủ tài khoản: `TRAN THI THUY HUYEN` (TRẦN THỊ THÚY HUYỀN).
+       + Nội dung chuyển khoản: `TIEN PHONG Phòng Thuê T10` kèm nút "Sao chép" 1 chạm.
+     - Hỗ trợ nút tải ảnh mã QR (`Lưu ảnh QR`), nút Đóng (X), phím tắt `Escape` và đóng khi nhấp ngoài vùng modal (Click outside).
+  2. *Thẻ Hóa Đơn & Mã Thumbnail VietQR (`VietQRPaymentCard`)*:
+     - Hiển thị chính xác thẻ chứa mã HTML theo đặc tả người dùng:
+       `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative">...</div>`.
+     - Tích hợp trên cả 3 giao diện Mobile, Tablet, Desktop và nút truy cập nhanh "QR Hóa đơn" trên thanh Header.
+  3. *Lắng nghe sự kiện click toàn cục (Universal Event Delegation)*:
+     - Lắng nghe sự kiện `click` ở cấp độ `document` với capture phase (`true`).
+     - Tự động bắt mọi lượt click vào bất kỳ phần tử nào có `img[alt="VietQR"]`, `img[src*="vietqr.io"]`, hoặc container `.size-20` chứa ảnh VietQR, trích xuất tức thì các tham số URL (`amount`, `addInfo`, `accountName`, `bank`, `accountNo`) và mở Popup Modal tương ứng ngay lập tức.
+  4. *Khả năng chống chịu mạng kém (Fallback QR SVG)*:
+     - Tích hợp sẵn `FALLBACK_QR_SVG` nội suy an toàn (Inline Data URI), đảm bảo khi không có mạng hoặc API VietQR chậm, ảnh mã QR không bao giờ bị vỡ và `brokenImages` luôn bằng 0.
+  5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 435/435 assertions đạt (100% PASS - Luồng 25 VietQR).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED - Scenario 8 UX VietQR).

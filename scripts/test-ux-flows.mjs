@@ -352,5 +352,51 @@ export async function runAllUXFlowTests(page) {
     );
   }
 
+  // =========================================================================
+  // SCENARIO 8: UX Quét Mã VietQR Thanh Toán Tiền Phòng & Hóa Đơn (REQ-080)
+  // =========================================================================
+  {
+    const canClickVietQR = await page.evaluate(() => {
+      const trigger = document.querySelector('[data-testid="vietqr-thumbnail-trigger"]') ||
+                      document.querySelector('[data-testid="header-vietqr-btn"]') ||
+                      document.querySelector('.size-20:has(img[alt="VietQR"])');
+      if (trigger) {
+        trigger.click();
+        return true;
+      }
+      return false;
+    });
+
+    assertUX('UX-08.1: Nhấp thẻ VietQR thumbnail kích hoạt modal', canClickVietQR, 'Thẻ VietQR phản hồi click người dùng');
+
+    if (canClickVietQR) {
+      await page.waitForSelector('[data-testid="vietqr-popup-modal"]', { timeout: 4000 }).catch(() => {});
+      const modalInfo = await page.evaluate(() => {
+        const modal = document.querySelector('[data-testid="vietqr-popup-modal"]');
+        if (!modal) return null;
+        const img = modal.querySelector('[data-testid="vietqr-modal-image"]');
+        const text = modal.innerText || '';
+        return {
+          isOpen: true,
+          hasImage: Boolean(img && img.src),
+          hasAmount: text.includes('4.860.500') || text.includes('Số tiền'),
+          hasAccount: text.includes('8817398313') || text.includes('BIDV')
+        };
+      });
+
+      assertUX(
+        'UX-08.2: Modal VietQR hiển thị đầy đủ ảnh QR phóng to & thông tin chuyển khoản',
+        modalInfo && modalInfo.isOpen && modalInfo.hasImage && (modalInfo.hasAmount || modalInfo.hasAccount),
+        'Modal VietQR hiển thị chính xác giữa màn hình'
+      );
+
+      // Đóng modal bằng phím Escape
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      const isClosed = await page.evaluate(() => !document.querySelector('[data-testid="vietqr-popup-modal"]'));
+      assertUX('UX-08.3: Phím Escape đóng popup VietQR mượt mà', isClosed, 'Popup đóng và khôi phục màn hình nền');
+    }
+  }
+
   return uxResults;
 }

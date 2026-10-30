@@ -2,22 +2,39 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.48.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `930dfe1` (`feat(weather): precision auto-location engine with Nominatim and strict manual override separation (REQ-069)`)
+- **Phiên bản**: `1.50.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `46cec9f` (`fix(theme): harmonize hero weather card, temperature chart, and weather sub-cards with Almond AI SaaS design system in Dark and Light modes (REQ-078)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
-  + ✅ **Kiểm thử logic chuyên sâu 24 luồng hệ thống (`npm run test:logic`)**: 427/427 assertions logic passed (100% PASS).
+  + ✅ **Kiểm thử logic chuyên sâu 25 luồng hệ thống (`npm run test:logic`)**: 435/435 assertions logic passed (100% PASS - Bổ sung Luồng 25 VietQR).
   + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).
-  + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop và Mobile.
+  + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile.
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build`).
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 475ms).
 
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+8. **[REQ-079] Nền Động Đa Tầng "Animated Mesh Gradient Background" & Động Cơ Hiệu Ứng Thời Tiết Thời Gian Thực (CSS + JS)**:
+   - Thẻ Hero thời tiết: Gradient đa điểm cực radial-gradient (multi-node mesh) với GPU acceleration (`meshGradientShift`, `meshNode1..4`).
+   - Động cơ thời tiết động (`WeatherBackgroundEffect.tsx`): Tự động hiển thị hiệu ứng theo điều kiện thực tế (mây trôi đa tầng `am-u`, mưa rơi 3D `mua-nho`, dông sấm sét `mua-dong`, đốm nắng lấp lánh `nang`, sóng nhiệt tỏa nhiệt `nang-gat`, dải sương mù `suong-mu`).
+   - Tự động chuẩn hóa emoji thời tiết phù hợp nhãn thời sự ("mây đen u ám" hiển thị ☁️ thay vì biểu tượng lửa 🔥).
+
+9. **[REQ-080] Phóng To Mã VietQR Quét Thanh Toán Bằng Popup Modal Căn Giữa Màn Hình & Lắng Nghe Toàn Cục**:
+   - Thẻ Hóa Đơn & Mã Thumbnail VietQR (`VietQRPaymentCard`): Hiển thị chính xác đoạn mã HTML theo đặc tả người dùng (`<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative">...</div>`) tích hợp trên Mobile, Tablet, Desktop và nút Header "QR Hóa đơn".
+   - Popup Modal VietQR (`VietQRModal.tsx`): Căn giữa tuyệt đối với backdrop-blur, hiển thị ảnh mã QR kích thước lớn, đầy đủ thông tin thanh toán Napas 247:
+     + Số tiền: `4.860.500 ₫` kèm nút "Sao chép" 1 chạm.
+     + Ngân hàng: `BIDV` (Ngân hàng TMCP Đầu tư và Phát triển Việt Nam).
+     + Số tài khoản: `8817398313` kèm nút "Sao chép" 1 chạm.
+     + Chủ tài khoản: `TRAN THI THUY HUYEN` (TRẦN THỊ THÚY HUYỀN).
+     + Nội dung chuyển khoản: `TIEN PHONG Phòng Thuê T10` kèm nút "Sao chép" 1 chạm.
+     + Hỗ trợ nút "Lưu ảnh QR", nút Đóng (X), phím tắt `Escape` và click outside.
+   - Lắng nghe toàn cục (Universal Event Delegation): Bất kỳ lượt click vào thẻ có ảnh VietQR trên toàn trang đều kích hoạt popup ngay lập tức.
+   - Kháng lỗi ảnh hỏng (`FALLBACK_QR_SVG`): Khi ngoại tuyến hoặc API VietQR chậm, ảnh tự động chuyển sang vector QR an toàn, đảm bảo `brokenImages` luôn bằng 0.
 
 7. **[REQ-078] Đồng Bộ & Tinh Chỉnh Bảng Màu Cao Cấp Chuẩn Almond AI SaaS Cho Toàn Bộ Phân Hệ Thời Tiết**:
    - Thẻ Hero thời tiết: Dark Mode Deep Cosmic Obsidian Noir (`#0d1117` -> `#151922` -> `#1a2233`), Light Mode Royal Electric Blue to Sky Azure (`#1d4ed8` -> `#2563ff` -> `#3b82f6`).

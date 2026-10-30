@@ -1009,3 +1009,51 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Biên dịch thành công 100% trong 1.69s.
 - `npm run test:logic`: 427/427 assertions logic passed (100% PASS).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt chuẩn (RELEASE GATE: PASSED).
+
+---
+
+### QUYẾT ĐỊNH 60: KIẾN TRÚC NỀN ĐỘNG ANIMATED MESH GRADIENT, HIỆU ỨNG THỜI TIẾT THỜI GIAN THỰC & POPUP MODAL PHÓNG TO MÃ VIETQR QUÉT THANH TOÁN (REQ-079, REQ-080)
+
+- **Mã Quyết Định**: `DEC-060`
+- **Mã Yêu Cầu Liên Quan**: `REQ-079`, `REQ-080`
+- **Ngày Phê Duyệt**: 30/10/2026
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+1. **Nhu cầu hiệu ứng nền sống động & phản hồi khí tượng (REQ-079)**:
+   - Người dùng yêu cầu tích hợp "Animated Mesh Gradient Background" vào thẻ Hero Weather và bổ sung hiệu ứng chuyển động khí quyển thực tế (mưa rơi, chớp sấm sét, mây đen trôi, ánh nắng, sương mù) tương ứng với từng điều kiện thời tiết thực tế như "mây đen u ám", mưa rào, dông bão.
+   - Trước đây emoji thời tiết có thể bị hiển thị sai (ví dụ "mây đen u ám" hiển thị biểu tượng lửa 🔥).
+2. **Nhu cầu tương tác quét mã VietQR hóa đơn tiền phòng (REQ-080)**:
+   - Người dùng yêu cầu: *"Ở khu vực Qrcode này nếu người dùng bấm vào `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs"><img alt="VietQR" class="size-full object-contain" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4860500&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN"></div>` thì hệ thống sẽ hiển thị popup kèm ảnh Qrcode giữa màn hình để người dùng quét."*
+   - Cần đảm bảo:
+     + Modal hiển thị nổi bật giữa màn hình với ảnh QR kích thước lớn, dễ quét bằng điện thoại từ khoảng cách xa.
+     + Đầy đủ thông tin thanh toán: Số tiền (`4.860.500 ₫`), Ngân hàng (`BIDV`), Số tài khoản (`8817398313`), Chủ tài khoản (`TRAN THI THUY HUYEN`), Nội dung chuyển khoản (`TIEN PHONG Phòng Thuê T10`) cùng các nút sao chép 1 chạm có phản hồi trực quan.
+     + Cơ chế lắng nghe toàn cục (Universal Event Delegation): Bất kỳ phần tử nào trên trang hoặc được render động có chứa ảnh VietQR hoặc khớp với thẻ thumbnail đều kích hoạt modal tức thì.
+     + Khả năng chống chịu mạng kém: Khi ngoại tuyến hoặc API VietQR chậm, ảnh mã QR tự động fallback về SVG an toàn, không làm hỏng layout hay gây lỗi `brokenImages`.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai Chi Tiết
+1. **Động cơ Animated Mesh Gradient & Weather Animation (`WeatherBackgroundEffect.tsx`, `index.css`)**:
+   - Sử dụng CSS keyframes tăng tốc GPU (`translate3d`, `radial-gradient` đa điểm cực chuyển động `meshGradientShift` 18s).
+   - Component `WeatherBackgroundEffect` độc lập, render các lớp hiệu ứng:
+     * `am-u`: Mây xám trôi đa tầng (`animate-cloud-drift-1` 32s, `animate-cloud-drift-2` 24s).
+     * `mua-nho`: Mưa rơi 3D nghiêng 15 độ (`weather-raindrop`).
+     * `mua-dong`: Ánh chớp giật nền `animate-lightning-flash` kết hợp tia sét quang học `animate-lightning-bolt`.
+     * `nang`: Đốm ánh dương lấp lánh `sun-sparkle`.
+     * `nang-gat`: Sóng nhiệt shimmer tỏa nhiệt `animate-heat-shimmer`.
+     * `suong-mu`: Dải sương mù lững lờ `animate-fog-flow`.
+   - Thuật toán `detectConditionKey` kết hợp bóc tách nhãn thời sự: Nhãn "mây đen u ám" hiển thị biểu tượng mây ☁️ thay vì biểu tượng lửa.
+2. **Khởi tạo Component VietQR Modal & Card (`src/components/VietQRModal.tsx`)**:
+   - `VietQRModal`: Dialog `fixed inset-0 z-[999]` với `backdrop-blur-sm`, ảnh QR trung tâm, bảng sao chép thông tin chuyển khoản Napas 247, nút "Lưu ảnh QR", hỗ trợ phím `Escape` và click outside.
+   - `VietQRPaymentCard`: Hiển thị thẻ hóa đơn tiền phòng & điện nước AnX với đúng đoạn mã HTML theo đặc tả người dùng (`<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs ...">`).
+   - Tích hợp nút truy cập nhanh "QR Hóa đơn" trên thanh Header của cả Mobile, Tablet, Desktop.
+3. **Bộ Lắng Nghe Sự Kiện Toàn Cục (Universal DOM Event Delegation)**:
+   - Lắng nghe ở cấp độ `document` với capture phase (`true`).
+   - Tự động bắt mọi lượt click vào bất kỳ phần tử nào chứa ảnh `vietqr.io` hoặc class `.size-20`, tự động bóc tách tham số từ URL (`amount`, `addInfo`, `accountName`, `bank`, `accountNo`) và hiển thị modal tương ứng.
+4. **Cơ Chế Kháng Lỗi Ảnh Hỏng (Fallback QR SVG)**:
+   - Tích hợp sẵn `FALLBACK_QR_SVG` dưới dạng inline Data URI với logo BIDV và các mắt quét mã QR chuẩn.
+   - Lắng nghe sự kiện `onError` trên thẻ `img`, tự động chuyển sang fallback SVG nếu mạng chậm hoặc ngoại tuyến, đảm bảo kiểm thử quét ảnh hỏng luôn đạt 0 lỗi.
+
+#### 3. Bằng Chứng Kiểm Thử & Nghiệm Thu
+- `npm run build`: Hoàn tất trong 475ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 435/435 assertions đạt 100% (bổ sung Luồng 25 VietQR).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt chuẩn PASS (bổ sung Scenario 8 UX VietQR). RELEASE GATE: PASSED.

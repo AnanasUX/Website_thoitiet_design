@@ -9,6 +9,8 @@ import { useGoogleOneTapLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { VideoShortsModal } from "./components/VideoShortsModal";
 import { AdminBoard } from "./AdminBoard";
+import { WeatherBackgroundEffect } from "./components/WeatherBackgroundEffect";
+import { VietQRModal, VietQRPaymentCard, DEFAULT_VIETQR_DATA, type VietQRData } from "./components/VietQRModal";
 import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT, DEFAULT_OFFICIAL_CHANNELS } from "./constants/userYouTubeSubscriptions";
 import {
   type ConditionKey,
@@ -634,6 +636,29 @@ function WeatherSection({
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
 
+  // Dynamically resolve active condition from conditionLabel (if available) or condKey
+  const activeConditionKey = useMemo<ConditionKey>(() => {
+    if (WEATHER?.conditionLabel) {
+      const detected = detectConditionKey(WEATHER.conditionLabel);
+      if (detected && detected !== 'binh-thuong') return detected;
+    }
+    return condKey;
+  }, [WEATHER?.conditionLabel, condKey]);
+
+  // Appropriate emoji for the condition (matching actual conditionLabel)
+  const conditionEmoji = useMemo(() => {
+    const lbl = (WEATHER?.conditionLabel || '').toLowerCase();
+    if (lbl.includes('dông') || lbl.includes('sấm') || lbl.includes('bão')) return '⛈️';
+    if (lbl.includes('mưa rào') || lbl.includes('mưa to')) return '🌧️';
+    if (lbl.includes('mưa')) return '🌦️';
+    if (lbl.includes('u ám') || lbl.includes('mây đen')) return '☁️';
+    if (lbl.includes('nhiều mây') || lbl.includes('mây cụm') || lbl.includes('mây rải rác')) return '🌥️';
+    if (lbl.includes('sương')) return '🌫️';
+    if (lbl.includes('nắng gắt') || lbl.includes('nắng nóng')) return '🔥';
+    if (lbl.includes('nắng') || lbl.includes('quang')) return '☀️';
+    return WEATHER_THEMES[activeConditionKey]?.emoji || baseTheme.emoji;
+  }, [WEATHER?.conditionLabel, activeConditionKey, baseTheme.emoji]);
+
   // Use live data if available, otherwise fall back to theme defaults
   const warningText = liveOverrides?.warningText ?? baseTheme.warningText;
   const suggestionItems = liveOverrides?.suggestionItems ?? baseTheme.suggestionItems;
@@ -646,26 +671,39 @@ function WeatherSection({
 
   return (
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
-      {/* Hero card - Modern Atmospheric Glass Card with CSS Morphing Gradients Animated Background */}
+      {/* Hero card - Modern Atmospheric Glass Card with Animated Mesh Gradient & Dynamic Weather Animation */}
       <div
         className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border ${
-          darkMode ? 'hero-morph-gradient-dark border-white/10' : 'hero-morph-gradient-light border-white/20'
+          darkMode ? 'hero-mesh-gradient-dark border-white/10' : 'hero-mesh-gradient-light border-white/20'
         }`}
       >
-        {/* Subtle Atmospheric Ambient Glow (Almond Sky & Electric Blue Depth) */}
-        <div className={`absolute -right-12 -top-12 w-64 h-64 rounded-full pointer-events-none blur-3xl animate-morph-blob-1 ${
-          darkMode ? 'bg-[#2563ff]/18' : 'bg-white/20'
-        }`}></div>
-        <div className={`absolute -left-10 -bottom-10 w-56 h-56 rounded-full pointer-events-none blur-3xl animate-morph-blob-2 ${
-          darkMode ? 'bg-[#38bdf8]/14' : 'bg-[#68dbff]/20'
-        }`}></div>
-        <div className={`absolute right-1/4 bottom-1/4 w-48 h-48 rounded-full pointer-events-none blur-3xl animate-morph-blob-3 ${
-          darkMode ? 'bg-[#6366f1]/12' : 'bg-[#b8ccff]/15'
-        }`}></div>
+        {/* Layer 1: Animated Mesh Gradient Blobs / Nodes (REQ-079) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-3xl" aria-hidden="true">
+          <div className={`absolute -right-12 -top-12 w-72 h-72 rounded-full blur-3xl animate-mesh-node-1 ${
+            darkMode ? 'bg-[#2563ff]/20' : 'bg-white/25'
+          }`}></div>
+          <div className={`absolute -left-10 -bottom-10 w-64 h-64 rounded-full blur-3xl animate-mesh-node-2 ${
+            darkMode ? 'bg-[#38bdf8]/15' : 'bg-[#68dbff]/25'
+          }`}></div>
+          <div className={`absolute right-1/4 bottom-1/4 w-52 h-52 rounded-full blur-3xl animate-mesh-node-3 ${
+            darkMode ? 'bg-[#6366f1]/15' : 'bg-[#b8ccff]/20'
+          }`}></div>
+          <div className={`absolute left-1/3 -top-16 w-60 h-60 rounded-full blur-3xl animate-mesh-node-4 ${
+            darkMode ? 'bg-[#0e7490]/15' : 'bg-[#93c5fd]/20'
+          }`}></div>
+        </div>
+
+        {/* Layer 2: Weather background animation CSS + JS (REQ-079) */}
+        <WeatherBackgroundEffect
+          condKey={activeConditionKey}
+          conditionLabel={WEATHER.conditionLabel}
+          isDark={darkMode}
+        />
 
         {/* Dynamic Weather Atmosphere Particles (Rain streaks / Sun flares / Mist) */}
-        <WeatherAtmosphereEffects condKey={condKey} />
+        <WeatherAtmosphereEffects condKey={activeConditionKey} />
 
+        {/* Layer 3: Interactive UI and Weather Data at z-10 */}
         <div className="flex items-center justify-between w-full z-10">
           <button
             type="button"
@@ -697,7 +735,7 @@ function WeatherSection({
             {WEATHER.temp}
           </p>
           <p className="font-bold text-[18px] text-white flex items-center gap-2 drop-shadow-xs">
-            <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span>
+            <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{conditionEmoji}</span>
             <span>{WEATHER.conditionLabel}</span>
           </p>
           <p className="font-medium text-[13.5px] text-white/85">
@@ -2585,6 +2623,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
+  onOpenQRModal,
   isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
@@ -2606,6 +2645,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
     onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
+    onOpenQRModal?: (data?: VietQRData) => void;
+    isManualLocation?: boolean;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2636,6 +2677,15 @@ function MobileLayout({ activeCategory, setActiveCategory,
               </p>
             </div>
           </div>
+          <button
+            type="button"
+            data-testid="header-vietqr-btn"
+            onClick={() => onOpenQRModal && onOpenQRModal()}
+            className="ml-1.5 h-[32px] px-2.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[11px] border border-blue-200 dark:border-blue-800 active:scale-95 transition-all cursor-pointer shrink-0 flex items-center gap-1"
+            title="Quét mã VietQR thanh toán tiền phòng & dịch vụ"
+          >
+            <span>QR</span>
+          </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} data-testid="dark-mode-toggle" className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer" title={darkMode ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}>
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -2669,6 +2719,12 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
             </div>
           )}
+
+          {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
+          <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
+
+          {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
+          <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
 
           {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
           {userRole && userRole.email && (
@@ -2785,6 +2841,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
+  onOpenQRModal,
   isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
@@ -2806,6 +2863,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
     onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
+    onOpenQRModal?: (data?: VietQRData) => void;
+    isManualLocation?: boolean;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2860,6 +2919,17 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <span>Shorts</span>
           </button>
 
+          {/* Nút VietQR Hóa Đơn trên Tablet Header */}
+          <button
+            type="button"
+            data-testid="tablet-vietqr-btn"
+            onClick={() => onOpenQRModal && onOpenQRModal()}
+            className="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
+            title="Xem mã VietQR thanh toán tiền phòng"
+          >
+            <span>QR Hóa đơn</span>
+          </button>
+
           <div 
             data-testid="dark-mode-toggle"
             onClick={() => setDarkMode && setDarkMode(!darkMode)} 
@@ -2900,6 +2970,9 @@ function TabletLayout({ activeCategory, setActiveCategory,
               <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
             </div>
           )}
+
+          {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
+          <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
 
           {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
           {userRole && userRole.email && (
@@ -3048,6 +3121,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
+  onOpenQRModal,
   isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
@@ -3069,6 +3143,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
+    onOpenQRModal?: (data?: VietQRData) => void;
+    isManualLocation?: boolean;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -3133,6 +3209,17 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             <span>Video Shorts 9:16</span>
           </button>
 
+          {/* Nút VietQR Hóa Đơn trên Desktop Header */}
+          <button
+            type="button"
+            data-testid="desktop-vietqr-btn"
+            onClick={() => onOpenQRModal && onOpenQRModal()}
+            className="flex items-center gap-1.5 h-[32px] px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
+            title="Xem mã VietQR thanh toán tiền phòng"
+          >
+            <span>QR Hóa đơn</span>
+          </button>
+
           <div 
             data-testid="dark-mode-toggle"
             onClick={() => setDarkMode && setDarkMode(!darkMode)} 
@@ -3180,6 +3267,9 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         )}
       </div>
+
+      {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
+      <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
 
       {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn (Đẩy kênh đăng ký ra giao diện chính) */}
       {userRole && userRole.email && (
@@ -5609,6 +5699,62 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrModalData, setQrModalData] = useState<VietQRData>(DEFAULT_VIETQR_DATA);
+
+  const handleOpenQRModal = useCallback((data?: VietQRData) => {
+    if (data) {
+      setQrModalData(data);
+    }
+    setShowQRModal(true);
+  }, []);
+
+  // Universal click interception for any VietQR element in DOM (REQ-080)
+  useEffect(() => {
+    const handleGlobalVietQRClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const img = target.closest('img[alt="VietQR"], img[src*="vietqr.io"]') as HTMLImageElement | null;
+      const container = target.closest('.size-20, [data-testid="vietqr-thumbnail-trigger"], [data-vietqr]');
+
+      if (img || (container && container.querySelector('img[src*="vietqr.io"], img[alt="VietQR"]'))) {
+        const targetImg = img || (container?.querySelector('img[src*="vietqr.io"], img[alt="VietQR"]') as HTMLImageElement | null);
+        if (targetImg && targetImg.src) {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const url = new URL(targetImg.src);
+            const amount = url.searchParams.get('amount') || '4860500';
+            const addInfo = url.searchParams.get('addInfo') || 'TIEN PHONG Phòng Thuê T10';
+            const accountName = url.searchParams.get('accountName') || 'TRAN THI THUY HUYEN';
+            const filename = url.pathname.split('/').pop() || '';
+            const bankPart = filename.split('-')[0] || 'BIDV';
+            const accountNoPart = filename.split('-')[1] || '8817398313';
+
+            setQrModalData({
+              qrUrl: targetImg.src,
+              bank: bankPart,
+              accountNo: accountNoPart,
+              accountName,
+              amount,
+              addInfo
+            });
+            setShowQRModal(true);
+          } catch {
+            setQrModalData({
+              ...DEFAULT_VIETQR_DATA,
+              qrUrl: targetImg.src
+            });
+            setShowQRModal(true);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalVietQRClick, true);
+    return () => document.removeEventListener('click', handleGlobalVietQRClick, true);
+  }, []);
   const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | 'auto'>(() => {
     const prev = getPreviouslyAcquiredLocation();
     return (prev && prev.source) ? prev.source : (prev?.isManual ? 'manual' : 'auto');
@@ -6732,7 +6878,13 @@ useEffect(() => {
       const cur  = (w.current  as Record<string, unknown>) ?? {};
       const fore = (w.forecast_3h as Record<string, unknown>) ?? {};
       const status: string = (w.status as string) ?? "BINH_THUONG";
-      const key  = mapBotStatusToCondKey(status);
+      let key = mapBotStatusToCondKey(status);
+      if (cur.desc && typeof cur.desc === 'string') {
+        const detected = detectConditionKey(cur.desc);
+        if (detected && detected !== 'binh-thuong') {
+          key = detected;
+        }
+      }
       setCondKey(key);
 
       const now = new Date();
@@ -6979,8 +7131,20 @@ useEffect(() => {
           }
           
           let trang_thai = "NANG";
-          if (n_pop > 50) trang_thai = "MUA";
-          else if (c_temp >= 35 || feels_like >= 35) trang_thai = "NANG_GAT";
+          const descLower = (c_desc || "").toLowerCase();
+          if (descLower.includes("dông") || descLower.includes("sấm") || descLower.includes("bão") || iconCode === "11d") {
+            trang_thai = "MUA_DONG";
+          } else if (descLower.includes("mưa") || n_pop > 50 || iconCode.startsWith("09") || iconCode.startsWith("10")) {
+            trang_thai = "MUA_NHO";
+          } else if (descLower.includes("nắng gắt") || descLower.includes("nóng") || c_temp >= 35 || feels_like >= 35) {
+            trang_thai = "NANG_GAT";
+          } else if (descLower.includes("mây") || descLower.includes("u ám") || iconCode.startsWith("03") || iconCode.startsWith("04")) {
+            trang_thai = "AM_U";
+          } else if (descLower.includes("sương") || iconCode.startsWith("50")) {
+            trang_thai = "AM_U";
+          } else if (descLower.includes("nắng") || iconCode === "01d" || iconCode === "02d") {
+            trang_thai = "NANG";
+          }
           
 
 
@@ -7490,13 +7654,13 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
       </div>
 
 
@@ -7524,6 +7688,14 @@ useEffect(() => {
         onLogin={handleRelogin}
         onUpdateUser={setUserRole}
         initialTab={shortsInitialTab}
+        darkMode={darkMode}
+      />
+
+      {/* VietQR Scan Modal Popup (REQ-080) */}
+      <VietQRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        data={qrModalData}
         darkMode={darkMode}
       />
 
