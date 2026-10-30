@@ -518,3 +518,28 @@
      - `npm run build`: 0 lỗi.
      - `npm run test:logic`: 435/435 assertions đạt (100% PASS - Luồng 25 VietQR).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED - Scenario 8 UX VietQR).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-081)
+
+- **Mã Yêu Cầu**: `REQ-081`
+- **Tiêu Đề**: Bổ Sung Ô Nhập "Ghi Chú Chuyển Khoản" Dưới "Tên Chủ Tài Khoản" & Ràng Buộc Thông Tin Phòng/Người Thuê Thực Tế Vào Sổ Công Nợ
+- **Nguồn Prompt**: `PROMPT-20261030-01`: *"Dưới thông tin 'Tên Chủ Tài Khoản' bổ sung thêm 'Ghi chú chuyển khoản' ô nhập nd chuyển khoản ngoài ra ở phần 'Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ' ở cột 'Phòng' khi nhấn 'Lưu vào Lịch Sử & Sổ Công Nợ' thông tin phải lấy theo thông tin phòng người thuê hiện tại không lấy."*
+- **Phân Hệ**: Bảng Giá & Cấu Hình Ngân Hàng VietQR, Bảng Nhập Số Công Tơ Tự Động Kế Thừa, Sổ Theo Dõi Công Nợ (`src/AdminBoard.tsx`, `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`, `scripts/test-logic-flows.mjs`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Bổ Sung Ô Nhập "Ghi Chú Chuyển Khoản"*:
+     - Vị trí: Đặt ngay bên dưới trường "Tên Chủ Tài Khoản" trong khối "💳 Thông Tin Nhận Chuyển Khoản VietQR".
+     - Nhãn: "Ghi chú chuyển khoản (Nội dung CK)".
+     - Giá trị mặc định: `TIEN PHONG {room} T{month}` hoặc nội dung do quản trị viên nhập tay.
+     - Hỗ trợ các biến phân giải động: `{room}` (tên phòng), `{tenant}` (tên người thuê), `{month}` (tháng), `{year}` (năm).
+     - Áp dụng vào mã VietQR URL, Modal hiển thị phóng to, tin nhắn Zalo, bản kê chi phí và nhắc nợ.
+  2. *Ràng Buộc Chính Xác Thông Tin Phòng & Người Thuê Thực Tế*:
+     - Đồng bộ tự động `calcRoomId` với danh sách phòng thực tế: Khi xóa các phòng mặc định và thêm phòng mới (ví dụ: `Phòng 302` - `Nguyễn Bá Ngọc`), hệ thống tự động trỏ `calcRoomId` về phòng mới thay vì giữ giá trị `p101` đã bị xóa.
+     - Triệt tiêu lỗi rơi về fallback giả định `Phòng Thuê` / `Khách thuê`.
+     - Khi nhấn "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn được ghi nhận với đúng `room_name` và `tenant` của phòng đang chọn.
+     - Trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ", cột "Phòng" hiển thị đầy đủ cả Tên Phòng (in đậm) và Tên Người Thuê (chữ xám rõ ràng bên dưới).
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi.
+     - `npm run test:logic`: 445/445 assertions đạt chuẩn 100% PASS (bổ sung Luồng 26).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

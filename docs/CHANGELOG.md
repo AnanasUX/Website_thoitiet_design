@@ -1062,3 +1062,21 @@
   - `npm run build`: 0 lỗi biên dịch.
   - `npm run test:logic`: 435/435 assertions đạt chuẩn 100% PASS.
   - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED).
+
+---
+
+## [Phiên bản 2.1.1] - 2026-10-30: Bổ Sung Ghi Chú Chuyển Khoản & Ràng Buộc Phòng/Người Thuê Vào Sổ Công Nợ (REQ-081)
+
+### Thay đổi & Tính năng mới
+- **Ô Nhập Ghi Chú Chuyển Khoản VietQR (REQ-081)**:
+  - Bổ sung ô nhập "Ghi chú chuyển khoản (Nội dung CK)" ngay dưới "Tên Chủ Tài Khoản" trong khối Cấu Hình Ngân Hàng VietQR.
+  - Cho phép người dùng tùy chỉnh nội dung chuyển khoản với các biến động: `{room}`, `{tenant}`, `{month}`, `{year}`.
+  - Tự động phản ánh nội dung này vào mã VietQR Napas247, Popup Modal phóng to và các mẫu tin nhắn Zalo/Telegram.
+- **Ràng Buộc Thông Tin Phòng & Người Thuê Thực Tế (REQ-081)**:
+  - Khắc phục lỗi mất đồng bộ `calcRoomId` khi xóa phòng cũ hoặc thêm phòng mới, đảm bảo phòng đang chọn (`Phòng 302` - `Nguyễn Bá Ngọc`) luôn được kế thừa chính xác.
+  - Khi nhấn "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn được ghi nhận với đúng Tên Phòng và Tên Người Thuê thực tế, không bị rơi về "Phòng Thuê".
+  - Cột "Phòng" trong bảng lịch sử công nợ hiển thị cả Tên Phòng và Tên Người Thuê.
+- **Nghiệm Thu Toàn Diện**:
+  - `npm run build`: 0 lỗi biên dịch.
+  - `npm run test:logic`: 445/445 assertions đạt chuẩn 100% PASS (bổ sung Luồng 26).
+  - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED).

@@ -837,6 +837,15 @@
       + Hỗ trợ đóng modal qua phím Escape, nút X hoặc click outside.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 435/435 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
 
+
+60. **[REQ-081] Bổ Sung Ô Nhập Ghi Chú Chuyển Khoản & Ràng Buộc Thông Tin Phòng/Người Thuê Vào Sổ Công Nợ**:
+    - *Ô Nhập Ghi Chú Chuyển Khoản*: Bổ sung trường `transfer_note` ngay dưới "Tên Chủ Tài Khoản" trong khối cấu hình ngân hàng VietQR (`src/AdminBoard.tsx` và các file HTML admin tĩnh), hỗ trợ biến nội suy động `{room}`, `{tenant}`, `{month}`.
+    - *Khắc Phục Đồng Bộ Thông Tin Phòng & Người Thuê*:
+      + Thiết lập `useEffect` tự động đồng bộ `calcRoomId` theo `rooms` thực tế, loại bỏ triệt để lỗi fallback về "Phòng Thuê" khi phòng cũ bị xóa hoặc chỉ còn phòng mới (như `Phòng 302` - `Nguyễn Bá Ngọc`).
+      + Khi bấm "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn lưu trữ chính xác thông tin phòng và người thuê hiện tại.
+      + Cột "Phòng" trong bảng lịch sử công nợ hiển thị cả Tên Phòng và Tên Người Thuê 2 dòng chuyên nghiệp.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 445/445 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử đa thiết bị PASS (RELEASE GATE: PASSED).
+
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
 2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.

@@ -615,6 +615,28 @@
                         </div>
 
                         <div class="space-y-3 text-xs">
+                            <div class="p-3.5 rounded-xl bg-violet-50 border border-violet-200 space-y-2">
+                                <span class="font-bold text-violet-900 block">💳 Thông Tin Nhận Chuyển Khoản VietQR:</span>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="text-[10px] text-violet-700 font-bold block mb-1">Mã Ngân Hàng:</label>
+                                        <input type="text" id="price_bank_name" value="BIDV" class="w-full font-bold bg-white border border-violet-200 rounded-lg p-1.5 text-[#182033]">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="text-[10px] text-violet-700 font-bold block mb-1">Số Tài Khoản:</label>
+                                        <input type="text" id="price_bank_account" value="8817398313" class="w-full font-mono font-bold bg-white border border-violet-200 rounded-lg p-1.5 text-[#182033]">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-violet-700 font-bold block mb-1">Tên Chủ Tài Khoản:</label>
+                                    <input type="text" id="price_bank_owner" value="TRAN THI THUY HUYEN" class="w-full font-bold bg-white border border-violet-200 rounded-lg p-1.5 text-[#182033]">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-violet-700 font-bold block mb-1">Ghi chú chuyển khoản (Nội dung CK):</label>
+                                    <input type="text" id="price_transfer_note" placeholder="Ví dụ: TIEN PHONG {room} T{month}..." value="TIEN PHONG {room} T{month}" class="w-full font-semibold bg-white border border-violet-200 rounded-lg p-1.5 text-[#182033] focus:border-violet-500 focus:outline-none">
+                                    <span class="text-[9.5px] text-violet-600 font-medium block mt-0.5">Mẹo: Hỗ trợ {room}, {tenant}, {month} để tự động điền phòng và tháng.</span>
+                                </div>
+                            </div>
                             <div class="flex items-center justify-between">
                                 <label class="text-[#5f687b]">Tiền nhà chuẩn (đ/tháng):</label>
                                 <input type="number" id="price_rent_fixed" value="3500000" class="w-36 text-right font-mono bg-[#f4f6fa] border border-[#e3e7ef] rounded-lg p-1.5 text-[#182033]">
@@ -730,7 +752,11 @@
                         water_unit: 35000,
                         service_fee_1: 100000,
                         service_fee_2: 100000,
-                        service_fee_3: 100000
+                        service_fee_3: 100000,
+                        bank_name: 'BIDV',
+                        bank_account: '8817398313',
+                        bank_owner: 'TRAN THI THUY HUYEN',
+                        transfer_note: 'TIEN PHONG {room} T{month}'
                     },
                     rooms: [
                         { id: 'p101', name: 'Phòng 101', tenant: 'Nguyễn Văn An', phone: '0912345678', fixed_rent: 3500000 },
@@ -889,6 +915,10 @@
             `).join('');
 
             // Pricing fields
+            if (document.getElementById('price_bank_name')) document.getElementById('price_bank_name').value = p.bank_name || 'BIDV';
+            if (document.getElementById('price_bank_account')) document.getElementById('price_bank_account').value = p.bank_account || '8817398313';
+            if (document.getElementById('price_bank_owner')) document.getElementById('price_bank_owner').value = p.bank_owner || 'TRAN THI THUY HUYEN';
+            if (document.getElementById('price_transfer_note')) document.getElementById('price_transfer_note').value = p.transfer_note || 'TIEN PHONG {room} T{month}';
             document.getElementById('price_rent_fixed').value = p.rent_fixed;
             document.getElementById('price_elec').value = p.electricity_unit;
             document.getElementById('price_water').value = p.water_unit;
@@ -942,7 +972,13 @@
                 return;
             }
 
-            const room = rooms.find(r => r.id === roomId) || { name: 'Phòng Thuê', tenant: 'Khách thuê', fixed_rent: p.rent_fixed };
+            const room = rooms.find(r => r.id === roomId) || rooms[0] || { id: 'p101', name: 'Phòng 302', tenant: 'Nguyễn Bá Ngọc', fixed_rent: p.rent_fixed };
+            let noteTpl = p.transfer_note && p.transfer_note.trim() ? p.transfer_note.trim() : 'TIEN PHONG {room} T{month}';
+            const resolvedNote = noteTpl
+                .replace(/\{room\}/gi, room.name)
+                .replace(/\{tenant\}/gi, room.tenant || '')
+                .replace(/\{month\}/gi, '' + (new Date().getMonth() + 1))
+                .replace(/\{year\}/gi, '' + new Date().getFullYear());
             const so_dien = d_moi - d_cu;
             const tien_dien = so_dien * p.electricity_unit;
             const so_nuoc = n_moi - n_cu;
@@ -1025,7 +1061,10 @@
                     <tr class="hover:bg-[#f4f6fa]/60 transition-colors">
                         <td class="p-3 font-mono font-bold text-indigo-600">${i.id}</td>
                         <td class="p-3 text-[#5f687b]">${i.created_at}</td>
-                        <td class="p-3 font-bold text-[#182033]">${i.room_name}</td>
+                        <td class="p-3 font-bold text-[#182033]">
+                            <div>${i.room_name}</div>
+                            ${i.tenant ? `<div class="text-[11px] font-medium text-[#5f687b]">${i.tenant}</div>` : ''}
+                        </td>
                         <td class="p-3 font-mono text-amber-600">${i.so_dien}</td>
                         <td class="p-3 font-mono text-cyan-600">${i.so_nuoc}</td>
                         <td class="p-3 font-mono font-bold text-emerald-600">${i.tong_tien.toLocaleString('vi-VN')} đ</td>
@@ -1095,6 +1134,10 @@
         function saveRentPricing() {
             const data = LocalStore.getData();
             data.pricing = {
+                bank_name: document.getElementById('price_bank_name') ? document.getElementById('price_bank_name').value.trim().toUpperCase() : 'BIDV',
+                bank_account: document.getElementById('price_bank_account') ? document.getElementById('price_bank_account').value.trim() : '8817398313',
+                bank_owner: document.getElementById('price_bank_owner') ? document.getElementById('price_bank_owner').value.trim().toUpperCase() : 'TRAN THI THUY HUYEN',
+                transfer_note: document.getElementById('price_transfer_note') ? document.getElementById('price_transfer_note').value.trim() : 'TIEN PHONG {room} T{month}',
                 rent_fixed: parseInt(document.getElementById('price_rent_fixed').value, 10) || 3500000,
                 electricity_unit: parseInt(document.getElementById('price_elec').value, 10) || 3500,
                 water_unit: parseInt(document.getElementById('price_water').value, 10) || 35000,

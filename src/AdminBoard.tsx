@@ -49,6 +49,7 @@ interface PricingConfig {
   bank_name: string;
   bank_account: string;
   bank_owner: string;
+  transfer_note?: string;
 }
 
 interface RoomItem {
@@ -132,6 +133,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
     bank_name: "BIDV",
     bank_account: "8817398313",
     bank_owner: "TRAN THI THUY HUYEN",
+    transfer_note: "TIEN PHONG {room} T{month}",
   });
 
   const [rooms, setRooms] = useState<RoomItem[]>([
@@ -280,8 +282,11 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        if (d.pricing) setPricing(d.pricing);
-        if (d.rooms) setRooms(d.rooms);
+        if (d.pricing) setPricing((prev) => ({ ...prev, ...d.pricing }));
+        if (d.rooms && d.rooms.length > 0) {
+          setRooms(d.rooms);
+          setCalcRoomId((prev) => (d.rooms.some((r: RoomItem) => r.id === prev) ? prev : d.rooms[0].id));
+        }
         if (d.invoices) setInvoices(d.invoices);
         if (d.weatherState) setWeatherState(d.weatherState);
         if (d.alertBanner) setAlertBanner(d.alertBanner);
@@ -311,6 +316,13 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
   useEffect(() => {
     persistData();
   }, [persistData]);
+
+  // Keep calcRoomId in sync with available rooms
+  useEffect(() => {
+    if (rooms.length > 0 && !rooms.some((r) => r.id === calcRoomId)) {
+      setCalcRoomId(rooms[0].id);
+    }
+  }, [rooms, calcRoomId]);
 
   // ── SMART AUTO-CARRY FORWARD (Kế thừa chỉ số cũ từ kỳ trước) ──────────────
   const handleRoomSelect = (roomId: string) => {
@@ -472,9 +484,11 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
 
   // ── Real-time Bill Computation ────────────────────────────────────────────
   const currentCalculatedBill = useMemo(() => {
-    const selectedRoom = rooms.find((r) => r.id === calcRoomId) || {
-      name: "Phòng Thuê",
-      tenant: "Khách thuê",
+    const selectedRoom = rooms.find((r) => r.id === calcRoomId) || rooms[0] || {
+      id: "p101",
+      name: "Phòng 302",
+      tenant: "Nguyễn Bá Ngọc",
+      phone: "",
       fixed_rent: pricing.rent_fixed,
     };
 
@@ -486,8 +500,16 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
     const phu_phi = pricing.service_fee_1 + pricing.service_fee_2 + pricing.service_fee_3;
     const tong_tien = tien_nha + tien_dien + tien_nuoc + phu_phi;
 
-    // VietQR URL
-    const addInfo = encodeURIComponent(`TIEN PHONG ${selectedRoom.name} T${new Date().getMonth() + 1}`);
+    // VietQR Transfer Note (REQ-081)
+    let noteTemplate = pricing.transfer_note && pricing.transfer_note.trim()
+      ? pricing.transfer_note.trim()
+      : "TIEN PHONG {room} T{month}";
+    const resolvedNote = noteTemplate
+      .replace(/\{room\}/gi, selectedRoom.name)
+      .replace(/\{tenant\}/gi, selectedRoom.tenant || "")
+      .replace(/\{month\}/gi, `${new Date().getMonth() + 1}`)
+      .replace(/\{year\}/gi, `${new Date().getFullYear()}`);
+    const addInfo = encodeURIComponent(resolvedNote);
     const qrUrl = `https://img.vietqr.io/image/${pricing.bank_name}-${pricing.bank_account}-compact2.png?amount=${tong_tien}&addInfo=${addInfo}&accountName=${encodeURIComponent(pricing.bank_owner)}`;
 
     // Messages
@@ -502,7 +524,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
       `--------------------------------\n` +
       `👉 TỔNG CỘNG: ${tong_tien.toLocaleString("vi-VN")} đ\n` +
       `💳 STK: ${pricing.bank_account} (${pricing.bank_name}) - ${pricing.bank_owner}\n` +
-      `Nội dung: ${selectedRoom.name} T${new Date().getMonth() + 1}\n` +
+      `Nội dung: ${resolvedNote}\n` +
       `(Vui lòng thanh toán trước ngày 05. Xin cảm ơn!)`;
 
     const accountingMsg =
@@ -540,6 +562,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
       note: calcNote,
       telegram_message: zaloMsg,
       qrUrl,
+      addInfo: resolvedNote,
       zaloMsg,
       accountingMsg,
       reminderMsg,
@@ -565,10 +588,25 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
       return;
     }
 
-    const newInv = { ...currentCalculatedBill, id: "HD-" + Math.floor(10000 + Math.random() * 90000) };
+    const activeRoom = rooms.find((r) => r.id === calcRoomId) || rooms[0] || {
+      id: "p_" + Date.now(),
+      name: "Phòng 302",
+      tenant: "Nguyễn Bá Ngọc",
+      phone: "",
+      fixed_rent: pricing.rent_fixed,
+    };
+
+    const newInv = {
+      ...currentCalculatedBill,
+      id: "HD-" + Math.floor(10000 + Math.random() * 90000),
+      created_at: new Date().toLocaleDateString("vi-VN"),
+      room_id: activeRoom.id,
+      room_name: activeRoom.name,
+      tenant: activeRoom.tenant || "Khách thuê",
+    };
     setInvoices((prev) => [newInv, ...prev]);
     setPreviewBill(newInv);
-    showToast(`Đã tự động lập và lưu hóa đơn ${newInv.id} vào sổ công nợ!`, "success");
+    showToast(`Đã tự động lập và lưu hóa đơn ${newInv.id} cho ${activeRoom.name} (${activeRoom.tenant || "Khách thuê"}) vào sổ công nợ!`, "success");
   };
 
   // ── Export CSV Action ─────────────────────────────────────────────────────
@@ -1230,7 +1268,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                               accountNo: pricing.bank_account,
                               accountName: pricing.bank_owner,
                               amount: currentCalculatedBill.tong_tien,
-                              addInfo: `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
+                              addInfo: currentCalculatedBill.addInfo || `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
                             });
                             setShowQRModal(true);
                           }}
@@ -1274,7 +1312,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                             accountNo: pricing.bank_account,
                             accountName: pricing.bank_owner,
                             amount: currentCalculatedBill.tong_tien,
-                            addInfo: `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
+                            addInfo: currentCalculatedBill.addInfo || `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
                           });
                           setShowQRModal(true);
                         }}
@@ -1401,7 +1439,14 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                         <tr key={inv.id} className="hover:bg-[#f4f6fa]/60 transition-colors">
                           <td className="p-3 font-mono font-bold text-indigo-600">{inv.id}</td>
                           <td className="p-3 text-[#5f687b]">{inv.created_at}</td>
-                          <td className="p-3 font-bold text-[#182033]">{inv.room_name}</td>
+                          <td className="p-3 font-bold text-[#182033]">
+                            <div>{inv.room_name}</div>
+                            {inv.tenant && (
+                              <div className="text-[11px] font-medium text-[#5f687b] mt-0.5">
+                                {inv.tenant}
+                              </div>
+                            )}
+                          </td>
                           <td className="p-3 font-mono text-amber-600">{inv.so_dien}</td>
                           <td className="p-3 font-mono text-cyan-600">{inv.so_nuoc}</td>
                           <td className="p-3 font-mono font-bold text-emerald-600">
@@ -2009,6 +2054,19 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                       className="w-full font-bold bg-white border border-violet-200 rounded-lg p-1.5 text-[#182033]"
                     />
                   </div>
+                  <div>
+                    <label className="text-[10px] text-violet-700 font-bold block mb-1">Ghi chú chuyển khoản (Nội dung CK):</label>
+                    <input
+                      type="text"
+                      placeholder="Ví dụ: TIEN PHONG {room} T{month} hoặc TIEN PHONG Phong Thue T10..."
+                      value={pricing.transfer_note || ""}
+                      onChange={(e) => setPricing((prev) => ({ ...prev, transfer_note: e.target.value }))}
+                      className="w-full font-semibold bg-white border border-violet-200 rounded-lg p-1.5 text-[#182033] focus:border-violet-500 focus:outline-none"
+                    />
+                    <span className="text-[9.5px] text-violet-600 font-medium block mt-0.5">
+                      Mẹo: Hỗ trợ &#123;room&#125;, &#123;tenant&#125;, &#123;month&#125; để tự động điền phòng và tháng.
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -2118,7 +2176,13 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                           <button
                             onClick={() => {
                               if (confirm(`Xóa phòng ${r.name}?`)) {
-                                setRooms((prev) => prev.filter((item) => item.id !== r.id));
+                                setRooms((prev) => {
+                                  const remaining = prev.filter((item) => item.id !== r.id);
+                                  if (calcRoomId === r.id && remaining.length > 0) {
+                                    setCalcRoomId(remaining[0].id);
+                                  }
+                                  return remaining;
+                                });
                                 showToast("Đã xóa phòng");
                               }
                             }}
@@ -2196,16 +2260,18 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                     showToast("Vui lòng nhập tên phòng", "error");
                     return;
                   }
+                  const newRoomId = "p_" + Date.now();
                   setRooms((prev) => [
                     ...prev,
                     {
-                      id: "p_" + Date.now(),
-                      name: modalRoomName,
-                      tenant: modalTenant,
-                      phone: modalPhone,
-                      fixed_rent: modalRent,
+                      id: newRoomId,
+                      name: modalRoomName.trim(),
+                      tenant: modalTenant.trim(),
+                      phone: modalPhone.trim(),
+                      fixed_rent: modalRent || pricing.rent_fixed,
                     },
                   ]);
+                  setCalcRoomId(newRoomId);
                   setIsAddRoomModalOpen(false);
                   setModalRoomName("");
                   setModalTenant("");
@@ -2231,7 +2297,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
           accountNo: pricing.bank_account,
           accountName: pricing.bank_owner,
           amount: currentCalculatedBill.tong_tien,
-          addInfo: `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
+          addInfo: currentCalculatedBill.addInfo || `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
         }}
       />
     </div>

@@ -1091,3 +1091,32 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: 0 lỗi, gói phân phối tạo hoàn tất.
 - `npm run test:logic`: 435/435 assertions đạt 100% PASS.
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-044: Bổ Sung Ghi Chú Chuyển Khoản Động & Khắc Phục Đồng Bộ Phòng/Người Thuê Vào Sổ Công Nợ (REQ-081)
+- **Ngày**: 2026-10-30
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Quản trị viên cần ô nhập ghi chú chuyển khoản VietQR ngay dưới thông tin "Tên Chủ Tài Khoản" để linh hoạt tùy biến nội dung thanh toán theo từng chu kỳ phòng trọ.
+- Phát hiện lỗi mất liên kết phòng/người thuê: Khi quản trị viên xóa các phòng mặc định (`p101..p202`) và chỉ thêm phòng mới (`Phòng 302` - `Nguyễn Bá Ngọc`), trạng thái `calcRoomId` trong React state vẫn giữ giá trị cũ `"p101"` do chưa có bộ lắng nghe đồng bộ khi `rooms` thay đổi. Khi đó, `rooms.find(r => r.id === calcRoomId)` trả về `undefined` và rơi vào object mặc định `{ name: "Phòng Thuê", tenant: "Khách thuê" }`. Kết quả là khi nhấn "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn bị lưu với tên "Phòng Thuê" thay vì "Phòng 302 - Nguyễn Bá Ngọc".
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Trường Dữ Liệu `transfer_note` trong `PricingConfig`**:
+   - Mở rộng giao diện `PricingConfig` thêm `transfer_note?: string`.
+   - Thêm ô nhập tại Tab 7 bên dưới "Tên Chủ Tài Khoản" với placeholder và gợi ý biến động (`{room}`, `{tenant}`, `{month}`).
+   - Tự động thay thế các biến này khi tạo URL VietQR và modal hiển thị.
+2. **Cơ Chế Đồng Bộ Phòng Đang Chọn (`calcRoomId` Sync Guard)**:
+   - Thêm `useEffect` tự động kiểm tra `rooms.some(r => r.id === calcRoomId)`; nếu không tồn tại hoặc danh sách phòng thay đổi, tự động gán `setCalcRoomId(rooms[0].id)`.
+   - Trong `currentCalculatedBill`, thay vì chỉ dựa vào `calcRoomId`, bổ sung fallback trực tiếp `rooms[0]` trước khi xét đến object trống, đảm bảo luôn ưu tiên phòng thật đang có trong hệ thống.
+   - Khi thêm phòng mới (`handleAddRoom`), tự động chuyển `calcRoomId` sang ID phòng vừa thêm.
+   - Khi xóa phòng (`handleDeleteRoom`), tự động chuyển `calcRoomId` sang phòng kế tiếp nếu phòng bị xóa đang được chọn.
+3. **Hiển Thị Đa Tầng Cột "Phòng" Trong Sổ Công Nợ**:
+   - Cột "Phòng" hiển thị cả Tên Phòng (`inv.room_name`) in đậm nổi bật và Tên Người Thuê (`inv.tenant`) màu xám bên dưới, rõ ràng và trực quan theo đúng mong muốn của chủ trọ.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: Hoàn thành trong 525ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 445/445 assertions đạt chuẩn 100% (bổ sung Luồng 26).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

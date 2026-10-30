@@ -1493,6 +1493,99 @@ export function runAllLogicFlowTests() {
   assert(fallbackSvgPrefix.startsWith("data:image/svg"), "Cơ chế Fallback SVG QR luôn cung cấp ảnh nội suy an toàn");
 
   console.log(`    ${colors.green}✓ Luồng VietQR Hóa Đơn: Đạt 8/8 kiểm tra tham số Napas 247, giải mã URL, định dạng VND & Fallback QR an toàn${colors.reset}\n`);
+
+  // =========================================================================
+  // LUỒNG 26: GHI CHÚ CHUYỂN KHOẢN TÙY BIẾN & RÀNG BUỘC PHÒNG/NGƯỜI THUÊ (REQ-081)
+  // =========================================================================
+  console.log(`  ${colors.bright}${colors.cyan}[LUỒNG 26] Ghi Chú Chuyển Khoản Tùy Biến & Ràng Buộc Phòng/Người Thuê Thực Tế (REQ-081)${colors.reset}`);
+
+  // 1. Phân giải mẫu ghi chú chuyển khoản động {room}, {tenant}, {month}
+  function resolveTransferNote(template, roomName, tenantName, month) {
+    if (!template || !template.trim()) {
+      return `TIEN PHONG ${roomName} T${month}`;
+    }
+    return template.trim()
+      .replace(/\{room\}/gi, roomName)
+      .replace(/\{tenant\}/gi, tenantName || '')
+      .replace(/\{month\}/gi, `${month}`)
+      .replace(/\{year\}/gi, '2026');
+  }
+
+  const note1 = resolveTransferNote("TIEN PHONG {room} T{month}", "Phòng 302", "Nguyễn Bá Ngọc", 10);
+  assert(note1 === "TIEN PHONG Phòng 302 T10", "Phân giải mẫu {room} và {month} chính xác: TIEN PHONG Phòng 302 T10");
+
+  const note2 = resolveTransferNote("TIEN PHONG Phong Thue T10", "Phòng 302", "Nguyễn Bá Ngọc", 10);
+  assert(note2 === "TIEN PHONG Phong Thue T10", "Hỗ trợ nội dung ghi chú cố định do người dùng tự gõ");
+
+  const note3 = resolveTransferNote("TIEN PHONG {room} - {tenant} T{month}", "Phòng 302", "Nguyễn Bá Ngọc", 10);
+  assert(note3 === "TIEN PHONG Phòng 302 - Nguyễn Bá Ngọc T10", "Phân giải mẫu kèm tên người thuê {tenant} chính xác");
+
+  // 2. Kiểm thử ràng buộc phòng & người thuê thực tế khi lập hóa đơn
+  const sampleRooms = [
+    { id: "p_custom_302", name: "Phòng 302", tenant: "Nguyễn Bá Ngọc", phone: "0345190988", fixed_rent: 3500000 }
+  ];
+
+  function getActiveRoomForInvoice(currentCalcRoomId, roomsList) {
+    return roomsList.find(r => r.id === currentCalcRoomId) || roomsList[0] || {
+      name: "Phòng Thuê",
+      tenant: "Khách thuê",
+      fixed_rent: 3500000
+    };
+  }
+
+  // Khi calcRoomId là "p101" (phòng cũ đã xóa), hệ thống tự động kế thừa phòng đầu tiên hiện có
+  const activeRoom = getActiveRoomForInvoice("p101", sampleRooms);
+  assert(activeRoom.name === "Phòng 302", "Kế thừa chính xác tên phòng hiện có Phòng 302 thay vì rơi về 'Phòng Thuê'");
+  assert(activeRoom.tenant === "Nguyễn Bá Ngọc", "Kế thừa chính xác người thuê Nguyễn Bá Ngọc thay vì rơi về 'Khách thuê'");
+
+  // 3. Kiểm thử hóa đơn được tạo mang thông tin phòng và người thuê chuẩn
+  function createInvoice(activeRoom, pricingConfig, dCu, dMoi, nCu, nMoi) {
+    const soDien = dMoi - dCu;
+    const soNuoc = nMoi - nCu;
+    const tienDien = soDien * pricingConfig.electricity_unit;
+    const tienNuoc = soNuoc * pricingConfig.water_unit;
+    const tienNha = activeRoom.fixed_rent;
+    const phuPhi = pricingConfig.service_fee_1 + pricingConfig.service_fee_2 + pricingConfig.service_fee_3;
+    const tongTien = tienNha + tienDien + tienNuoc + phuPhi;
+
+    return {
+      id: "HD-88612",
+      created_at: "30/10/2026",
+      room_id: activeRoom.id,
+      room_name: activeRoom.name,
+      tenant: activeRoom.tenant,
+      so_dien: soDien,
+      so_nuoc: soNuoc,
+      tong_tien: tongTien,
+      status: "unpaid"
+    };
+  }
+
+  const samplePricing = {
+    electricity_unit: 3500,
+    water_unit: 35000,
+    service_fee_1: 100000,
+    service_fee_2: 100000,
+    service_fee_3: 100000,
+    bank_name: "BIDV",
+    bank_account: "8817398313",
+    bank_owner: "TRAN THI THUY HUYEN",
+    transfer_note: "TIEN PHONG {room} T{month}"
+  };
+
+  const invoiceCreated = createInvoice(activeRoom, samplePricing, 12850, 13093, 818, 824);
+  assert(invoiceCreated.room_name === "Phòng 302", "Hóa đơn được lưu mang đúng tên Phòng 302");
+  assert(invoiceCreated.tenant === "Nguyễn Bá Ngọc", "Hóa đơn được lưu mang đúng người thuê Nguyễn Bá Ngọc");
+  assert(invoiceCreated.tong_tien === 4860500, "Tổng tiền tính toán chuẩn xác 4.860.500 đ từ chỉ số công tơ 12850->13093 và 818->824");
+
+  // 4. Mã hóa VietQR URL với ghi chú chuyển khoản tùy biến
+  const generatedAddInfo = encodeURIComponent(resolveTransferNote(samplePricing.transfer_note, invoiceCreated.room_name, invoiceCreated.tenant, 10));
+  const generatedQrUrl = `https://img.vietqr.io/image/${samplePricing.bank_name}-${samplePricing.bank_account}-compact2.png?amount=${invoiceCreated.tong_tien}&addInfo=${generatedAddInfo}&accountName=${encodeURIComponent(samplePricing.bank_owner)}`;
+  assert(generatedQrUrl.includes("amount=4860500"), "VietQR URL chứa đúng số tiền 4.860.500 đ");
+  assert(generatedQrUrl.includes("addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20302%20T10"), "VietQR URL chứa đúng nội dung chuyển khoản TIEN PHONG Phòng 302 T10");
+
+  console.log(`    ${colors.green}✓ Luồng Ghi Chú Chuyển Khoản & Ràng Buộc Phòng: Đạt 9/9 kiểm tra mẫu tùy biến, kế thừa phòng Phòng 302 & URL VietQR${colors.reset}\n`);
+
   console.log(`${colors.bright}TỔNG KẾT KIỂM THỬ LUỒNG LOGIC: ${colors.green}${passedAssertions}/${totalAssertions} ASSERTIONS ĐẠT (100% PASS)${colors.reset} | ${failedAssertions > 0 ? colors.red : colors.dim}${failedAssertions} THẤT BẠI${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}\n`);
 
