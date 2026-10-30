@@ -1080,3 +1080,19 @@
   - `npm run build`: 0 lỗi biên dịch.
   - `npm run test:logic`: 445/445 assertions đạt chuẩn 100% PASS (bổ sung Luồng 26).
   - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED).
+
+---
+
+## [Phiên bản 2.1.2] - 2026-10-30: Bổ Sung Mã VietQR Bên Dưới Từng Dòng Hóa Đơn Trong Sổ Công Nợ (REQ-082)
+
+### Thay đổi & Tính năng mới
+- **Mã VietQR Bên Dưới Từng Dòng Hóa Đơn (REQ-082)**:
+  - Bổ sung khối sub-row hiển thị mã VietQR thanh toán ngay bên dưới từng dòng hóa đơn trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ".
+  - Mỗi dòng có ảnh thumbnail QR `size-16`, số tiền thực tế của hóa đơn, ngân hàng BIDV, STK `8817398313`, và nội dung chuyển khoản tương ứng.
+  - Nhấp vào ảnh thumbnail QR hoặc bấm nút "📱 Phóng to mã QR" sẽ hiển thị Popup Modal căn giữa màn hình để khách quét thanh toán.
+  - Bổ sung nút "📋 Sao chép CK" 1 chạm để sao chép nhanh toàn bộ thông tin thanh toán của hóa đơn đó.
+  - Tự động lưu trữ thông tin mã QR đi kèm khi bấm "Lưu Vào Lịch Sử & Sổ Công Nợ".
+- **Nghiệm Thu Toàn Diện**:
+  - `npm run build`: 0 lỗi biên dịch.
+  - `npm run test:logic`: 452/452 assertions đạt chuẩn 100% PASS (bổ sung Luồng 27).
+  - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED, bổ sung UX-08.5).

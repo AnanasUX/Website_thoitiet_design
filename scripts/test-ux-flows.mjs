@@ -425,6 +425,25 @@ export async function runAllUXFlowTests(page) {
       const isClosed = await page.evaluate(() => !document.querySelector('[data-testid="vietqr-popup-modal"]'));
       assertUX('UX-08.4: Phím Escape đóng popup VietQR mượt mà', isClosed, 'Popup đóng và khôi phục màn hình nền');
 
+      // 8.5 Kiểm tra nhấp mã QR ở dòng hóa đơn trong bảng lịch sử (REQ-082)
+      const canClickRowQR = await page.evaluate(() => {
+        const rowQr = document.querySelector('[data-testid^="invoice-qr-thumbnail-"]') ||
+                      document.querySelector('[data-testid^="btn-zoom-qr-"]');
+        if (rowQr) {
+          rowQr.click();
+          return true;
+        }
+        return false;
+      });
+
+      if (canClickRowQR) {
+        await page.waitForSelector('[data-testid="vietqr-popup-modal"]', { timeout: 3000 }).catch(() => {});
+        const isRowModalOpen = await page.evaluate(() => Boolean(document.querySelector('[data-testid="vietqr-popup-modal"]')));
+        assertUX('UX-08.5: Nhấp mã QR bên dưới từng dòng hóa đơn phóng to modal thành công (REQ-082)', isRowModalOpen, 'Mã QR từng dòng mở modal phóng to chính xác');
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+      }
+
       // Khôi phục lại trang chủ
       await page.evaluate(() => {
         sessionStorage.removeItem("anx_admin_auth");

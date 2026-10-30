@@ -998,6 +998,11 @@
                 `--------------------------------\n` +
                 `👉 TỔNG CỘNG: ${tong_tien.toLocaleString('vi-VN')} đ`;
 
+            const invBank = p.bank_name || 'BIDV';
+            const invAccount = p.bank_account || '8817398313';
+            const invOwner = p.bank_owner || 'TRAN THI THUY HUYEN';
+            const invQrUrl = `https://img.vietqr.io/image/${invBank}-${invAccount}-compact2.png?amount=${tong_tien}&addInfo=${encodeURIComponent(resolvedNote)}&accountName=${encodeURIComponent(invOwner)}`;
+
             const bill = {
                 id: billId,
                 created_at: new Date().toLocaleDateString('vi-VN'),
@@ -1009,6 +1014,11 @@
                 tien_nha, phu_phi, s_khoa: sk, tong_tien,
                 status: 'unpaid',
                 note,
+                qrUrl: invQrUrl,
+                addInfo: resolvedNote,
+                bank_name: invBank,
+                bank_account: invAccount,
+                bank_owner: invOwner,
                 telegram_message: msg
             };
 
@@ -1057,9 +1067,31 @@
 
             tb.innerHTML = invoices.map(i => {
                 const isPaid = i.status === 'paid';
+                const p = data.pricing || {};
+                const bBank = i.bank_name || p.bank_name || 'BIDV';
+                const bAcc = i.bank_account || p.bank_account || '8817398313';
+                const bOwner = i.bank_owner || p.bank_owner || 'TRAN THI THUY HUYEN';
+                let bNote = i.addInfo;
+                if (!bNote) {
+                    let tpl = p.transfer_note && p.transfer_note.trim() ? p.transfer_note.trim() : 'TIEN PHONG {room} T{month}';
+                    bNote = tpl
+                        .replace(/\{room\}/gi, i.room_name || 'Phòng Thuê')
+                        .replace(/\{tenant\}/gi, i.tenant || '')
+                        .replace(/\{month\}/gi, '' + (new Date().getMonth() + 1))
+                        .replace(/\{year\}/gi, '' + new Date().getFullYear());
+                }
+                const bQrUrl = i.qrUrl || `https://img.vietqr.io/image/${bBank}-${bAcc}-compact2.png?amount=${i.tong_tien}&addInfo=${encodeURIComponent(bNote)}&accountName=${encodeURIComponent(bOwner)}`;
+
                 return `
                     <tr class="hover:bg-[#f4f6fa]/60 transition-colors">
-                        <td class="p-3 font-mono font-bold text-indigo-600">${i.id}</td>
+                        <td class="p-3 font-mono font-bold text-indigo-600">
+                            <div class="flex items-center gap-1.5">
+                                <span>${i.id}</span>
+                                <button type="button" onclick="openInvoiceQRModalById('${i.id}')" class="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all cursor-pointer" title="Xem mã VietQR hóa đơn này">
+                                    QR
+                                </button>
+                            </div>
+                        </td>
                         <td class="p-3 text-[#5f687b]">${i.created_at}</td>
                         <td class="p-3 font-bold text-[#182033]">
                             <div>${i.room_name}</div>
@@ -1078,6 +1110,47 @@
                                 ${isPaid ? 'Hủy thu' : 'Đã thu'}
                             </button>
                             <button onclick="deleteInvoice('${i.id}')" class="text-xs text-[#5f687b] hover:text-[#ff315f]">Xóa</button>
+                        </td>
+                    </tr>
+                    <tr class="bg-slate-50/70 border-b border-[#e3e7ef]/80">
+                        <td colspan="8" class="px-3 py-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2.5 rounded-xl bg-white border border-[#e3e7ef] shadow-2xs">
+                                <div class="flex items-center gap-3">
+                                    <div onclick="openInvoiceQRModalById('${i.id}')" class="size-16 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative active:scale-95" title="Nhấp để phóng to mã QR hóa đơn ${i.id}" data-testid="invoice-qr-thumbnail-${i.id}">
+                                        <img src="${bQrUrl}" alt="VietQR" class="size-full object-contain" onerror="this.src='https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=${i.tong_tien}&addInfo=${encodeURIComponent(bNote)}&accountName=TRAN%20THI%20THUY%20HUYEN'">
+                                        <div class="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                            <span class="text-white text-[8px] font-extrabold bg-blue-600 px-1 py-0.5 rounded shadow-xs">🔍 Phóng to</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col text-[11px] leading-tight text-[#5f687b]">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-[#182033] flex items-center gap-1">
+                                                <span>💳</span> Mã VietQR Thanh Toán: ${i.room_name}
+                                            </span>
+                                            <span class="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                                                ${i.id}
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                                            <span>Số tiền: <b class="font-mono font-bold text-emerald-600 text-xs">${i.tong_tien.toLocaleString('vi-VN')} đ</b></span>
+                                            <span>STK: <b class="font-mono text-[#182033]">${bAcc}</b> (${bBank})</span>
+                                        </div>
+                                        <div class="text-[10.5px] mt-0.5">
+                                            Nội dung CK: <b class="font-mono text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded border border-violet-200">${bNote}</b>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                    <button type="button" onclick="openInvoiceQRModalById('${i.id}')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer" title="Phóng to mã QR giữa màn hình để quét" data-testid="btn-zoom-qr-${i.id}">
+                                        <span>📱</span>
+                                        <span>Phóng to mã QR</span>
+                                    </button>
+                                    <button type="button" onclick="navigator.clipboard.writeText('MÃ HĐ: ${i.id} - ${i.room_name}\nSTK: ${bAcc} (${bBank}) - ${bOwner}\nSố tiền: ${i.tong_tien.toLocaleString('vi-VN')} đ\nNội dung: ${bNote}'); showToast('Đã sao chép thông tin chuyển khoản HĐ ${i.id}!', 'success');" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-[#5f687b] font-medium text-[11px] border border-[#e3e7ef] shadow-2xs active:scale-95 transition-all cursor-pointer" title="Sao chép nội dung chuyển khoản">
+                                        <span>📋</span>
+                                        <span>Sao chép CK</span>
+                                    </button>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1321,6 +1394,41 @@
         }
 
         
+        function openInvoiceQRModalById(id) {
+            const data = LocalStore.getData();
+            const inv = (data.invoices || []).find(i => i.id === id);
+            if (!inv) return;
+            const p = data.pricing || {};
+            const bBank = inv.bank_name || p.bank_name || 'BIDV';
+            const bAcc = inv.bank_account || p.bank_account || '8817398313';
+            const bOwner = inv.bank_owner || p.bank_owner || 'TRAN THI THUY HUYEN';
+            let bNote = inv.addInfo;
+            if (!bNote) {
+                let tpl = p.transfer_note && p.transfer_note.trim() ? p.transfer_note.trim() : 'TIEN PHONG {room} T{month}';
+                bNote = tpl
+                    .replace(/\{room\}/gi, inv.room_name || 'Phòng Thuê')
+                    .replace(/\{tenant\}/gi, inv.tenant || '')
+                    .replace(/\{month\}/gi, '' + (new Date().getMonth() + 1))
+                    .replace(/\{year\}/gi, '' + new Date().getFullYear());
+            }
+            const bQrUrl = inv.qrUrl || `https://img.vietqr.io/image/${bBank}-${bAcc}-compact2.png?amount=${inv.tong_tien}&addInfo=${encodeURIComponent(bNote)}&accountName=${encodeURIComponent(bOwner)}`;
+
+            const modalImg = document.getElementById('modal_vietqr_img');
+            if (modalImg) modalImg.src = bQrUrl;
+            const modalAmount = document.getElementById('modal_bill_amount');
+            if (modalAmount) modalAmount.innerText = inv.tong_tien.toLocaleString('vi-VN') + ' ₫';
+            const modalBank = document.getElementById('modal_bill_bank');
+            if (modalBank) modalBank.innerText = bBank;
+            const modalAcc = document.getElementById('modal_bill_account');
+            if (modalAcc) modalAcc.innerText = bAcc;
+            const modalOwner = document.getElementById('modal_bill_owner');
+            if (modalOwner) modalOwner.innerText = bOwner;
+            const modalMemo = document.getElementById('modal_bill_memo');
+            if (modalMemo) modalMemo.innerText = bNote;
+
+            openVietQRModal();
+        }
+
         function openVietQRModal() {
             const modal = document.getElementById('vietqrModal');
             if (modal) {

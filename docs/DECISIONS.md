@@ -1120,3 +1120,29 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn thành trong 525ms, 0 lỗi biên dịch.
 - `npm run test:logic`: 445/445 assertions đạt chuẩn 100% (bổ sung Luồng 26).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-045: Thiết Kế Khối Mã VietQR Gắn Liền Từng Dòng Hóa Đơn & Tương Tác Phóng To (REQ-082)
+- **Ngày**: 2026-10-30
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Theo yêu cầu của người dùng: Trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ", cần bổ sung mã QR-code bên dưới từng dòng hóa đơn để khách thuê có thể quét mã chuyển khoản nhanh theo từng hóa đơn cụ thể, và khi bấm vào ảnh QR đó thì phóng to modal giữa màn hình.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Mở Rộng Dữ Liệu Hóa Đơn (`InvoiceItem`)**:
+   - Thêm các trường `qrUrl?`, `addInfo?`, `bank_name?`, `bank_account?`, `bank_owner?` vào interface `InvoiceItem`.
+   - Khi lưu hóa đơn (`handleSaveInvoice`), hệ thống tự động sinh và lưu trữ URL VietQR cùng nội dung chuyển khoản đặc thù của hóa đơn đó.
+2. **Thiết Kế Sub-Row Mã QR Bên Dưới Từng Dòng**:
+   - Mỗi phần tử trong danh sách hóa đơn render qua `<React.Fragment key={inv.id}>` gồm dòng chính và một dòng phụ `<tr className="bg-slate-50/70 border-b border-[#e3e7ef]/80">` với `colSpan={8}`.
+   - Khối hiển thị gồm: Ảnh thumbnail QR `size-16` sắc nét, thông tin số tiền, ngân hàng, STK, nội dung CK, nút "📱 Phóng to mã QR" và nút "📋 Sao chép CK".
+   - Helper `getInvoiceQrData(inv)` và `openInvoiceQRModal(inv)` chịu trách nhiệm tạo payload và mở modal `VietQRModal`.
+3. **Đồng Bộ Trên Cả React Admin & HTML Quản Trị Tĩnh**:
+   - Áp dụng trên `src/AdminBoard.tsx` và các file tĩnh `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html` qua hàm `openInvoiceQRModalById(id)`.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: 0 lỗi, bundle thành công.
+- `npm run test:logic`: 452/452 assertions đạt 100% (bổ sung Luồng 27).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (UX-08.5 xác thực nhấp mã QR từng dòng phóng to modal thành công).

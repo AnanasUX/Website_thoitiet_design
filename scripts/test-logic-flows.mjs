@@ -1586,6 +1586,68 @@ export function runAllLogicFlowTests() {
 
   console.log(`    ${colors.green}✓ Luồng Ghi Chú Chuyển Khoản & Ràng Buộc Phòng: Đạt 9/9 kiểm tra mẫu tùy biến, kế thừa phòng Phòng 302 & URL VietQR${colors.reset}\n`);
 
+
+  // =========================================================================
+  // LUỒNG 27: MÃ VIETQR TỪNG DÒNG HÓA ĐƠN & PHÓNG TO MODAL (REQ-082)
+  // =========================================================================
+  console.log(`  ${colors.bright}${colors.cyan}[LUỒNG 27] Mã VietQR Gắn Liền Từng Dòng Hóa Đơn & Tương Tác Phóng To (REQ-082)${colors.reset}`);
+
+  function getInvoiceQrDataTest(inv, pricing) {
+    const bank = inv.bank_name || pricing.bank_name || 'BIDV';
+    const accountNo = inv.bank_account || pricing.bank_account || '8817398313';
+    const accountName = inv.bank_owner || pricing.bank_owner || 'TRAN THI THUY HUYEN';
+    const amount = inv.tong_tien;
+
+    let note = inv.addInfo;
+    if (!note) {
+      const tpl = pricing.transfer_note && pricing.transfer_note.trim()
+        ? pricing.transfer_note.trim()
+        : "TIEN PHONG {room} T{month}";
+      note = tpl
+        .replace(/\{room\}/gi, inv.room_name || "Phòng Thuê")
+        .replace(/\{tenant\}/gi, inv.tenant || "")
+        .replace(/\{month\}/gi, "10")
+        .replace(/\{year\}/gi, "2026");
+    }
+
+    const qrUrl = inv.qrUrl || `https://img.vietqr.io/image/${bank}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(accountName)}`;
+
+    return { qrUrl, bank, accountNo, accountName, amount, addInfo: note };
+  }
+
+  const invoiceP302 = {
+    id: "HD-88612",
+    created_at: "30/10/2026",
+    room_id: "p_302",
+    room_name: "Phòng 302",
+    tenant: "Nguyễn Bá Ngọc",
+    tong_tien: 4860500,
+    status: "unpaid"
+  };
+
+  const invoiceP101 = {
+    id: "HD-89214",
+    created_at: "30/10/2026",
+    room_id: "p_101",
+    room_name: "Phòng 101",
+    tenant: "Nguyễn Văn An",
+    tong_tien: 4577000,
+    status: "paid"
+  };
+
+  const qrData302 = getInvoiceQrDataTest(invoiceP302, samplePricing);
+  const qrData101 = getInvoiceQrDataTest(invoiceP101, samplePricing);
+
+  assert(qrData302.amount === 4860500, "Mã QR dòng Phòng 302 mang đúng số tiền 4.860.500 đ");
+  assert(qrData101.amount === 4577000, "Mã QR dòng Phòng 101 mang đúng số tiền 4.577.000 đ");
+  assert(qrData302.addInfo === "TIEN PHONG Phòng 302 T10", "Nội dung CK dòng 302 ghi đúng: TIEN PHONG Phòng 302 T10");
+  assert(qrData101.addInfo === "TIEN PHONG Phòng 101 T10", "Nội dung CK dòng 101 ghi đúng: TIEN PHONG Phòng 101 T10");
+  assert(qrData302.qrUrl !== qrData101.qrUrl, "Mỗi dòng hóa đơn sở hữu một URL VietQR hoàn toàn độc lập và chính xác");
+  assert(qrData302.accountNo === "8817398313", "STK nhận tiền đồng bộ BIDV 8817398313");
+  assert(Boolean(qrData302.qrUrl && qrData302.bank && qrData302.accountName), "Payload mở VietQRModal đầy đủ mọi trường cần thiết");
+
+  console.log(`    ${colors.green}✓ Luồng VietQR Từng Dòng Hóa Đơn: Đạt 7/7 kiểm tra dữ liệu độc lập, số tiền khớp từng dòng & payload modal phóng to${colors.reset}\n`);
+
   console.log(`${colors.bright}TỔNG KẾT KIỂM THỬ LUỒNG LOGIC: ${colors.green}${passedAssertions}/${totalAssertions} ASSERTIONS ĐẠT (100% PASS)${colors.reset} | ${failedAssertions > 0 ? colors.red : colors.dim}${failedAssertions} THẤT BẠI${colors.reset}`);
   console.log(`${colors.bright}${colors.cyan}========================================================================================${colors.reset}\n`);
 

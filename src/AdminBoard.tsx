@@ -81,6 +81,11 @@ interface InvoiceItem {
   status: "paid" | "unpaid";
   note?: string;
   telegram_message?: string;
+  qrUrl?: string;
+  addInfo?: string;
+  bank_name?: string;
+  bank_account?: string;
+  bank_owner?: string;
 }
 
 interface WeatherAdminState {
@@ -577,6 +582,51 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
     }
   }, [currentCalculatedBill, previewBill]);
 
+  // ── Helper: Get VietQR Data for any invoice item (REQ-082) ──────────────
+  const getInvoiceQrData = useCallback(
+    (inv: InvoiceItem): VietQRData => {
+      const bank = inv.bank_name || pricing.bank_name;
+      const accountNo = inv.bank_account || pricing.bank_account;
+      const accountName = inv.bank_owner || pricing.bank_owner;
+      const amount = inv.tong_tien;
+
+      let note = inv.addInfo;
+      if (!note) {
+        const tpl = pricing.transfer_note && pricing.transfer_note.trim()
+          ? pricing.transfer_note.trim()
+          : "TIEN PHONG {room} T{month}";
+        note = tpl
+          .replace(/\{room\}/gi, inv.room_name || "Phòng Thuê")
+          .replace(/\{tenant\}/gi, inv.tenant || "")
+          .replace(/\{month\}/gi, `${new Date().getMonth() + 1}`)
+          .replace(/\{year\}/gi, `${new Date().getFullYear()}`);
+      }
+
+      const qrUrl =
+        inv.qrUrl ||
+        `https://img.vietqr.io/image/${bank}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(accountName)}`;
+
+      return {
+        qrUrl,
+        bank,
+        accountNo,
+        accountName,
+        amount,
+        addInfo: note,
+      };
+    },
+    [pricing]
+  );
+
+  const openInvoiceQRModal = useCallback(
+    (inv: InvoiceItem) => {
+      const qrData = getInvoiceQrData(inv);
+      setQrModalData(qrData);
+      setShowQRModal(true);
+    },
+    [getInvoiceQrData]
+  );
+
   // ── Save Invoice Action ───────────────────────────────────────────────────
   const handleSaveInvoice = () => {
     if (calcDMoi < calcDCu) {
@@ -596,13 +646,18 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
       fixed_rent: pricing.rent_fixed,
     };
 
-    const newInv = {
+    const newInv: InvoiceItem = {
       ...currentCalculatedBill,
       id: "HD-" + Math.floor(10000 + Math.random() * 90000),
       created_at: new Date().toLocaleDateString("vi-VN"),
       room_id: activeRoom.id,
       room_name: activeRoom.name,
       tenant: activeRoom.tenant || "Khách thuê",
+      qrUrl: currentCalculatedBill.qrUrl,
+      addInfo: currentCalculatedBill.addInfo,
+      bank_name: pricing.bank_name,
+      bank_account: pricing.bank_account,
+      bank_owner: pricing.bank_owner,
     };
     setInvoices((prev) => [newInv, ...prev]);
     setPreviewBill(newInv);
@@ -1435,61 +1490,154 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                   <tbody className="divide-y divide-[#e3e7ef]">
                     {displayedInvoices.map((inv) => {
                       const isPaid = inv.status === "paid";
+                      const invQrData = getInvoiceQrData(inv);
                       return (
-                        <tr key={inv.id} className="hover:bg-[#f4f6fa]/60 transition-colors">
-                          <td className="p-3 font-mono font-bold text-indigo-600">{inv.id}</td>
-                          <td className="p-3 text-[#5f687b]">{inv.created_at}</td>
-                          <td className="p-3 font-bold text-[#182033]">
-                            <div>{inv.room_name}</div>
-                            {inv.tenant && (
-                              <div className="text-[11px] font-medium text-[#5f687b] mt-0.5">
-                                {inv.tenant}
+                        <React.Fragment key={inv.id}>
+                          <tr className="hover:bg-[#f4f6fa]/60 transition-colors">
+                            <td className="p-3 font-mono font-bold text-indigo-600">
+                              <div className="flex items-center gap-1.5">
+                                <span>{inv.id}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => openInvoiceQRModal(inv)}
+                                  className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all cursor-pointer"
+                                  title="Xem mã VietQR hóa đơn này"
+                                >
+                                  QR
+                                </button>
                               </div>
-                            )}
-                          </td>
-                          <td className="p-3 font-mono text-amber-600">{inv.so_dien}</td>
-                          <td className="p-3 font-mono text-cyan-600">{inv.so_nuoc}</td>
-                          <td className="p-3 font-mono font-bold text-emerald-600">
-                            {inv.tong_tien.toLocaleString("vi-VN")} đ
-                          </td>
-                          <td className="p-3">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                isPaid
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-rose-50 text-rose-700 border border-rose-200"
-                              }`}
-                            >
-                              {isPaid ? "✓ Đã thu" : "⏳ Chưa thu"}
-                            </span>
-                          </td>
-                          <td className="p-3 text-right space-x-2">
-                            <button
-                              onClick={() => {
-                                setInvoices((prev) =>
-                                  prev.map((i) =>
-                                    i.id === inv.id ? { ...i, status: isPaid ? "unpaid" : "paid" } : i
-                                  )
-                                );
-                                showToast(`Đã đổi trạng thái sang: ${isPaid ? "Chưa thu" : "Đã thu"}!`, "success");
-                              }}
-                              className={`text-xs font-bold ${isPaid ? "text-amber-600" : "text-emerald-600"} hover:underline`}
-                            >
-                              {isPaid ? "Hủy thu" : "Đã thu"}
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm("Xóa hóa đơn này?")) {
-                                  setInvoices((prev) => prev.filter((i) => i.id !== inv.id));
-                                  showToast("Đã xóa hóa đơn");
-                                }
-                              }}
-                              className="text-xs text-[#5f687b] hover:text-[#ff315f]"
-                            >
-                              Xóa
-                            </button>
-                          </td>
-                        </tr>
+                            </td>
+                            <td className="p-3 text-[#5f687b]">{inv.created_at}</td>
+                            <td className="p-3 font-bold text-[#182033]">
+                              <div>{inv.room_name}</div>
+                              {inv.tenant && (
+                                <div className="text-[11px] font-medium text-[#5f687b] mt-0.5">
+                                  {inv.tenant}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-3 font-mono text-amber-600">{inv.so_dien}</td>
+                            <td className="p-3 font-mono text-cyan-600">{inv.so_nuoc}</td>
+                            <td className="p-3 font-mono font-bold text-emerald-600">
+                              {inv.tong_tien.toLocaleString("vi-VN")} đ
+                            </td>
+                            <td className="p-3">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                  isPaid
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : "bg-rose-50 text-rose-700 border border-rose-200"
+                                }`}
+                              >
+                                {isPaid ? "✓ Đã thu" : "⏳ Chưa thu"}
+                              </span>
+                            </td>
+                            <td className="p-3 text-right space-x-2">
+                              <button
+                                onClick={() => {
+                                  setInvoices((prev) =>
+                                    prev.map((i) =>
+                                      i.id === inv.id ? { ...i, status: isPaid ? "unpaid" : "paid" } : i
+                                    )
+                                  );
+                                  showToast(`Đã đổi trạng thái sang: ${isPaid ? "Chưa thu" : "Đã thu"}!`, "success");
+                                }}
+                                className={`text-xs font-bold ${isPaid ? "text-amber-600" : "text-emerald-600"} hover:underline`}
+                              >
+                                {isPaid ? "Hủy thu" : "Đã thu"}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm("Xóa hóa đơn này?")) {
+                                    setInvoices((prev) => prev.filter((i) => i.id !== inv.id));
+                                    showToast("Đã xóa hóa đơn");
+                                  }
+                                }}
+                                className="text-xs text-[#5f687b] hover:text-[#ff315f]"
+                              >
+                                Xóa
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* Dòng bổ sung mã QR chuyển khoản ngay bên dưới của từng dòng (REQ-082) */}
+                          <tr className="bg-slate-50/70 border-b border-[#e3e7ef]/80">
+                            <td colSpan={8} className="px-3 py-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2.5 rounded-xl bg-white border border-[#e3e7ef] shadow-2xs">
+                                <div className="flex items-center gap-3">
+                                  {/* Thumbnail QR: Nhấp để phóng to modal giữa màn hình */}
+                                  <div
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => openInvoiceQRModal(inv)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") openInvoiceQRModal(inv);
+                                    }}
+                                    className="size-16 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative active:scale-95"
+                                    title={`Nhấp để phóng to mã VietQR thanh toán ${inv.room_name} (${inv.id})`}
+                                    data-testid={`invoice-qr-thumbnail-${inv.id}`}
+                                  >
+                                    <img
+                                      src={invQrData.qrUrl}
+                                      alt="VietQR"
+                                      className="size-full object-contain group-hover:scale-105 transition-transform"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = FALLBACK_QR_SVG;
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                      <span className="text-white text-[8px] font-extrabold bg-blue-600 px-1 py-0.5 rounded shadow-xs">🔍 Phóng to</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex flex-col text-[11px] leading-tight text-[#5f687b]">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-[#182033] flex items-center gap-1">
+                                        <span>💳</span> Mã VietQR Thanh Toán: {inv.room_name}
+                                      </span>
+                                      <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                                        {inv.id}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                                      <span>Số tiền: <b className="font-mono font-bold text-emerald-600 text-xs">{inv.tong_tien.toLocaleString("vi-VN")} đ</b></span>
+                                      <span>STK: <b className="font-mono text-[#182033]">{invQrData.accountNo}</b> ({invQrData.bank})</span>
+                                    </div>
+                                    <div className="text-[10.5px] mt-0.5">
+                                      Nội dung CK: <b className="font-mono text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded border border-violet-200">{invQrData.addInfo}</b>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => openInvoiceQRModal(inv)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer"
+                                    title="Phóng to mã QR giữa màn hình để quét"
+                                    data-testid={`btn-zoom-qr-${inv.id}`}
+                                  >
+                                    <span>📱</span>
+                                    <span>Phóng to mã QR</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const copyContent = `MÃ HĐ: ${inv.id} - ${inv.room_name}\nSTK: ${invQrData.accountNo} (${invQrData.bank}) - ${invQrData.accountName}\nSố tiền: ${inv.tong_tien.toLocaleString("vi-VN")} đ\nNội dung: ${invQrData.addInfo}`;
+                                      navigator.clipboard.writeText(copyContent);
+                                      showToast(`Đã sao chép thông tin chuyển khoản HĐ ${inv.id}!`, "success");
+                                    }}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-[#5f687b] font-medium text-[11px] border border-[#e3e7ef] shadow-2xs active:scale-95 transition-all cursor-pointer"
+                                    title="Sao chép nội dung chuyển khoản"
+                                  >
+                                    <span>📋</span>
+                                    <span>Sao chép CK</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
                       );
                     })}
                   </tbody>

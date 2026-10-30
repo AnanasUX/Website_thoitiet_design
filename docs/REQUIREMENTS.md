@@ -543,3 +543,28 @@
      - `npm run build`: 0 lỗi.
      - `npm run test:logic`: 445/445 assertions đạt chuẩn 100% PASS (bổ sung Luồng 26).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-082)
+
+- **Mã Yêu Cầu**: `REQ-082`
+- **Tiêu Đề**: Bổ Sung Mã QR-Code Bên Dưới Từng Dòng Hóa Đơn Trong Sổ Công Nợ Để Chuyển Khoản & Nhấp Để Phóng To Modal
+- **Nguồn Prompt**: `PROMPT-20261030-02`: *"ở trên bảng bổ sung thêm Qr-code bên dưới của từng dòng khi nội dung lưu thì sẽ có qr-code để ngời dùng chuyển khoản . Bấm vào qrcode đó để phóng to qrcode như hiện tại"*
+- **Phân Hệ**: Bảng Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ, VietQR Modal Popup, Dynamic QR Generator (`src/AdminBoard.tsx`, `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`, `scripts/test-logic-flows.mjs`, `scripts/test-ux-flows.mjs`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Bổ Sung Khối Mã QR Bên Dưới Từng Dòng Hóa Đơn*:
+     - Vị trí: Hiển thị ngay dưới mỗi dòng hóa đơn trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ" dưới dạng sub-row trải dài (`colSpan={8}`).
+     - Chứa ảnh thumbnail mã VietQR kích thước `size-16` sắc nét kèm hiệu ứng hover "🔍 Phóng to".
+     - Hiển thị rõ ràng thông tin: Tên phòng, Mã hóa đơn, Số tiền thanh toán thực tế (khớp chính xác với hóa đơn đó), STK, Ngân hàng BIDV, và Nội dung chuyển khoản riêng biệt.
+  2. *Tương Tác Phóng To Mã QR Giữa Màn Hình (Click-to-Zoom)*:
+     - Khi người dùng nhấp vào ảnh thumbnail QR code hoặc bấm nút "📱 Phóng to mã QR" tại dòng đó, hệ thống lập tức mở Popup Modal `VietQRModal` căn giữa màn hình với mã QR độ phân giải cao và thông tin tương ứng của hóa đơn đó.
+     - Hỗ trợ nút sao chép thông tin chuyển khoản nhanh 1 chạm (`Sao chép CK`).
+     - Hỗ trợ đóng modal linh hoạt bằng phím `Escape`, nút đóng (X) hoặc nhấp ra ngoài nền mờ.
+  3. *Tự Động Tạo Mã QR Riêng Cho Hóa Đơn Khi Lưu*:
+     - Khi nhấn "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn mới được lưu trữ kèm đầy đủ `qrUrl`, `addInfo`, `bank_name`, `bank_account`, `bank_owner`.
+     - Ngay lập tức hiển thị dòng QR riêng biệt bên dưới hóa đơn vừa lưu.
+  4. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi biên dịch.
+     - `npm run test:logic`: 452/452 assertions đạt chuẩn 100% PASS (bổ sung Luồng 27).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (bổ sung ca kiểm thử UX-08.5).

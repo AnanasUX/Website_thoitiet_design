@@ -846,6 +846,13 @@
       + Cột "Phòng" trong bảng lịch sử công nợ hiển thị cả Tên Phòng và Tên Người Thuê 2 dòng chuyên nghiệp.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 445/445 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử đa thiết bị PASS (RELEASE GATE: PASSED).
 
+
+61. **[REQ-082] Bổ Sung Mã QR-Code Bên Dưới Từng Dòng Hóa Đơn & Tương Tác Phóng To Modal**:
+    - *Hiển Thị QR Bên Dưới Từng Dòng*: Trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ", mỗi dòng hóa đơn được trang bị một dải sub-row QR riêng biệt bên dưới chứa ảnh thumbnail VietQR `size-16`, số tiền, STK, và nội dung chuyển khoản đặc thù.
+    - *Tương Tác Phóng To*: Nhấp vào ảnh QR thumbnail hoặc bấm nút "📱 Phóng to mã QR" sẽ lập tức mở Popup Modal `VietQRModal` căn giữa màn hình với mã QR sắc nét, sẵn sàng để khách quét thanh toán.
+    - *Tự Động Lưu Mã QR Kèm Hóa Đơn*: Khi bấm "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn được ghi nhận kèm mã VietQR riêng biệt.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 452/452 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử đa thiết bị PASS (RELEASE GATE: PASSED).
+
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
 2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.
