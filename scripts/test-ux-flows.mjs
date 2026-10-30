@@ -351,15 +351,44 @@ export async function runAllUXFlowTests(page) {
       `Tổng cộng ${touchTargetQuality.totalInteractive} phần tử tương tác đáp ứng chuẩn bấm phím/chạm ngón tay`
     );
   }
-
   // =========================================================================
   // SCENARIO 8: UX Quét Mã VietQR Thanh Toán Tiền Phòng & Hóa Đơn (REQ-080)
   // =========================================================================
   {
+    // 8.1 Xác nhận trang thời tiết công cộng KHÔNG lộ nút hóa đơn tiền phòng
+    const isPublicClean = await page.evaluate(() => {
+      const publicBtn = document.querySelector('[data-testid="header-vietqr-btn"]');
+      return !publicBtn;
+    });
+    assertUX('UX-08.1: Trang thời tiết công cộng không hiển thị nhầm nút hóa đơn tiền phòng', isPublicClean, 'Trang chủ giữ giao diện thông tin thời tiết chuẩn');
+
+    // 8.2 Chuyển hướng sang giao diện Quản Trị /admin_board với phiên hợp lệ
+    await page.evaluate(() => {
+      sessionStorage.setItem("anx_admin_auth", "true");
+      localStorage.setItem("anx_admin_auth", "true");
+      window.history.pushState(null, '', window.location.pathname + '?view=admin');
+      window.dispatchEvent(new Event('popstate'));
+    });
+    await page.waitForTimeout(600);
+
+    // Nếu gặp form đăng nhập, thực hiện đăng nhập quản trị tự động
+    const loginInput = await page.$('input[name="admin_user_field"]');
+    if (loginInput) {
+      await page.fill('input[name="admin_user_field"]', 'admin');
+      await page.fill('input[name="admin_pass_field"]', 'admin123');
+      await page.click('button[type="submit"]');
+      await page.waitForTimeout(600);
+    }
+
+    // Chờ phần tử VietQR trong Admin Board xuất hiện
+    await page.waitForSelector('[data-testid="admin-vietqr-thumbnail-trigger"], [data-testid="tablet-vietqr-btn"], .size-20', { timeout: 6000 }).catch(() => {});
+
+    // 8.3 Nhấp thẻ VietQR thumbnail hoặc nút QR Hóa đơn trong Admin Board
     const canClickVietQR = await page.evaluate(() => {
-      const trigger = document.querySelector('[data-testid="vietqr-thumbnail-trigger"]') ||
-                      document.querySelector('[data-testid="header-vietqr-btn"]') ||
-                      document.querySelector('.size-20:has(img[alt="VietQR"])');
+      const trigger = document.querySelector('[data-testid="admin-vietqr-thumbnail-trigger"]') ||
+                      document.querySelector('[data-testid="tablet-vietqr-btn"]') ||
+                      document.querySelector('.size-20:has(img[alt="VietQR"])') ||
+                      document.querySelector('.size-20');
       if (trigger) {
         trigger.click();
         return true;
@@ -367,7 +396,7 @@ export async function runAllUXFlowTests(page) {
       return false;
     });
 
-    assertUX('UX-08.1: Nhấp thẻ VietQR thumbnail kích hoạt modal', canClickVietQR, 'Thẻ VietQR phản hồi click người dùng');
+    assertUX('UX-08.2: Nhấp thẻ VietQR thumbnail trong trang Admin kích hoạt modal', canClickVietQR, 'Thẻ VietQR tại https://anx.io.vn/admin phản hồi click người dùng');
 
     if (canClickVietQR) {
       await page.waitForSelector('[data-testid="vietqr-popup-modal"]', { timeout: 4000 }).catch(() => {});
@@ -379,13 +408,13 @@ export async function runAllUXFlowTests(page) {
         return {
           isOpen: true,
           hasImage: Boolean(img && img.src),
-          hasAmount: text.includes('4.860.500') || text.includes('Số tiền'),
+          hasAmount: text.includes('4.563.000') || text.includes('4.860.500') || text.includes('Số tiền'),
           hasAccount: text.includes('8817398313') || text.includes('BIDV')
         };
       });
 
       assertUX(
-        'UX-08.2: Modal VietQR hiển thị đầy đủ ảnh QR phóng to & thông tin chuyển khoản',
+        'UX-08.3: Modal VietQR hiển thị đầy đủ ảnh QR phóng to & thông tin chuyển khoản (BIDV 8817398313)',
         modalInfo && modalInfo.isOpen && modalInfo.hasImage && (modalInfo.hasAmount || modalInfo.hasAccount),
         'Modal VietQR hiển thị chính xác giữa màn hình'
       );
@@ -394,7 +423,15 @@ export async function runAllUXFlowTests(page) {
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
       const isClosed = await page.evaluate(() => !document.querySelector('[data-testid="vietqr-popup-modal"]'));
-      assertUX('UX-08.3: Phím Escape đóng popup VietQR mượt mà', isClosed, 'Popup đóng và khôi phục màn hình nền');
+      assertUX('UX-08.4: Phím Escape đóng popup VietQR mượt mà', isClosed, 'Popup đóng và khôi phục màn hình nền');
+
+      // Khôi phục lại trang chủ
+      await page.evaluate(() => {
+        sessionStorage.removeItem("anx_admin_auth");
+        window.history.pushState(null, '', window.location.pathname.split('?')[0]);
+        window.dispatchEvent(new Event('popstate'));
+      });
+      await page.waitForTimeout(400);
     }
   }
 

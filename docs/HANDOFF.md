@@ -827,6 +827,16 @@
       + 4 khối mầm màu chuyển động độc lập (`morphBlob1` đến `4`) với sắc màu tương phản cao (Royal Blue, Cosmic Violet, Cyan, Sunset Amber), làm mờ `blur-3xl`, kết hợp `mix-blend-screen` (Dark Mode) và `mix-blend-hard-light` (Light Mode) tạo dòng chảy gradient tan chảy liên tục, bắt mắt và mượt mà 60fps.
     - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 427/427 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
 
+
+59. **[REQ-080] Cô Lập Mã VietQR và Nút Hóa Đơn Vào Duy Nhất Trang Quản Trị https://anx.io.vn/admin**:
+    - *Làm Sạch Giao Diện Công Cộng*: Loại bỏ toàn bộ thẻ hóa đơn `<VietQRPaymentCard />` và nút header VietQR khỏi `src/App.tsx` (Mobile, Tablet, Desktop).
+    - *Tích Hợp Modal Căn Giữa Màn Hình Cho Admin*:
+      + Tích hợp component `<VietQRModal />` vào `src/AdminBoard.tsx` và các trang tĩnh `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`.
+      + Hỗ trợ click vào khung ảnh thumbnail `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs"><img alt="VietQR" ...></div>` hoặc nút `<button data-testid="tablet-vietqr-btn"><span>QR Hóa đơn</span></button>` để phóng to mã QR thanh toán giữa màn hình.
+      + Hiển thị đầy đủ thông tin: BIDV, STK 8817398313, TRAN THI THUY HUYEN, số tiền phòng thực tế tính toán từ công tơ điện nước.
+      + Hỗ trợ đóng modal qua phím Escape, nút X hoặc click outside.
+    - *Bảo Toàn 100% Bộ Kiểm Thử*: `npm run build` 0 lỗi, `npm run test:logic` 435/435 assertions PASS, `npm run testwebsite` 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
 ## 3. CÁC CÔNG VIỆC TIẾP THEO (NEXT STEPS)
 1. Giám sát tiến trình triển khai tự động trên Render/Railway của bot Telegram `quan-ly-tien-phong`.
 2. Duy trì hệ thống cổng kiểm duyệt `RELEASE_GATE.md` cho mọi thay đổi trong tương lai.

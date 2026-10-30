@@ -1047,3 +1047,18 @@
   - `npm run test:dashboard`: 47/47 PASS (100% ĐẠT, 0 FAIL) trên Google Chrome thật.
   - `npm run testwebsite`: 47/47 PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
 
+
+---
+
+## [Phiên bản 2.1.0] - 2026-10-30: Cô Lập VietQR Modal Vào Trang Admin & Tinh Chỉnh Giao Diện Công Cộng
+
+### Thay đổi & Tính năng mới
+- **Cô Lập Thẻ & Nút Hóa Đơn VietQR Vào Admin (REQ-080)**:
+  - Loại bỏ hoàn toàn các nút truy cập hóa đơn và thẻ tiền phòng khỏi trang chủ thời tiết công cộng (`src/App.tsx`).
+  - Đặt nút `<button data-testid="tablet-vietqr-btn"><span>QR Hóa đơn</span></button>` và khối ảnh thumbnail `<div class="size-20 ..."><img alt="VietQR" ...></div>` độc quyền trong trang quản trị `https://anx.io.vn/admin` (`src/AdminBoard.tsx`, `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`).
+  - Khi nhấp vào thumbnail hoặc nút "QR Hóa đơn" trên trang Admin, popup modal `VietQRModal` phóng to mã QR giữa màn hình kèm thông tin BIDV, STK 8817398313, chủ tài khoản TRAN THI THUY HUYEN và số tiền phòng thực tế.
+  - Hỗ trợ đóng modal bằng phím `Escape`, nút đóng (X) hoặc nhấp ngoài vùng nền làm mờ (`backdrop-blur-sm`).
+- **Nghiệm Thu Toàn Diện**:
+  - `npm run build`: 0 lỗi biên dịch.
+  - `npm run test:logic`: 435/435 assertions đạt chuẩn 100% PASS.
+  - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED).

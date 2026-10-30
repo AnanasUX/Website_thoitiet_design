@@ -1057,3 +1057,37 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn tất trong 475ms, 0 lỗi biên dịch.
 - `npm run test:logic`: 435/435 assertions đạt 100% (bổ sung Luồng 25 VietQR).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt chuẩn PASS (bổ sung Scenario 8 UX VietQR). RELEASE GATE: PASSED.
+
+---
+
+### ADR-043: Cô Lập Nút và Modal Hóa Đơn VietQR Vào Duy Nhất Trang Quản Trị /admin (REQ-080)
+- **Ngày**: 2026-10-30
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Theo yêu cầu của người dùng tại prompt:
+  *"nút này chỉ nằm trong `<button type="button" data-testid="tablet-vietqr-btn" class="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0" title="Xem mã VietQR thanh toán tiền phòng"><span>QR Hóa đơn</span></button>` trang này thôi khi người dùng bấm `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs"><img alt="VietQR" class="size-full object-contain" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4563000&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN"></div>` https://anx.io.vn/admin"*.
+- Cần cô lập hoàn toàn thẻ tiền phòng và nút QR hóa đơn khỏi trang chủ tin tức thời tiết công cộng (`https://anx.io.vn/` - `src/App.tsx`), chỉ hiển thị và hoạt động trên trang quản trị (`https://anx.io.vn/admin` - `src/AdminBoard.tsx` và các trang tĩnh quản trị).
+- Khi người dùng bấm vào thumbnail mã VietQR `<div class="size-20 ...">` hoặc nút `tablet-vietqr-btn` trong trang Admin, một modal căn giữa màn hình `VietQRModal` sẽ bật lên với đầy đủ thông tin: Ngân hàng BIDV, STK 8817398313, Chủ tài khoản TRAN THI THUY HUYEN, số tiền phòng động (4.563.000 ₫ hoặc 4.860.500 ₫), và mã QR quét nhanh Napas 247.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Dọn dẹp trang công cộng (`src/App.tsx`)**:
+   - Loại bỏ các nút `header-vietqr-btn`, `tablet-vietqr-btn`, `desktop-vietqr-btn` và component `<VietQRPaymentCard />` khỏi `MobileLayout`, `TabletLayout`, `DesktopLayout`.
+   - Trang chủ thời tiết giữ nguyên sự tinh tế, chỉ phục vụ thông tin thời tiết và tin tức báo chí chính thống.
+2. **Tích hợp vào Trang Quản Trị (`src/AdminBoard.tsx` & static admin HTMLs)**:
+   - Import và nhúng `<VietQRModal />` vào `src/AdminBoard.tsx`.
+   - Cung cấp trigger click `data-testid="admin-vietqr-thumbnail-trigger"` tại khối `<div class="size-20 ...">` và nút `data-testid="tablet-vietqr-btn"`.
+   - Bổ sung cơ chế ủy quyền sự kiện (Event Delegation) tự động bắt mọi click vào ảnh `vietqr.io` hoặc container `.size-20` để mở popup.
+   - Đồng bộ tương tự trên các file HTML tĩnh: `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`.
+3. **Cập nhật Bộ Kiểm Thử E2E Scenario 8 (`scripts/test-ux-flows.mjs`)**:
+   - Bước 8.1: Kiểm tra trang công cộng tuyệt đối sạch bóng (0 nút VietQR).
+   - Bước 8.2: Điều hướng vào `?view=admin` với cờ xác thực.
+   - Bước 8.3: Bấm thumbnail VietQR `.size-20` hoặc nút `tablet-vietqr-btn`.
+   - Bước 8.4: Xác nhận modal bật lên căn giữa màn hình với ảnh QR hợp lệ, thông tin BIDV, STK 8817398313 và số tiền phòng.
+   - Bước 8.5: Kiểm tra đóng modal bằng phím `Escape`.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: 0 lỗi, gói phân phối tạo hoàn tất.
+- `npm run test:logic`: 435/435 assertions đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

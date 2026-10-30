@@ -10,7 +10,7 @@ import { jwtDecode } from "jwt-decode";
 import { VideoShortsModal } from "./components/VideoShortsModal";
 import { AdminBoard } from "./AdminBoard";
 import { WeatherBackgroundEffect } from "./components/WeatherBackgroundEffect";
-import { VietQRModal, VietQRPaymentCard, DEFAULT_VIETQR_DATA, type VietQRData } from "./components/VietQRModal";
+import { VietQRModal, DEFAULT_VIETQR_DATA, type VietQRData } from "./components/VietQRModal";
 import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT, DEFAULT_OFFICIAL_CHANNELS } from "./constants/userYouTubeSubscriptions";
 import {
   type ConditionKey,
@@ -2677,15 +2677,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            data-testid="header-vietqr-btn"
-            onClick={() => onOpenQRModal && onOpenQRModal()}
-            className="ml-1.5 h-[32px] px-2.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold text-[11px] border border-blue-200 dark:border-blue-800 active:scale-95 transition-all cursor-pointer shrink-0 flex items-center gap-1"
-            title="Quét mã VietQR thanh toán tiền phòng & dịch vụ"
-          >
-            <span>QR</span>
-          </button>
           <div onClick={() => setDarkMode(!darkMode)} role="button" tabIndex={0} data-testid="dark-mode-toggle" className="ml-2 w-[32px] h-[32px] rounded-full bg-[#f4f6fa] flex items-center justify-center text-[#182033] hover:bg-[#e3e7ef] transition-colors shrink-0 aspect-square cursor-pointer" title={darkMode ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối"}>
               {darkMode ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -2719,12 +2710,6 @@ function MobileLayout({ activeCategory, setActiveCategory,
               <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
             </div>
           )}
-
-          {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
-          <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
-
-          {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
-          <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
 
           {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
           {userRole && userRole.email && (
@@ -2919,17 +2904,6 @@ function TabletLayout({ activeCategory, setActiveCategory,
             <span>Shorts</span>
           </button>
 
-          {/* Nút VietQR Hóa Đơn trên Tablet Header */}
-          <button
-            type="button"
-            data-testid="tablet-vietqr-btn"
-            onClick={() => onOpenQRModal && onOpenQRModal()}
-            className="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
-            title="Xem mã VietQR thanh toán tiền phòng"
-          >
-            <span>QR Hóa đơn</span>
-          </button>
-
           <div 
             data-testid="dark-mode-toggle"
             onClick={() => setDarkMode && setDarkMode(!darkMode)} 
@@ -2970,9 +2944,6 @@ function TabletLayout({ activeCategory, setActiveCategory,
               <CalendarSection userEmail={userRole.email} accessToken={userRole._access_token} onTokenExpired={onTokenExpired} onRelogin={onRelogin} onTokenUpdated={onTokenUpdated} />
             </div>
           )}
-
-          {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
-          <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
 
           {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn trên Tablet */}
           {userRole && userRole.email && (
@@ -3209,17 +3180,6 @@ function DesktopLayout({ activeCategory, setActiveCategory,
             <span>Video Shorts 9:16</span>
           </button>
 
-          {/* Nút VietQR Hóa Đơn trên Desktop Header */}
-          <button
-            type="button"
-            data-testid="desktop-vietqr-btn"
-            onClick={() => onOpenQRModal && onOpenQRModal()}
-            className="flex items-center gap-1.5 h-[32px] px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
-            title="Xem mã VietQR thanh toán tiền phòng"
-          >
-            <span>QR Hóa đơn</span>
-          </button>
-
           <div 
             data-testid="dark-mode-toggle"
             onClick={() => setDarkMode && setDarkMode(!darkMode)} 
@@ -3267,9 +3227,6 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           </div>
         )}
       </div>
-
-      {/* Thẻ Hóa Đơn Tiền Phòng & Điện Nước AnX (VietQR Interactive Card) */}
-      <VietQRPaymentCard darkMode={darkMode} onOpenModal={onOpenQRModal} />
 
       {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn (Đẩy kênh đăng ký ra giao diện chính) */}
       {userRole && userRole.email && (

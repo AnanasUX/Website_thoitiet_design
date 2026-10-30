@@ -351,6 +351,28 @@
                                     <span class="text-[#182033]">TỔNG CỘNG:</span>
                                     <span class="text-base text-[#ff315f]" id="bill_prev_total">4.563.000 đ</span>
                                 </div>
+                                <div class="pt-2 border-t border-[#e3e7ef] flex items-center justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div onclick="openVietQRModal()" class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative active:scale-95" title="Nhấp để hiển thị popup ảnh QR giữa màn hình quét mã">
+                                            <img id="bill_vietqr_img" alt="VietQR" class="size-full object-contain group-hover:scale-105 transition-transform" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4563000&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN">
+                                        </div>
+                                        <div class="flex flex-col text-[11px] leading-relaxed text-[#5f687b]">
+                                            <span class="font-bold text-[#182033]">💳 VietQR Thanh Toán Nhanh</span>
+                                            <span>Ngân hàng: <b>BIDV</b></span>
+                                            <span>STK: <b class="font-mono text-[#182033]">8817398313</b></span>
+                                            <span class="text-[10px] text-emerald-600 font-semibold">Khách quét mã app là khớp số tiền!</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" data-testid="tablet-vietqr-btn" onclick="openVietQRModal()" class="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-[12px] border border-blue-200 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0" title="Xem mã VietQR thanh toán tiền phòng">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="7" height="7"></rect>
+                                            <rect x="14" y="3" width="7" height="7"></rect>
+                                            <rect x="14" y="14" width="7" height="7"></rect>
+                                            <rect x="3" y="14" width="7" height="7"></rect>
+                                        </svg>
+                                        <span>QR Hóa đơn</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1286,7 +1308,100 @@
             showToast('Đã lưu và cập nhật banner cảnh báo trực tiếp lên website!', 'success');
         }
 
+        
+        function openVietQRModal() {
+            const modal = document.getElementById('vietqrModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeVietQRModal() {
+            const modal = document.getElementById('vietqrModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeVietQRModal();
+        });
+
+        // Click outside backdrop to dismiss
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('vietqrModal');
+            if (modal && !modal.classList.contains('hidden') && e.target === modal) {
+                closeVietQRModal();
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', checkInitialAuth);
     </script>
+
+    <!-- VietQR Centered Popup Modal (REQ-080) -->
+    <div id="vietqrModal" class="fixed inset-0 z-[999] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn" data-testid="vietqr-popup-modal">
+        <div class="relative w-full max-w-sm sm:max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col p-6 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">💳</span>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base leading-tight">Mã VietQR Hóa Đơn</h3>
+                        <p class="text-[11px] text-slate-500">Quét chuyển khoản qua App ngân hàng bất kỳ</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeVietQRModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer" title="Đóng modal (ESC)">
+                    ✕
+                </button>
+            </div>
+
+            <div class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200">
+                    <img id="vietqr_modal_img" data-testid="vietqr-modal-image" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4563000&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN" alt="Mã VietQR Thanh Toán Tiền Phòng" class="w-60 h-60 sm:w-64 sm:h-64 object-contain rounded-xl">
+                </div>
+                <p class="text-[11px] text-slate-500 mt-2 font-medium">Camera điện thoại quét trực tiếp mã QR trên màn hình</p>
+            </div>
+
+            <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span class="text-slate-500">Ngân hàng:</span>
+                    <span class="font-bold text-slate-800">BIDV (Đầu tư và Phát triển VN)</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span class="text-slate-500">Số tài khoản:</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-mono font-bold text-blue-600 text-sm">8817398313</span>
+                        <button onclick="navigator.clipboard.writeText('8817398313'); showToast('Đã sao chép STK!', 'success');" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-semibold hover:bg-blue-200 transition-colors">Sao chép</button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span class="text-slate-500">Chủ tài khoản:</span>
+                    <span class="font-bold text-slate-800">TRAN THI THUY HUYEN</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                    <span class="text-slate-500">Số tiền:</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-black text-rose-600 text-sm" id="modal_bill_amount">4.563.000 ₫</span>
+                        <button onclick="navigator.clipboard.writeText('4563000'); showToast('Đã sao chép số tiền!', 'success');" class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-semibold hover:bg-rose-200 transition-colors">Sao chép</button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-500">Nội dung CK:</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-mono font-semibold text-slate-700 text-[11px]" id="modal_bill_memo">TIEN PHONG Phòng Thuê T10</span>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('modal_bill_memo').innerText); showToast('Đã sao chép nội dung!', 'success');" class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-semibold hover:bg-slate-300 transition-colors">Sao chép</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeVietQRModal()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

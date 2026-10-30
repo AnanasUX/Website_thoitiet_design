@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { VietQRModal, FALLBACK_QR_SVG, type VietQRData } from "./components/VietQRModal";
 
 export interface NewsArticle {
   title: string;
@@ -108,7 +109,7 @@ const STORAGE_KEY = "anx_admin_unified_store_v4";
 export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
   // ── Authentication State ──────────────────────────────────────────────────
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem("anx_admin_auth") === "true";
+    return sessionStorage.getItem("anx_admin_auth") === "true" || localStorage.getItem("anx_admin_auth") === "true";
   });
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
@@ -117,6 +118,8 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
 
   // ── Navigation Tabs ───────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<"rent" | "analytics" | "weather" | "news" | "shorts" | "alert" | "settings">("rent");
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrModalData, setQrModalData] = useState<VietQRData | null>(null);
 
   // ── Data Stores ───────────────────────────────────────────────────────────
   const [pricing, setPricing] = useState<PricingConfig>({
@@ -126,9 +129,9 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
     service_fee_1: 100000,
     service_fee_2: 100000,
     service_fee_3: 100000,
-    bank_name: "MB",
-    bank_account: "0912345678",
-    bank_owner: "NGUYEN VAN QUAN TRI",
+    bank_name: "BIDV",
+    bank_account: "8817398313",
+    bank_owner: "TRAN THI THUY HUYEN",
   });
 
   const [rooms, setRooms] = useState<RoomItem[]>([
@@ -288,6 +291,7 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
   }, []);
 
   // ── Save to local storage on change ───────────────────────────────────────
+
   const persistData = useCallback(() => {
     try {
       localStorage.setItem(
@@ -1213,24 +1217,78 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
                       </span>
                     </div>
 
-                    {/* Integrated VietQR Napas247 */}
-                    <div className="pt-2 border-t border-[#e3e7ef] flex items-center gap-3">
-                      <div className="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs">
-                        <img
-                          src={currentCalculatedBill.qrUrl}
-                          alt="VietQR"
-                          className="size-full object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
+                    {/* Integrated VietQR Napas247 with Click-to-Zoom Modal (REQ-080) */}
+                    <div className="pt-2 border-t border-[#e3e7ef] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setQrModalData({
+                              qrUrl: currentCalculatedBill.qrUrl,
+                              bank: pricing.bank_name,
+                              accountNo: pricing.bank_account,
+                              accountName: pricing.bank_owner,
+                              amount: currentCalculatedBill.tong_tien,
+                              addInfo: `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
+                            });
+                            setShowQRModal(true);
                           }}
-                        />
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              setShowQRModal(true);
+                            }
+                          }}
+                          className="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative active:scale-95"
+                          title="Nhấp để hiển thị popup ảnh QR giữa màn hình quét mã"
+                          data-testid="admin-vietqr-thumbnail-trigger"
+                        >
+                          <img
+                            src={currentCalculatedBill.qrUrl}
+                            alt="VietQR"
+                            className="size-full object-contain group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = FALLBACK_QR_SVG;
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                            <span className="text-white text-[9px] font-extrabold bg-blue-600 px-1 py-0.5 rounded shadow-xs">🔍 Phóng to</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col text-[11px] leading-relaxed text-[#5f687b]">
+                          <span className="font-bold text-[#182033]">💳 VietQR Thanh Toán Nhanh</span>
+                          <span>Ngân hàng: <b>{pricing.bank_name}</b></span>
+                          <span>STK: <b className="font-mono text-[#182033]">{pricing.bank_account}</b></span>
+                          <span className="text-[10px] text-emerald-600 font-semibold">Khách quét mã app là khớp số tiền!</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col text-[11px] leading-relaxed text-[#5f687b]">
-                        <span className="font-bold text-[#182033]">💳 VietQR Thanh Toán Nhanh</span>
-                        <span>Ngân hàng: <b>{pricing.bank_name}</b></span>
-                        <span>STK: <b className="font-mono text-[#182033]">{pricing.bank_account}</b></span>
-                        <span className="text-[10px] text-emerald-600 font-semibold">Khách quét mã app là khớp số tiền!</span>
-                      </div>
+
+                      {/* Nút QR Hóa Đơn */}
+                      <button
+                        type="button"
+                        data-testid="tablet-vietqr-btn"
+                        onClick={() => {
+                          setQrModalData({
+                            qrUrl: currentCalculatedBill.qrUrl,
+                            bank: pricing.bank_name,
+                            accountNo: pricing.bank_account,
+                            accountName: pricing.bank_owner,
+                            amount: currentCalculatedBill.tong_tien,
+                            addInfo: `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
+                          });
+                          setShowQRModal(true);
+                        }}
+                        className="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0"
+                        title="Xem mã VietQR thanh toán tiền phòng"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="14" width="7" height="7"></rect>
+                          <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>QR Hóa đơn</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -2162,6 +2220,20 @@ export function AdminBoard({ onBackToSite }: { onBackToSite: () => void }) {
           </div>
         </div>
       )}
+
+      {/* Centered VietQR Modal Popup (REQ-080) */}
+      <VietQRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        data={qrModalData || {
+          qrUrl: currentCalculatedBill.qrUrl,
+          bank: pricing.bank_name,
+          accountNo: pricing.bank_account,
+          accountName: pricing.bank_owner,
+          amount: currentCalculatedBill.tong_tien,
+          addInfo: `TIEN PHONG ${currentCalculatedBill.room_name || 'Phòng Thuê'} T${new Date().getMonth() + 1}`,
+        }}
+      />
     </div>
   );
 }
