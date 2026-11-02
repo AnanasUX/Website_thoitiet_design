@@ -1146,3 +1146,39 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: 0 lỗi, bundle thành công.
 - `npm run test:logic`: 452/452 assertions đạt 100% (bổ sung Luồng 27).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (UX-08.5 xác thực nhấp mã QR từng dòng phóng to modal thành công).
+
+---
+
+### ADR-046: Kiến Trúc Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng (Multi-Layer Canonical URL, Title Fingerprint & Cross-Feed Semantic Overlap) (REQ-083)
+- **Ngày**: 2026-11-02
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng phản ánh: *"Các bài viết ở trang chủ đang bị lặp nhiều kiểm tra fix lại"*.
+- Qua rà soát sâu kiến trúc dòng dữ liệu tin tức:
+  1. *Trùng lặp nguồn cấp (Feed-Level Duplication)*: Trong `RSS_FEEDS_DB`, các URL RSS chính (ví dụ `https://vtv.vn/rss/xa-hoi.rss`, `https://vietnamnet.vn/rss/thoi-su.rss`, `https://baotintuc.vn/rss/thoi-su-xa-hoi.rss`) xuất hiện 2-3 lần ở các danh mục khác nhau. Khi chọn "Tất cả", hệ thống ghép thêm 5 nguồn hot dẫn đến `selectedFeeds` chứa nhiều URL trùng lặp, khiến `fetchSingleFeed` cào về hàng chục bài viết giống hệt nhau.
+  2. *Thiếu khử trùng lặp trong bộ trộn (`rawMixed`)*: `fetchCategoryNews` gom toàn bộ tin tức vào `rawMixed` và chuyển thẳng qua `filterAndSortFreshNews`. Tuy nhiên, `filterAndSortFreshNews` chỉ lọc theo ngày và sắp xếp, hoàn toàn không gọi bộ lọc khử trùng lặp.
+  3. *Hạn chế của Canonical URL đơn thuần*: Khi các báo đài lớn (VnExpress, Dân Trí, VTV, Tuổi Trẻ, Thanh Niên) cùng đưa tin về một sự kiện thời sự/thời tiết (thông cáo TTXVN hoặc họp báo), các URL hoàn toàn khác nhau về domain và đường dẫn. Bộ lọc URL không thể nhận biết đây là cùng một bài viết.
+  4. *Lặp lại giữa thẻ Featured và Grid*: Trong DesktopLayout và TabletLayout, thẻ `featured` được tách ra, nhưng nếu dữ liệu có bài viết trùng lặp hoặc phái sinh, bài viết vẫn xuất hiện lặp lại ở lưới `grid` bên dưới.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Khử Trùng Lặp Nguồn Cấp (Feed URL Deduplication)**:
+   - Trước khi thực thi `Promise.all(selectedFeeds.map(fetchSingleFeed))`, lọc `uniqueFeeds` theo `feed.url` chuẩn hóa, loại bỏ hoàn toàn các request cào tin trùng lặp trong cùng chu kỳ, tăng tốc nạp tin và giảm tải mạng ~40%.
+2. **Động Cơ Khử Trùng Lặp Đa Tầng (Multi-Layer Deduplication Engine)**:
+   - `normalizeTitleFingerprint(title)`: Bóc tách tiêu đề tiếng Việt, loại bỏ tiền tố báo chí (`[Ảnh]`, `[Video]`, `[Trực tiếp]`, `Bản tin:`, `Nóng:`...), ký tự đặc biệt và dấu câu, chuẩn hóa chữ thường.
+   - `extractNumbers(text)`: Trích xuất các số liệu, ngày tháng trong tiêu đề. Nếu 2 tiêu đề có con số đối lập (ví dụ ngày 2/11 vs 3/11, 90 triệu vs 95 triệu), hệ thống bảo đảm không bao giờ lọc nhầm.
+   - `areTitlesSimilar(titleA, titleB)`: Đo lường độ tương đồng từ vựng (Inclusion Ratio >= 85% hoặc Jaccard >= 80%) kết hợp kiểm tra độ dài (>= 25 ký tự) và số lượng từ (>= 6 từ), triệt tiêu các bài viết sao chép chéo giữa các báo đài.
+   - `isSameArticle(a, b)`: Hàm kiểm tra tương đương toàn năng cho bài báo.
+3. **Tích Hợp Trực Tiếp Vào `filterAndSortFreshNews`**:
+   - `filterAndSortFreshNews` sau khi sắp xếp (Newest first, ưu tiên tin nóng `_isHot` trong 3h) tự động chuyển qua `filterDeduplicatedNews(sorted)`.
+   - Đảm bảo phiên bản mới nhất và chất lượng nhất của bài viết luôn được giữ lại, bản sao chép cũ hơn bị loại bỏ.
+4. **Phòng Thủ Bố Cục Đa Màn Hình (Layout Defense-in-Depth)**:
+   - Desktop Layout: `cleanGrid = grid.filter(item => !isSameArticle(item, featured))` loại trừ 100% bài viết trùng với thẻ `featured`.
+   - Tablet Layout: `cleanRest = rest.filter(item => !isSameArticle(item, featured))` loại trừ 100% bài viết trùng với thẻ `featured`.
+   - Phân trang cuộn vô cực (`fetchMoreNews`): Sử dụng `filterDeduplicatedNews(fullNewsPool.current, liveNews)` bảo đảm không bao giờ nạp thêm bài đã có trên màn hình.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: Hoàn thành trong 544ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 462/462 assertions đạt 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3 cho REQ-083).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

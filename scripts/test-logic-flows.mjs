@@ -26,6 +26,9 @@ import {
   formatVND,
   calculatePriceChange,
   getUniqueKey,
+  normalizeTitleFingerprint,
+  areTitlesSimilar,
+  isSameArticle,
   filterDeduplicatedNews,
   filterNewsByCategory,
   paginateNews,
@@ -338,7 +341,46 @@ export function runAllLogicFlowTests() {
   const formattedArticleYesterday = formatArticleDate("Wed, 14 Oct 2026 15:45:00 +07:00", nowFixed);
   assert(formattedArticleYesterday.includes("Hôm qua"), "Format ngày hôm qua");
 
-  console.log(`    ${colors.green}✓ Luồng Tin Tức: Đạt 28/28 kiểm tra thuật toán khử trùng, độ tươi mới & định dạng ngày giờ${colors.reset}`);
+  // 3.9 normalizeTitleFingerprint & extractNumbers (REQ-083)
+  const norm1 = normalizeTitleFingerprint("[Ảnh] Dự báo thời tiết hôm nay 2/11: Bắc Bộ se lạnh, có mưa dông!");
+  const norm2 = normalizeTitleFingerprint("Thời tiết hôm nay 2/11: Bắc Bộ se lạnh, có mưa dông");
+  assert(norm1.includes("bắc bộ se lạnh"), "Loại bỏ tiền tố [Ảnh] và chuẩn hóa chữ thường");
+  assert(!norm1.includes("!"), "Loại bỏ dấu chấm than và ký tự đặc biệt");
+
+  // 3.10 areTitlesSimilar (Thuật toán đối soát bài viết đưa tin cùng sự kiện giữa các báo)
+  const wireVnExpress = "Dự báo thời tiết hôm nay ngày 2/11: Hà Nội trời se lạnh, vùng núi Bắc Bộ có nơi dưới 18 độ C";
+  const wireDanTri = "Thời tiết ngày 2/11: Hà Nội trời se lạnh, vùng núi Bắc Bộ có nơi dưới 18 độ C";
+  const diffGoldNews = "Thời tiết ngày 3/11: Hà Nội trời se lạnh, vùng núi Bắc Bộ có nơi dưới 18 độ C";
+  assert(areTitlesSimilar(wireVnExpress, wireDanTri) === true, "Phát hiện bài viết cùng sự kiện phát hành trên 2 báo khác nhau (VnExpress & Dân Trí)");
+  assert(areTitlesSimilar(wireVnExpress, diffGoldNews) === false, "Phân biệt chính xác tin khác ngày (2/11 vs 3/11)");
+
+  // 3.11 isSameArticle
+  const artA = { link: "https://vnexpress.net/tin-123.htm?utm_source=fb", title: "Giá vàng SJC tăng mạnh 90 triệu" };
+  const artB = { link: "https://vnexpress.net/tin-123.htm#comment", title: "Giá vàng SJC tăng mạnh 90 triệu" };
+  const artC = { link: "https://dantri.com.vn/gia-vang-sjc.htm", title: "[Nóng] Giá vàng SJC tăng mạnh 90 triệu!" };
+  assert(isSameArticle(artA, artB) === true, "Cùng bài viết khác query string");
+  assert(isSameArticle(artA, artC) === true, "Cùng bài viết đăng chéo báo chí khác domain");
+
+  // 3.12 filterDeduplicatedNews triệt tiêu trùng lặp liên báo (REQ-083)
+  const crossSourceNews = [
+    { link: "https://vnexpress.net/thoi-tiet-a.html", author: wireVnExpress, pubDate: "Thu, 15 Oct 2026 10:00:00 +07:00" },
+    { link: "https://dantri.com.vn/thoi-tiet-b.html", author: wireDanTri, pubDate: "Thu, 15 Oct 2026 09:30:00 +07:00" },
+    { link: "https://tuoitre.vn/tin-doc-quyen.html", author: "Khám phá thành phố xanh thông minh tại Việt Nam", pubDate: "Thu, 15 Oct 2026 09:00:00 +07:00" }
+  ];
+  const dedupedCross = filterDeduplicatedNews(crossSourceNews);
+  assert(dedupedCross.length === 2, "Khử trùng lặp liên báo: loại bỏ bản tin sao chép, giữ lại 2 bài riêng biệt");
+  assert(dedupedCross[0].author === wireVnExpress, "Giữ lại bài viết của nguồn xuất hiện đầu tiên");
+
+  // 3.13 filterAndSortFreshNews tự động tích hợp khử trùng lặp & ưu tiên tin nóng
+  const poolWithDupes = [
+    { link: "https://vietnamnet.vn/bai-thuong.html", author: "Cập nhật tình hình thị trường xăng dầu hôm nay", pubDate: "Thu, 15 Oct 2026 08:00:00 +07:00" },
+    { link: "https://vtv.vn/bai-nong.html", author: "[Nóng] Cập nhật tình hình thị trường xăng dầu hôm nay", pubDate: "Thu, 15 Oct 2026 09:00:00 +07:00", _isHot: true }
+  ];
+  const freshDeduped = filterAndSortFreshNews(poolWithDupes, 3, nowFixed);
+  assert(freshDeduped.length === 1, "filterAndSortFreshNews tự động triệt tiêu bài trùng lặp 100%");
+  assert(freshDeduped[0]._isHot === true, "Ưu tiên giữ lại phiên bản tin nóng (_isHot) mới hơn");
+
+  console.log(`    ${colors.green}✓ Luồng Tin Tức: Đạt 38/38 kiểm tra thuật toán khử trùng đa tầng, độ tươi mới & định dạng ngày giờ (REQ-083)${colors.reset}`);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // LUỒNG 4: NEWS FULL-TEXT PARSER & AVATAR GUARD FLOW

@@ -86,6 +86,7 @@
 | REQ-070 | PROMPT-20261023-06 | Triển khai hệ thống thiết kế (Design System) và bảng phối màu Almond AI SaaS (https://almond.framer.website/): Warm Alabaster Canvas (#f6f5f4), Deep Obsidian Dark Canvas (#0c0f12), Electric Royal Blue (#2563ff), Cosmic Violet (#5715d1), Flame Amber (#ff7917), Mint (#25caac), thẻ bo góc 24px viền tinh tế và tài liệu DESIGN_SYSTEM.md | P1 | Design System & Visual Theme | TC-016, TC-024 | PASS | index.css, App.tsx, DESIGN_SYSTEM.md, testwebsite.mjs | Almond AI SaaS tokens, Inter font, warm alabaster matte background, atmospheric hero mesh, category pill active state |
 | REQ-071 | PROMPT-20261024-01 | Khắc phục triệt để lỗi định vị sai lệch, nâng cấp hệ thống định vị siêu chính xác cấp quận/huyện đa tầng: Thuật toán Haversine đối chiếu mạng lưới địa danh Việt Nam (0ms, 100% chuẩn tiếng Việt), Photon Komoot OSM reverse geocode có CORS thay thế Nominatim bị 403, bộ ba IP HTTPS native (ipwho.is, freeipapi, ipinfo), tăng timeout GPS lên 12s và hiển thị cảnh báo hướng dẫn cấp quyền rõ ràng khi bị chặn | P0 | Weather / Precision Geolocation | TC-016, TC-022, TC-024 | PASS | App.tsx, logicFlows.ts, test-logic-flows.mjs, testwebsite.mjs | Haversine 0ms local match, Photon Komoot CORS, HTTPS IP fallbacks, GPS permission guide, 427/427 logic tests PASS, 47/47 E2E PASS |
 | REQ-072 | PROMPT-20261024-02 | Chuẩn hóa toàn diện ngôn ngữ thiết kế khung viền (Frame & Surface Architecture), khắc phục triệt để lỗi chuyển đổi màu sắc Dark/Light mode: Thêm @custom-variant dark vào Tailwind CSS v4, đồng bộ thẻ trắng #ffffff viền #e2e4e8 ở Light mode, Deep Obsidian #151921 viền trắng 8% ở Dark mode, làm mịn dải màu cảnh báo pastel/glow và chuyển sắc mượt mà 0.25s cubic-bezier | P1 | UI/UX & Theme Engine | TC-016, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs | @custom-variant dark loại bỏ kích hoạt nhầm dark:, thẻ bài viết & widget đồng bộ Almond Noir/Porcelain, chuyển sắc mượt 250ms, 47/47 E2E PASS |
+| REQ-083 | PROMPT-20261102-01 | Khử trùng lặp tin tức trang chủ đa tầng toàn diện: Chuẩn hóa Canonical URL, Dấu vân tay Tiêu đề (Title Fingerprint), Triệt tiêu bài viết đưa tin cùng sự kiện giữa các báo đài (Semantic Word Overlap >= 85%), Khử trùng URL nguồn cấp trong fetchCategoryNews, Tự động deduplicate trong filterAndSortFreshNews và phân tách rạch ròi featured vs grid | P0 | News Ingestion / Deduplication | TC-022, TC-027 | PASS | logicFlows.ts, App.tsx, test-logic-flows.mjs | 462/462 logic tests PASS, 47/47 E2E PASS |
 
 ## Prompt intake log
 
@@ -148,6 +149,7 @@
 | PROMPT-20261023-06 | 2026-10-23 | Về phối màu sẽ sử dụng trang này và lên design system cho website này https://almond.framer.website/ | REQ-070 | Resolved | Approved |
 | PROMPT-20261024-01 | 2026-10-24 | Hiện tại hệ thống đang định vị sai vị trí của người dùng kiểm tra lại. | REQ-071 | Resolved | Approved |
 | PROMPT-20261024-02 | 2026-10-24 | Về giao diện Dark và Light về chuyển đổi màu sắc khung đang rất xấu cần điều chỉnh chỉnh sửa lại | REQ-072 | Resolved | Approved |
+| PROMPT-20261102-01 | 2026-11-02 | Các bài viết ở trang chủ đang bị lặp nhiều kiểm tra fix lại | REQ-083 | Resolved | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -568,3 +570,30 @@
      - `npm run build`: 0 lỗi biên dịch.
      - `npm run test:logic`: 452/452 assertions đạt chuẩn 100% PASS (bổ sung Luồng 27).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (bổ sung ca kiểm thử UX-08.5).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-083)
+
+- **Mã Yêu Cầu**: `REQ-083`
+- **Tiêu Đề**: Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng Toàn Diện (Multi-Layer Canonical URL, Title Fingerprint & Cross-Feed Semantic Overlap)
+- **Nguồn Prompt**: `PROMPT-20261102-01`: *"Các bài viết ở trang chủ đang bị lặp nhiều kiểm tra fix lại"*
+- **Phân Hệ**: Khử trùng lặp tin tức, Thu thập RSS, Phân trang cuộn vô cực, Hiển thị bố cục Desktop/Tablet/Mobile (`src/utils/logicFlows.ts`, `src/utils/logicFlows.js`, `src/App.tsx`, `scripts/test-logic-flows.mjs`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Khử Trùng Lặp Nguồn Cấp (Feed-Level Deduplication)*:
+     - Trước khi gọi `Promise.all` thu thập tin tức trong `fetchCategoryNews`, tự động khử trùng lặp toàn bộ danh sách `selectedFeeds` theo URL nguồn cấp.
+     - Loại bỏ triệt để việc gửi request trùng lặp tới cùng 1 URL RSS trong cùng 1 chu kỳ cào tin.
+  2. *Động Cơ Khử Trùng Lặp Đa Tầng (Multi-Layer Deduplication Engine)*:
+     - Tầng 1 (Canonical URL): Chuẩn hóa và triệt tiêu query params (`?utm_...`, `?fbclid=...`), hash tag (`#...`), giao thức (`http` vs `https`), và dấu gạch chéo cuối.
+     - Tầng 2 (Title Fingerprint): Chuẩn hóa tiêu đề tiếng Việt, loại bỏ tiền tố báo chí (`[Ảnh]`, `[Video]`, `Bản tin:`, `Nóng:`,...), loại bỏ dấu câu, chuyển chữ thường và so khớp chính xác.
+     - Tầng 3 (Semantic Word Overlap & Number Consistency): Phân tích tập hợp từ khóa (Tokens) và số liệu (ngày tháng, số tiền, tập phim). Nếu 2 bài viết từ 2 báo khác nhau có độ tương đồng từ vựng >= 85% và cùng chỉ số ngày tháng (ví dụ bản tin thời tiết, tin giá vàng cùng ngày), tự động nhận diện là tin đăng chéo và loại bỏ bản sao chép.
+  3. *Tích Hợp Tự Động Vào Bộ Lọc Độ Tươi Mới*:
+     - `filterAndSortFreshNews` tự động gọi `filterDeduplicatedNews(sorted)` sau khi sắp xếp, đảm bảo luôn giữ lại phiên bản tin tức mới nhất hoặc có gắn nhãn tin nóng (`_isHot`), triệt tiêu 100% bản tin trùng lặp.
+  4. *Khử Trùng Lặp Hiển Thị Bố Cục (Layout Defense-in-Depth)*:
+     - Desktop Layout: Tự động lọc `cleanGrid` loại bỏ bất kỳ bài viết nào trùng lặp với thẻ tiêu điểm `featured`.
+     - Tablet Layout: Tự động lọc `cleanRest` loại bỏ bài viết trùng lặp với thẻ tiêu điểm `featured`.
+     - Phân trang cuộn vô cực (`loadMoreNews`): Sử dụng `filterDeduplicatedNews` đối soát với toàn bộ bài viết đang hiển thị trên giao diện (`liveNews`), đảm bảo khi cuộn xuống không bao giờ nạp lại bài đã thấy.
+  5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi biên dịch.
+     - `npm run test:logic`: 462/462 assertions đạt chuẩn 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

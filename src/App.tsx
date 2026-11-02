@@ -24,6 +24,7 @@ import {
   formatVND,
   calculatePriceChange,
   getUniqueKey,
+  isSameArticle,
   filterDeduplicatedNews,
   filterNewsByCategory,
   paginateNews,
@@ -80,6 +81,7 @@ export {
   formatVND,
   calculatePriceChange,
   getUniqueKey,
+  isSameArticle,
   filterDeduplicatedNews,
   filterNewsByCategory,
   paginateNews,
@@ -2864,6 +2866,10 @@ function TabletLayout({ activeCategory, setActiveCategory,
     );
   }, [newsFeed, searchQuery]);
   const [featured, ...rest] = filteredNews.length > 0 ? filteredNews : newsFeed;
+  const cleanRest = useMemo(() => {
+    if (!featured) return rest;
+    return rest.filter(item => !isSameArticle(item, featured));
+  }, [rest, featured]);
   const now = useCurrentTime();
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const dayName = days[now.getDay()];
@@ -3038,7 +3044,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           )}
 
           {/* Remaining articles */}
-          {rest.map((item, i) => (
+          {cleanRest.map((item, i) => (
             <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
@@ -3130,6 +3136,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     );
   }, [newsFeed, searchQuery]);
   const [featured, ...grid] = filteredFeed.length > 0 ? filteredFeed : newsFeed;
+  const cleanGrid = useMemo(() => {
+    if (!featured) return grid;
+    return grid.filter(item => !isSameArticle(item, featured));
+  }, [grid, featured]);
   const now = useCurrentTime();
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
     const dayName = days[now.getDay()];
@@ -3334,7 +3344,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
           {/* News grid */}
             <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
-              {grid.map((item, i) => (
+              {cleanGrid.map((item, i) => (
                 <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden rounded-2xl shadow-sm hover:-translate-y-1.5 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
                 <div className="h-[150px] relative w-full overflow-hidden bg-slate-100 dark:bg-[#1c222d]">
@@ -3910,7 +3920,7 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
 
 function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liveData?: any, condKey?: string }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey || 'HaNoi'];
-  const topNews = news.slice(0, 5);
+  const topNews = filterDeduplicatedNews(news).slice(0, 5);
   
   if (!news.length) return null;
 
@@ -6464,15 +6474,7 @@ useEffect(() => {
     await new Promise(res => setTimeout(res, 400));
     
     try {
-      const getUniqueKey = (item: any) => {
-        if (item.link) return item.link.split('?')[0].replace(/^https?:\/\//, '').toLowerCase();
-        if (item.author) return item.author.trim().toLowerCase();
-        return Math.random().toString();
-      };
-      
-      const existingKeys = new Set((liveNews || []).map(getUniqueKey));
-      
-      const trulyNewItems = (fullNewsPool.current || []).filter(item => !existingKeys.has(getUniqueKey(item)));
+      const trulyNewItems = filterDeduplicatedNews(fullNewsPool.current || [], liveNews || []);
       
       if (trulyNewItems.length === 0) {
         setHasMoreNews(false);
@@ -6486,7 +6488,7 @@ useEffect(() => {
       }
       
       setLiveNews(prev => {
-        const next = [...(prev || []), ...picked];
+        const next = filterDeduplicatedNews([...(prev || []), ...picked]);
         return next;
       });
     } catch (err) {
@@ -6653,7 +6655,16 @@ useEffect(() => {
             ]
           : [...catFeeds];
         
-        const results = await Promise.all(selectedFeeds.map(fetchSingleFeed));
+        // Khử trùng lặp URL nguồn cấp để không fetch trùng một kênh RSS nhiều lần trong cùng chu kỳ
+        const seenFeedUrls = new Set<string>();
+        const uniqueFeeds = selectedFeeds.filter(feed => {
+          const u = (feed.url || '').trim().toLowerCase();
+          if (!u || seenFeedUrls.has(u)) return false;
+          seenFeedUrls.add(u);
+          return true;
+        });
+
+        const results = await Promise.all(uniqueFeeds.map(fetchSingleFeed));
         if (isCancelled) return;
         
         const fallbackImages = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
@@ -6773,27 +6784,26 @@ useEffect(() => {
         }
         
         const rawMixed = [...hotNews, ...normalNews];
-        // Áp dụng Lá chắn độ tươi mới tin tức (Smart Freshness Gate):
+        // Áp dụng Lá chắn độ tươi mới tin tức & Bộ lọc khử trùng lặp toàn diện:
         // 1. Khống chế cứng tin mới trong 3 ngày (loại bỏ triệt để các bài viết cũ hơn 3 ngày)
         // 2. Sắp xếp tin mới nhất lên đầu, ưu tiên tin nóng nếu trong vòng 3h.
+        // 3. Khử trùng lặp đa tầng (Canonical URL + Dấu vân tay Tiêu đề + Độ tương đồng ngữ nghĩa liên báo)
         const mixedNews = filterAndSortFreshNews(rawMixed, 3);
         
         if (!isBackground) {
-          const existingLinks = new Set(mixedNews.map(n => n.link));
           // Lọc bot items: chỉ giữ các bài tươi mới (trong 3 ngày), loại trừ triệt để tin cũ
           const botItems = activeCategory === "Tất cả"
             ? (fullNewsPool.current || [])
-                .filter(n => (n as any)._isBot && !existingLinks.has(n.link))
+                .filter(n => (n as any)._isBot)
                 .filter(n => isArticleFresh(n, 3))
             : [];
           const finalPool = filterAndSortFreshNews([...botItems, ...mixedNews], 3);
           fullNewsPool.current = finalPool;
           setLiveNews(finalPool.slice(0, 15));
         } else {
-          const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
-          const newItems = mixedNews.filter(n => !existingLinks.has(n.link));
-          if (newItems.length > 0) {
-            const combined = filterAndSortFreshNews([...newItems, ...fullNewsPool.current], 3);
+          const trulyNewItems = filterDeduplicatedNews(mixedNews, fullNewsPool.current || []);
+          if (trulyNewItems.length > 0) {
+            const combined = filterAndSortFreshNews([...trulyNewItems, ...fullNewsPool.current], 3);
             fullNewsPool.current = combined;
             setLiveNews(combined.slice(0, 15));
           }
@@ -6925,8 +6935,7 @@ useEffect(() => {
               } as any;
             });
           
-          const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
-          const trulyNewBotItems = allMapped.filter(n => !n.link || !existingLinks.has(n.link));
+          const trulyNewBotItems = filterDeduplicatedNews(allMapped, fullNewsPool.current || []);
           
           if (fullNewsPool.current.length === 0) {
             const freshPool = filterAndSortFreshNews(allMapped, 3);

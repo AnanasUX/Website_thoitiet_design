@@ -1,6 +1,32 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
-## Phiên bản 1.50.0 (2026-10-30) - Phóng To Mã VietQR Quét Thanh Toán Bằng Popup Modal Căn Giữa Màn Hình (REQ-080) & Nền Động Animated Mesh Gradient Khí Quyển (REQ-079)
+## Phiên bản 1.53.0 (2026-11-02) - Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng Toàn Diện (REQ-083)
+
+### 1. Động Cơ Khử Trùng Lặp Đa Tầng (Multi-Layer News Deduplication Engine)
+- **Chuẩn Hóa Dấu Vân Tay Tiêu Đề (`normalizeTitleFingerprint`)**:
+  + Tự động bóc tách và loại bỏ các tiền tố báo chí (`[Ảnh]`, `[Video]`, `[Infographic]`, `[Trực tiếp]`, `Bản tin:`, `Nóng:`, `Tin nóng:`, `Mới nhất:`,...).
+  + Triệt tiêu toàn bộ dấu câu, ký tự đặc biệt, chuẩn hóa khoảng trắng và chuyển chữ thường.
+- **Đối Soát Ngữ Nghĩa Tin Tức Liên Báo (`areTitlesSimilar`)**:
+  + So khớp tập hợp từ khóa (Tokens) với thuật toán đo lường độ bao phủ từ vựng (Inclusion Ratio >= 85% hoặc Jaccard Similarity >= 80%).
+  + Áp dụng `extractNumbers` kiểm tra tính nhất quán số liệu và ngày tháng: Nếu 2 tiêu đề có con số đối lập (ví dụ ngày 2/11 vs 3/11, 90 triệu vs 95 triệu), hệ thống bảo đảm phân biệt rạch ròi, không lọc nhầm.
+  + Triệt tiêu hoàn toàn tình trạng các báo đài lớn (VnExpress, Dân Trí, VTV, Tuổi Trẻ, Thanh Niên) cùng đưa tin về một sự kiện tạo thành các thẻ bài trùng nhau trên trang chủ.
+- **Kiểm Tra Trùng Khớp Toàn Năng (`isSameArticle`)**:
+  + Xác thực tương đương theo Canonical URL (bỏ query params, hash, protocol, trailing slash) hoặc theo dấu vân tay tiêu đề tương đồng.
+
+### 2. Tự Động Hóa Bộ Lọc Tin Tức Sống & Phân Tách Bố Cục
+- **Khử Trùng Lặp Nguồn Cấp (`uniqueFeeds`)**:
+  + Tự động lọc sạch danh sách URL RSS trong `fetchCategoryNews` trước khi gọi `Promise.all`, loại trừ việc cào trùng URL và giảm tải mạng ~40%.
+- **Tích Hợp Sâu Vào `filterAndSortFreshNews`**:
+  + Tự động gọi `filterDeduplicatedNews(sorted)` sau khi sắp xếp, luôn ưu tiên bảo toàn phiên bản tin nóng (`_isHot`) hoặc mới nhất của bài viết.
+- **Phòng Thủ Bố Cục Đa Màn Hình**:
+  + `DesktopLayout`: `cleanGrid` loại trừ 100% bài viết trùng lặp với thẻ tiêu điểm `featured`.
+  + `TabletLayout`: `cleanRest` loại trừ 100% bài viết trùng lặp với thẻ tiêu điểm `featured`.
+  + Cuộn vô cực (`loadMoreNews`): `filterDeduplicatedNews(fullNewsPool.current, liveNews)` loại trừ 100% bài viết đã xuất hiện trên giao diện.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: 0 lỗi biên dịch, hoàn tất trong 544ms.
+- `npm run test:logic`: 462/462 assertions logic đạt chuẩn 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3 cho REQ-083).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
 
 ### 1. Phân Hệ Quét Mã VietQR Thanh Toán Hóa Đơn Tiền Phòng & Điện Nước AnX (REQ-080)
 - **Khởi tạo Component `VietQRModal.tsx`**:

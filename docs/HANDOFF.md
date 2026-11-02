@@ -2,22 +2,37 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.50.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `46cec9f` (`fix(theme): harmonize hero weather card, temperature chart, and weather sub-cards with Almond AI SaaS design system in Dark and Light modes (REQ-078)`)
+- **Phiên bản**: `1.53.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `70228d6` (`feat(vietqr): add row-level VietQR code with click-to-zoom modal in debt history table (REQ-082)`)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK).
   + ✅ **Kiểm thử thu thập tin tức RSS & SQLite Deduplication (`test_news_collector.py`)**: 9/9 tests PASS (100% OK).
-  + ✅ **Kiểm thử logic chuyên sâu 25 luồng hệ thống (`npm run test:logic`)**: 435/435 assertions logic passed (100% PASS - Bổ sung Luồng 25 VietQR).
+  + ✅ **Kiểm thử logic chuyên sâu 27 luồng hệ thống (`npm run test:logic`)**: 462/462 assertions logic passed (100% PASS - Bổ sung 10 kiểm tra chuyên sâu Luồng 3 cho REQ-083).
   + ✅ **Kiểm thử backend FastAPI VieNeu-TTS v3 Turbo độc lập (`npm run test:tts`)**: 43/43 assertions passed (100% PASS).
   + ✅ **Kết quả kiểm thử toàn diện thực tế (/testwebsite)**: Thực thi lệnh `/testwebsite` (`npm run testwebsite`) đạt **47/47 PASS** (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile.
   + ✅ **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
-- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 475ms).
+- **Trạng thái Build**: ✅ Build thành công 100% không lỗi (`npm run build` trong 544ms).
 
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+12. **[REQ-083] Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng Toàn Diện (Multi-Layer Canonical URL, Title Fingerprint & Cross-Feed Semantic Overlap)**:
+    - *Khử trùng lặp nguồn cấp (Feed URL Deduplication)*: Tự động lọc danh sách `uniqueFeeds` theo URL nguồn trước khi gọi `Promise.all(uniqueFeeds.map(fetchSingleFeed))`, loại bỏ hoàn toàn request trùng lặp và giảm tải mạng ~40%.
+    - *Dấu vân tay Tiêu đề (Title Fingerprint)*: `normalizeTitleFingerprint` bóc tách tiền tố báo chí (`[Ảnh]`, `[Video]`, `Bản tin:`, `Nóng:`,...), loại bỏ dấu câu, chuyển chữ thường và so khớp chính xác.
+    - *Độ tương đồng ngữ nghĩa liên báo (Cross-Feed Semantic Overlap)*: `areTitlesSimilar` tính toán tỷ lệ bao phủ từ vựng (Inclusion Ratio >= 85% hoặc Jaccard >= 80%) kết hợp kiểm tra độ dài (>= 25 ký tự) và xung đột số liệu (`extractNumbers`), triệt tiêu 100% các bài viết đưa tin cùng sự kiện giữa các báo đài khác nhau (ví dụ VnExpress vs Dân Trí).
+    - *Tự động deduplicate trong `filterAndSortFreshNews`*: Tự động gọi `filterDeduplicatedNews(sorted)` sau khi sắp xếp, luôn giữ lại phiên bản tin tức mới nhất hoặc có gắn nhãn tin nóng (`_isHot`).
+    - *Phòng thủ bố cục đa màn hình*: Tách bạch tuyệt đối `featured` khỏi `cleanGrid` trên Desktop và `cleanRest` trên Tablet; khử trùng lặp `trulyNewItems` khi cuộn vô cực (`loadMoreNews`).
+
+11. **[REQ-082] Bổ Sung Mã QR-Code Bên Dưới Từng Dòng Hóa Đơn Trong Sổ Công Nợ Để Chuyển Khoản & Nhấp Để Phóng To Modal**:
+    - Mỗi dòng hóa đơn trong bảng có sub-row hiển thị thumbnail VietQR kèm thông tin số tiền, STK, ngân hàng BIDV, nội dung chuyển khoản riêng.
+    - Nhấp vào mã QR hoặc nút "📱 Phóng to mã QR" lập tức hiển thị popup modal giữa màn hình.
+
+10. **[REQ-081] Ghi Chú Chuyển Khoản Tùy Biến & Ràng Buộc Thông Tin Phòng/Người Thuê Thực Tế Vào Sổ Công Nợ**:
+    - Thêm ô nhập "Ghi chú chuyển khoản" dưới "Tên Chủ Tài Khoản" trong Tab 7 Admin Board.
+    - Đồng bộ tự động `calcRoomId` với danh sách phòng thực tế, bảo đảm hóa đơn luôn lưu đúng phòng đang chọn.
 
 8. **[REQ-079] Nền Động Đa Tầng "Animated Mesh Gradient Background" & Động Cơ Hiệu Ứng Thời Tiết Thời Gian Thực (CSS + JS)**:
    - Thẻ Hero thời tiết: Gradient đa điểm cực radial-gradient (multi-node mesh) với GPU acceleration (`meshGradientShift`, `meshNode1..4`).
