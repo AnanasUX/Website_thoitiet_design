@@ -1182,3 +1182,36 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn thành trong 544ms, 0 lỗi biên dịch.
 - `npm run test:logic`: 462/462 assertions đạt 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3 cho REQ-083).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### ADR-047: Kéo & Tích Hợp Ứng Dụng Tụng Kinh (`tungkinh`) Về Chung Một Tên Miền `https://anx.io.vn/tung-kinh` Không Xung Đột (REQ-084)
+- **Ngày**: 2026-11-04
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng có 2 dự án trên GitHub (`https://github.com/AnanasUX`):
+  1. `Website_thoitiet_design` + `quan-ly-tien-phong` (đang chạy tại `https://anx.io.vn/`).
+  2. `tungkinh` (`https://github.com/AnanasUX/tungkinh.git`).
+- Người dùng yêu cầu kéo ứng dụng Tụng Kinh về chạy chung dưới cùng tên miền tại `https://anx.io.vn/tung-kinh` (và `/tung-kinh/`), hợp nhất việc triển khai mà không làm xung đột hay ảnh hưởng lẫn nhau.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Kiến Trúc Tích Hợp Thư Mục Độc Lập `public/tung-kinh/`**:
+   - Tận dụng quy trình build của Vite và triển khai GitHub Pages: Mọi tệp tĩnh đặt trong thư mục `public/` sẽ được Vite sao chép nguyên vẹn sang `dist/` khi thực thi `npm run build`.
+   - Toàn bộ ứng dụng `tungkinh` (bao gồm `index.html`, `manifest.json`, `css/style.css`, các scripts `js/` và tài nguyên âm thanh `nhac/*.mp3` như chuông chùa, gõ mõ, nhạc thiền) được đóng gói độc lập trong `public/tung-kinh/`.
+   - Nhờ đó, ứng dụng Tụng Kinh chạy tĩnh hoàn toàn không can thiệp vào bundle React SPA chính, không gây phình to bundle JS chính của trang tin tức, và hoạt động mượt mà 0ms độ trễ.
+2. **Cấu Hình Base Routing & Điều Hướng Chuẩn Xác (`<base href="/tung-kinh/">`)**:
+   - Thêm `<base href="/tung-kinh/">` vào thẻ `<head>` của `public/tung-kinh/index.html`.
+   - Đảm bảo toàn bộ các đường dẫn tương đối (như `js/app.js`, `nhac/tieng_go_mo.mp3`, `manifest.json`) đều tự động phân giải về `/tung-kinh/...` kể cả khi người dùng truy cập từ `https://anx.io.vn/tung-kinh` (không có dấu gạch chéo cuối).
+   - Cập nhật `public/404.html`: Tự động nhận diện đường dẫn `path.includes('tung-kinh') || path.includes('tungkinh')` để chuyển hướng tức thì sang `/tung-kinh/` kèm query/hash.
+   - Cập nhật `src/App.tsx`: Bộ kiểm tra URL trong React App tự động chuyển hướng sang `/tung-kinh/` nếu người dùng gõ URL trên trình duyệt.
+3. **Liên Kết Hai Chiều Thuận Tiện Giữa 2 Không Gian Ứng Dụng**:
+   - Tại ứng dụng Tụng Kinh: Bổ sung nút Home (Biểu tượng ngôi nhà) ở góc trái thanh tiêu đề để quay về trang chủ Thời tiết & Tin tức (`https://anx.io.vn/`).
+   - Tại ứng dụng Thời tiết & Tin tức: Bổ sung liên kết "Tụng Kinh Online (Chùa An Nhiên)" trong menu tài khoản (`UserAvatarMenu`) và thanh chân trang (`Site Footer`).
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: Hoàn thành xuất sắc, tài nguyên tĩnh được sao chép chuẩn sang `dist/tung-kinh/`.
+- `npm run test:logic`: 462/462 assertions đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

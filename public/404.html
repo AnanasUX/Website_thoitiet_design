@@ -10,6 +10,8 @@
         var hash = window.location.hash || '';
         if (path.includes('admin')) {
           window.location.replace('/admin_board/' + search + hash);
+        } else if (path.includes('tung-kinh') || path.includes('tungkinh')) {
+          window.location.replace('/tung-kinh/' + search + hash);
         } else {
           sessionStorage.redirect = window.location.href;
           window.location.replace('/' + search + hash);

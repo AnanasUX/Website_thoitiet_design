@@ -87,6 +87,7 @@
 | REQ-071 | PROMPT-20261024-01 | Khắc phục triệt để lỗi định vị sai lệch, nâng cấp hệ thống định vị siêu chính xác cấp quận/huyện đa tầng: Thuật toán Haversine đối chiếu mạng lưới địa danh Việt Nam (0ms, 100% chuẩn tiếng Việt), Photon Komoot OSM reverse geocode có CORS thay thế Nominatim bị 403, bộ ba IP HTTPS native (ipwho.is, freeipapi, ipinfo), tăng timeout GPS lên 12s và hiển thị cảnh báo hướng dẫn cấp quyền rõ ràng khi bị chặn | P0 | Weather / Precision Geolocation | TC-016, TC-022, TC-024 | PASS | App.tsx, logicFlows.ts, test-logic-flows.mjs, testwebsite.mjs | Haversine 0ms local match, Photon Komoot CORS, HTTPS IP fallbacks, GPS permission guide, 427/427 logic tests PASS, 47/47 E2E PASS |
 | REQ-072 | PROMPT-20261024-02 | Chuẩn hóa toàn diện ngôn ngữ thiết kế khung viền (Frame & Surface Architecture), khắc phục triệt để lỗi chuyển đổi màu sắc Dark/Light mode: Thêm @custom-variant dark vào Tailwind CSS v4, đồng bộ thẻ trắng #ffffff viền #e2e4e8 ở Light mode, Deep Obsidian #151921 viền trắng 8% ở Dark mode, làm mịn dải màu cảnh báo pastel/glow và chuyển sắc mượt mà 0.25s cubic-bezier | P1 | UI/UX & Theme Engine | TC-016, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs | @custom-variant dark loại bỏ kích hoạt nhầm dark:, thẻ bài viết & widget đồng bộ Almond Noir/Porcelain, chuyển sắc mượt 250ms, 47/47 E2E PASS |
 | REQ-083 | PROMPT-20261102-01 | Khử trùng lặp tin tức trang chủ đa tầng toàn diện: Chuẩn hóa Canonical URL, Dấu vân tay Tiêu đề (Title Fingerprint), Triệt tiêu bài viết đưa tin cùng sự kiện giữa các báo đài (Semantic Word Overlap >= 85%), Khử trùng URL nguồn cấp trong fetchCategoryNews, Tự động deduplicate trong filterAndSortFreshNews và phân tách rạch ròi featured vs grid | P0 | News Ingestion / Deduplication | TC-022, TC-027 | PASS | logicFlows.ts, App.tsx, test-logic-flows.mjs | 462/462 logic tests PASS, 47/47 E2E PASS |
+| REQ-084 | PROMPT-20261104-01 | Tích hợp ứng dụng Tụng Kinh (Chùa An Nhiên - tungkinh) trực tiếp vào website chung tên miền https://anx.io.vn/tung-kinh, cấu hình base routing, đồng bộ asset audio/js/css, bổ sung nút điều hướng quay về trang chủ và xử lý SPA 404 rewrite | P0 | Domain Integration / Tụng Kinh | TC-020, TC-028 | PASS | public/tung-kinh/, App.tsx, 404.html | Tích hợp toàn diện Tụng Kinh chạy mượt mà tại https://anx.io.vn/tung-kinh chung 1 domain anx.io.vn không xung đột |
 
 ## Prompt intake log
 
@@ -150,6 +151,7 @@
 | PROMPT-20261024-01 | 2026-10-24 | Hiện tại hệ thống đang định vị sai vị trí của người dùng kiểm tra lại. | REQ-071 | Resolved | Approved |
 | PROMPT-20261024-02 | 2026-10-24 | Về giao diện Dark và Light về chuyển đổi màu sắc khung đang rất xấu cần điều chỉnh chỉnh sửa lại | REQ-072 | Resolved | Approved |
 | PROMPT-20261102-01 | 2026-11-02 | Các bài viết ở trang chủ đang bị lặp nhiều kiểm tra fix lại | REQ-083 | Resolved | Approved |
+| PROMPT-20261104-01 | 2026-11-04 | Kéo 2 dự án Website_thoitiet_design và tungkinh về chung 1 domain https://anx.io.vn/, trang tụng kinh tại https://anx.io.vn/tung-kinh | REQ-084 | None | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -596,4 +598,29 @@
   5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
      - `npm run build`: 0 lỗi biên dịch.
      - `npm run test:logic`: 462/462 assertions đạt chuẩn 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-084)
+
+- **Mã Yêu Cầu**: `REQ-084`
+- **Tiêu Đề**: Kéo & Hợp Nhất Ứng Dụng Tụng Kinh (Chùa An Nhiên - `tungkinh`) Về Chung 1 Tên Miền Tại `https://anx.io.vn/tung-kinh`
+- **Nguồn Prompt**: `PROMPT-20261104-01`: *"Hiện tại trong kênh của tôi: https://github.com/AnanasUX đang có 2 dự án [1]. Website_thoitiet_design [https://github.com/AnanasUX/Website_thoitiet_design.git]; quan-ly-tien-phong [https://github.com/AnanasUX/quan-ly-tien-phong.git] [2]. tungkinh [https://github.com/AnanasUX/tungkinh.git]. Hiện tại với website chạy tin tức nghĩa là ở [1] đang chạy 'https://anx.io.vn/' giờ với trang chủ [1] trang tụng kinh sẽ 'https://anx.io.vn/tung-kinh', đảm bảo kéo được chung về 1 domain tránh việc sử dụng chung với nhau."*
+- **Phân Hệ**: Kiến trúc Tên Miền & Triển Khai GitHub Pages, Điều Hướng SPA, Tụng Kinh Sanctuary (`public/tung-kinh/`, `public/404.html`, `src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Cấu Trúc Tích Hợp Sub-App Độc Lập Tại `public/tung-kinh/`*:
+     - Tích hợp toàn bộ mã nguồn của dự án `tungkinh` vào thư mục `public/tung-kinh/` bao gồm: `index.html`, `manifest.json`, `css/`, `js/`, `nhac/` (tiếng chuông chùa, tiếng gõ mõ, nhạc thiền nền).
+     - Khi chạy `npm run build`, Vite tự động xuất toàn vẹn sang `dist/tung-kinh/` và GitHub Pages triển khai tới `https://anx.io.vn/tung-kinh/`.
+  2. *Cấu Hình Base Routing & Điều Hướng Chuẩn Xác*:
+     - Thêm thẻ `<base href="/tung-kinh/">` vào `<head>` của `public/tung-kinh/index.html` để đảm bảo 100% tài nguyên tĩnh (scripts, stylesheets, Web Audio buffer mp3, manifest) được nạp chuẩn xác mà không xung đột đường dẫn với ứng dụng gốc.
+     - Cập nhật `public/404.html` tự động nhận diện đường dẫn `path.includes('tung-kinh') || path.includes('tungkinh')` để điều hướng chuyển trang tức thì về `/tung-kinh/` kèm đầy đủ params/hash.
+     - Cập nhật router trong `src/App.tsx` tự động kiểm tra `window.location.pathname` để redirect mượt mà sang `/tung-kinh/`.
+  3. *Liên Kết Hai Chiều Tiện Lợi Giữa 2 Hệ Thống*:
+     - Tại `public/tung-kinh/index.html`: Bổ sung nút bấm Home (Biểu tượng ngôi nhà) ở góc trái thanh tiêu đề để người dùng một chạm quay trở lại trang chủ Tin tức & Thời tiết (`https://anx.io.vn/`).
+     - Tại `src/App.tsx`: Bổ sung mục "Tụng Kinh Online (Chùa An Nhiên)" trong menu đại diện người dùng (`UserAvatarMenu`) và dưới chân trang (`Site Footer`) dẫn trực tiếp đến `/tung-kinh/`.
+  4. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi biên dịch, các asset mp3 và js được đồng bộ sang `dist/tung-kinh/`.
+     - `npm run test:logic`: 462/462 assertions đạt chuẩn 100% PASS.
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

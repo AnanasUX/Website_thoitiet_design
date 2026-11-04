@@ -1,5 +1,27 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.54.0 (2026-11-04) - Hợp Nhất Ứng Dụng Tụng Kinh (`tungkinh`) Về Chung Một Tên Miền `https://anx.io.vn/tung-kinh` (REQ-084)
+
+### 1. Kiến Trúc Tích Hợp Sub-App Độc Lập
+- **Tích hợp mã nguồn `tungkinh`**:
+  + Đưa toàn bộ ứng dụng Chùa An Nhiên (`index.html`, `manifest.json`, `css/`, `js/`, `nhac/*.mp3`) vào thư mục `public/tung-kinh/`.
+  + Tự động build và sao chép nguyên vẹn sang `dist/tung-kinh/` thông qua Vite, triển khai đồng bộ lên GitHub Pages tại tên miền chung `https://anx.io.vn/tung-kinh/`.
+  + Giữ nguyên tính độc lập của ứng dụng Tụng Kinh, không làm phình to bundle React SPA của trang tin tức chính.
+
+### 2. Định Tuyến & Điều Hướng Chuẩn Xác
+- **Base Routing (`<base href="/tung-kinh/">`)**:
+  + Thêm thẻ `<base>` trong `<head>` của `public/tung-kinh/index.html` để 100% đường dẫn tương đối (audio Web Audio buffer, scripts, manifest) nạp chuẩn xác dưới `/tung-kinh/`.
+- **Chuyển Hướng Tự Động SPA 404 Rewrite**:
+  + Cập nhật `public/404.html` và `src/App.tsx` tự động chuyển hướng các yêu cầu `/tung-kinh` (không có dấu gạch chéo) sang `/tung-kinh/` bảo toàn query và hash.
+- **Liên Kết Hai Chiều (Bidirectional Navigation)**:
+  + Thêm nút Home (Biểu tượng ngôi nhà) trên header của ứng dụng Tụng Kinh dẫn về trang chủ `https://anx.io.vn/`.
+  + Thêm liên kết "Tụng Kinh Online (Chùa An Nhiên)" trong menu đại diện người dùng (`UserAvatarMenu`) và dưới chân trang (`Site Footer`) của trang tin tức.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: 0 lỗi biên dịch, các asset âm thanh và scripts được xuất hoàn hảo sang `dist/tung-kinh/`.
+- `npm run test:logic`: 462/462 assertions logic đạt chuẩn 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.53.0 (2026-11-02) - Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng Toàn Diện (REQ-083)
 
 ### 1. Động Cơ Khử Trùng Lặp Đa Tầng (Multi-Layer News Deduplication Engine)

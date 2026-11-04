@@ -5372,6 +5372,20 @@ function UserAvatarMenu({ userRole, onLogout, onOpenSubscriptions }: { userRole:
                 {userRole.youtubeSubscriptions?.length || 0}
               </span>
             </button>
+            <a 
+              href="/tung-kinh/" 
+              onClick={() => setIsOpen(false)} 
+              className="px-4 py-2 text-left text-[12.5px] text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 font-semibold transition-colors w-full flex items-center justify-between border-b border-[#e3e7ef] dark:border-white/10"
+              title="Chùa An Nhiên — Hệ Thống Tu Tập & Cầu Nguyện Trực Tuyến"
+            >
+              <div className="flex items-center gap-2">
+                <span>🪷</span>
+                <span>Tụng Kinh Online (Chùa An Nhiên)</span>
+              </div>
+              <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                Mới
+              </span>
+            </a>
             {isUserAdminQA(userRole) && (
               <a 
                 href={getDashboardUrl()} 
@@ -5623,6 +5637,10 @@ export default function App() {
   const [isAdminView, setIsAdminView] = useState(() => {
     if (typeof window !== "undefined") {
       const p = window.location.pathname.toLowerCase();
+      if (p.includes("tung-kinh") || p.includes("tungkinh")) {
+        window.location.replace("/tung-kinh/");
+        return false;
+      }
       const s = window.location.search.toLowerCase();
       const h = window.location.hash.toLowerCase();
       return p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin");
@@ -7694,6 +7712,10 @@ useEffect(() => {
               🛡️ QA Dashboard
             </a>
           )}
+          <a href="/tung-kinh/" className="hover:text-amber-600 dark:hover:text-amber-300 transition-colors flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
+            <span>🪷</span>
+            <span>Tụng Kinh Online</span>
+          </a>
           <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
             Chính sách Bảo mật
           </button>
