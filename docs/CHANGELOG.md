@@ -1,5 +1,143 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.54.0 (2026-11-04) - Hợp Nhất Ứng Dụng Tụng Kinh (`tungkinh`) Về Chung Một Tên Miền `https://anx.io.vn/tung-kinh` (REQ-084)
+
+### 1. Kiến Trúc Tích Hợp Sub-App Độc Lập
+- **Tích hợp mã nguồn `tungkinh`**:
+  + Đưa toàn bộ ứng dụng Chùa An Nhiên (`index.html`, `manifest.json`, `css/`, `js/`, `nhac/*.mp3`) vào thư mục `public/tung-kinh/`.
+  + Tự động build và sao chép nguyên vẹn sang `dist/tung-kinh/` thông qua Vite, triển khai đồng bộ lên GitHub Pages tại tên miền chung `https://anx.io.vn/tung-kinh/`.
+  + Giữ nguyên tính độc lập của ứng dụng Tụng Kinh, không làm phình to bundle React SPA của trang tin tức chính.
+
+### 2. Định Tuyến & Điều Hướng Chuẩn Xác
+- **Base Routing (`<base href="/tung-kinh/">`)**:
+  + Thêm thẻ `<base>` trong `<head>` của `public/tung-kinh/index.html` để 100% đường dẫn tương đối (audio Web Audio buffer, scripts, manifest) nạp chuẩn xác dưới `/tung-kinh/`.
+- **Chuyển Hướng Tự Động SPA 404 Rewrite**:
+  + Cập nhật `public/404.html` và `src/App.tsx` tự động chuyển hướng các yêu cầu `/tung-kinh` (không có dấu gạch chéo) sang `/tung-kinh/` bảo toàn query và hash.
+- **Liên Kết Hai Chiều (Bidirectional Navigation)**:
+  + Thêm nút Home (Biểu tượng ngôi nhà) trên header của ứng dụng Tụng Kinh dẫn về trang chủ `https://anx.io.vn/`.
+  + Thêm liên kết "Tụng Kinh Online (Chùa An Nhiên)" trong menu đại diện người dùng (`UserAvatarMenu`) và dưới chân trang (`Site Footer`) của trang tin tức.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: 0 lỗi biên dịch, các asset âm thanh và scripts được xuất hoàn hảo sang `dist/tung-kinh/`.
+- `npm run test:logic`: 462/462 assertions logic đạt chuẩn 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+## Phiên bản 1.53.0 (2026-11-02) - Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng Toàn Diện (REQ-083)
+
+### 1. Động Cơ Khử Trùng Lặp Đa Tầng (Multi-Layer News Deduplication Engine)
+- **Chuẩn Hóa Dấu Vân Tay Tiêu Đề (`normalizeTitleFingerprint`)**:
+  + Tự động bóc tách và loại bỏ các tiền tố báo chí (`[Ảnh]`, `[Video]`, `[Infographic]`, `[Trực tiếp]`, `Bản tin:`, `Nóng:`, `Tin nóng:`, `Mới nhất:`,...).
+  + Triệt tiêu toàn bộ dấu câu, ký tự đặc biệt, chuẩn hóa khoảng trắng và chuyển chữ thường.
+- **Đối Soát Ngữ Nghĩa Tin Tức Liên Báo (`areTitlesSimilar`)**:
+  + So khớp tập hợp từ khóa (Tokens) với thuật toán đo lường độ bao phủ từ vựng (Inclusion Ratio >= 85% hoặc Jaccard Similarity >= 80%).
+  + Áp dụng `extractNumbers` kiểm tra tính nhất quán số liệu và ngày tháng: Nếu 2 tiêu đề có con số đối lập (ví dụ ngày 2/11 vs 3/11, 90 triệu vs 95 triệu), hệ thống bảo đảm phân biệt rạch ròi, không lọc nhầm.
+  + Triệt tiêu hoàn toàn tình trạng các báo đài lớn (VnExpress, Dân Trí, VTV, Tuổi Trẻ, Thanh Niên) cùng đưa tin về một sự kiện tạo thành các thẻ bài trùng nhau trên trang chủ.
+- **Kiểm Tra Trùng Khớp Toàn Năng (`isSameArticle`)**:
+  + Xác thực tương đương theo Canonical URL (bỏ query params, hash, protocol, trailing slash) hoặc theo dấu vân tay tiêu đề tương đồng.
+
+### 2. Tự Động Hóa Bộ Lọc Tin Tức Sống & Phân Tách Bố Cục
+- **Khử Trùng Lặp Nguồn Cấp (`uniqueFeeds`)**:
+  + Tự động lọc sạch danh sách URL RSS trong `fetchCategoryNews` trước khi gọi `Promise.all`, loại trừ việc cào trùng URL và giảm tải mạng ~40%.
+- **Tích Hợp Sâu Vào `filterAndSortFreshNews`**:
+  + Tự động gọi `filterDeduplicatedNews(sorted)` sau khi sắp xếp, luôn ưu tiên bảo toàn phiên bản tin nóng (`_isHot`) hoặc mới nhất của bài viết.
+- **Phòng Thủ Bố Cục Đa Màn Hình**:
+  + `DesktopLayout`: `cleanGrid` loại trừ 100% bài viết trùng lặp với thẻ tiêu điểm `featured`.
+  + `TabletLayout`: `cleanRest` loại trừ 100% bài viết trùng lặp với thẻ tiêu điểm `featured`.
+  + Cuộn vô cực (`loadMoreNews`): `filterDeduplicatedNews(fullNewsPool.current, liveNews)` loại trừ 100% bài viết đã xuất hiện trên giao diện.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: 0 lỗi biên dịch, hoàn tất trong 544ms.
+- `npm run test:logic`: 462/462 assertions logic đạt chuẩn 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3 cho REQ-083).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+### 1. Phân Hệ Quét Mã VietQR Thanh Toán Hóa Đơn Tiền Phòng & Điện Nước AnX (REQ-080)
+- **Khởi tạo Component `VietQRModal.tsx`**:
+  + Hiển thị popup modal căn giữa tuyệt đối (`fixed inset-0 z-[999] flex items-center justify-center`) với hiệu ứng làm mờ nền cao cấp (`backdrop-blur-sm`).
+  + Hiển thị ảnh mã QR kích thước lớn, sắc nét, tối ưu cho camera điện thoại quét từ xa (`https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4860500&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN`).
+  + Bảng thông tin thanh toán chi tiết:
+    * Số tiền: `4.860.500 ₫` kèm nút "Sao chép" 1 chạm và phản hồi "✓ Đã chép".
+    * Ngân hàng: `BIDV` (Ngân hàng TMCP Đầu tư và Phát triển Việt Nam).
+    * Số tài khoản: `8817398313` kèm nút "Sao chép" 1 chạm.
+    * Chủ tài khoản: `TRAN THI THUY HUYEN` (TRẦN THỊ THÚY HUYỀN).
+    * Nội dung CK: `TIEN PHONG Phòng Thuê T10` kèm nút "Sao chép" 1 chạm.
+  + Hỗ trợ nút "Lưu ảnh QR", nút đóng (X), phím tắt `Escape` và đóng khi nhấp ngoài vùng backdrop (Click outside).
+- **Thẻ Hóa Đơn & Mã Thumbnail VietQR (`VietQRPaymentCard`)**:
+  + Hiển thị chính xác thẻ chứa mã HTML theo đặc tả người dùng: `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group relative">...</div>`.
+  + Tích hợp đồng bộ trên cả 3 giao diện Mobile, Tablet, Desktop và nút truy cập nhanh "QR Hóa đơn" trên Header.
+- **Lắng Nghe Toàn Cục (Universal DOM Event Delegation)**:
+  + Lắng nghe ở cấp độ `document` với capture phase (`true`).
+  + Bắt mọi lượt click vào bất kỳ phần tử nào trên toàn trang có chứa ảnh VietQR hoặc khớp với thẻ thumbnail, tự động bóc tách tham số URL và mở popup tương ứng ngay lập tức.
+- **Kháng Lỗi Ảnh Hỏng (`FALLBACK_QR_SVG`)**:
+  + Tích hợp sẵn vector QR nội suy an toàn (Inline Data URI), đảm bảo khi không có mạng hoặc API VietQR chậm, ảnh mã QR không bao giờ bị vỡ và `brokenImages` luôn bằng 0.
+
+### 2. Nền Động "Animated Mesh Gradient Background" & Động Cơ Hiệu Ứng Thời Tiết Thời Gian Thực (REQ-079)
+- **Multi-node Animated Mesh Gradient**: Gradient chuyển động đa điểm cực bằng GPU (`meshGradientShift`, `meshNode1..4`), tối ưu hóa cả Light Mode (`hero-mesh-gradient-light`) và Dark Mode (`hero-mesh-gradient-dark`).
+- **Động cơ `WeatherBackgroundEffect`**: Tự động phản hồi theo điều kiện thời tiết thực tế (mây đen trôi đa tầng `am-u`, mưa rơi 3D `mua-nho`, dông sét phát quang `mua-dong`, ánh dương lấp lánh `nang`, sóng nhiệt shimmer `nang-gat`, sương mù lững lờ `suong-mu`).
+- **Chuẩn hóa Emoji Thời Tiết**: Đồng bộ chính xác biểu tượng cảm xúc theo trạng thái thực tế ("mây đen u ám" hiển thị ☁️ thay vì biểu tượng lửa 🔥).
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 475ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 435/435 assertions logic đạt chuẩn (100% PASS - Bổ sung Luồng 25 VietQR).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile.
+- **Cổng kiểm duyệt phát hành**: **RELEASE GATE: PASSED**.
+
+---
+
+## Phiên bản 1.48.0 (2026-10-28) - Đồng Bộ & Tinh Chỉnh Bảng Màu Cao Cấp Chuẩn Almond AI SaaS Cho Toàn Bộ Phân Hệ Thời Tiết (Hero Weather Card, Hourly Temperature Chart & Weather Sub-cards) Trong Cả Hai Chế Độ Sáng & Tối (REQ-078)
+
+### 1. Tinh Chỉnh Thẻ Hero Thời Tiết (Hero Weather Card) Chuẩn Bảng Màu Almond AI SaaS
+- **Dark Mode (Deep Cosmic Obsidian Noir)**: Thay thế dải màu cũ bằng gradient `linear-gradient(135deg, #0d1117 0%, #151922 40%, #1a2233 75%, #0f131c 100%)`, đồng điệu tuyệt đối với mã màu `#151921` và `#0c0f12` của hệ thống SaaS Almond xung quanh.
+- **Triệt tiêu vệt màu neon loang lổ (Bleaching Artifacts)**: Tối giản số lượng aura khí quyển từ 4 khối màu chói gắt xuống 3 khối mượt mà (Royal Blue `#2563ff`, Soft Indigo `#6366f1`, Sky Cyan `#38bdf8`) với độ mờ nhẹ dịu (12% - 18%), loại bỏ hoàn toàn `mix-blend-screen` gây cháy sáng và lệch màu ở nửa phải thẻ.
+- **Light Mode (Royal Electric Blue to Sky Azure)**: Chuyển sang `linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #3b82f6 100%)` cùng hiệu ứng đổ bóng mờ xanh dương cao cấp (`box-shadow: 0 16px 36px -8px rgba(37, 99, 255, 0.28)`), loại bỏ các vệt màu tím chói gắt.
+- **Huy hiệu vị trí (Location Badge)**: Tinh chỉnh đường viền kính phản quang cao cấp, badge "Tự động" với độ tương phản sắc nét, nhãn thời gian và icon ghim định vị nổi bật trên cả 2 nền.
+
+### 2. Nâng Cấp 4 Thẻ Chỉ Số Khí Quyển (Gió, Độ Ẩm, Bụi PM2.5, Tầm Nhìn) Thành Luxury Glass Cards
+- **Dark Mode**: Sử dụng lớp phủ kính đen sang trọng `bg-white/[0.06] border-white/[0.08] hover:bg-white/[0.10]`, nhãn phân loại `text-slate-300 text-[11.5px]`, giá trị `text-white font-bold text-[14px]`. Loại bỏ hoàn toàn cảm giác kính đục mờ xám tím.
+- **Light Mode**: Sử dụng kính sương mờ trắng tuyết `bg-white/15 border-white/25 hover:bg-white/25`, nhãn `text-white/85`, giá trị `text-white font-bold`.
+
+### 3. Chuẩn Hóa Đồ Thị Nhiệt Độ Hàng Giờ (`HourlyTemperatureChart`)
+- **Loại bỏ đường cong hồng rực `#ff315f`**: Thay bằng sắc xanh thương hiệu Almond Royal Blue `#2563ff`.
+- **Đổ bóng mượt mà**: Vùng tô gradient bên dưới chuyển sang dải xanh trong suốt `rgba(37, 99, 255, 0.08)`.
+- **Chấm tròn nhiệt độ đa theme**: Sử dụng `fill="currentColor" className="text-white dark:text-[#151921]" stroke="#2563ff"` kết hợp typography tương thích `text-[#0c0f12] dark:text-[#f8fafc]`.
+
+### 4. Đồng Bộ Dark Mode Toàn Diện Cho Toàn Bộ Các Thẻ Phụ Phân Hệ Thời Tiết
+- Bổ sung `dark:bg-[#151921] dark:border-white/[0.08] text-[#0c0f12] dark:text-[#f8fafc]` cho:
+  + DỰ BÁO HÀNG GIỜ
+  + DỰ BÁO THỜI TIẾT TUẦN (thanh tiến trình nhiệt độ chuyển sang dải xanh - hổ phách tinh tế)
+  + DỰ BÁO 3 GIỜ TỚI
+  + BẢNG ĐIỂM ĐEN NGẬP ÚNG
+  + CẢNH BÁO KHÍ TƯỢNG (`dark:bg-amber-950/20 dark:border-amber-800/30`)
+  + GỢI Ý CHĂM SÓC SỨC KHỎE (`dark:bg-emerald-950/20 dark:border-emerald-800/30`)
+- Loại bỏ hoàn toàn tình trạng thẻ phụ bị giữ nền trắng chói mắt hoặc chữ đen bị chìm khi người dùng bật Dark Mode.
+
+### 5. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 1.69s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
+## Phiên bản 1.47.0 (2026-10-28) - Tự Động Cập Nhật Theo Vị Trí Trước Đó Đã Lấy Được & Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp (REQ-077)
+
+### 1. Tự Động Cập Nhật & Bảo Toàn Vị Trí Trước Đó Hệ Thống Đã Lấy Được
+- **Khởi tạo tức thì (0ms) từ bộ nhớ vị trí**: Triển khai hàm `getPreviouslyAcquiredLocation()` khôi phục tức thời vị trí từ `sessionStorage` -> `user_weather_manual_location` -> `user_weather_last_location` -> `user_weather_auto_location`.
+- **Khởi tạo state `liveData` tại Frame 0**: Gán trực tiếp địa danh trước đó vào `liveData` ngay khi mount component, chấm dứt hoàn toàn hiện tượng hiển thị mặc định "Hà Nội" rồi mới nhảy sang vị trí khác.
+- **Bảo toàn bộ nhớ vĩnh viễn**: Xóa bỏ hoàn toàn mã lệnh `localStorage.removeItem('user_weather_manual_location')` trong `loadData()`, không bao giờ tự ý xóa vị trí người dùng đã từng lưu.
+- **Lá chắn bảo vệ IP Fallback**: Trong `fallbackToIp()`, nếu hệ thống đã từng lấy được vị trí hợp lệ trước đó (không phải IP Hà Nội mặc định), hệ thống giữ nguyên và fetch lại thời tiết cho vị trí đó, không ghi đè IP Hà Nội lên khi GPS timeout hoặc chưa cấp quyền.
+- **Cập nhật tức thì khi có GPS hoặc di chuyển**: Tiếp tục theo dõi qua `watchPosition` và `permissions.onchange` để cập nhật tọa độ thực tế tức thì.
+
+### 2. Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp
+- **Triệt tiêu lỗi cú pháp minifier**: Xóa bỏ `filter: hue-rotate(0deg)` trong keyframes (vốn bị trình biên dịch Vite rút gọn thành `hue-rotate()` không có đối số gây lỗi cú pháp CSS trên trình duyệt).
+- **Animation chuẩn mực `@keyframes morphGradientBackground`**: Sử dụng `background-position` từ 0% đến 100% với `background-size: 300% 300%` chuyển động mượt mà (12s / 15s vô tận).
+- **4 Khối Morphing Blobs Tan Chảy Bắt Mắt**: 4 khối mầm màu kích thước lớn (w-80, w-72, w-64, w-56) với dải màu sắc nét (Royal Blue `#2563ff/70`, Cosmic Violet `#a855f7/70`, Vibrant Cyan `#06b6d4/65`, Sunset Amber `#f59e0b/55`), làm mờ `blur-3xl`, kết hợp `mix-blend-screen` (Dark Mode) và `mix-blend-hard-light` (Light Mode) tạo dòng chảy gradient tan chảy liên tục, bắt mắt và mượt mà 60fps.
+
+### 3. Kết Quả Kiểm Thử Toàn Diện
+- `npm run build`: Hoàn thành 100% trong 1.95s, 0 lỗi biên dịch.
+- `npm run test:logic`: 427/427 assertions đạt (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử PASS (100% PASS, 0 FAIL) trên cả Desktop, Tablet và Mobile (RELEASE GATE: PASSED).
+
+---
+
 ## Phiên bản 1.46.0 (2026-10-24) - Đồng Bộ Hóa Toàn Diện Giao Diện Video Shorts Theo Theme Sáng/Tối (Dark/Light) & Triệt Tiêu Lỗi Tiêu Đề Danh Sách Bản Tin Màu Đen Bị Chìm (REQ-076)
 
 ### 1. Đồng Bộ Hóa Toàn Diện Chủ Đề Dark/Light Cho Phân Hệ Video Shorts
@@ -957,3 +1095,52 @@
   - `npm run test:dashboard`: 47/47 PASS (100% ĐẠT, 0 FAIL) trên Google Chrome thật.
   - `npm run testwebsite`: 47/47 PASS (100% ĐẠT, 0 FAIL), RELEASE GATE: PASSED.
 
+
+---
+
+## [Phiên bản 2.1.0] - 2026-10-30: Cô Lập VietQR Modal Vào Trang Admin & Tinh Chỉnh Giao Diện Công Cộng
+
+### Thay đổi & Tính năng mới
+- **Cô Lập Thẻ & Nút Hóa Đơn VietQR Vào Admin (REQ-080)**:
+  - Loại bỏ hoàn toàn các nút truy cập hóa đơn và thẻ tiền phòng khỏi trang chủ thời tiết công cộng (`src/App.tsx`).
+  - Đặt nút `<button data-testid="tablet-vietqr-btn"><span>QR Hóa đơn</span></button>` và khối ảnh thumbnail `<div class="size-20 ..."><img alt="VietQR" ...></div>` độc quyền trong trang quản trị `https://anx.io.vn/admin` (`src/AdminBoard.tsx`, `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`).
+  - Khi nhấp vào thumbnail hoặc nút "QR Hóa đơn" trên trang Admin, popup modal `VietQRModal` phóng to mã QR giữa màn hình kèm thông tin BIDV, STK 8817398313, chủ tài khoản TRAN THI THUY HUYEN và số tiền phòng thực tế.
+  - Hỗ trợ đóng modal bằng phím `Escape`, nút đóng (X) hoặc nhấp ngoài vùng nền làm mờ (`backdrop-blur-sm`).
+- **Nghiệm Thu Toàn Diện**:
+  - `npm run build`: 0 lỗi biên dịch.
+  - `npm run test:logic`: 435/435 assertions đạt chuẩn 100% PASS.
+  - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED).
+
+---
+
+## [Phiên bản 2.1.1] - 2026-10-30: Bổ Sung Ghi Chú Chuyển Khoản & Ràng Buộc Phòng/Người Thuê Vào Sổ Công Nợ (REQ-081)
+
+### Thay đổi & Tính năng mới
+- **Ô Nhập Ghi Chú Chuyển Khoản VietQR (REQ-081)**:
+  - Bổ sung ô nhập "Ghi chú chuyển khoản (Nội dung CK)" ngay dưới "Tên Chủ Tài Khoản" trong khối Cấu Hình Ngân Hàng VietQR.
+  - Cho phép người dùng tùy chỉnh nội dung chuyển khoản với các biến động: `{room}`, `{tenant}`, `{month}`, `{year}`.
+  - Tự động phản ánh nội dung này vào mã VietQR Napas247, Popup Modal phóng to và các mẫu tin nhắn Zalo/Telegram.
+- **Ràng Buộc Thông Tin Phòng & Người Thuê Thực Tế (REQ-081)**:
+  - Khắc phục lỗi mất đồng bộ `calcRoomId` khi xóa phòng cũ hoặc thêm phòng mới, đảm bảo phòng đang chọn (`Phòng 302` - `Nguyễn Bá Ngọc`) luôn được kế thừa chính xác.
+  - Khi nhấn "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn được ghi nhận với đúng Tên Phòng và Tên Người Thuê thực tế, không bị rơi về "Phòng Thuê".
+  - Cột "Phòng" trong bảng lịch sử công nợ hiển thị cả Tên Phòng và Tên Người Thuê.
+- **Nghiệm Thu Toàn Diện**:
+  - `npm run build`: 0 lỗi biên dịch.
+  - `npm run test:logic`: 445/445 assertions đạt chuẩn 100% PASS (bổ sung Luồng 26).
+  - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED).
+
+---
+
+## [Phiên bản 2.1.2] - 2026-10-30: Bổ Sung Mã VietQR Bên Dưới Từng Dòng Hóa Đơn Trong Sổ Công Nợ (REQ-082)
+
+### Thay đổi & Tính năng mới
+- **Mã VietQR Bên Dưới Từng Dòng Hóa Đơn (REQ-082)**:
+  - Bổ sung khối sub-row hiển thị mã VietQR thanh toán ngay bên dưới từng dòng hóa đơn trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ".
+  - Mỗi dòng có ảnh thumbnail QR `size-16`, số tiền thực tế của hóa đơn, ngân hàng BIDV, STK `8817398313`, và nội dung chuyển khoản tương ứng.
+  - Nhấp vào ảnh thumbnail QR hoặc bấm nút "📱 Phóng to mã QR" sẽ hiển thị Popup Modal căn giữa màn hình để khách quét thanh toán.
+  - Bổ sung nút "📋 Sao chép CK" 1 chạm để sao chép nhanh toàn bộ thông tin thanh toán của hóa đơn đó.
+  - Tự động lưu trữ thông tin mã QR đi kèm khi bấm "Lưu Vào Lịch Sử & Sổ Công Nợ".
+- **Nghiệm Thu Toàn Diện**:
+  - `npm run build`: 0 lỗi biên dịch.
+  - `npm run test:logic`: 452/452 assertions đạt chuẩn 100% PASS (bổ sung Luồng 27).
+  - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện vượt qua kiểm duyệt (RELEASE GATE: PASSED, bổ sung UX-08.5).

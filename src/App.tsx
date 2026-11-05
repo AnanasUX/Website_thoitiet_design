@@ -8,6 +8,9 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useGoogleOneTapLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import { VideoShortsModal } from "./components/VideoShortsModal";
+import { AdminBoard } from "./AdminBoard";
+import { WeatherBackgroundEffect } from "./components/WeatherBackgroundEffect";
+import { VietQRModal, DEFAULT_VIETQR_DATA, type VietQRData } from "./components/VietQRModal";
 import { USER_YOUTUBE_SUBSCRIPTIONS_SNAPSHOT, DEFAULT_OFFICIAL_CHANNELS } from "./constants/userYouTubeSubscriptions";
 import {
   type ConditionKey,
@@ -21,6 +24,7 @@ import {
   formatVND,
   calculatePriceChange,
   getUniqueKey,
+  isSameArticle,
   filterDeduplicatedNews,
   filterNewsByCategory,
   paginateNews,
@@ -77,6 +81,7 @@ export {
   formatVND,
   calculatePriceChange,
   getUniqueKey,
+  isSameArticle,
   filterDeduplicatedNews,
   filterNewsByCategory,
   paginateNews,
@@ -388,19 +393,19 @@ function HourlyTemperatureChart({ hourlyData }: { hourlyData: any[] }) {
     <div className="w-full overflow-x-auto scrollbar-hide pb-2">
       <div className="relative" style={{ width: `${width}px`, height: `${height}px` }}>
         <svg width={width} height={height} className="absolute top-0 left-0 overflow-visible z-0">
-          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="rgba(255, 49, 95, 0.08)" />
-          <path d={pathD} fill="none" stroke="#ff315f" strokeWidth="2.5" strokeLinecap="round" />
+          <path d={`${pathD} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`} fill="rgba(37, 99, 255, 0.08)" />
+          <path d={pathD} fill="none" stroke="#2563ff" strokeWidth="2.5" strokeLinecap="round" />
           {points.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="#fff" stroke="#ff315f" strokeWidth="2.5" />
+            <circle key={i} cx={p.x} cy={p.y} r="4.5" fill="currentColor" className="text-white dark:text-[#151921]" stroke="#2563ff" strokeWidth="2.5" />
           ))}
         </svg>
         
         {points.map((p, i) => (
           <div key={i} className="absolute flex flex-col items-center justify-start w-[65px] z-10" style={{ left: `${p.x - 32.5}px`, top: '10px' }}>
-            <p className="font-semibold text-[#182033] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
+            <p className="font-semibold text-[#0c0f12] dark:text-[#f8fafc] text-[13px] whitespace-nowrap mb-1">{p.time}</p>
             <img className="w-8 h-8 drop-shadow-sm" src={`https://openweathermap.org/img/wn/${p.icon}.png`} alt="" loading="lazy" decoding="async" />
-            <p className="font-semibold text-[#0a84ff] text-[11px] whitespace-nowrap">{p.pop}%</p>
-            <p className="font-bold text-[#182033] text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
+            <p className="font-semibold text-[#2563ff] dark:text-[#60a5fa] text-[11px] whitespace-nowrap">{p.pop}%</p>
+            <p className="font-bold text-[#0c0f12] dark:text-white text-[14px] absolute" style={{ top: `${p.y + 12}px` }}>{p.temp}°</p>
           </div>
         ))}
       </div>
@@ -518,6 +523,97 @@ function SmartWeatherAssistant({
   );
 }
 
+// ── Visual Atmospheric & Ambient Effects Suite ───────────────────────────
+
+export function WeatherAtmosphereEffects({ condKey }: { condKey: ConditionKey }) {
+  const isRain = condKey === "mua-nho" || condKey === "mua-dong";
+  const isSun = condKey === "nang" || condKey === "nang-gat";
+  const isCloudy = condKey === "am-u" || condKey === "binh-thuong";
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-3xl">
+      {/* Rain Particles */}
+      {isRain && (
+        <div className="absolute inset-0">
+          {[...Array(16)].map((_, i) => (
+            <span
+              key={i}
+              className="rain-particle absolute w-[1.5px] h-8 bg-gradient-to-b from-transparent via-cyan-200/50 to-white/70 rounded-full"
+              style={{
+                left: `${(i * 6.25) + (Math.sin(i) * 2)}%`,
+                top: `${(i % 4) * -20}%`,
+                animationDelay: `${(i * 0.12) % 0.85}s`,
+                animationDuration: `${0.65 + ((i % 5) * 0.1)}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Sun Flares & Golden Sparkles */}
+      {isSun && (
+        <div className="absolute inset-0">
+          <div className="absolute -top-10 -right-10 w-44 h-44 bg-amber-300/25 rounded-full blur-2xl animate-pulse" />
+          {[...Array(8)].map((_, i) => (
+            <span
+              key={i}
+              className="sun-sparkle absolute rounded-full bg-amber-200/60 shadow-[0_0_8px_rgba(251,191,36,0.8)]"
+              style={{
+                width: `${4 + (i % 3) * 3}px`,
+                height: `${4 + (i % 3) * 3}px`,
+                left: `${20 + (i * 9)}%`,
+                top: `${25 + (i * 7)}%`,
+                animationDelay: `${i * 0.4}s`,
+                animationDuration: `${2.8 + (i % 3)}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Atmospheric Mist Clouds */}
+      {isCloudy && (
+        <div className="absolute inset-0">
+          <div
+            className="cloud-drift absolute -bottom-10 -left-10 w-80 h-32 bg-white/10 rounded-full blur-3xl pointer-events-none"
+            style={{ animationDuration: '18s' }}
+          />
+          <div
+            className="cloud-drift absolute top-10 right-0 w-72 h-28 bg-sky-200/10 rounded-full blur-3xl pointer-events-none"
+            style={{ animationDuration: '22s', animationDirection: 'reverse' }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function AmbientAuroraBackground({ darkMode = false }: { darkMode?: boolean }) {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
+      {/* High-tech micro-dots matrix grid */}
+      <div className="absolute inset-0 bg-tech-grid opacity-75" />
+
+      {/* Glowing Aurora Orbs */}
+      <div
+        className={`animate-aurora-1 absolute -top-[15%] -left-[10%] w-[55vw] h-[55vw] max-w-[700px] max-h-[700px] rounded-full blur-[110px] pointer-events-none transition-colors duration-1000 ${
+          darkMode ? 'bg-indigo-600/15' : 'bg-blue-400/18'
+        }`}
+      />
+      <div
+        className={`animate-aurora-2 absolute top-[25%] -right-[12%] w-[50vw] h-[50vw] max-w-[650px] max-h-[650px] rounded-full blur-[120px] pointer-events-none transition-colors duration-1000 ${
+          darkMode ? 'bg-violet-600/14' : 'bg-violet-400/16'
+        }`}
+      />
+      <div
+        className={`animate-aurora-3 absolute -bottom-[10%] left-[20%] w-[60vw] h-[50vw] max-w-[750px] max-h-[650px] rounded-full blur-[130px] pointer-events-none transition-colors duration-1000 ${
+          darkMode ? 'bg-cyan-600/12' : 'bg-amber-300/15'
+        }`}
+      />
+    </div>
+  );
+}
+
 function WeatherSection({
   compact = false,
   condKey,
@@ -542,6 +638,29 @@ function WeatherSection({
   const baseTheme = WEATHER_THEMES[condKey];
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
 
+  // Dynamically resolve active condition from conditionLabel (if available) or condKey
+  const activeConditionKey = useMemo<ConditionKey>(() => {
+    if (WEATHER?.conditionLabel) {
+      const detected = detectConditionKey(WEATHER.conditionLabel);
+      if (detected && detected !== 'binh-thuong') return detected;
+    }
+    return condKey;
+  }, [WEATHER?.conditionLabel, condKey]);
+
+  // Appropriate emoji for the condition (matching actual conditionLabel)
+  const conditionEmoji = useMemo(() => {
+    const lbl = (WEATHER?.conditionLabel || '').toLowerCase();
+    if (lbl.includes('dông') || lbl.includes('sấm') || lbl.includes('bão')) return '⛈️';
+    if (lbl.includes('mưa rào') || lbl.includes('mưa to')) return '🌧️';
+    if (lbl.includes('mưa')) return '🌦️';
+    if (lbl.includes('u ám') || lbl.includes('mây đen')) return '☁️';
+    if (lbl.includes('nhiều mây') || lbl.includes('mây cụm') || lbl.includes('mây rải rác')) return '🌥️';
+    if (lbl.includes('sương')) return '🌫️';
+    if (lbl.includes('nắng gắt') || lbl.includes('nắng nóng')) return '🔥';
+    if (lbl.includes('nắng') || lbl.includes('quang')) return '☀️';
+    return WEATHER_THEMES[activeConditionKey]?.emoji || baseTheme.emoji;
+  }, [WEATHER?.conditionLabel, activeConditionKey, baseTheme.emoji]);
+
   // Use live data if available, otherwise fall back to theme defaults
   const warningText = liveOverrides?.warningText ?? baseTheme.warningText;
   const suggestionItems = liveOverrides?.suggestionItems ?? baseTheme.suggestionItems;
@@ -554,24 +673,48 @@ function WeatherSection({
 
   return (
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
-      {/* Hero card - Modern Atmospheric Glass Card */}
+      {/* Hero card - Modern Atmospheric Glass Card with Animated Mesh Gradient & Dynamic Weather Animation */}
       <div
-        className="relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border border-white/20"
-        style={{
-          background: darkMode
-            ? "linear-gradient(135deg, #0c0f12 0%, #14062d 50%, #2563ff 100%)"
-            : "linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #5715d1 100%)",
-        }}
+        className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border ${
+          darkMode ? 'hero-mesh-gradient-dark border-white/10' : 'hero-mesh-gradient-light border-white/20'
+        }`}
       >
-        {/* Ambient decorative aura (Almond Frost & Sky Glow) */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#b8ccff]/25 blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-12 -bottom-12 w-56 h-56 rounded-full bg-[#68dbff]/20 blur-3xl pointer-events-none"></div>
+        {/* Layer 1: Animated Mesh Gradient Blobs / Nodes (REQ-079) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-3xl" aria-hidden="true">
+          <div className={`absolute -right-12 -top-12 w-72 h-72 rounded-full blur-3xl animate-mesh-node-1 ${
+            darkMode ? 'bg-[#2563ff]/20' : 'bg-white/25'
+          }`}></div>
+          <div className={`absolute -left-10 -bottom-10 w-64 h-64 rounded-full blur-3xl animate-mesh-node-2 ${
+            darkMode ? 'bg-[#38bdf8]/15' : 'bg-[#68dbff]/25'
+          }`}></div>
+          <div className={`absolute right-1/4 bottom-1/4 w-52 h-52 rounded-full blur-3xl animate-mesh-node-3 ${
+            darkMode ? 'bg-[#6366f1]/15' : 'bg-[#b8ccff]/20'
+          }`}></div>
+          <div className={`absolute left-1/3 -top-16 w-60 h-60 rounded-full blur-3xl animate-mesh-node-4 ${
+            darkMode ? 'bg-[#0e7490]/15' : 'bg-[#93c5fd]/20'
+          }`}></div>
+        </div>
 
+        {/* Layer 2: Weather background animation CSS + JS (REQ-079) */}
+        <WeatherBackgroundEffect
+          condKey={activeConditionKey}
+          conditionLabel={WEATHER.conditionLabel}
+          isDark={darkMode}
+        />
+
+        {/* Dynamic Weather Atmosphere Particles (Rain streaks / Sun flares / Mist) */}
+        <WeatherAtmosphereEffects condKey={activeConditionKey} />
+
+        {/* Layer 3: Interactive UI and Weather Data at z-10 */}
         <div className="flex items-center justify-between w-full z-10">
           <button
             type="button"
             onClick={onOpenLocationSelector}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 backdrop-blur-md border border-white/25 text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group"
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group active:scale-95 ${
+              darkMode
+                ? 'bg-white/[0.08] hover:bg-white/[0.14] border-white/[0.12]'
+                : 'bg-white/20 hover:bg-white/30 border-white/30'
+            }`}
             title={isManualLocation ? "Vị trí do bạn tự chọn thủ công (Nhấp để đổi hoặc bật lại tự động định vị)" : "Vị trí tự động định vị theo khu vực thực tế của bạn (Nhấp để thay đổi)"}
             data-testid="hero-location-badge"
           >
@@ -581,7 +724,9 @@ function WeatherSection({
             </span>
             <span className="opacity-60">·</span>
             <span>{WEATHER.time}</span>
-            <span className="text-[10px] bg-white/25 hover:bg-white/35 font-bold px-1.5 py-0.5 rounded-full ml-1">
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 ${
+              darkMode ? 'bg-blue-500/25 text-blue-200 border border-blue-400/30' : 'bg-white/25 text-white'
+            }`}>
               {isManualLocation ? "Đã chọn" : "Tự động"}
             </span>
           </button>
@@ -592,10 +737,10 @@ function WeatherSection({
             {WEATHER.temp}
           </p>
           <p className="font-bold text-[18px] text-white flex items-center gap-2 drop-shadow-xs">
-            <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{baseTheme.emoji}</span>
+            <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{conditionEmoji}</span>
             <span>{WEATHER.conditionLabel}</span>
           </p>
-          <p className="font-medium text-[13.5px] text-white/80">
+          <p className="font-medium text-[13.5px] text-white/85">
             Cảm nhận {WEATHER.feelsLike}
           </p>
         </div>
@@ -607,9 +752,16 @@ function WeatherSection({
             { label: "🌫️ Bụi PM2.5", value: WEATHER.pm25 },
             { label: "👁️ Tầm nhìn", value: WEATHER.visibility }
           ].map((stat, idx) => (
-            <div key={idx} className="bg-white/15 backdrop-blur-md border border-white/25 flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-2xl hover:bg-white/25 transition-all duration-300 shadow-xs">
-              <p className="font-medium text-white/90 text-[11.5px] whitespace-nowrap">{stat.label}</p>
-              <p className="font-bold leading-5 text-white text-[14px]">{stat.value}</p>
+            <div
+              key={idx}
+              className={`flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-2xl backdrop-blur-md transition-all duration-300 shadow-2xs border ${
+                darkMode
+                  ? 'bg-white/[0.06] hover:bg-white/[0.1] border-white/[0.08]'
+                  : 'bg-white/15 hover:bg-white/25 border-white/25'
+              }`}
+            >
+              <p className={`font-medium text-[11.5px] whitespace-nowrap ${darkMode ? 'text-slate-300' : 'text-white/85'}`}>{stat.label}</p>
+              <p className="font-bold leading-5 text-white text-[14.5px]">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -619,39 +771,39 @@ function WeatherSection({
       <SmartWeatherAssistant weather={WEATHER} condKey={condKey} />
 
       {/* Forecast */}
-      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ</p>
+      <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+        <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap">🕒 DỰ BÁO HÀNG GIỜ</p>
         {WEATHER.hourlyForecast && WEATHER.hourlyForecast.length > 0 ? (
           <HourlyTemperatureChart hourlyData={WEATHER.hourlyForecast || []} />
           ) : (
-            <p className="text-[12px] text-[#5f687b] italic">Đang tải dữ liệu...</p>
+            <p className="text-[12px] text-[#4e5b6d] dark:text-slate-400 italic">Đang tải dữ liệu...</p>
           )}
         </div>
 
         
         {WEATHER.dailyForecast && WEATHER.dailyForecast.length > 0 && (
-          <div className="bg-white border border-[#e3e7ef] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full mt-0">
+          <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-4 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full mt-0 shadow-xs transition-colors duration-250">
             <div className="flex flex-col gap-1 w-full">
-              <p className="font-bold text-[#182033] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
-              {WEATHER.weekRange && <p className="font-medium text-[#5f687b] text-[12px]">{WEATHER.weekRange}</p>}
+              <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap">📅 DỰ BÁO THỜI TIẾT TUẦN</p>
+              {WEATHER.weekRange && <p className="font-medium text-[#4e5b6d] dark:text-slate-400 text-[12px]">{WEATHER.weekRange}</p>}
             </div>
             <div className="flex flex-col w-full gap-4">
               {WEATHER.dailyForecast.map((day: any, idx: number) => (
                 <div key={idx} className="flex items-center justify-between w-full">
-                  <p className="font-semibold text-[#182033] w-[70px] shrink-0 text-left">{day.day}</p>
+                  <p className="font-semibold text-[#0c0f12] dark:text-[#f8fafc] w-[70px] shrink-0 text-left">{day.day}</p>
                   
                   <div className="flex items-center gap-2 w-[110px] shrink-0">
                     <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} className="w-9 h-9 drop-shadow-sm" loading="lazy" decoding="async" alt="" />
                     <div className="flex flex-col items-start leading-tight">
-                      <span className="text-[#182033] text-[12px] font-bold">{getConditionLabel(day.icon)}</span>
-                      {day.pop > 0 && <span className="text-[#0a84ff] text-[10px] font-bold tracking-tight">Mưa {day.pop}%</span>}
+                      <span className="text-[#0c0f12] dark:text-[#f8fafc] text-[12px] font-bold">{getConditionLabel(day.icon)}</span>
+                      {day.pop > 0 && <span className="text-[#2563ff] dark:text-[#60a5fa] text-[10px] font-bold tracking-tight">Mưa {day.pop}%</span>}
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2 justify-end flex-1 ml-2">
-                    <span className="text-[#5f687b] font-medium text-[13px]">{day.tempMin}°</span>
-                    <div className="flex-1 h-1.5 bg-gradient-to-r from-blue-400 to-red-400 rounded-full opacity-70"></div>
-                    <span className="text-[#182033] font-bold text-[13px]">{day.tempMax}°</span>
+                    <span className="text-[#4e5b6d] dark:text-slate-400 font-medium text-[13px]">{day.tempMin}°</span>
+                    <div className="flex-1 h-1.5 bg-gradient-to-r from-blue-400 to-amber-400 rounded-full opacity-70"></div>
+                    <span className="text-[#0c0f12] dark:text-white font-bold text-[13px]">{day.tempMax}°</span>
                   </div>
                 </div>
               ))}
@@ -660,20 +812,20 @@ function WeatherSection({
         )}
 
 
-      <div className="bg-white border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-        <p className="font-bold text-[#182033] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
-        <p className="font-normal leading-5 text-[#5f687b] w-full">{WEATHER.forecastText}</p>
+      <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+        <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap">🔮 DỰ BÁO 3 GIỜ TỚI</p>
+        <p className="font-normal leading-5 text-[#4e5b6d] dark:text-slate-300 w-full">{WEATHER.forecastText}</p>
       </div>
 
       {/* Warning – only show when we have real warning text */}
       {warningText && (
-        <div className="bg-[#fff7ed] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
+        <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30 flex flex-col gap-2 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+          <p className="font-bold text-amber-900 dark:text-amber-200 whitespace-nowrap">🚨 CẢNH BÁO TRỌNG TÂM</p>
           <div className="flex flex-col gap-1 w-full">
               {warningText.split('\n').map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 const text = line.replace(/^[└├]\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-amber-800/90 dark:text-amber-300/80 w-full">{prefix}{text}</p>;
               })}
             </div>
         </div>
@@ -681,41 +833,41 @@ function WeatherSection({
 
       {/* Suggestion – only show when we have items */}
       {suggestionItems && suggestionItems.length > 0 && (
-        <div className="bg-[#f0fdf4] border border-[#e3e7ef] flex flex-col gap-2 items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
-          <p className="font-bold text-[#182033] whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/30 flex flex-col gap-2 items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
+          <p className="font-bold text-emerald-900 dark:text-emerald-200 whitespace-nowrap">💡 GỢI Ý LỊCH TRÌNH THỰC TẾ</p>
           <div className="flex flex-col gap-1 w-full mt-1">
             {suggestionItems.map((line, i, arr) => {
                 const prefix = arr.length > 1 ? (i === arr.length - 1 ? '└ ' : '├ ') : '└ ';
                 // Remove any leading bullet points or symbols like ▪, •, -, or corrupted chars
                 const text = line.replace(/^[^a-zA-ZÀ-ỹ0-9]+\s*/, '');
-                return <p key={i} className="font-normal leading-5 text-[#5f687b] w-full">{prefix}{text}</p>;
+                return <p key={i} className="font-normal leading-5 text-emerald-800/90 dark:text-emerald-300/80 w-full">{prefix}{text}</p>;
             })}
           </div>
         </div>
       )}
 
       {/* Combined Flood & Weather News */}
-      <div className="bg-white border border-[#e3e7ef] flex flex-col items-start overflow-hidden p-4 rounded-2xl text-[13px] w-full">
+      <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
         {/* Flood Section */}
-        <p className="font-bold text-[#182033] whitespace-nowrap mb-2 uppercase">
+        <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap mb-2 uppercase">
           BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
         </p>
         <div className="flex flex-col gap-0 w-full mb-1">
           {showFlood && floodItems && floodItems.length > 0 ? (
             floodItems.map((line, i) => (
-              <p key={i} className="font-normal leading-5 text-[#5f687b]">{line}</p>
+              <p key={i} className="font-normal leading-5 text-[#4e5b6d] dark:text-slate-400">{line}</p>
             ))
           ) : (
-            <p className="font-normal leading-5 text-[#5f687b]">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
+            <p className="font-normal leading-5 text-[#4e5b6d] dark:text-slate-400">• Chưa ghi nhận dữ liệu điểm ngập đáng chú ý.</p>
           )}
         </div>
 
         {/* Divider & Weather News */}
         {liveOverrides?.weatherNews && liveOverrides.weatherNews.length > 0 && (
           <>
-            <div className="w-full border-t border-[#e3e7ef] my-3"></div>
+            <div className="w-full border-t border-[#e2e4e8] dark:border-white/[0.08] my-3"></div>
             
-            <p className="font-bold text-[#182033] flex items-center gap-2 mb-3">
+            <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] flex items-center gap-2 mb-3">
               📰 Bài viết liên quan
             </p>
             <div className="flex flex-col gap-3 w-full">
@@ -2473,6 +2625,7 @@ function MobileLayout({ activeCategory, setActiveCategory,
   onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
+  onOpenQRModal,
   isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
@@ -2494,6 +2647,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
     onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
+    onOpenQRModal?: (data?: VietQRData) => void;
+    isManualLocation?: boolean;
 }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2502,8 +2657,8 @@ function MobileLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100]">
+    <div className="bg-transparent flex flex-col items-start w-full relative z-10">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 sticky top-0 z-[100] transition-colors">
         <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
         <div className="flex items-center">
           <div className="flex flex-col items-end">
@@ -2673,6 +2828,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
   onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
+  onOpenQRModal,
   isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
@@ -2694,6 +2850,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
     onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
+    onOpenQRModal?: (data?: VietQRData) => void;
+    isManualLocation?: boolean;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2708,6 +2866,10 @@ function TabletLayout({ activeCategory, setActiveCategory,
     );
   }, [newsFeed, searchQuery]);
   const [featured, ...rest] = filteredNews.length > 0 ? filteredNews : newsFeed;
+  const cleanRest = useMemo(() => {
+    if (!featured) return rest;
+    return rest.filter(item => !isSameArticle(item, featured));
+  }, [rest, featured]);
   const now = useCurrentTime();
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const dayName = days[now.getDay()];
@@ -2715,8 +2877,8 @@ function TabletLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100]">
+    <div className="bg-transparent flex flex-col items-start w-full relative z-10">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100] transition-colors">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
           <button
@@ -2882,7 +3044,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
           )}
 
           {/* Remaining articles */}
-          {rest.map((item, i) => (
+          {cleanRest.map((item, i) => (
             <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex gap-[var(--grid-gap)] items-center overflow-hidden p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 w-full no-underline group cursor-pointer"
             >
               <div className="relative rounded-[10px] shrink-0 size-[72px] overflow-hidden bg-[#f4f6fa]">
@@ -2936,6 +3098,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   onTokenUpdated,
   onOpenShorts,
   onOpenLocationSelector,
+  onOpenQRModal,
   isManualLocation = false
 }: {
   isFetchingCategory?: boolean;
@@ -2957,6 +3120,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     onTokenUpdated?: (token: string) => void;
     onOpenShorts?: () => void;
     onOpenLocationSelector?: () => void;
+    onOpenQRModal?: (data?: VietQRData) => void;
+    isManualLocation?: boolean;
 }) {
   const WEATHER  = (liveData ?? DEFAULT_WEATHER_DATA)[condKey];
   const newsFeed = liveNews ?? DEFAULT_NEWS_FEED;
@@ -2971,14 +3136,18 @@ function DesktopLayout({ activeCategory, setActiveCategory,
     );
   }, [newsFeed, searchQuery]);
   const [featured, ...grid] = filteredFeed.length > 0 ? filteredFeed : newsFeed;
+  const cleanGrid = useMemo(() => {
+    if (!featured) return grid;
+    return grid.filter(item => !isSameArticle(item, featured));
+  }, [grid, featured]);
   const now = useCurrentTime();
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
     const dayName = days[now.getDay()];
     const dateStr = `${dayName}, ${now.getDate()} tháng ${now.getMonth() + 1}`;
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
-    <div className="bg-[#f4f6fa] flex flex-col items-start w-full">
-      <div className="bg-white border-b border-[#e3e7ef] flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100]">
+    <div className="bg-transparent flex flex-col items-start w-full relative z-10">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100] transition-colors">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <div className="flex items-center gap-2 group cursor-pointer">
             <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">Anx.</span>
@@ -3175,7 +3344,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
           {/* News grid */}
             <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
-              {grid.map((item, i) => (
+              {cleanGrid.map((item, i) => (
                 <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden rounded-2xl shadow-sm hover:-translate-y-1.5 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
                 <div className="h-[150px] relative w-full overflow-hidden bg-slate-100 dark:bg-[#1c222d]">
@@ -3751,15 +3920,19 @@ function InfiniteScrollTrigger({ onTrigger, isLoading, hasMoreNews }: { onTrigge
 
 function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liveData?: any, condKey?: string }) {
   const WEATHER = (liveData ?? DEFAULT_WEATHER_DATA)[condKey || 'HaNoi'];
-  const topNews = news.slice(0, 5);
+  const topNews = filterDeduplicatedNews(news).slice(0, 5);
   
   if (!news.length) return null;
 
   return (
-    <div className="w-full bg-white text-[#182033] flex items-center h-[32px] overflow-hidden border-b border-[#e3e7ef] z-20 shrink-0 select-none">
-      <div className="bg-[#ff315f] text-white font-bold text-[11px] px-3 py-1 flex items-center justify-center shrink-0 z-10 h-full tracking-wider uppercase shadow-xs">
-        <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse mr-1.5"></div>
-        Tin nóng
+    <div className="w-full bg-white/85 dark:bg-[#151921]/90 backdrop-blur-md text-[#182033] dark:text-white flex items-center h-[34px] overflow-hidden border-b border-[#e3e7ef] dark:border-white/10 z-20 shrink-0 select-none shadow-2xs">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#ff315f] to-[#f97316] text-white font-extrabold text-[11px] px-3.5 py-1 flex items-center justify-center shrink-0 z-10 h-full tracking-wider uppercase shadow-xs">
+        <span className="absolute inset-0 bg-white/25 animate-shimmer-sweep pointer-events-none" />
+        <span className="relative flex size-2 mr-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full size-2 bg-white"></span>
+        </span>
+        <span>TIN NÓNG 24H</span>
       </div>
       <div className="flex-1 overflow-hidden h-full flex items-center relative pl-2" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 1%, black 99%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 1%, black 99%, transparent)' }}>
         <div className="animate-marquee whitespace-nowrap flex items-center gap-6 text-[12.5px] font-medium min-w-full hover:[animation-play-state:paused]">
@@ -5199,6 +5372,20 @@ function UserAvatarMenu({ userRole, onLogout, onOpenSubscriptions }: { userRole:
                 {userRole.youtubeSubscriptions?.length || 0}
               </span>
             </button>
+            <a 
+              href="/tung-kinh/" 
+              onClick={() => setIsOpen(false)} 
+              className="px-4 py-2 text-left text-[12.5px] text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 font-semibold transition-colors w-full flex items-center justify-between border-b border-[#e3e7ef] dark:border-white/10"
+              title="Chùa An Nhiên — Hệ Thống Tu Tập & Cầu Nguyện Trực Tuyến"
+            >
+              <div className="flex items-center gap-2">
+                <span>🪷</span>
+                <span>Tụng Kinh Online (Chùa An Nhiên)</span>
+              </div>
+              <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                Mới
+              </span>
+            </a>
             {isUserAdminQA(userRole) && (
               <a 
                 href={getDashboardUrl()} 
@@ -5389,23 +5576,177 @@ function PrivacyPolicyPage({ onClose }: { onClose: () => void }) {
   );
 }
 
+interface PreviouslyAcquiredLocation {
+  lat: number;
+  lon: number;
+  name: string;
+  nameFull?: string;
+  isManual?: boolean;
+  source?: 'gps' | 'ip' | 'manual' | 'auto';
+  timestamp?: number;
+}
+
+const getPreviouslyAcquiredLocation = (): PreviouslyAcquiredLocation | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    // 1. Kiểm tra vị trí thủ công trong phiên làm việc hiện tại
+    const sManual = sessionStorage.getItem('user_weather_session_manual_location');
+    if (sManual) {
+      const p = JSON.parse(sManual);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return { ...p, isManual: true, source: 'manual' };
+      }
+    }
+    // 2. Kiểm tra vị trí thủ công đã lưu bền vững
+    const lManual = localStorage.getItem('user_weather_manual_location');
+    if (lManual) {
+      const p = JSON.parse(lManual);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return { ...p, isManual: true, source: 'manual' };
+      }
+    }
+    // 3. Kiểm tra vị trí gần nhất hệ thống đã lấy được
+    const lastLoc = localStorage.getItem('user_weather_last_location');
+    if (lastLoc) {
+      const p = JSON.parse(lastLoc);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return p;
+      }
+    }
+    // 4. Kiểm tra vị trí tự động đã lưu trước đó
+    const autoLoc = localStorage.getItem('user_weather_auto_location');
+    if (autoLoc) {
+      const p = JSON.parse(autoLoc);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return p;
+      }
+    }
+    // 5. Kiểm tra key tương thích ngược
+    const legacyLoc = localStorage.getItem('user_weather_location');
+    if (legacyLoc) {
+      const p = JSON.parse(legacyLoc);
+      if (p && typeof p.lat === 'number' && typeof p.lon === 'number' && (p.name || p.nameFull)) {
+        return p;
+      }
+    }
+  } catch {}
+  return null;
+};
+
 export default function App() {
+  const [isAdminView, setIsAdminView] = useState(() => {
+    if (typeof window !== "undefined") {
+      const p = window.location.pathname.toLowerCase();
+      if (p.includes("tung-kinh") || p.includes("tungkinh")) {
+        window.location.replace("/tung-kinh/");
+        return false;
+      }
+      const s = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      return p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin");
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const p = window.location.pathname.toLowerCase();
+      const s = window.location.search.toLowerCase();
+      const h = window.location.hash.toLowerCase();
+      setIsAdminView(p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin"));
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const handleOpenAdmin = useCallback(() => {
+    setIsAdminView(true);
+    window.history.pushState(null, "", "/admin_board");
+  }, []);
+
+  const handleBackToSite = useCallback(() => {
+    setIsAdminView(false);
+    window.history.pushState(null, "", "/");
+  }, []);
+
+  if (isAdminView) {
+    return <AdminBoard onBackToSite={handleBackToSite} />;
+  }
+
+  return <MainSiteApp onOpenAdmin={handleOpenAdmin} />;
+}
+
+function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const doFetchRef = useRef<((lat: number, lon: number, locationNameStr?: string | null, isManualSelection?: boolean, source?: 'gps' | 'ip' | 'manual' | 'auto') => void) | null>(null);
   const fallbackToIpRef = useRef<(() => void) | null>(null);
+  const watchIdRef = useRef<number | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null);
-  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | 'auto'>('auto');
-  const [isManualLocation, setIsManualLocation] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem('user_weather_manual_location');
-      if (stored) {
-        const p = JSON.parse(stored);
-        return !!(p && p.isManual);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrModalData, setQrModalData] = useState<VietQRData>(DEFAULT_VIETQR_DATA);
+
+  const handleOpenQRModal = useCallback((data?: VietQRData) => {
+    if (data) {
+      setQrModalData(data);
+    }
+    setShowQRModal(true);
+  }, []);
+
+  // Universal click interception for any VietQR element in DOM (REQ-080)
+  useEffect(() => {
+    const handleGlobalVietQRClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const img = target.closest('img[alt="VietQR"], img[src*="vietqr.io"]') as HTMLImageElement | null;
+      const container = target.closest('.size-20, [data-testid="vietqr-thumbnail-trigger"], [data-vietqr]');
+
+      if (img || (container && container.querySelector('img[src*="vietqr.io"], img[alt="VietQR"]'))) {
+        const targetImg = img || (container?.querySelector('img[src*="vietqr.io"], img[alt="VietQR"]') as HTMLImageElement | null);
+        if (targetImg && targetImg.src) {
+          e.preventDefault();
+          e.stopPropagation();
+          try {
+            const url = new URL(targetImg.src);
+            const amount = url.searchParams.get('amount') || '4860500';
+            const addInfo = url.searchParams.get('addInfo') || 'TIEN PHONG Phòng Thuê T10';
+            const accountName = url.searchParams.get('accountName') || 'TRAN THI THUY HUYEN';
+            const filename = url.pathname.split('/').pop() || '';
+            const bankPart = filename.split('-')[0] || 'BIDV';
+            const accountNoPart = filename.split('-')[1] || '8817398313';
+
+            setQrModalData({
+              qrUrl: targetImg.src,
+              bank: bankPart,
+              accountNo: accountNoPart,
+              accountName,
+              amount,
+              addInfo
+            });
+            setShowQRModal(true);
+          } catch {
+            setQrModalData({
+              ...DEFAULT_VIETQR_DATA,
+              qrUrl: targetImg.src
+            });
+            setShowQRModal(true);
+          }
+        }
       }
-    } catch {}
-    return false;
+    };
+
+    document.addEventListener('click', handleGlobalVietQRClick, true);
+    return () => document.removeEventListener('click', handleGlobalVietQRClick, true);
+  }, []);
+  const [locationSource, setLocationSource] = useState<'gps' | 'ip' | 'manual' | 'auto'>(() => {
+    const prev = getPreviouslyAcquiredLocation();
+    return (prev && prev.source) ? prev.source : (prev?.isManual ? 'manual' : 'auto');
+  });
+  const [isManualLocation, setIsManualLocation] = useState<boolean>(() => {
+    const prev = getPreviouslyAcquiredLocation();
+    return !!(prev && prev.isManual);
   });
 
   const handleSelectLocation = (lat: number, lon: number, name: string, nameFull: string) => {
@@ -5413,10 +5754,19 @@ export default function App() {
     setShowLocationModal(false);
     setIsManualLocation(true);
     setLocationSource('manual');
+    const locObj = {
+      lat,
+      lon,
+      name,
+      nameFull: nameFull || `${name}, VN`,
+      isManual: true,
+      source: 'manual' as const,
+      timestamp: Date.now()
+    };
     try {
-      sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify({
-        lat, lon, name, nameFull, isManual: true, timestamp: Date.now()
-      }));
+      localStorage.setItem('user_weather_manual_location', JSON.stringify(locObj));
+      localStorage.setItem('user_weather_last_location', JSON.stringify(locObj));
+      sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify(locObj));
     } catch {}
     if (doFetchRef.current) {
       doFetchRef.current(lat, lon, nameFull || name, true, 'manual');
@@ -5479,7 +5829,7 @@ export default function App() {
                 doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
               }
             },
-            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
           );
           return;
         }
@@ -5502,7 +5852,7 @@ export default function App() {
           doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
         }
       },
-      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   };
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -6110,7 +6460,19 @@ useEffect(() => {
 
   const [condKey, setCondKey] = useState<ConditionKey>("mua-nho");
   const [panelOpen, setPanelOpen] = useState(false);
-  const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(undefined);
+  const [liveData, setLiveData] = useState<Record<ConditionKey, WeatherEntry> | undefined>(() => {
+    const prevLoc = getPreviouslyAcquiredLocation();
+    if (prevLoc && (prevLoc.name || prevLoc.nameFull)) {
+      const locName = prevLoc.name || (prevLoc.nameFull ? prevLoc.nameFull.split(',')[0].trim() : 'Vị trí của bạn');
+      const locFull = prevLoc.nameFull || `${locName}, VN`;
+      const initial: Record<ConditionKey, WeatherEntry> = { ...DEFAULT_WEATHER_DATA };
+      (Object.keys(initial) as ConditionKey[]).forEach(k => {
+        initial[k] = { ...initial[k], location: locName, locationFull: locFull };
+      });
+      return initial;
+    }
+    return undefined;
+  });
   const [liveNews, setLiveNews] = useState<LiveNewsItem[] | undefined>(undefined);
   const preCrawledRef = useRef<Map<string, any>>(new Map());
   const [activeCategory, setActiveCategory] = useState("Tất cả");
@@ -6130,15 +6492,7 @@ useEffect(() => {
     await new Promise(res => setTimeout(res, 400));
     
     try {
-      const getUniqueKey = (item: any) => {
-        if (item.link) return item.link.split('?')[0].replace(/^https?:\/\//, '').toLowerCase();
-        if (item.author) return item.author.trim().toLowerCase();
-        return Math.random().toString();
-      };
-      
-      const existingKeys = new Set((liveNews || []).map(getUniqueKey));
-      
-      const trulyNewItems = (fullNewsPool.current || []).filter(item => !existingKeys.has(getUniqueKey(item)));
+      const trulyNewItems = filterDeduplicatedNews(fullNewsPool.current || [], liveNews || []);
       
       if (trulyNewItems.length === 0) {
         setHasMoreNews(false);
@@ -6152,7 +6506,7 @@ useEffect(() => {
       }
       
       setLiveNews(prev => {
-        const next = [...(prev || []), ...picked];
+        const next = filterDeduplicatedNews([...(prev || []), ...picked]);
         return next;
       });
     } catch (err) {
@@ -6319,7 +6673,16 @@ useEffect(() => {
             ]
           : [...catFeeds];
         
-        const results = await Promise.all(selectedFeeds.map(fetchSingleFeed));
+        // Khử trùng lặp URL nguồn cấp để không fetch trùng một kênh RSS nhiều lần trong cùng chu kỳ
+        const seenFeedUrls = new Set<string>();
+        const uniqueFeeds = selectedFeeds.filter(feed => {
+          const u = (feed.url || '').trim().toLowerCase();
+          if (!u || seenFeedUrls.has(u)) return false;
+          seenFeedUrls.add(u);
+          return true;
+        });
+
+        const results = await Promise.all(uniqueFeeds.map(fetchSingleFeed));
         if (isCancelled) return;
         
         const fallbackImages = [imgNews1, imgNews2, imgNews3, imgNews4, imgNews5];
@@ -6439,27 +6802,26 @@ useEffect(() => {
         }
         
         const rawMixed = [...hotNews, ...normalNews];
-        // Áp dụng Lá chắn độ tươi mới tin tức (Smart Freshness Gate):
+        // Áp dụng Lá chắn độ tươi mới tin tức & Bộ lọc khử trùng lặp toàn diện:
         // 1. Khống chế cứng tin mới trong 3 ngày (loại bỏ triệt để các bài viết cũ hơn 3 ngày)
         // 2. Sắp xếp tin mới nhất lên đầu, ưu tiên tin nóng nếu trong vòng 3h.
+        // 3. Khử trùng lặp đa tầng (Canonical URL + Dấu vân tay Tiêu đề + Độ tương đồng ngữ nghĩa liên báo)
         const mixedNews = filterAndSortFreshNews(rawMixed, 3);
         
         if (!isBackground) {
-          const existingLinks = new Set(mixedNews.map(n => n.link));
           // Lọc bot items: chỉ giữ các bài tươi mới (trong 3 ngày), loại trừ triệt để tin cũ
           const botItems = activeCategory === "Tất cả"
             ? (fullNewsPool.current || [])
-                .filter(n => (n as any)._isBot && !existingLinks.has(n.link))
+                .filter(n => (n as any)._isBot)
                 .filter(n => isArticleFresh(n, 3))
             : [];
           const finalPool = filterAndSortFreshNews([...botItems, ...mixedNews], 3);
           fullNewsPool.current = finalPool;
           setLiveNews(finalPool.slice(0, 15));
         } else {
-          const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
-          const newItems = mixedNews.filter(n => !existingLinks.has(n.link));
-          if (newItems.length > 0) {
-            const combined = filterAndSortFreshNews([...newItems, ...fullNewsPool.current], 3);
+          const trulyNewItems = filterDeduplicatedNews(mixedNews, fullNewsPool.current || []);
+          if (trulyNewItems.length > 0) {
+            const combined = filterAndSortFreshNews([...trulyNewItems, ...fullNewsPool.current], 3);
             fullNewsPool.current = combined;
             setLiveNews(combined.slice(0, 15));
           }
@@ -6501,7 +6863,13 @@ useEffect(() => {
       const cur  = (w.current  as Record<string, unknown>) ?? {};
       const fore = (w.forecast_3h as Record<string, unknown>) ?? {};
       const status: string = (w.status as string) ?? "BINH_THUONG";
-      const key  = mapBotStatusToCondKey(status);
+      let key = mapBotStatusToCondKey(status);
+      if (cur.desc && typeof cur.desc === 'string') {
+        const detected = detectConditionKey(cur.desc);
+        if (detected && detected !== 'binh-thuong') {
+          key = detected;
+        }
+      }
       setCondKey(key);
 
       const now = new Date();
@@ -6585,8 +6953,7 @@ useEffect(() => {
               } as any;
             });
           
-          const existingLinks = new Set((fullNewsPool.current || []).map(n => n.link));
-          const trulyNewBotItems = allMapped.filter(n => !n.link || !existingLinks.has(n.link));
+          const trulyNewBotItems = filterDeduplicatedNews(allMapped, fullNewsPool.current || []);
           
           if (fullNewsPool.current.length === 0) {
             const freshPool = filterAndSortFreshNews(allMapped, 3);
@@ -6748,8 +7115,20 @@ useEffect(() => {
           }
           
           let trang_thai = "NANG";
-          if (n_pop > 50) trang_thai = "MUA";
-          else if (c_temp >= 35 || feels_like >= 35) trang_thai = "NANG_GAT";
+          const descLower = (c_desc || "").toLowerCase();
+          if (descLower.includes("dông") || descLower.includes("sấm") || descLower.includes("bão") || iconCode === "11d") {
+            trang_thai = "MUA_DONG";
+          } else if (descLower.includes("mưa") || n_pop > 50 || iconCode.startsWith("09") || iconCode.startsWith("10")) {
+            trang_thai = "MUA_NHO";
+          } else if (descLower.includes("nắng gắt") || descLower.includes("nóng") || c_temp >= 35 || feels_like >= 35) {
+            trang_thai = "NANG_GAT";
+          } else if (descLower.includes("mây") || descLower.includes("u ám") || iconCode.startsWith("03") || iconCode.startsWith("04")) {
+            trang_thai = "AM_U";
+          } else if (descLower.includes("sương") || iconCode.startsWith("50")) {
+            trang_thai = "AM_U";
+          } else if (descLower.includes("nắng") || iconCode === "01d" || iconCode === "02d") {
+            trang_thai = "NANG";
+          }
           
 
 
@@ -6770,7 +7149,7 @@ useEffect(() => {
             };
           });
 
-          let resolvedLocation = locationNameStr;
+          let resolvedLocation = (isManualSelection && locationNameStr) ? locationNameStr : null;
           if (!resolvedLocation) {
             // ƯU TIÊN 1: Photon Komoot OpenStreetMap Reverse Geocoding (Bóc tách chính xác từng xã/phường, quận/huyện theo ranh giới hành chính OSM)
             if (geoReverse && geoReverse.features && geoReverse.features.length > 0) {
@@ -6778,20 +7157,33 @@ useEffect(() => {
               const district = p.district || p.suburb || p.locality || p.county;
               const city = p.city || p.state;
               const formatted = formatVietnamLocationName(district, city);
-              if (formatted) {
+              if (formatted && formatted !== 'Hà Nội, VN') {
                 resolvedLocation = formatted;
+              } else if (formatted === 'Hà Nội, VN') {
+                // Nếu Photon chỉ trả về chung chung "Hà Nội", kiểm tra xem tọa độ có khớp quận huyện cụ thể không
+                const nearestDistrict = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 10);
+                if (nearestDistrict && nearestDistrict.nameFull !== 'Hà Nội, VN') {
+                  resolvedLocation = nearestDistrict.nameFull;
+                } else {
+                  resolvedLocation = formatted;
+                }
               }
             }
 
             // ƯU TIÊN 2: Thuật toán khoảng cách Haversine đối chiếu mạng lưới 63 tỉnh thành & toàn bộ quận huyện (0ms, offline fallback)
             if (!resolvedLocation) {
-              const nearestLoc = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 15);
+              const nearestLoc = findNearestVietnamLocation(lat, lon, VIETNAM_LOCATIONS, 25);
               if (nearestLoc) {
                 resolvedLocation = nearestLoc.nameFull;
               }
             }
 
-            // ƯU TIÊN 3: OpenWeatherMap Geocoding API
+            // ƯU TIÊN 3: OpenWeatherMap Weather station name (e.g., "Son Tay", "Da Nang", "Nha Trang")
+            if (!resolvedLocation && weather?.name) {
+              resolvedLocation = `${weather.name}, VN`;
+            }
+
+            // ƯU TIÊN 4: OpenWeatherMap Geocoding API
             if (!resolvedLocation && Array.isArray(owmGeo) && owmGeo.length > 0) {
               const item = owmGeo[0];
               const viName = item.local_names?.vi || item.name;
@@ -6800,12 +7192,12 @@ useEffect(() => {
               }
             }
 
-            // ƯU TIÊN 4: OpenWeatherMap Current Weather name
-            if (!resolvedLocation && weather?.name) {
-              resolvedLocation = `${weather.name}, VN`;
+            // ƯU TIÊN 5: locationNameStr gợi ý từ IP fallback (nếu có)
+            if (!resolvedLocation && locationNameStr) {
+              resolvedLocation = locationNameStr;
             }
 
-            // ƯU TIÊN 5: Fallback mặc định
+            // ƯU TIÊN 6: Fallback mặc định
             if (!resolvedLocation) {
               resolvedLocation = "Hà Nội, VN";
             }
@@ -6912,33 +7304,26 @@ useEffect(() => {
           
           processJson(jsonPayload);
           try {
+            const saveObj = {
+              lat,
+              lon,
+              name: resolvedLocation.split(',')[0].trim(),
+              nameFull: resolvedLocation,
+              isManual: isManualSelection,
+              source: source,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('user_weather_last_location', JSON.stringify(saveObj));
             if (isManualSelection) {
-              localStorage.setItem('user_weather_manual_location', JSON.stringify({
-                lat,
-                lon,
-                name: resolvedLocation.split(',')[0].trim(),
-                nameFull: resolvedLocation,
-                isManual: true,
-                source: 'manual',
-                timestamp: Date.now()
-              }));
+              localStorage.setItem('user_weather_manual_location', JSON.stringify(saveObj));
+              sessionStorage.setItem('user_weather_session_manual_location', JSON.stringify(saveObj));
               setIsManualLocation(true);
               setLocationSource('manual');
             } else {
-              localStorage.setItem('user_weather_auto_location', JSON.stringify({
-                lat,
-                lon,
-                name: resolvedLocation.split(',')[0].trim(),
-                nameFull: resolvedLocation,
-                isManual: false,
-                source: source,
-                timestamp: Date.now()
-              }));
+              localStorage.setItem('user_weather_auto_location', JSON.stringify(saveObj));
               setIsManualLocation(false);
               setLocationSource(source);
             }
-            // Dọn dẹp key cũ không phân định để tránh khóa cứng vị trí cũ
-            localStorage.removeItem('user_weather_location');
           } catch {}
           
         }).catch((e: any) => {
@@ -6967,6 +7352,18 @@ useEffect(() => {
       };
 
       const fallbackToIp = () => {
+        // Nếu hệ thống ĐÃ TỪNG LẤY ĐƯỢC vị trí hợp lệ trước đó (không phải IP Hà Nội mặc định),
+        // thì tuyệt đối giữ nguyên và cập nhật lại theo vị trí đó, không đè IP Hà Nội lên!
+        const prev = getPreviouslyAcquiredLocation();
+        if (prev && typeof prev.lat === 'number' && typeof prev.lon === 'number' && prev.name) {
+          const isGenericHanoi = (prev.source === 'ip' && (prev.name === 'Hà Nội' || prev.nameFull === 'Hà Nội, VN'));
+          if (!isGenericHanoi) {
+            console.log("[Geolocation] Preserving previously acquired location over IP fallback:", prev.nameFull || prev.name);
+            doFetch(prev.lat, prev.lon, prev.nameFull || prev.name, !!prev.isManual, prev.source || 'auto');
+            return;
+          }
+        }
+
         // Tầng 1: Sử dụng ipwho.is (HTTPS native, độ chính xác cao tại VN, không rate limit)
         fetch("https://ipwho.is/")
           .then(res => res.json())
@@ -7039,74 +7436,98 @@ useEffect(() => {
 
       fallbackToIpRef.current = fallbackToIp;
 
-      // ── BƯỚC 1: KIỂM TRA LỰA CHỌN THỦ CÔNG TRONG PHIÊN LÀM VIỆC HIỆN TẠI (SESSION) ──
-      // Chỉ duy trì vị trí thủ công nếu người dùng chủ động chọn trong phiên hiện tại (sessionStorage)
-      let manualLoc: any = null;
-      try {
-        const storedManual = sessionStorage.getItem('user_weather_session_manual_location');
-        if (storedManual) {
-          const parsed = JSON.parse(storedManual);
-          if (parsed && parsed.isManual && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
-            manualLoc = parsed;
-          }
-        }
-      } catch {}
-
-      if (manualLoc) {
-        setIsManualLocation(true);
-        doFetch(manualLoc.lat, manualLoc.lon, manualLoc.nameFull || manualLoc.name, true, 'manual');
-        return;
+      // ── BƯỚC 1: TỰ ĐỘNG CẬP NHẬT THEO VỊ TRÍ TRƯỚC ĐÓ HỆ THỐNG ĐÃ LẤY ĐƯỢC ──
+      const previouslyAcquired = getPreviouslyAcquiredLocation();
+      if (previouslyAcquired && typeof previouslyAcquired.lat === 'number' && typeof previouslyAcquired.lon === 'number') {
+        console.log("[Geolocation] Restoring and updating according to previously acquired location:", previouslyAcquired.nameFull || previouslyAcquired.name);
+        setIsManualLocation(!!previouslyAcquired.isManual);
+        setLocationSource(previouslyAcquired.source || (previouslyAcquired.isManual ? 'manual' : 'auto'));
+        doFetch(
+          previouslyAcquired.lat,
+          previouslyAcquired.lon,
+          previouslyAcquired.nameFull || previouslyAcquired.name,
+          !!previouslyAcquired.isManual,
+          previouslyAcquired.source || 'auto'
+        );
       }
 
-      // Tự động dọn dẹp key manual cũ trong localStorage để đảm bảo hệ thống luôn tự động cập nhật vị trí thực tế
-      try {
-        localStorage.removeItem('user_weather_manual_location');
-        localStorage.removeItem('user_weather_location');
-      } catch {}
-
-      // ── BƯỚC 2: TỰ ĐỘNG CẬP NHẬT VỊ TRÍ THỰC TẾ CỦA NGƯỜI DÙNG ──
-      // "hệ thống sẽ phải định vị đúng vị trí của người dùng đang ở khu vực nào thì sẽ đẩy vào"
-      setIsManualLocation(false);
-
-      // Nếu có cache tự động trước đó, load tức thì (0ms) để không bị giật lag giao diện
-      let autoCacheLoc: any = null;
-      try {
-        const storedAuto = localStorage.getItem('user_weather_auto_location');
-        if (storedAuto) {
-          const parsed = JSON.parse(storedAuto);
-          if (parsed && typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
-            autoCacheLoc = parsed;
-            doFetch(parsed.lat, parsed.lon, parsed.nameFull || parsed.name, false);
-          }
+      // Hàm kích hoạt lấy tọa độ GPS chính xác thực tế
+      const requestGpsPosition = (onFail?: () => void) => {
+        if (!navigator.geolocation) {
+          if (onFail) onFail();
+          else fallbackToIp();
+          return;
         }
-      } catch {}
 
-      // Kích hoạt định vị 2 tầng: Tầng 1 Lấy nhanh vị trí mạng/Wi-Fi (0.3s), Tầng 2 Tinh chỉnh vệ tinh GPS chính xác cao
-      if (navigator.geolocation) {
         let hasResolved = false;
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             hasResolved = true;
+            console.log("[Geolocation] Real GPS fix acquired:", pos.coords.latitude, pos.coords.longitude);
             doFetch(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
           },
-          () => {
+          (err) => {
+            console.warn("[Geolocation] High-accuracy GPS timeout or error, trying standard accuracy:", err);
             navigator.geolocation.getCurrentPosition(
               (pos2) => {
                 hasResolved = true;
+                console.log("[Geolocation] Standard position fix acquired:", pos2.coords.latitude, pos2.coords.longitude);
                 doFetch(pos2.coords.latitude, pos2.coords.longitude, null, false, 'gps');
               },
               (err2) => {
-                console.warn("Geolocation prompt or timeout, falling back to IP:", err2);
-                if (!hasResolved) fallbackToIp();
+                console.warn("[Geolocation] Standard position error, falling back to IP:", err2);
+                if (!hasResolved) {
+                  if (onFail) onFail();
+                  else fallbackToIp();
+                }
               },
-              { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+              { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
             );
           },
-          { enableHighAccuracy: false, timeout: 4000, maximumAge: 180000 }
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
         );
-      } else {
-        fallbackToIp();
+      };
+
+      // 1. Kích hoạt lấy GPS thực tế ngay lập tức
+      requestGpsPosition();
+
+      // 2. Lắng nghe Permissions API: Ngay khi người dùng nhấn "Cho phép" (Allow) trên trình duyệt, lập tức tự động cập nhật vị trí thực tế
+      if (typeof navigator !== 'undefined' && navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((pStatus) => {
+          pStatus.onchange = () => {
+            if (pStatus.state === 'granted') {
+              console.log("[Geolocation] Location permission granted by user! Re-fetching real GPS position...");
+              requestGpsPosition();
+            }
+          };
+          if (pStatus.state === 'granted') {
+            requestGpsPosition();
+          }
+        }).catch(() => {});
       }
+
+      // 3. Theo dõi vị trí di chuyển thực tế (Continuous Watcher)
+      if (typeof navigator !== 'undefined' && navigator.geolocation && navigator.geolocation.watchPosition) {
+        let lastWatchLat = 0;
+        let lastWatchLon = 0;
+        const wid = navigator.geolocation.watchPosition(
+          (pos) => {
+            const wLat = pos.coords.latitude;
+            const wLon = pos.coords.longitude;
+            const dist = haversineDistanceKm(wLat, wLon, lastWatchLat, lastWatchLon);
+            if (dist > 0.4 || lastWatchLat === 0) {
+              lastWatchLat = wLat;
+              lastWatchLon = wLon;
+              console.log("[Geolocation Watcher] Fresh position fix:", wLat, wLon);
+              doFetch(wLat, wLon, null, false, 'gps');
+            }
+          },
+          () => {},
+          { enableHighAccuracy: true, maximumAge: 30000, timeout: 25000 }
+        );
+        watchIdRef.current = wid;
+      }
+
       return;
     }
 
@@ -7121,6 +7542,25 @@ useEffect(() => {
     }; // end loadData
 
     loadData();
+
+    const handleWindowFocus = () => {
+      try {
+        const isManual = sessionStorage.getItem('user_weather_session_manual_location');
+        if (!isManual && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (doFetchRef.current) {
+                doFetchRef.current(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
+              }
+            },
+            () => {},
+            { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+          );
+        }
+      } catch {}
+    };
+    window.addEventListener('focus', handleWindowFocus);
+
     const intervalId = setInterval(() => {
       const isUserBusy = isShortsOpenRef.current || selectedArticleRef.current || (Date.now() - lastActivityRef.current < 45000);
       if (isUserBusy) {
@@ -7130,7 +7570,14 @@ useEffect(() => {
       // Không có tác động gì mới load dữ liệu định kỳ theo logic cũ
       loadData();
     }, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleWindowFocus);
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
   }, []);
 
   // ── Pre-fetch bài viết chi tiết từ News Bot Worker ──
@@ -7167,7 +7614,10 @@ useEffect(() => {
     const theme = WEATHER_THEMES[condKey];
 
   return (
-    <div className="min-h-screen w-full bg-[#f4f6fa] pb-[40px]">
+    <div className="min-h-screen w-full bg-[#f4f6fa] dark:bg-[#0c0f12] pb-[40px] relative">
+      {/* Ambient Aurora Canvas & Tech Grid Background */}
+      <AmbientAuroraBackground darkMode={darkMode} />
+
       {/* Live API status indicator */}
       {apiStatus === "error" && (
         <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-red-500/80 text-white text-[12px] px-4 py-1 rounded-full backdrop-blur-sm">
@@ -7188,13 +7638,13 @@ useEffect(() => {
       )}
 
       <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
       </div>
       <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} isManualLocation={isManualLocation} />
+        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
       </div>
 
 
@@ -7222,6 +7672,14 @@ useEffect(() => {
         onLogin={handleRelogin}
         onUpdateUser={setUserRole}
         initialTab={shortsInitialTab}
+        darkMode={darkMode}
+      />
+
+      {/* VietQR Scan Modal Popup (REQ-080) */}
+      <VietQRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        data={qrModalData}
         darkMode={darkMode}
       />
 
@@ -7254,6 +7712,10 @@ useEffect(() => {
               🛡️ QA Dashboard
             </a>
           )}
+          <a href="/tung-kinh/" className="hover:text-amber-600 dark:hover:text-amber-300 transition-colors flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400">
+            <span>🪷</span>
+            <span>Tụng Kinh Online</span>
+          </a>
           <button onClick={() => setShowPrivacyPolicy(true)} className="hover:text-[#3a7bd5] underline underline-offset-2 transition-colors">
             Chính sách Bảo mật
           </button>

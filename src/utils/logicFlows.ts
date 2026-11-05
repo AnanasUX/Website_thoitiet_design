@@ -213,23 +213,209 @@ export function getUniqueKey(item: { link?: string; author?: string; title?: str
 }
 
 /**
- * Thuật toán lọc khử trùng lặp tin tức theo Canonical Key.
+ * Chuẩn hóa tiêu đề bài báo thành dấu vân tay (Title Fingerprint)
+ * - Loại bỏ các tiền tố báo chí phổ biến ([Ảnh], [Video], Bản tin:, Nóng:,...)
+ * - Loại bỏ ký tự đặc biệt, dấu câu, chuẩn hóa khoảng trắng và chuyển chữ thường.
+ */
+export function normalizeTitleFingerprint(titleOrAuthor: string | null | undefined): string {
+  if (!titleOrAuthor || typeof titleOrAuthor !== 'string') return '';
+  return titleOrAuthor
+    .replace(/<[^>]+>/g, '') // Bỏ HTML tags
+    .replace(/^\[(ảnh|video|infographic|trực tiếp|nóng|tin nóng|tin nhanh|podcast)\]\s*/i, '')
+    .replace(/^(bản tin|dự báo thời tiết|thời tiết hôm nay|giá vàng hôm nay|tin nóng|tin mới|nóng|mới nhất)[\s:\-–—]+/i, '')
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'“”‘’…–—\[\]]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Trích xuất các số trong tiêu đề để kiểm tra tính nhất quán (số liệu, ngày tháng, tập phim, thứ tự).
+ */
+export function extractNumbers(text: string): string[] {
+  const matches = text.match(/\d+/g);
+  return matches || [];
+}
+
+/**
+ * Trích xuất tập hợp từ khóa (Tokens) để so khớp độ tương đồng tiêu đề bài viết.
+ */
+export function getTitleTokens(titleOrAuthor: string | null | undefined): Set<string> {
+  const norm = normalizeTitleFingerprint(titleOrAuthor);
+  if (!norm) return new Set();
+  const words = norm.split(' ').filter(w => w.length > 0);
+  return new Set(words);
+}
+
+/**
+ * Đo lường độ tương đồng từ vựng (Word Overlap & Inclusion Ratio) giữa hai tiêu đề bài báo.
+ * Giúp phát hiện các bài viết cùng sự kiện được đăng chéo qua nhiều báo hoặc biên tập lại một phần.
+ */
+export function areTitlesSimilar(
+  titleA: string | null | undefined,
+  titleB: string | null | undefined,
+  threshold: number = 0.80
+): boolean {
+  if (!titleA || !titleB) return false;
+  const normA = normalizeTitleFingerprint(titleA);
+  const normB = normalizeTitleFingerprint(titleB);
+  
+  if (normA && normB && normA === normB && normA.length >= 6) return true;
+  
+  // Với tiêu đề ngắn (< 25 ký tự), chỉ coi là trùng nếu tiêu đề chuẩn hóa giống hệt nhau
+  if (normA.length < 25 || normB.length < 25) {
+    return normA === normB;
+  }
+  
+  // Kiểm tra số liệu / ngày tháng: nếu 2 tiêu đề có các con số đối lập (ví dụ ngày 2/11 vs 3/11, 90 triệu vs 95 triệu)
+  const numsA = extractNumbers(normA);
+  const numsB = extractNumbers(normB);
+  if (numsA.length > 0 && numsB.length > 0) {
+    const numSetA = new Set(numsA);
+    const numSetB = new Set(numsB);
+    const diffA = [...numSetA].filter(n => !numSetB.has(n));
+    const diffB = [...numSetB].filter(n => !numSetA.has(n));
+    if (diffA.length > 0 && diffB.length > 0) {
+      return false; // Có con số xung đột (khác ngày, khác số liệu) -> không trùng
+    }
+  }
+
+  const tokensA = getTitleTokens(titleA);
+  const tokensB = getTitleTokens(titleB);
+  
+  if (tokensA.size < 6 || tokensB.size < 6) {
+    return normA === normB;
+  }
+  
+  // Tính số từ giao nhau
+  let intersectionCount = 0;
+  for (const token of tokensA) {
+    if (tokensB.has(token)) {
+      intersectionCount++;
+    }
+  }
+  
+  // Độ bao phủ từ vựng theo tập nhỏ hơn (Inclusion ratio)
+  const minSize = Math.min(tokensA.size, tokensB.size);
+  const inclusionRatio = intersectionCount / minSize;
+  
+  // Chỉ số Jaccard (Độ tương đồng toàn phần)
+  const unionSize = tokensA.size + tokensB.size - intersectionCount;
+  const jaccardRatio = unionSize > 0 ? intersectionCount / unionSize : 0;
+  
+  // Trùng khớp nếu tỷ lệ bao phủ >= 85% hoặc Jaccard >= threshold
+  return inclusionRatio >= 0.85 || jaccardRatio >= threshold;
+}
+
+/**
+ * Kiểm tra xem hai đối tượng bài báo có cùng nội dung hay không (Universal Article Equality).
+ */
+export function isSameArticle(
+  a: { link?: string; author?: string; title?: string } | null | undefined,
+  b: { link?: string; author?: string; title?: string } | null | undefined
+): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.link && b.link) {
+    const uA = getUniqueKey(a);
+    const uB = getUniqueKey(b);
+    if (uA === uB) return true;
+  }
+  const tA = a.title || a.author;
+  const tB = b.title || b.author;
+  if (tA && tB) {
+    const nA = normalizeTitleFingerprint(tA);
+    const nB = normalizeTitleFingerprint(tB);
+    if (nA && nB && nA === nB && nA.length >= 6) return true;
+    return areTitlesSimilar(tA, tB, 0.85);
+  }
+  return false;
+}
+
+/**
+ * Thuật toán lọc khử trùng lặp tin tức đa tầng toàn diện (Multi-layer Deduplication):
+ * 1. Khử trùng lặp theo Canonical URL Key (loại bỏ query params, hash, protocol, trailing slash).
+ * 2. Khử trùng lặp theo Dấu vân tay Tiêu đề (Title Fingerprint) chính xác.
+ * 3. Khử trùng lặp ngữ nghĩa theo Độ tương đồng từ vựng (Word Overlap / Inclusion) cho các bài viết đưa tin cùng sự kiện giữa các báo đài khác nhau.
  */
 export function filterDeduplicatedNews<T extends { link?: string; author?: string; title?: string }>(
   incomingItems: T[],
   existingItems: T[] = []
 ): T[] {
   if (!incomingItems || !Array.isArray(incomingItems)) return [];
-  const existingSet = new Set(existingItems.map(getUniqueKey));
+  
+  const seenCanonicalUrls = new Set<string>();
+  const seenTitleKeys = new Set<string>();
+  const seenTitleEntries: { raw: string; tokens: Set<string> }[] = [];
+
+  // Nạp các bài viết đã có vào kho đối chiếu
+  if (Array.isArray(existingItems)) {
+    for (const item of existingItems) {
+      if (!item) continue;
+      const key = getUniqueKey(item);
+      if (item.link) {
+        seenCanonicalUrls.add(key);
+      }
+      const title = item.title || item.author;
+      const normTitle = normalizeTitleFingerprint(title);
+      if (normTitle && normTitle.length >= 6) {
+        seenTitleKeys.add(normTitle);
+        if (normTitle.length >= 25) {
+          const tokens = getTitleTokens(title);
+          if (tokens.size >= 6) {
+            seenTitleEntries.push({ raw: normTitle, tokens });
+          }
+        }
+      }
+    }
+  }
+
   const result: T[] = [];
 
   for (const item of incomingItems) {
-    const key = getUniqueKey(item);
-    if (!existingSet.has(key)) {
-      existingSet.add(key);
-      result.push(item);
+    if (!item) continue;
+
+    // 1. Kiểm tra Canonical URL
+    const urlKey = item.link ? getUniqueKey(item) : '';
+    if (urlKey && seenCanonicalUrls.has(urlKey)) {
+      continue; // Trùng URL -> loại bỏ
+    }
+
+    // 2. Kiểm tra Title Fingerprint chính xác
+    const title = item.title || item.author;
+    const normTitle = normalizeTitleFingerprint(title);
+    if (normTitle && normTitle.length >= 6 && seenTitleKeys.has(normTitle)) {
+      continue; // Trùng tiêu đề chính xác -> loại bỏ
+    }
+
+    // 3. Kiểm tra Độ tương đồng ngữ nghĩa từ vựng (> 80% từ giao nhau cho bài viết dài)
+    if (normTitle && normTitle.length >= 25) {
+      let isDuplicateStory = false;
+      for (const entry of seenTitleEntries) {
+        if (areTitlesSimilar(normTitle, entry.raw)) {
+          isDuplicateStory = true;
+          break;
+        }
+      }
+      if (isDuplicateStory) {
+        continue; // Trùng câu chuyện/sự kiện tin tức -> loại bỏ
+      }
+    }
+
+    // Không trùng lặp: Thêm vào danh sách và cập nhật các kho đối chiếu
+    result.push(item);
+    if (urlKey) seenCanonicalUrls.add(urlKey);
+    if (normTitle && normTitle.length >= 6) {
+      seenTitleKeys.add(normTitle);
+      if (normTitle.length >= 25) {
+        const tokens = getTitleTokens(title);
+        if (tokens.size >= 6) {
+          seenTitleEntries.push({ raw: normTitle, tokens });
+        }
+      }
     }
   }
+
   return result;
 }
 
@@ -338,10 +524,10 @@ export function isArticleFresh(
 }
 
 /**
- * Bộ lọc và sắp xếp đảm bảo 100% độ tươi mới của tin tức:
+ * Bộ lọc và sắp xếp đảm bảo 100% độ tươi mới & triệt tiêu hoàn toàn trùng lặp tin tức:
  * 1. Triệt tiêu hoàn toàn các bài viết cũ hơn maxAgeDays (mặc định 7 ngày).
- * 2. Sắp xếp thứ tự bài viết mới nhất lên đầu (Newest first).
- * 3. Nếu hai bài xuất bản sát nhau (trong vòng 3 giờ), ưu tiên bài _isHot lên trước.
+ * 2. Sắp xếp thứ tự bài viết mới nhất lên đầu (Newest first, ưu tiên bài _isHot trong 3h).
+ * 3. Tự động áp dụng Bộ lọc khử trùng lặp đa tầng (filterDeduplicatedNews) bảo toàn phiên bản mới nhất/nóng nhất.
  */
 export function filterAndSortFreshNews<T extends { pubDate?: string; _isHot?: boolean; [key: string]: any }>(
   items: T[],
@@ -354,7 +540,7 @@ export function filterAndSortFreshNews<T extends { pubDate?: string; _isHot?: bo
   const freshItems = items.filter(item => isArticleFresh(item, maxAgeDays, referenceTimeMs));
 
   // 2. Sắp xếp thời gian giảm dần (Mới nhất lên đầu)
-  return freshItems.sort((a, b) => {
+  const sorted = freshItems.sort((a, b) => {
     const timeA = parseFlexiblePubDate(a.pubDate);
     const timeB = parseFlexiblePubDate(b.pubDate);
 
@@ -369,6 +555,9 @@ export function filterAndSortFreshNews<T extends { pubDate?: string; _isHot?: bo
 
     return timeB - timeA;
   });
+
+  // 3. Tự động khử trùng lặp đa tầng toàn diện (Canonical URL + Title Fingerprint + Word Overlap)
+  return filterDeduplicatedNews(sorted);
 }
 
 /**

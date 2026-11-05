@@ -1,0 +1,21 @@
+{
+  "name": "Chùa An Nhiên - Khóa Tụng Kinh Online",
+  "short_name": "Tụng Kinh",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#120904",
+  "theme_color": "#b87c20",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

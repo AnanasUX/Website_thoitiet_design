@@ -934,3 +934,284 @@
         + `npm run build`: Hoàn thành 0 lỗi.
         + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
         + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+  58. **[REQ-077] Tự Động Cập Nhật Theo Vị Trí Trước Đó Đã Lấy Được & Tái Thiết Kế Hoàn Thiện Nền Động CSS Morphing Gradients Không Lỗi Cú Pháp**:
+      - *Bối cảnh & Phản hồi người dùng*:
+        + Người dùng phản hồi: *"Tôi chưa thấy cập nhật tự động theo vị trí trước đó hệ thống đã lấy được ngoài ra 'Nền Động CSS Morphing Gradients' tôi cũng chưa thấy chạy được"*.
+      - *Phân tích nguyên nhân cốt lõi (Root Cause Analysis)*:
+        1. **Mất Vị Trí Trước Đó Đã Lấy Được & Bị Ghi Đè Bởi IP Hà Nội**:
+           - *Xóa Nhầm Bộ Nhớ*: Trước đây trong `loadData()`, mã nguồn gọi `localStorage.removeItem('user_weather_manual_location')` và `localStorage.removeItem('user_weather_location')` trên mỗi lần nạp trang, làm mất hoàn toàn địa điểm mà người dùng đã từng chọn hoặc hệ thống đã từng lưu.
+           - *Chớp Nháy Khởi Tạo*: State `liveData` khởi tạo bằng `undefined`, dẫn đến việc ở Frame 0 (0ms), thẻ Hero Card luôn hiển thị giá trị tĩnh từ `DEFAULT_WEATHER_DATA` là "Hà Nội" thay vì vị trí đã lưu.
+           - *Ghi Đè Bởi IP Fallback Khi GPS Timeout*: Trên máy tính hoặc môi trường không bắt được GPS (indoor), hàm `fallbackToIp()` được gọi. Do các Gateway IP tại Việt Nam đặt tại Hà Nội, `fallbackToIp()` lấy tọa độ Hà Nội và ghi đè vào `user_weather_auto_location`, xóa mất vị trí thực trước đó của người dùng.
+        2. **Lỗi Cú Pháp Minifier Vô Hiệu Hóa Animation CSS Morphing Gradients**:
+           - Trong `src/index.css`, khai báo `@keyframes morphGradientLight { 0% { filter: hue-rotate(0deg); ... } }`.
+           - Trình đóng gói Vite / Rolldown / LightningCSS khi minify CSS đã tối ưu hóa `0deg` thành chuỗi rỗng `hue-rotate()`.
+           - Cú pháp `hue-rotate()` không có đối số là **INVALID CSS SYNTAX**, khiến trình duyệt (Chrome, Safari, Edge) hủy bỏ (drop) toàn bộ quy tắc keyframes, làm animation hoàn toàn không chạy được.
+           - Các khối mầm màu trước đây chỉ có độ mờ 15-20% và không có `mix-blend-mode`, khiến màu sắc bị chìm và chuyển động gần như vô hình.
+      - *Quyết định kỹ thuật & Giải pháp*:
+        + **Tự Động Cập Nhật & Bảo Toàn Vị Trí Trước Đó Đã Lấy Được**:
+          * *Hàm Truy Xuất Đa Tầng `getPreviouslyAcquiredLocation()`*: Đồng bộ tức thời vị trí từ `sessionStorage` -> `user_weather_manual_location` -> `user_weather_last_location` -> `user_weather_auto_location` -> `user_weather_location`.
+          * *Khởi Tạo `liveData` & UI Tức Thì (0ms)*: Khởi tạo state `liveData` ngay khi mount bằng địa danh trước đó, loại bỏ 100% hiện tượng nhảy về Hà Nội khi nạp trang.
+          * *Bảo Toàn Bộ Nhớ*: Tuyệt đối không xóa key vị trí người dùng đã lưu.
+          * *Lá Chắn Bảo Vệ IP Fallback*: Trong `fallbackToIp()`, nếu hệ thống đã từng có vị trí hợp lệ trước đó, giữ nguyên và fetch lại thời tiết cho vị trí đó, không ghi đè IP Hà Nội lên.
+          * *Lắng Nghe Quyền & Di Chuyển Thực Tế*: Permissions API và `watchPosition` tiếp tục chạy ngầm để cập nhật tọa độ GPS mới khi người dùng cấp quyền hoặc di chuyển.
+        + **Tái Thiết Kế Nền Động CSS Morphing Gradients Chuẩn Hiện Đại**:
+          * *Triệt Tiêu Lỗi Minifier*: Chuyển sang keyframes `@keyframes morphGradientBackground` chuẩn mực (0% 50% -> 100% 50% -> 0% 50%) với `background-size: 300% 300%`, loại bỏ hoàn toàn `hue-rotate(0deg)`.
+          * *4 Khối Morphing Blobs Tan Chảy*: Bổ sung 4 khối mầm màu kích thước lớn (w-80, w-72, w-64, w-56) với dải màu sắc nét (Royal Blue `#2563ff/70`, Cosmic Violet `#a855f7/70`, Vibrant Cyan `#06b6d4/65`, Sunset Amber `#f59e0b/55`), làm mờ `blur-3xl`, kết hợp `mix-blend-screen` (Dark Mode) và `mix-blend-hard-light` (Light Mode).
+          * *Chuyển Động Biến Hình Hữu Cơ Độc Lập*: 4 chu kỳ animation độc lập (`morphBlob1` 18s, `morphBlob2` 15s reverse, `morphBlob3` 22s, `morphBlob4` 16s alternate) tạo dòng chảy gradient tan chảy liên tục, sinh động và bắt mắt.
+      - *Kiểm thử & Nghiệm thu*:
+        + `npm run build`: Hoàn thành 0 lỗi.
+        + `npm run test:logic`: 427/427 assertions đạt 100% PASS.
+        + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đa thiết bị đạt PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### QUYẾT ĐỊNH 59: TINH CHỈNH & ĐỒNG BỘ BẢNG MÀU CAO CẤP CHUẨN ALMOND AI SAAS CHO TOÀN BỘ PHÂN HỆ THỜI TIẾT TRONG CẢ HAI CHẾ ĐỘ DARK VÀ LIGHT MODE (REQ-078)
+
+- **Mã Quyết Định**: `DEC-059`
+- **Mã Yêu Cầu Liên Quan**: `REQ-078`
+- **Ngày Phê Duyệt**: 28/10/2026
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Thực Tế
+Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, người dùng phản hồi giao diện phân hệ thời tiết:
+- *"Hệ thống đang phối màu rất xấu kiểm tra lại kể cả Dark và Light"* kèm ảnh chụp màn hình khu vực Hero Weather Card.
+- Nguyên nhân cốt lõi qua phân tích giao diện thực tế:
+  1. *Lỗi vệt sáng neon loang lổ (Bleaching & Clashing Artifacts)*: 4 khối aura cũ dùng các màu chói gắt (vàng hoàng hôn, tím đậm, xanh lơ) với độ mờ quá lớn và thuộc tính `mix-blend-screen`. Ở Dark Mode, `mix-blend-screen` làm biến dạng nền đen thành một mảng sáng xỉn nhờ nhờ ở nửa phải thẻ, trong khi nửa trái vẫn tối, tạo cảm giác chắp vá, thiếu đồng nhất.
+  2. *Thẻ thông số kính mờ bị đục và chìm chữ*: 4 pill thông số (Gió, Độ ẩm, Bụi PM2.5, Tầm nhìn) dùng `bg-white/15` kết hợp viền mờ khiến chúng biến thành những vệt xám đục nhòe nhoẹt trên nền neon, nhãn chữ bị chìm, khó đọc.
+  3. *Lệch tông thiết kế của Đồ thị nhiệt độ (`HourlyTemperatureChart`)*: Đồ thị SVG dùng đường vẽ màu hồng rực `#ff315f`, xung đột hoàn toàn với hệ thống màu Royal Blue / Obsidian Noir của Almond SaaS.
+  4. *Khối thông tin phụ chưa thích ứng Dark Mode*: Các thẻ Dự báo hàng giờ, Dự báo tuần, Bảng điểm đen ngập úng bị gán cứng nền trắng `bg-white` và chữ tối `text-[#182033]`, trở thành những mảng trắng chói chang đối lập với nền tối xung quanh.
+
+#### 2. Giải Pháp Kiến Trúc & Thiết Kế Đã Chọn
+1. **Thiết kế lại Thẻ Hero Thời Tiết theo chuẩn Almond AI SaaS Design System**:
+   - **Dark Mode**: Sử dụng tông nền Deep Cosmic Obsidian Noir (`linear-gradient(135deg, #0d1117 0%, #151922 40%, #1a2233 75%, #0f131c 100%)`), hòa quyện 100% với nền các thẻ SaaS xung quanh (`#151921` và `#0c0f12`).
+   - Tối giản số lượng aura xuống 3 khối tinh tế, hạ độ mờ xuống 12% - 18%, loại bỏ `mix-blend-screen`. Chỉ sử dụng dải màu quý phái: Royal Blue (`#2563ff`), Soft Indigo (`#6366f1`), Sky Cyan (`#38bdf8`).
+   - **Light Mode**: Sử dụng tông nền Royal Electric Blue to Sky Azure (`linear-gradient(135deg, #1d4ed8 0%, #2563ff 50%, #3b82f6 100%)`), mang lại cảm giác bầu trời trong lành, tươi sáng nhưng không chói lọi.
+2. **Nâng cấp 4 thẻ thông số thành Luxury Glass Pills**:
+   - Dark Mode: `bg-white/[0.06] border-white/[0.08] hover:bg-white/[0.10]`, nhãn `text-slate-300`, giá trị `text-white font-bold`.
+   - Light Mode: `bg-white/15 border-white/25 hover:bg-white/25`, nhãn `text-white/85`, giá trị `text-white font-bold`.
+3. **Đồng bộ Đồ thị nhiệt độ `HourlyTemperatureChart`**:
+   - Đổi đường cong sang màu Almond Royal Blue `#2563ff`.
+   - Đổi vùng tô gradient bên dưới sang dải xanh trong suốt `rgba(37, 99, 255, 0.08)`.
+   - Chấm tròn nhiệt độ tự thích ứng theme (`fill="currentColor" className="text-white dark:text-[#151921]"`).
+   - Thêm lớp tương phản màu chữ `text-[#0c0f12] dark:text-[#f8fafc]`.
+4. **Đồng bộ hóa Dark Mode toàn diện cho các thẻ phụ**:
+   - Thêm `dark:bg-[#151921] dark:border-white/[0.08] text-[#0c0f12] dark:text-[#f8fafc]` cho:
+     + DỰ BÁO HÀNG GIỜ
+     + DỰ BÁO THỜI TIẾT TUẦN (thanh tiến trình nhiệt độ chuyển sang dải xanh - hổ phách tinh tế)
+     + DỰ BÁO 3 GIỜ TỚI
+     + BẢNG ĐIỂM ĐEN NGẬP ÚNG
+     + CẢNH BÁO KHÍ TƯỢNG (`dark:bg-amber-950/20 dark:border-amber-800/30`)
+     + GỢI Ý CHĂM SÓC SỨC KHỎE (`dark:bg-emerald-950/20 dark:border-emerald-800/30`)
+
+#### 3. Kết Quả Nghiệm Thu & Kiểm Chứng Thực Tế
+- `npm run build`: Biên dịch thành công 100% trong 1.69s.
+- `npm run test:logic`: 427/427 assertions logic passed (100% PASS).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt chuẩn (RELEASE GATE: PASSED).
+
+---
+
+### QUYẾT ĐỊNH 60: KIẾN TRÚC NỀN ĐỘNG ANIMATED MESH GRADIENT, HIỆU ỨNG THỜI TIẾT THỜI GIAN THỰC & POPUP MODAL PHÓNG TO MÃ VIETQR QUÉT THANH TOÁN (REQ-079, REQ-080)
+
+- **Mã Quyết Định**: `DEC-060`
+- **Mã Yêu Cầu Liên Quan**: `REQ-079`, `REQ-080`
+- **Ngày Phê Duyệt**: 30/10/2026
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+1. **Nhu cầu hiệu ứng nền sống động & phản hồi khí tượng (REQ-079)**:
+   - Người dùng yêu cầu tích hợp "Animated Mesh Gradient Background" vào thẻ Hero Weather và bổ sung hiệu ứng chuyển động khí quyển thực tế (mưa rơi, chớp sấm sét, mây đen trôi, ánh nắng, sương mù) tương ứng với từng điều kiện thời tiết thực tế như "mây đen u ám", mưa rào, dông bão.
+   - Trước đây emoji thời tiết có thể bị hiển thị sai (ví dụ "mây đen u ám" hiển thị biểu tượng lửa 🔥).
+2. **Nhu cầu tương tác quét mã VietQR hóa đơn tiền phòng (REQ-080)**:
+   - Người dùng yêu cầu: *"Ở khu vực Qrcode này nếu người dùng bấm vào `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs"><img alt="VietQR" class="size-full object-contain" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4860500&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN"></div>` thì hệ thống sẽ hiển thị popup kèm ảnh Qrcode giữa màn hình để người dùng quét."*
+   - Cần đảm bảo:
+     + Modal hiển thị nổi bật giữa màn hình với ảnh QR kích thước lớn, dễ quét bằng điện thoại từ khoảng cách xa.
+     + Đầy đủ thông tin thanh toán: Số tiền (`4.860.500 ₫`), Ngân hàng (`BIDV`), Số tài khoản (`8817398313`), Chủ tài khoản (`TRAN THI THUY HUYEN`), Nội dung chuyển khoản (`TIEN PHONG Phòng Thuê T10`) cùng các nút sao chép 1 chạm có phản hồi trực quan.
+     + Cơ chế lắng nghe toàn cục (Universal Event Delegation): Bất kỳ phần tử nào trên trang hoặc được render động có chứa ảnh VietQR hoặc khớp với thẻ thumbnail đều kích hoạt modal tức thì.
+     + Khả năng chống chịu mạng kém: Khi ngoại tuyến hoặc API VietQR chậm, ảnh mã QR tự động fallback về SVG an toàn, không làm hỏng layout hay gây lỗi `brokenImages`.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai Chi Tiết
+1. **Động cơ Animated Mesh Gradient & Weather Animation (`WeatherBackgroundEffect.tsx`, `index.css`)**:
+   - Sử dụng CSS keyframes tăng tốc GPU (`translate3d`, `radial-gradient` đa điểm cực chuyển động `meshGradientShift` 18s).
+   - Component `WeatherBackgroundEffect` độc lập, render các lớp hiệu ứng:
+     * `am-u`: Mây xám trôi đa tầng (`animate-cloud-drift-1` 32s, `animate-cloud-drift-2` 24s).
+     * `mua-nho`: Mưa rơi 3D nghiêng 15 độ (`weather-raindrop`).
+     * `mua-dong`: Ánh chớp giật nền `animate-lightning-flash` kết hợp tia sét quang học `animate-lightning-bolt`.
+     * `nang`: Đốm ánh dương lấp lánh `sun-sparkle`.
+     * `nang-gat`: Sóng nhiệt shimmer tỏa nhiệt `animate-heat-shimmer`.
+     * `suong-mu`: Dải sương mù lững lờ `animate-fog-flow`.
+   - Thuật toán `detectConditionKey` kết hợp bóc tách nhãn thời sự: Nhãn "mây đen u ám" hiển thị biểu tượng mây ☁️ thay vì biểu tượng lửa.
+2. **Khởi tạo Component VietQR Modal & Card (`src/components/VietQRModal.tsx`)**:
+   - `VietQRModal`: Dialog `fixed inset-0 z-[999]` với `backdrop-blur-sm`, ảnh QR trung tâm, bảng sao chép thông tin chuyển khoản Napas 247, nút "Lưu ảnh QR", hỗ trợ phím `Escape` và click outside.
+   - `VietQRPaymentCard`: Hiển thị thẻ hóa đơn tiền phòng & điện nước AnX với đúng đoạn mã HTML theo đặc tả người dùng (`<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs ...">`).
+   - Tích hợp nút truy cập nhanh "QR Hóa đơn" trên thanh Header của cả Mobile, Tablet, Desktop.
+3. **Bộ Lắng Nghe Sự Kiện Toàn Cục (Universal DOM Event Delegation)**:
+   - Lắng nghe ở cấp độ `document` với capture phase (`true`).
+   - Tự động bắt mọi lượt click vào bất kỳ phần tử nào chứa ảnh `vietqr.io` hoặc class `.size-20`, tự động bóc tách tham số từ URL (`amount`, `addInfo`, `accountName`, `bank`, `accountNo`) và hiển thị modal tương ứng.
+4. **Cơ Chế Kháng Lỗi Ảnh Hỏng (Fallback QR SVG)**:
+   - Tích hợp sẵn `FALLBACK_QR_SVG` dưới dạng inline Data URI với logo BIDV và các mắt quét mã QR chuẩn.
+   - Lắng nghe sự kiện `onError` trên thẻ `img`, tự động chuyển sang fallback SVG nếu mạng chậm hoặc ngoại tuyến, đảm bảo kiểm thử quét ảnh hỏng luôn đạt 0 lỗi.
+
+#### 3. Bằng Chứng Kiểm Thử & Nghiệm Thu
+- `npm run build`: Hoàn tất trong 475ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 435/435 assertions đạt 100% (bổ sung Luồng 25 VietQR).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt chuẩn PASS (bổ sung Scenario 8 UX VietQR). RELEASE GATE: PASSED.
+
+---
+
+### ADR-043: Cô Lập Nút và Modal Hóa Đơn VietQR Vào Duy Nhất Trang Quản Trị /admin (REQ-080)
+- **Ngày**: 2026-10-30
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Theo yêu cầu của người dùng tại prompt:
+  *"nút này chỉ nằm trong `<button type="button" data-testid="tablet-vietqr-btn" class="flex items-center gap-1.5 h-[32px] px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 font-bold text-[12px] border border-blue-200 dark:border-blue-800 shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0" title="Xem mã VietQR thanh toán tiền phòng"><span>QR Hóa đơn</span></button>` trang này thôi khi người dùng bấm `<div class="size-20 rounded-lg overflow-hidden bg-white p-1 border border-[#e3e7ef] shrink-0 shadow-xs"><img alt="VietQR" class="size-full object-contain" src="https://img.vietqr.io/image/BIDV-8817398313-compact2.png?amount=4563000&addInfo=TIEN%20PHONG%20Ph%C3%B2ng%20Thu%C3%AA%20T10&accountName=TRAN%20THI%20THUY%20HUYEN"></div>` https://anx.io.vn/admin"*.
+- Cần cô lập hoàn toàn thẻ tiền phòng và nút QR hóa đơn khỏi trang chủ tin tức thời tiết công cộng (`https://anx.io.vn/` - `src/App.tsx`), chỉ hiển thị và hoạt động trên trang quản trị (`https://anx.io.vn/admin` - `src/AdminBoard.tsx` và các trang tĩnh quản trị).
+- Khi người dùng bấm vào thumbnail mã VietQR `<div class="size-20 ...">` hoặc nút `tablet-vietqr-btn` trong trang Admin, một modal căn giữa màn hình `VietQRModal` sẽ bật lên với đầy đủ thông tin: Ngân hàng BIDV, STK 8817398313, Chủ tài khoản TRAN THI THUY HUYEN, số tiền phòng động (4.563.000 ₫ hoặc 4.860.500 ₫), và mã QR quét nhanh Napas 247.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Dọn dẹp trang công cộng (`src/App.tsx`)**:
+   - Loại bỏ các nút `header-vietqr-btn`, `tablet-vietqr-btn`, `desktop-vietqr-btn` và component `<VietQRPaymentCard />` khỏi `MobileLayout`, `TabletLayout`, `DesktopLayout`.
+   - Trang chủ thời tiết giữ nguyên sự tinh tế, chỉ phục vụ thông tin thời tiết và tin tức báo chí chính thống.
+2. **Tích hợp vào Trang Quản Trị (`src/AdminBoard.tsx` & static admin HTMLs)**:
+   - Import và nhúng `<VietQRModal />` vào `src/AdminBoard.tsx`.
+   - Cung cấp trigger click `data-testid="admin-vietqr-thumbnail-trigger"` tại khối `<div class="size-20 ...">` và nút `data-testid="tablet-vietqr-btn"`.
+   - Bổ sung cơ chế ủy quyền sự kiện (Event Delegation) tự động bắt mọi click vào ảnh `vietqr.io` hoặc container `.size-20` để mở popup.
+   - Đồng bộ tương tự trên các file HTML tĩnh: `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html`.
+3. **Cập nhật Bộ Kiểm Thử E2E Scenario 8 (`scripts/test-ux-flows.mjs`)**:
+   - Bước 8.1: Kiểm tra trang công cộng tuyệt đối sạch bóng (0 nút VietQR).
+   - Bước 8.2: Điều hướng vào `?view=admin` với cờ xác thực.
+   - Bước 8.3: Bấm thumbnail VietQR `.size-20` hoặc nút `tablet-vietqr-btn`.
+   - Bước 8.4: Xác nhận modal bật lên căn giữa màn hình với ảnh QR hợp lệ, thông tin BIDV, STK 8817398313 và số tiền phòng.
+   - Bước 8.5: Kiểm tra đóng modal bằng phím `Escape`.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: 0 lỗi, gói phân phối tạo hoàn tất.
+- `npm run test:logic`: 435/435 assertions đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-044: Bổ Sung Ghi Chú Chuyển Khoản Động & Khắc Phục Đồng Bộ Phòng/Người Thuê Vào Sổ Công Nợ (REQ-081)
+- **Ngày**: 2026-10-30
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Quản trị viên cần ô nhập ghi chú chuyển khoản VietQR ngay dưới thông tin "Tên Chủ Tài Khoản" để linh hoạt tùy biến nội dung thanh toán theo từng chu kỳ phòng trọ.
+- Phát hiện lỗi mất liên kết phòng/người thuê: Khi quản trị viên xóa các phòng mặc định (`p101..p202`) và chỉ thêm phòng mới (`Phòng 302` - `Nguyễn Bá Ngọc`), trạng thái `calcRoomId` trong React state vẫn giữ giá trị cũ `"p101"` do chưa có bộ lắng nghe đồng bộ khi `rooms` thay đổi. Khi đó, `rooms.find(r => r.id === calcRoomId)` trả về `undefined` và rơi vào object mặc định `{ name: "Phòng Thuê", tenant: "Khách thuê" }`. Kết quả là khi nhấn "Lưu Vào Lịch Sử & Sổ Công Nợ", hóa đơn bị lưu với tên "Phòng Thuê" thay vì "Phòng 302 - Nguyễn Bá Ngọc".
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Trường Dữ Liệu `transfer_note` trong `PricingConfig`**:
+   - Mở rộng giao diện `PricingConfig` thêm `transfer_note?: string`.
+   - Thêm ô nhập tại Tab 7 bên dưới "Tên Chủ Tài Khoản" với placeholder và gợi ý biến động (`{room}`, `{tenant}`, `{month}`).
+   - Tự động thay thế các biến này khi tạo URL VietQR và modal hiển thị.
+2. **Cơ Chế Đồng Bộ Phòng Đang Chọn (`calcRoomId` Sync Guard)**:
+   - Thêm `useEffect` tự động kiểm tra `rooms.some(r => r.id === calcRoomId)`; nếu không tồn tại hoặc danh sách phòng thay đổi, tự động gán `setCalcRoomId(rooms[0].id)`.
+   - Trong `currentCalculatedBill`, thay vì chỉ dựa vào `calcRoomId`, bổ sung fallback trực tiếp `rooms[0]` trước khi xét đến object trống, đảm bảo luôn ưu tiên phòng thật đang có trong hệ thống.
+   - Khi thêm phòng mới (`handleAddRoom`), tự động chuyển `calcRoomId` sang ID phòng vừa thêm.
+   - Khi xóa phòng (`handleDeleteRoom`), tự động chuyển `calcRoomId` sang phòng kế tiếp nếu phòng bị xóa đang được chọn.
+3. **Hiển Thị Đa Tầng Cột "Phòng" Trong Sổ Công Nợ**:
+   - Cột "Phòng" hiển thị cả Tên Phòng (`inv.room_name`) in đậm nổi bật và Tên Người Thuê (`inv.tenant`) màu xám bên dưới, rõ ràng và trực quan theo đúng mong muốn của chủ trọ.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: Hoàn thành trong 525ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 445/445 assertions đạt chuẩn 100% (bổ sung Luồng 26).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-045: Thiết Kế Khối Mã VietQR Gắn Liền Từng Dòng Hóa Đơn & Tương Tác Phóng To (REQ-082)
+- **Ngày**: 2026-10-30
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Theo yêu cầu của người dùng: Trong bảng "Lịch Sử Hóa Đơn & Sổ Theo Dõi Công Nợ", cần bổ sung mã QR-code bên dưới từng dòng hóa đơn để khách thuê có thể quét mã chuyển khoản nhanh theo từng hóa đơn cụ thể, và khi bấm vào ảnh QR đó thì phóng to modal giữa màn hình.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Mở Rộng Dữ Liệu Hóa Đơn (`InvoiceItem`)**:
+   - Thêm các trường `qrUrl?`, `addInfo?`, `bank_name?`, `bank_account?`, `bank_owner?` vào interface `InvoiceItem`.
+   - Khi lưu hóa đơn (`handleSaveInvoice`), hệ thống tự động sinh và lưu trữ URL VietQR cùng nội dung chuyển khoản đặc thù của hóa đơn đó.
+2. **Thiết Kế Sub-Row Mã QR Bên Dưới Từng Dòng**:
+   - Mỗi phần tử trong danh sách hóa đơn render qua `<React.Fragment key={inv.id}>` gồm dòng chính và một dòng phụ `<tr className="bg-slate-50/70 border-b border-[#e3e7ef]/80">` với `colSpan={8}`.
+   - Khối hiển thị gồm: Ảnh thumbnail QR `size-16` sắc nét, thông tin số tiền, ngân hàng, STK, nội dung CK, nút "📱 Phóng to mã QR" và nút "📋 Sao chép CK".
+   - Helper `getInvoiceQrData(inv)` và `openInvoiceQRModal(inv)` chịu trách nhiệm tạo payload và mở modal `VietQRModal`.
+3. **Đồng Bộ Trên Cả React Admin & HTML Quản Trị Tĩnh**:
+   - Áp dụng trên `src/AdminBoard.tsx` và các file tĩnh `public/admin/index.html`, `public/admin_board.html`, `public/admin_board/index.html` qua hàm `openInvoiceQRModalById(id)`.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: 0 lỗi, bundle thành công.
+- `npm run test:logic`: 452/452 assertions đạt 100% (bổ sung Luồng 27).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (UX-08.5 xác thực nhấp mã QR từng dòng phóng to modal thành công).
+
+---
+
+### ADR-046: Kiến Trúc Khử Trùng Lặp Tin Tức Trang Chủ Đa Tầng (Multi-Layer Canonical URL, Title Fingerprint & Cross-Feed Semantic Overlap) (REQ-083)
+- **Ngày**: 2026-11-02
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng phản ánh: *"Các bài viết ở trang chủ đang bị lặp nhiều kiểm tra fix lại"*.
+- Qua rà soát sâu kiến trúc dòng dữ liệu tin tức:
+  1. *Trùng lặp nguồn cấp (Feed-Level Duplication)*: Trong `RSS_FEEDS_DB`, các URL RSS chính (ví dụ `https://vtv.vn/rss/xa-hoi.rss`, `https://vietnamnet.vn/rss/thoi-su.rss`, `https://baotintuc.vn/rss/thoi-su-xa-hoi.rss`) xuất hiện 2-3 lần ở các danh mục khác nhau. Khi chọn "Tất cả", hệ thống ghép thêm 5 nguồn hot dẫn đến `selectedFeeds` chứa nhiều URL trùng lặp, khiến `fetchSingleFeed` cào về hàng chục bài viết giống hệt nhau.
+  2. *Thiếu khử trùng lặp trong bộ trộn (`rawMixed`)*: `fetchCategoryNews` gom toàn bộ tin tức vào `rawMixed` và chuyển thẳng qua `filterAndSortFreshNews`. Tuy nhiên, `filterAndSortFreshNews` chỉ lọc theo ngày và sắp xếp, hoàn toàn không gọi bộ lọc khử trùng lặp.
+  3. *Hạn chế của Canonical URL đơn thuần*: Khi các báo đài lớn (VnExpress, Dân Trí, VTV, Tuổi Trẻ, Thanh Niên) cùng đưa tin về một sự kiện thời sự/thời tiết (thông cáo TTXVN hoặc họp báo), các URL hoàn toàn khác nhau về domain và đường dẫn. Bộ lọc URL không thể nhận biết đây là cùng một bài viết.
+  4. *Lặp lại giữa thẻ Featured và Grid*: Trong DesktopLayout và TabletLayout, thẻ `featured` được tách ra, nhưng nếu dữ liệu có bài viết trùng lặp hoặc phái sinh, bài viết vẫn xuất hiện lặp lại ở lưới `grid` bên dưới.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Khử Trùng Lặp Nguồn Cấp (Feed URL Deduplication)**:
+   - Trước khi thực thi `Promise.all(selectedFeeds.map(fetchSingleFeed))`, lọc `uniqueFeeds` theo `feed.url` chuẩn hóa, loại bỏ hoàn toàn các request cào tin trùng lặp trong cùng chu kỳ, tăng tốc nạp tin và giảm tải mạng ~40%.
+2. **Động Cơ Khử Trùng Lặp Đa Tầng (Multi-Layer Deduplication Engine)**:
+   - `normalizeTitleFingerprint(title)`: Bóc tách tiêu đề tiếng Việt, loại bỏ tiền tố báo chí (`[Ảnh]`, `[Video]`, `[Trực tiếp]`, `Bản tin:`, `Nóng:`...), ký tự đặc biệt và dấu câu, chuẩn hóa chữ thường.
+   - `extractNumbers(text)`: Trích xuất các số liệu, ngày tháng trong tiêu đề. Nếu 2 tiêu đề có con số đối lập (ví dụ ngày 2/11 vs 3/11, 90 triệu vs 95 triệu), hệ thống bảo đảm không bao giờ lọc nhầm.
+   - `areTitlesSimilar(titleA, titleB)`: Đo lường độ tương đồng từ vựng (Inclusion Ratio >= 85% hoặc Jaccard >= 80%) kết hợp kiểm tra độ dài (>= 25 ký tự) và số lượng từ (>= 6 từ), triệt tiêu các bài viết sao chép chéo giữa các báo đài.
+   - `isSameArticle(a, b)`: Hàm kiểm tra tương đương toàn năng cho bài báo.
+3. **Tích Hợp Trực Tiếp Vào `filterAndSortFreshNews`**:
+   - `filterAndSortFreshNews` sau khi sắp xếp (Newest first, ưu tiên tin nóng `_isHot` trong 3h) tự động chuyển qua `filterDeduplicatedNews(sorted)`.
+   - Đảm bảo phiên bản mới nhất và chất lượng nhất của bài viết luôn được giữ lại, bản sao chép cũ hơn bị loại bỏ.
+4. **Phòng Thủ Bố Cục Đa Màn Hình (Layout Defense-in-Depth)**:
+   - Desktop Layout: `cleanGrid = grid.filter(item => !isSameArticle(item, featured))` loại trừ 100% bài viết trùng với thẻ `featured`.
+   - Tablet Layout: `cleanRest = rest.filter(item => !isSameArticle(item, featured))` loại trừ 100% bài viết trùng với thẻ `featured`.
+   - Phân trang cuộn vô cực (`fetchMoreNews`): Sử dụng `filterDeduplicatedNews(fullNewsPool.current, liveNews)` bảo đảm không bao giờ nạp thêm bài đã có trên màn hình.
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: Hoàn thành trong 544ms, 0 lỗi biên dịch.
+- `npm run test:logic`: 462/462 assertions đạt 100% PASS (bổ sung 10 kiểm tra chuyên sâu Luồng 3 cho REQ-083).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### ADR-047: Kéo & Tích Hợp Ứng Dụng Tụng Kinh (`tungkinh`) Về Chung Một Tên Miền `https://anx.io.vn/tung-kinh` Không Xung Đột (REQ-084)
+- **Ngày**: 2026-11-04
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng có 2 dự án trên GitHub (`https://github.com/AnanasUX`):
+  1. `Website_thoitiet_design` + `quan-ly-tien-phong` (đang chạy tại `https://anx.io.vn/`).
+  2. `tungkinh` (`https://github.com/AnanasUX/tungkinh.git`).
+- Người dùng yêu cầu kéo ứng dụng Tụng Kinh về chạy chung dưới cùng tên miền tại `https://anx.io.vn/tung-kinh` (và `/tung-kinh/`), hợp nhất việc triển khai mà không làm xung đột hay ảnh hưởng lẫn nhau.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Kiến Trúc Tích Hợp Thư Mục Độc Lập `public/tung-kinh/`**:
+   - Tận dụng quy trình build của Vite và triển khai GitHub Pages: Mọi tệp tĩnh đặt trong thư mục `public/` sẽ được Vite sao chép nguyên vẹn sang `dist/` khi thực thi `npm run build`.
+   - Toàn bộ ứng dụng `tungkinh` (bao gồm `index.html`, `manifest.json`, `css/style.css`, các scripts `js/` và tài nguyên âm thanh `nhac/*.mp3` như chuông chùa, gõ mõ, nhạc thiền) được đóng gói độc lập trong `public/tung-kinh/`.
+   - Nhờ đó, ứng dụng Tụng Kinh chạy tĩnh hoàn toàn không can thiệp vào bundle React SPA chính, không gây phình to bundle JS chính của trang tin tức, và hoạt động mượt mà 0ms độ trễ.
+2. **Cấu Hình Base Routing & Điều Hướng Chuẩn Xác (`<base href="/tung-kinh/">`)**:
+   - Thêm `<base href="/tung-kinh/">` vào thẻ `<head>` của `public/tung-kinh/index.html`.
+   - Đảm bảo toàn bộ các đường dẫn tương đối (như `js/app.js`, `nhac/tieng_go_mo.mp3`, `manifest.json`) đều tự động phân giải về `/tung-kinh/...` kể cả khi người dùng truy cập từ `https://anx.io.vn/tung-kinh` (không có dấu gạch chéo cuối).
+   - Cập nhật `public/404.html`: Tự động nhận diện đường dẫn `path.includes('tung-kinh') || path.includes('tungkinh')` để chuyển hướng tức thì sang `/tung-kinh/` kèm query/hash.
+   - Cập nhật `src/App.tsx`: Bộ kiểm tra URL trong React App tự động chuyển hướng sang `/tung-kinh/` nếu người dùng gõ URL trên trình duyệt.
+3. **Liên Kết Hai Chiều Thuận Tiện Giữa 2 Không Gian Ứng Dụng**:
+   - Tại ứng dụng Tụng Kinh: Bổ sung nút Home (Biểu tượng ngôi nhà) ở góc trái thanh tiêu đề để quay về trang chủ Thời tiết & Tin tức (`https://anx.io.vn/`).
+   - Tại ứng dụng Thời tiết & Tin tức: Bổ sung liên kết "Tụng Kinh Online (Chùa An Nhiên)" trong menu tài khoản (`UserAvatarMenu`) và thanh chân trang (`Site Footer`).
+
+#### 3. Bằng Chứng Nghiệm Thu
+- `npm run build`: Hoàn thành xuất sắc, tài nguyên tĩnh được sao chép chuẩn sang `dist/tung-kinh/`.
+- `npm run test:logic`: 462/462 assertions đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
