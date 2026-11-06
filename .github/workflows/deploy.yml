@@ -29,6 +29,16 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Sync latest tungkinh from source repository
+        run: |
+          mkdir -p public/tung-kinh
+          git clone --depth=1 https://github.com/AnanasUX/tungkinh.git _temp_tungkinh
+          cp -r _temp_tungkinh/dist public/tung-kinh/
+          cp -r _temp_tungkinh/js public/tung-kinh/
+          cp -r _temp_tungkinh/css public/tung-kinh/
+          cp -r _temp_tungkinh/nhac public/tung-kinh/
+          node -e "const fs = require('fs'); let h = fs.readFileSync('_temp_tungkinh/index.html', 'utf8'); if (!h.includes('<base href=\"/tung-kinh/\">')) h = h.replace('<head>', '<head>\n  <base href=\"/tung-kinh/\">'); fs.writeFileSync('public/tung-kinh/index.html', h, 'utf8');"
+          rm -rf _temp_tungkinh
       - name: Build
         run: npm run build
       - name: Setup Pages
