@@ -1215,3 +1215,49 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn thành xuất sắc, tài nguyên tĩnh được sao chép chuẩn sang `dist/tung-kinh/`.
 - `npm run test:logic`: 462/462 assertions đạt 100% PASS.
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-048: Tự Động Hóa Quản Lý Quyền GPS & Triệt Tiêu Loading Lại Toàn Trang Khi Đã Nạp Gmail (REQ-085, REQ-086)
+- **Ngày**: 2026-11-06
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+1. **Quyền GPS & Banner Cảnh Báo Lỗi**:
+   - Khi người dùng mở modal chọn vị trí thời tiết, hệ thống trước đây hiển thị banner cảnh báo lỗi màu vàng/đỏ: *"⚠️ Không thể lấy tọa độ GPS tự động. Không thể lấy tọa độ GPS của thiết bị. Hệ thống đã tự động định vị theo IP mạng."*
+   - Nguyên nhân: Trên máy tính để bàn (PC) hoặc laptop chạy Chrome không có phần cứng GPS vệ tinh, việc gọi `getCurrentPosition` với `enableHighAccuracy: true` sẽ trả về `code === 3` (TIMEOUT) hoặc `code === 2` (POSITION_UNAVAILABLE). Trước đây, code thiết lập `gpsErrorMessage` cho cả hai trường hợp này, khiến người dùng cảm thấy phiền toái mặc dù hệ thống đã tự động định vị được theo IP mạng thành công.
+   - Người dùng yêu cầu: *"Hệ thống nếu phát hiện ra người dùng chưa cấp gps thì yêu cầu còn nếu xác định và người dùng cấp quyền truy cập rồi thì mặc nhiên hệ thống sẽ tự động lấy."*
+2. **Hiện Tượng Re-loading Toàn Trang Khi Đã Nạp Tài Khoản Gmail**:
+   - Người dùng phản hồi: *"Ngoài ra hệ thống khi đã load được gmail của người dùng rồi thì mặc nhiên sẽ không loading lại nữa thi thoảng đang sử dụng hệ thống lại loading lại lần nữa rất phiền khi sử dụng."*
+   - Nguyên nhân:
+     + Bộ đếm `setInterval` 90 giây định kỳ gọi `loadData()`. Trong `loadData()`, câu lệnh `setApiStatus('loading')` được gọi vô điều kiện.
+     + Cờ `isLoading={apiStatus === 'loading'}` được truyền vào cả 3 layout (`MobileLayout`, `TabletLayout`, `DesktopLayout`), áp dụng class `opacity-50 blur-[2px] grayscale-[0.3]` làm mờ toàn bộ giao diện và hiển thị các skeleton loading trong 1-2 giây mỗi chu kỳ 90s hoặc khi window focus.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Tự Động Hóa Quản Lý Quyền GPS qua Permissions API (REQ-085)**:
+   - Sử dụng `navigator.permissions.query({ name: 'geolocation' })` để kiểm tra trạng thái quyền:
+     + `state === 'prompt'`: Người dùng chưa cấp quyền -> Hệ thống chủ động kích hoạt `requestGpsPosition()` để trình duyệt hiển thị hộp thoại xin cấp quyền bản địa (Native Browser Prompt: Cho phép / Chặn). Nút bấm modal hiển thị "Cấp quyền GPS".
+     + `state === 'granted'`: Người dùng đã cấp quyền -> Hệ thống **mặc nhiên tự động lấy tọa độ thực tế** của thiết bị ngay lập tức mà không cần bấm thêm thao tác nào. Nút bấm modal hiển thị "✓ Đã cấp quyền (Tự động nhận diện)".
+     + Lắng nghe `pStatus.onchange`: Ngay khi người dùng nhấn "Cho phép", hệ thống lập tức tự động lấy tọa độ GPS và xóa bỏ mọi thông báo lỗi.
+   - **Triệt tiêu 100% banner lỗi khi timeout / không có chip GPS**:
+     + Chỉ hiển thị `gpsErrorMessage` khi người dùng chủ động bấm Chặn quyền vị trí (`err.code === 1` PERMISSION_DENIED) và cố tình bấm định vị trong modal.
+     + Với lỗi `code === 2` hoặc `code === 3`: Hệ thống âm thầm (silently) fallback sang định vị IP / vị trí đã lưu, bảo đảm `gpsErrorMessage` luôn là `null`, triệt tiêu hoàn toàn banner cảnh báo vàng đỏ gây khó chịu.
+2. **Kiến Trúc Zero-Flicker Background Sync & Bảo Vệ Ổn Định Khi Đã Nạp Gmail (REQ-086)**:
+   - **Tách biệt Initial Load và Background Refresh**:
+     + Bổ sung tham số `isBackgroundRefresh = false` vào `loadData`.
+     + Tạo ref `hasLoadedInitialRef = useRef(false)`, `liveDataRef` và `userRoleRef`.
+     + Chỉ thiết lập `setApiStatus('loading')` khi chưa có dữ liệu ban đầu VÀ chưa nạp tài khoản Gmail người dùng: `const isAlreadyLoaded = hasLoadedInitialRef.current || !!liveDataRef.current || !!userRoleRef.current?.email; if (!isAlreadyLoaded && !isBackgroundRefresh) setApiStatus('loading');`.
+     + Trong chu kỳ định kỳ 90s, gọi `loadData(true)` ở chế độ nền.
+   - **Bảo Vệ Trạng Thái Giao Diện (`isUiLoading`)**:
+     + Tính toán `const isUiLoading = (apiStatus === 'loading') && !liveData && !userRole?.email;`.
+     + Truyền `isLoading={isUiLoading}` vào cả 3 layout. Một khi tài khoản Gmail đã load hoặc đã có dữ liệu ban đầu, `isLoading` luôn luôn bằng `false`.
+     + Loại bỏ hiệu ứng làm mờ: `(isLoading && !liveData && !userRole?.email) ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'`.
+   - **Đồng Bộ Ngầm Lịch Google (`CalendarSection`) & YouTube**:
+     + `CalendarSection`: Khởi tạo `initialLoaded` dựa trên cache localStorage (`localStorage.getItem(cacheKey)`). Chỉ hiển thị `CalendarSectionSkeleton` ở lần đầu tiên truy cập chưa có cache và chưa có sự kiện. Các lần đồng bộ ngầm định kỳ 60s và window focus cập nhật dữ liệu âm thầm mà không làm nhấp nháy lịch.
+     + Đồng bộ YouTube: Bổ sung `hasSyncedYouTubeRef` để ngăn chặn vòng lặp re-render liên tục khi `userRole` cập nhật.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Hoàn thành xuất sắc trong 729ms, 0 lỗi TypeScript, 0 lỗi đóng gói.
+- `npm run test:logic`: 462/462 assertions đạt 100% PASS.
+- `npm run testwebsite`: Thực thi 47/47 ca kiểm thử toàn diện thực tế đạt **PASS (100%)**, vượt qua cổng kiểm duyệt phát hành (**RELEASE GATE: PASSED**).

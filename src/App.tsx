@@ -2943,7 +2943,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
         </div>
 
         {/* News panel */}
-        <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
+        <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${(isLoading && !liveData && !userRole?.email) ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
           <MarketSection />
           {userRole && userRole.email && (
             <div className="w-full">
@@ -3226,7 +3226,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         </div>
 
         {/* News column */}
-        <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${isLoading ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
+        <div className={`flex flex-1 flex-col gap-[var(--grid-gap)] items-start min-w-0 overflow-hidden transition-all duration-700 ease-in-out ${(isLoading && !liveData && !userRole?.email) ? 'opacity-50 blur-[2px] grayscale-[0.3]' : 'opacity-100 blur-0 grayscale-0'}`}>
       <div className="flex gap-[var(--grid-gap)] w-full items-stretch">
         <div className={userRole && userRole.email ? "flex-[5] min-w-0" : "w-full min-w-0"}>
           <MarketSection />
@@ -3629,6 +3629,7 @@ function LocationSelectorModal({
   isGpsLoading,
   gpsErrorMessage,
   onClearGpsError,
+  gpsPermissionStatus = 'unknown',
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -3641,6 +3642,7 @@ function LocationSelectorModal({
   isGpsLoading?: boolean;
   gpsErrorMessage?: string | null;
   onClearGpsError?: () => void;
+  gpsPermissionStatus?: 'prompt' | 'granted' | 'denied' | 'unknown';
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'popular' | 'Hà Nội' | 'TP. Hồ Chí Minh' | 'khac'>('all');
@@ -3749,16 +3751,28 @@ function LocationSelectorModal({
             data-testid="location-gps-btn"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">{isGpsLoading ? "⏳" : "🎯"}</span>
+              <span className="text-xl">{isGpsLoading ? "⏳" : (gpsPermissionStatus === 'granted' ? "📍" : "🎯")}</span>
               <div className="text-left">
                 <p className="font-bold text-[14px]">
                   {isGpsLoading ? "Đang dò tìm tọa độ GPS thực tế..." : "Tự động định vị vị trí hiện tại (GPS)"}
                 </p>
-                <p className="text-[11px] text-blue-100 opacity-90">Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết</p>
+                <p className="text-[11px] text-blue-100 opacity-90">
+                  {gpsPermissionStatus === 'granted'
+                    ? "Đã cấp quyền GPS • Tự động nhận diện khu vực của bạn"
+                    : gpsPermissionStatus === 'denied'
+                    ? "Quyền vị trí bị chặn • Nhấn để xem hướng dẫn mở khóa"
+                    : "Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết"}
+                </p>
               </div>
             </div>
             <span className="text-[12px] font-semibold bg-white/20 px-2.5 py-1 rounded-full">
-              {isGpsLoading ? "Đang xử lý" : (isManualLocation ? "Bật tự động" : "Định vị ngay")}
+              {isGpsLoading
+                ? "Đang xử lý..."
+                : gpsPermissionStatus === 'granted'
+                ? "✓ Đã cấp quyền"
+                : gpsPermissionStatus === 'prompt'
+                ? "Cấp quyền GPS"
+                : (isManualLocation ? "Bật tự động" : "Định vị ngay")}
             </span>
           </button>
         </div>
@@ -4375,7 +4389,14 @@ function CalendarSection({
   });
 
   const [loadingEvents, setLoadingEvents] = useState(false);
-  const [initialLoaded, setInitialLoaded] = useState(false);
+  const [initialLoaded, setInitialLoaded] = useState(() => {
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      return !!raw;
+    } catch {
+      return false;
+    }
+  });
   const [activeTooltipDay, setActiveTooltipDay] = useState<number | null>(null);
 
   // Tự động tải sự kiện thực tế từ Google Calendar API (100% Real Data)
@@ -4413,7 +4434,9 @@ function CalendarSection({
       return;
     }
 
-    setLoadingEvents(true);
+    if (!initialLoaded && Object.keys(events).length === 0) {
+      setLoadingEvents(true);
+    }
     const timeMin = new Date(targetYear, targetMonth, 1).toISOString();
     const timeMax = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59).toISOString();
     fetch(
@@ -4488,8 +4511,8 @@ function CalendarSection({
     };
   }, [year, month, autoFetchCalendarEvents]);
 
-  // Show skeleton only on first load when we have a token
-  if (accessToken && !initialLoaded && loadingEvents) return <CalendarSectionSkeleton />;
+  // Show skeleton only on very first initial load when we have a token and no cached events
+  if (accessToken && !initialLoaded && loadingEvents && Object.keys(events).length === 0) return <CalendarSectionSkeleton />;
 
   const daysInMonth = getDaysInMonth(year, month);
   let firstDay = getFirstDayOfMonth(year, month);
@@ -5705,6 +5728,7 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [gpsErrorMessage, setGpsErrorMessage] = useState<string | null>(null);
+  const [gpsPermissionState, setGpsPermissionState] = useState<'prompt' | 'granted' | 'denied' | 'unknown'>('unknown');
   const [showQRModal, setShowQRModal] = useState(false);
   const [qrModalData, setQrModalData] = useState<VietQRData>(DEFAULT_VIETQR_DATA);
 
@@ -5812,7 +5836,6 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
     } catch {}
     setIsManualLocation(false);
     if (!navigator.geolocation) {
-      setGpsErrorMessage("Trình duyệt không hỗ trợ Geolocation. Hệ thống đã tự động định vị theo IP mạng.");
       if (fallbackToIpRef.current) fallbackToIpRef.current();
       return;
     }
@@ -5821,6 +5844,7 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
       (pos) => {
         setIsGpsLocating(false);
         setGpsErrorMessage(null);
+        setGpsPermissionState('granted');
         setLocationSource('gps');
         setShowLocationModal(false);
         if (doFetchRef.current) {
@@ -5828,52 +5852,45 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         }
       },
       (err) => {
-        if (err.code === 3 || err.code === 2) {
-          navigator.geolocation.getCurrentPosition(
-            (pos2) => {
-              setIsGpsLocating(false);
-              setGpsErrorMessage(null);
-              setLocationSource('gps');
-              setShowLocationModal(false);
-              if (doFetchRef.current) {
-                doFetchRef.current(pos2.coords.latitude, pos2.coords.longitude, null, false, 'gps');
-              }
-            },
-            () => {
-              setIsGpsLocating(false);
-              let msg = "Không thể lấy tọa độ GPS của thiết bị. Hệ thống đã tự động định vị theo IP mạng.";
-              setGpsErrorMessage(msg);
-              setLocationSource('ip');
-              if (fallbackToIpRef.current) {
-                fallbackToIpRef.current();
-              } else if (doFetchRef.current) {
-                doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
-              }
-            },
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
-          );
+        // Nếu người dùng bấm Chặn (PERMISSION_DENIED = 1):
+        if (err.code === 1) {
+          setIsGpsLocating(false);
+          setGpsPermissionState('denied');
+          setGpsErrorMessage("Quyền vị trí đang bị chặn trên trình duyệt. Vui lòng bấm vào biểu tượng cài đặt/ổ khóa 🔒 trên thanh địa chỉ trình duyệt, chọn 'Cho phép' quyền Vị trí và bấm lại nút này, hoặc chọn nhanh địa phương bên dưới.");
+          setLocationSource('ip');
+          if (fallbackToIpRef.current) fallbackToIpRef.current();
           return;
         }
 
-        console.warn("GPS request error:", err);
-        setIsGpsLocating(false);
-        let msg = "Không thể lấy tọa độ GPS của thiết bị. Hệ thống chuyển sang ước tính theo IP mạng.";
-        if (err.code === 1) {
-          msg = "Quyền vị trí đang bị chặn trên trình duyệt. Vui lòng bấm vào biểu tượng cài đặt/ổ khóa 🔒 trên thanh địa chỉ trình duyệt, chọn 'Cho phép' quyền Vị trí và bấm lại nút này, hoặc chọn nhanh địa phương bên dưới.";
-        } else if (err.code === 2) {
-          msg = "Dịch vụ vị trí của thiết bị hiện không khả dụng (Location Services có thể đang tắt). Hệ thống đã ước tính vị trí theo IP mạng.";
-        } else if (err.code === 3) {
-          msg = "Hết thời gian chờ phản hồi GPS. Hệ thống đã tự động ước tính theo IP mạng.";
-        }
-        setGpsErrorMessage(msg);
-        setLocationSource('ip');
-        if (fallbackToIpRef.current) {
-          fallbackToIpRef.current();
-        } else if (doFetchRef.current) {
-          doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
-        }
+        // Lỗi code 2 (POSITION_UNAVAILABLE) hoặc code 3 (TIMEOUT) trên PC không có chip GPS:
+        // Thử lại 1 lần nhanh với độ chính xác tiêu chuẩn
+        navigator.geolocation.getCurrentPosition(
+          (pos2) => {
+            setIsGpsLocating(false);
+            setGpsErrorMessage(null);
+            setGpsPermissionState('granted');
+            setLocationSource('gps');
+            setShowLocationModal(false);
+            if (doFetchRef.current) {
+              doFetchRef.current(pos2.coords.latitude, pos2.coords.longitude, null, false, 'gps');
+            }
+          },
+          () => {
+            // Tự động và âm thầm fallback sang IP mạng mà KHÔNG hiển thị banner lỗi đỏ gây khó chịu
+            setIsGpsLocating(false);
+            setGpsErrorMessage(null);
+            setLocationSource('ip');
+            if (fallbackToIpRef.current) {
+              fallbackToIpRef.current();
+            } else if (doFetchRef.current) {
+              doFetchRef.current(21.0285, 105.8542, "Hà Nội, VN", false, 'auto');
+            }
+            setShowLocationModal(false);
+          },
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   };
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
@@ -6316,8 +6333,10 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
   };
 
   // Tự động đồng bộ thông tin kênh YouTube nếu người dùng đã đăng nhập và có token
+  const hasSyncedYouTubeRef = useRef(false);
   useEffect(() => {
-    if (userRole && userRole._access_token && !userRole._ytChecked && (!userRole.youtubeChannel || !Array.isArray(userRole.youtubeSubscriptions) || userRole.youtubeSubscriptions.length === 0 || userRole.youtubeNeedsAuth)) {
+    if (userRole && userRole._access_token && !hasSyncedYouTubeRef.current && (!userRole.youtubeChannel || !Array.isArray(userRole.youtubeSubscriptions) || userRole.youtubeSubscriptions.length === 0 || userRole.youtubeNeedsAuth)) {
+      hasSyncedYouTubeRef.current = true;
       const token = userRole._access_token;
       const copy = { ...userRole, _ytChecked: true };
       fetchAndAttachYouTubeData(token, copy).then((synced) => {
@@ -6329,7 +6348,7 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         saveUserAuthCookie(synced);
       }).catch(() => {});
     }
-  }, [userRole]);
+  }, [userRole?._access_token]);
   
   // Tự động yêu cầu OAuth2 token ngầm cho Google Calendar qua Google Identity Services (GIS)
   useEffect(() => {
@@ -6499,6 +6518,11 @@ useEffect(() => {
   const [activeCategory, setActiveCategory] = useState("Tất cả");
   const [liveOverrides, setLiveOverrides] = useState<LiveOverrides | undefined>(undefined);
   const [apiStatus, setApiStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const liveDataRef = useRef(liveData);
+  liveDataRef.current = liveData;
+  const userRoleRef = useRef(userRole);
+  userRoleRef.current = userRole;
+  const hasLoadedInitialRef = useRef(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isFetchingCategory, setIsFetchingCategory] = useState(false);
     const fullNewsPool = useRef<any[]>([]);
@@ -6873,7 +6897,7 @@ useEffect(() => {
 
   // ── Load live data: ?data=<base64json> (bot-embedded) hoặc ?api=<url> (fetch) ───
   useEffect(() => {
-    const loadData = () => {
+    const loadData = (isBackgroundRefresh = false) => {
     const params  = new URLSearchParams(window.location.search);
     const rawData = params.get("data");   // base64 JSON từ bot
     const cData   = params.get("cdata");  // zlib compressed base64 JSON từ bot
@@ -6997,6 +7021,7 @@ useEffect(() => {
         weatherNews: (Array.isArray(json.weatherNews) && json.weatherNews.length > 0) ? (json.weatherNews as any) : undefined,
       });
 
+      hasLoadedInitialRef.current = true;
       setApiStatus("ok");
     }
 
@@ -7063,7 +7088,10 @@ useEffect(() => {
 
     // Nếu không có dữ liệu từ Bot và không có apiUrl, trang web tự động fetch dữ liệu thực tế
     if (!cData && !rawData && !apiUrl) {
-        setApiStatus("loading");
+        const isAlreadyLoaded = hasLoadedInitialRef.current || !!liveDataRef.current || !!userRoleRef.current?.email;
+        if (!isAlreadyLoaded && !isBackgroundRefresh) {
+          setApiStatus("loading");
+        }
         
         const doFetch = (lat: number, lon: number, locationNameStr: string | null = null, isManualSelection = false, source: 'gps' | 'ip' | 'manual' | 'auto' = 'auto') => {
           const apiKey = "a201c471567522a7d0b7a0567ad245fe";
@@ -7485,14 +7513,21 @@ useEffect(() => {
           (pos) => {
             hasResolved = true;
             console.log("[Geolocation] Real GPS fix acquired:", pos.coords.latitude, pos.coords.longitude);
+            setGpsPermissionState('granted');
+            setGpsErrorMessage(null);
             doFetch(pos.coords.latitude, pos.coords.longitude, null, false, 'gps');
           },
           (err) => {
+            if (err.code === 1) {
+              setGpsPermissionState('denied');
+            }
             console.warn("[Geolocation] High-accuracy GPS timeout or error, trying standard accuracy:", err);
             navigator.geolocation.getCurrentPosition(
               (pos2) => {
                 hasResolved = true;
                 console.log("[Geolocation] Standard position fix acquired:", pos2.coords.latitude, pos2.coords.longitude);
+                setGpsPermissionState('granted');
+                setGpsErrorMessage(null);
                 doFetch(pos2.coords.latitude, pos2.coords.longitude, null, false, 'gps');
               },
               (err2) => {
@@ -7502,29 +7537,44 @@ useEffect(() => {
                   else fallbackToIp();
                 }
               },
-              { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+              { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
             );
           },
-          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
         );
       };
 
-      // 1. Kích hoạt lấy GPS thực tế ngay lập tức
-      requestGpsPosition();
-
-      // 2. Lắng nghe Permissions API: Ngay khi người dùng nhấn "Cho phép" (Allow) trên trình duyệt, lập tức tự động cập nhật vị trí thực tế
+      // Lắng nghe Permissions API:
+      // - Nếu chưa cấp quyền (state === 'prompt'): Gọi requestGpsPosition() để kích hoạt hộp thoại xin quyền của trình duyệt
+      // - Nếu đã cấp quyền (state === 'granted'): Mặc nhiên tự động lấy tọa độ thực tế ngay lập tức
+      // - Nếu bị chặn (state === 'denied'): Tự động dùng fallbackToIp() ngầm mà không gây lỗi
       if (typeof navigator !== 'undefined' && navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: 'geolocation' as PermissionName }).then((pStatus) => {
+          setGpsPermissionState(pStatus.state);
           pStatus.onchange = () => {
+            setGpsPermissionState(pStatus.state);
             if (pStatus.state === 'granted') {
-              console.log("[Geolocation] Location permission granted by user! Re-fetching real GPS position...");
+              console.log("[Geolocation] Location permission granted by user! Auto-acquiring GPS position...");
+              setGpsErrorMessage(null);
               requestGpsPosition();
             }
           };
           if (pStatus.state === 'granted') {
+            console.log("[Geolocation] Permission already granted! Auto-acquiring GPS...");
+            setGpsErrorMessage(null);
             requestGpsPosition();
+          } else if (pStatus.state === 'prompt') {
+            console.log("[Geolocation] Permission not yet prompted, requesting browser prompt...");
+            requestGpsPosition();
+          } else if (pStatus.state === 'denied') {
+            console.log("[Geolocation] Permission previously denied. Falling back to IP silently.");
+            fallbackToIp();
           }
-        }).catch(() => {});
+        }).catch(() => {
+          requestGpsPosition();
+        });
+      } else {
+        requestGpsPosition();
       }
 
       // 3. Theo dõi vị trí di chuyển thực tế (Continuous Watcher)
@@ -7588,8 +7638,8 @@ useEffect(() => {
         // Người dùng đang thao tác hoặc đang mở Shorts/bài viết -> Không kích hoạt tải lại
         return;
       }
-      // Không có tác động gì mới load dữ liệu định kỳ theo logic cũ
-      loadData();
+      // Không có tác động gì mới load dữ liệu định kỳ theo logic cũ (cập nhật ngầm không nhấp nháy UI)
+      loadData(true);
     }, 90 * 1000); // 1.5 minutes (90s) for Real-time Gold updates
     return () => {
       clearInterval(intervalId);
@@ -7658,15 +7708,23 @@ useEffect(() => {
         />
       )}
 
-      <div className="md:hidden w-full">
-        <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
-      </div>
-      <div className="hidden md:block xl:hidden w-full">
-        <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
-      </div>
-      <div className="hidden xl:block w-full">
-        <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={apiStatus === 'loading'} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
-      </div>
+      {/* Khi tài khoản Gmail đã load hoặc đã có dữ liệu ban đầu, tuyệt đối không loading lại */}
+      {(() => {
+        const isUiLoading = (apiStatus === 'loading') && !liveData && !userRole?.email;
+        return (
+          <>
+            <div className="md:hidden w-full">
+              <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={isUiLoading} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
+            </div>
+            <div className="hidden md:block xl:hidden w-full">
+              <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={isUiLoading} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
+            </div>
+            <div className="hidden xl:block w-full">
+              <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={isUiLoading} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
+            </div>
+          </>
+        );
+      })()}
 
 
       {/* Modal chọn vị trí thời tiết tương tác */}
@@ -7682,6 +7740,7 @@ useEffect(() => {
         isGpsLoading={isGpsLocating}
         gpsErrorMessage={gpsErrorMessage}
         onClearGpsError={() => setGpsErrorMessage(null)}
+        gpsPermissionStatus={gpsPermissionState}
       />
 
       {/* Video Shorts Modal (Trải nghiệm TikTok / YouTube Shorts) */}

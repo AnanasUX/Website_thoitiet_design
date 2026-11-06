@@ -88,6 +88,8 @@
 | REQ-072 | PROMPT-20261024-02 | Chuẩn hóa toàn diện ngôn ngữ thiết kế khung viền (Frame & Surface Architecture), khắc phục triệt để lỗi chuyển đổi màu sắc Dark/Light mode: Thêm @custom-variant dark vào Tailwind CSS v4, đồng bộ thẻ trắng #ffffff viền #e2e4e8 ở Light mode, Deep Obsidian #151921 viền trắng 8% ở Dark mode, làm mịn dải màu cảnh báo pastel/glow và chuyển sắc mượt mà 0.25s cubic-bezier | P1 | UI/UX & Theme Engine | TC-016, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs | @custom-variant dark loại bỏ kích hoạt nhầm dark:, thẻ bài viết & widget đồng bộ Almond Noir/Porcelain, chuyển sắc mượt 250ms, 47/47 E2E PASS |
 | REQ-083 | PROMPT-20261102-01 | Khử trùng lặp tin tức trang chủ đa tầng toàn diện: Chuẩn hóa Canonical URL, Dấu vân tay Tiêu đề (Title Fingerprint), Triệt tiêu bài viết đưa tin cùng sự kiện giữa các báo đài (Semantic Word Overlap >= 85%), Khử trùng URL nguồn cấp trong fetchCategoryNews, Tự động deduplicate trong filterAndSortFreshNews và phân tách rạch ròi featured vs grid | P0 | News Ingestion / Deduplication | TC-022, TC-027 | PASS | logicFlows.ts, App.tsx, test-logic-flows.mjs | 462/462 logic tests PASS, 47/47 E2E PASS |
 | REQ-084 | PROMPT-20261104-01 | Tích hợp ứng dụng Tụng Kinh (Chùa An Nhiên - tungkinh) trực tiếp vào website chung tên miền https://anx.io.vn/tung-kinh, cấu hình base routing, đồng bộ asset audio/js/css, bổ sung nút điều hướng quay về trang chủ và xử lý SPA 404 rewrite | P0 | Domain Integration / Tụng Kinh | TC-020, TC-028 | PASS | public/tung-kinh/, App.tsx, 404.html | Tích hợp toàn diện Tụng Kinh chạy mượt mà tại https://anx.io.vn/tung-kinh chung 1 domain anx.io.vn không xung đột |
+| REQ-085 | PROMPT-20261106-01 | Tự động hóa quản lý quyền GPS & định vị khí tượng liền mạch: Chủ động yêu cầu cấp quyền khi chưa cấp (state === 'prompt'), tự động lấy tọa độ thực tế khi đã cấp quyền (state === 'granted') và triệt tiêu 100% banner cảnh báo lỗi giả lập ("Không thể lấy tọa độ GPS tự động") khi thiết bị timeout/không có chip GPS | P0 | Weather / Geolocation Permissions | TC-016, TC-020 | PASS | App.tsx, testwebsite.mjs:TC-016 | Permissions API query, tự động lấy khi granted, suppress non-denial GPS error banners, 47/47 E2E PASS |
+| REQ-086 | PROMPT-20261106-01 | Khắc phục triệt để hiện tượng loading lại toàn trang khi đã nạp tài khoản Gmail (userRole.email) hoặc khi đã có dữ liệu ban đầu: Triệt tiêu isLoading khi làm mới nền định kỳ 90s, window focus, loại bỏ mờ giao diện (opacity-50 blur-[2px]) và đồng bộ ngầm ổn định tuyệt đối | P0 | Auth / Zero-Flicker Background Sync | TC-020, TC-025 | PASS | App.tsx, testwebsite.mjs:TC-020, TC-025 | isUiLoading guard, background refresh không setApiStatus loading, Calendar initialLoaded cache, 47/47 E2E PASS |
 
 ## Prompt intake log
 
@@ -152,6 +154,7 @@
 | PROMPT-20261024-02 | 2026-10-24 | Về giao diện Dark và Light về chuyển đổi màu sắc khung đang rất xấu cần điều chỉnh chỉnh sửa lại | REQ-072 | Resolved | Approved |
 | PROMPT-20261102-01 | 2026-11-02 | Các bài viết ở trang chủ đang bị lặp nhiều kiểm tra fix lại | REQ-083 | Resolved | Approved |
 | PROMPT-20261104-01 | 2026-11-04 | Kéo 2 dự án Website_thoitiet_design và tungkinh về chung 1 domain https://anx.io.vn/, trang tụng kinh tại https://anx.io.vn/tung-kinh | REQ-084 | None | Approved |
+| PROMPT-20261106-01 | 2026-11-06 | Hệ thống nếu phát hiện người dùng chưa cấp GPS thì yêu cầu, nếu đã cấp quyền thì mặc nhiên tự động lấy; loại bỏ thông báo lỗi; khắc phục triệt để hiện tượng loading lại khi đã nạp Gmail | REQ-085, REQ-086 | None | Approved |
 
 ### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-065)
 
@@ -622,5 +625,42 @@
      - Tại `src/App.tsx`: Bổ sung mục "Tụng Kinh Online (Chùa An Nhiên)" trong menu đại diện người dùng (`UserAvatarMenu`) và dưới chân trang (`Site Footer`) dẫn trực tiếp đến `/tung-kinh/`.
   4. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
      - `npm run build`: 0 lỗi biên dịch, các asset mp3 và js được đồng bộ sang `dist/tung-kinh/`.
+     - `npm run test:logic`: 462/462 assertions đạt chuẩn 100% PASS.
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-085 & REQ-086)
+
+- **Mã Yêu Cầu**: `REQ-085`
+- **Tiêu Đề**: Tự Động Hóa Quản Lý Quyền GPS & Định Vị Khí Tượng Liền Mạch (Seamless Geolocation Permissions & Error Suppression)
+- **Nguồn Prompt**: `PROMPT-20261106-01`: *"Hệ thống nếu phát hiện ra người dùng chưa cấp gps thì yêu cầu còn nếu xác định và người dùng cấp quyền truy cập rồi thì mặc nhiên hệ thống sẽ tự động lấy."*
+- **Phân Hệ**: Khí Tượng, Permissions API, Geolocation Watcher & Location Modal (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Phát hiện & Quản Lý Trạng Thái Quyền Vị Trí Thông Minh qua Permissions API*:
+     - Khi `navigator.permissions.query({ name: 'geolocation' })` trả về `state === 'prompt'`: Hệ thống chủ động yêu cầu quyền vị trí, kích hoạt hộp thoại xin quyền chuẩn của trình duyệt. Nút bấm trong Modal hiển thị nhãn "Cấp quyền GPS".
+     - Khi `state === 'granted'`: Hệ thống mặc nhiên tự động lấy tọa độ thực tế của thiết bị ngay lập tức, không yêu cầu người dùng phải bấm thao tác thủ công. Nút bấm trong Modal hiển thị nhãn "✓ Đã cấp quyền (Tự động nhận diện)".
+     - Khi `pStatus.onchange` phát hiện người dùng bấm "Cho phép" (Allow): Lập tức tự động lấy tọa độ GPS thực tế và cập nhật thời tiết tức thì.
+  2. *Triệt Tiêu 100% Banner Cảnh Báo Lỗi Giả Lập Trong Modal*:
+     - Khi thiết bị không có chip GPS vệ tinh (máy tính để bàn PC/laptop Windows) dẫn tới timeout (code 3) hoặc unavailable (code 2), hệ thống tự động và âm thầm (silently) chuyển sang định vị IP / vị trí đã lưu.
+     - Tuyệt đối không hiển thị banner cảnh báo lỗi đỏ/vàng `gpsErrorMessage` ("Không thể lấy tọa độ GPS tự động") gây hoang mang cho người dùng.
+     - Chỉ hiển thị hướng dẫn mở khóa qua biểu tượng 🔒 ổ khóa trên thanh địa chỉ khi quyền thực sự bị người dùng bấm "Chặn" (`code === 1` PERMISSION_DENIED) và người dùng bấm yêu cầu định vị trong modal.
+
+- **Mã Yêu Cầu**: `REQ-086`
+- **Tiêu Đề**: Khắc Phục Triệt Để Hiện Tượng Re-Loading Toàn Trang Khi Đã Nạp Tài Khoản Gmail (Zero-Flicker Background Sync & UI Stability)
+- **Nguồn Prompt**: `PROMPT-20261106-01`: *"Ngoài ra hệ thống khi đã load được gmail của người dùng rồi thì mặc nhiên sẽ không loading lại nữa thi thoảng đang sử dụng hệ thống lại loading lại lần nữa rất phiền khi sử dụng."*
+- **Phân Hệ**: Quản Lý Phiên Người Dùng, Cập Nhật Nền Định Kỳ 90s, Google Calendar & Layout State (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Nguyên Tắc Zero-Flicker Loading State*:
+     - Tách bạch rạch ròi giữa tải ban đầu (Initial Mount khi chưa có dữ liệu và chưa có tài khoản) và làm mới nền (Background Refresh định kỳ 90s, window focus, geo watcher).
+     - Khi tài khoản Gmail đã nạp (`userRole?.email`) hoặc khi đã có dữ liệu ban đầu (`liveData !== null` hoặc `hasLoadedInitialRef.current = true`):
+       + `isLoading` truyền vào `MobileLayout`, `TabletLayout`, `DesktopLayout` luôn giữ nguyên là `false`.
+       + `loadData(true)` ở chế độ nền tuyệt đối KHÔNG gọi `setApiStatus("loading")`.
+       + Triệt tiêu hoàn toàn hiệu ứng làm mờ giao diện (`opacity-50 blur-[2px] grayscale-[0.3]`) và không bao giờ hiện lại NewsSkeleton hay WeatherSkeleton.
+  2. *Đồng Bộ Ổn Định Lịch Google (`CalendarSection`) & YouTube Channel*:
+     - `CalendarSection` khởi tạo `initialLoaded` dựa trên cache localStorage, không bao giờ hiển thị `CalendarSectionSkeleton` khi đã có lịch trong bộ đệm.
+     - `fetchAndAttachYouTubeData` sử dụng `hasSyncedYouTubeRef` bảo đảm chỉ đồng bộ đúng 1 lần khi có token, triệt tiêu 100% vòng lặp cập nhật `userRole` gây re-render liên tục.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: 0 lỗi biên dịch (729ms).
      - `npm run test:logic`: 462/462 assertions đạt chuẩn 100% PASS.
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).

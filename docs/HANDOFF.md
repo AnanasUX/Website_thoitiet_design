@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.54.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: `06adb12` (`fix(dedup): refine title tokenization and numeric discrepancies for cross-feed deduplication (REQ-083)`)
+- **Phiên bản**: `1.55.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-085, REQ-086
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
@@ -18,6 +18,19 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+15. **[REQ-086] Khắc Phục Triệt Để Hiện Tượng Re-Loading Toàn Trang Khi Đã Nạp Tài Khoản Gmail (Zero-Flicker Background Sync & UI Stability)**:
+    - *Bảo vệ trạng thái giao diện khi có Gmail hoặc dữ liệu ban đầu*: Tính toán `isUiLoading = (apiStatus === 'loading') && !liveData && !userRole?.email`. Khi đã có Gmail hoặc đã có dữ liệu thời tiết ban đầu, `isLoading` truyền vào `MobileLayout`, `TabletLayout`, `DesktopLayout` luôn luôn bằng `false`.
+    - *Làm mới dữ liệu nền ngầm (Background Refresh)*: Hàm `loadData(true)` ở chu kỳ 90 giây và window focus chạy ngầm hoàn toàn, tuyệt đối không gọi `setApiStatus('loading')`, triệt tiêu 100% hiện tượng màn hình bị mờ (`opacity-50 blur-[2px] grayscale-[0.3]`) và hiện skeleton loading.
+    - *Bộ đệm Lịch Google (`CalendarSection`)*: Khởi tạo `initialLoaded` dựa trên `localStorage.getItem(cacheKey)`. Chỉ hiển thị skeleton khi chưa có sự kiện nào trong bộ nhớ đệm, bảo đảm lịch luôn mở tức thì và cập nhật âm thầm.
+    - *Cách ly vòng lặp YouTube Sync*: Bổ sung `hasSyncedYouTubeRef` ngăn chặn re-render lặp vòng khi `userRole` cập nhật.
+
+14. **[REQ-085] Tự Động Hóa Quản Lý Quyền GPS & Triệt Tiêu 100% Banner Cảnh Báo Lỗi Giả Lập Trong Modal (Seamless Geolocation Permissions)**:
+    - *Quản lý trạng thái quyền vị trí qua Permissions API*:
+      + Khi `state === 'prompt'`: Hệ thống chủ động yêu cầu cấp quyền vị trí, kích hoạt hộp thoại của trình duyệt để người dùng dễ dàng cho phép; nút bấm modal hiển thị nhãn "Cấp quyền GPS".
+      + Khi `state === 'granted'`: Hệ thống mặc nhiên tự động lấy tọa độ thực tế của thiết bị ngay lập tức, không yêu cầu thao tác thủ công; nút bấm modal hiển thị nhãn "✓ Đã cấp quyền (Tự động nhận diện)".
+      + Lắng nghe `pStatus.onchange`: Khi người dùng bấm "Cho phép" (Allow), tự động nhận diện GPS và cập nhật thời tiết tức thì.
+    - *Triệt tiêu 100% banner lỗi khi timeout hoặc không có chip GPS*: Khi thiết bị PC/laptop gặp timeout hoặc unavailable (code 2/3), hệ thống tự động và âm thầm fallback sang định vị IP / vị trí đã lưu, bảo đảm `gpsErrorMessage` luôn là `null`, không bao giờ hiển thị banner lỗi đỏ/vàng gây hoang mang cho người dùng.
 
 13. **[REQ-084] Kéo & Hợp Nhất Ứng Dụng Tụng Kinh (Chùa An Nhiên - `tungkinh`) Về Chung 1 Tên Miền Tại `https://anx.io.vn/tung-kinh`**:
     - *Tích hợp ứng dụng độc lập*: Đóng gói toàn bộ mã nguồn của dự án `tungkinh` (HTML5, Vanilla JS, CSS3, Web Audio MP3, Paho MQTT, Supabase Realtime) vào thư mục tĩnh `public/tung-kinh/`. Khi build Vite, hệ thống xuất sang `dist/tung-kinh/` và triển khai tự động lên GitHub Pages `anx.io.vn`.

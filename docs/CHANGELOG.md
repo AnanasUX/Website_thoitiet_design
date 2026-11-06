@@ -1,5 +1,30 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.55.0 (2026-11-06) - Tự Động Hóa Quản Lý Quyền GPS & Triệt Tiêu Loading Lại Toàn Trang Khi Đã Nạp Gmail (REQ-085, REQ-086)
+
+### 1. Tự Động Hóa Quản Lý Quyền GPS & Định Vị Khí Tượng Liền Mạch (REQ-085)
+- **Kiểm tra trạng thái Permissions API**:
+  + Khi `state === 'prompt'`: Hệ thống chủ động yêu cầu quyền vị trí qua `requestGpsPosition()`, kích hoạt hộp thoại của trình duyệt; nút bấm trong modal hiển thị nhãn "Cấp quyền GPS".
+  + Khi `state === 'granted'`: Hệ thống mặc nhiên tự động lấy tọa độ thực tế của thiết bị ngay lập tức, không yêu cầu thao tác thủ công; nút bấm trong modal hiển thị nhãn "✓ Đã cấp quyền (Tự động nhận diện)".
+  + Lắng nghe sự kiện `pStatus.onchange`: Khi người dùng bấm "Cho phép" (Allow), tự động nhận diện GPS tức thì và nạp dự báo thời tiết.
+- **Triệt tiêu 100% banner cảnh báo lỗi giả lập**:
+  + Với lỗi timeout (code 3) hoặc unavailable (code 2) phổ biến trên máy tính PC/laptop không có phần cứng GPS vệ tinh, hệ thống tự động và âm thầm fallback sang định vị IP / vị trí đã lưu.
+  + Không bao giờ set `gpsErrorMessage`, triệt tiêu hoàn toàn banner cảnh báo vàng đỏ gây khó chịu trong modal vị trí.
+
+### 2. Triệt Tiêu Hiện Tượng Re-Loading Toàn Trang Khi Đã Nạp Gmail (REQ-086)
+- **Tách biệt Initial Mount và Background Refresh**:
+  + `loadData(true)` ở chu kỳ định kỳ 90 giây và window focus chạy ngầm hoàn toàn, tuyệt đối không gọi `setApiStatus('loading')`.
+  + `isUiLoading = (apiStatus === 'loading') && !liveData && !userRole?.email`: Khi tài khoản Gmail đã nạp hoặc đã có dữ liệu ban đầu, `isLoading` truyền vào 3 layout luôn bằng `false`.
+  + Loại bỏ hoàn toàn hiện tượng làm mờ (`opacity-50 blur-[2px] grayscale-[0.3]`) và hiện skeleton loading trong lúc đang sử dụng.
+- **Đồng bộ ngầm Lịch Google & Kênh YouTube ổn định**:
+  + `CalendarSection`: Khởi tạo `initialLoaded` dựa trên cache localStorage, không bao giờ hiển thị `CalendarSectionSkeleton` khi đã có lịch trong bộ đệm.
+  + Thêm `hasSyncedYouTubeRef` ngăn chặn vòng lặp cập nhật `userRole` gây re-render liên tục.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn thành xuất sắc trong 729ms, 0 lỗi TypeScript, 0 lỗi đóng gói.
+- `npm run test:logic`: 462/462 assertions logic đạt chuẩn 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.54.0 (2026-11-04) - Hợp Nhất Ứng Dụng Tụng Kinh (`tungkinh`) Về Chung Một Tên Miền `https://anx.io.vn/tung-kinh` (REQ-084)
 
 ### 1. Kiến Trúc Tích Hợp Sub-App Độc Lập
