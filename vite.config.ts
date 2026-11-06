@@ -62,10 +62,10 @@ export default defineConfig(({ mode }) => {
           skipWaiting: true,
           clientsClaim: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-          globIgnores: ['**/fonts/**', 'mock-thanhnien.json'],
+          globIgnores: ['**/fonts/**', 'mock-thanhnien.json', 'tung-kinh/**', 'tungkinh/**'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           navigateFallback: `${appBase}index.html`,
-          navigateFallbackDenylist: [/^\/api/, /^https?:\/\//],
+          navigateFallbackDenylist: [/\/api/, /\/tung-kinh/, /\/tungkinh/, /\/admin_board\.html/, /\/dashboard\.html/, /^https?:\/\//],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/(new-bot|gold-api)\.mrkun28\.workers\.dev\/.*/i,

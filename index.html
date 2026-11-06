@@ -32,8 +32,29 @@
     <link rel="apple-touch-icon" href="%BASE_URL%icons/apple-touch-icon.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="%BASE_URL%icons/apple-touch-icon.png" />
     <script type="text/javascript">
-      // GitHub Pages SPA redirect recovery
+      // 1. Thoát ngay lập tức nếu Service Worker cũ nạp nhầm index.html cho phân hệ Tụng Kinh
       (function() {
+        var p = (window.location.pathname || '').toLowerCase();
+        if (p.includes('/tung-kinh') || p.includes('/tungkinh')) {
+          var search = window.location.search || '';
+          var hash = window.location.hash || '';
+          fetch('/tung-kinh/index.html' + search, { cache: 'reload' })
+            .then(function(res) {
+              if (res.ok) return res.text();
+              throw new Error('fetch failed');
+            })
+            .then(function(html) {
+              document.open();
+              document.write(html);
+              document.close();
+            })
+            .catch(function() {
+              window.location.replace('/tung-kinh/index.html' + search + hash);
+            });
+          return;
+        }
+
+        // 2. GitHub Pages SPA redirect recovery
         var redirect = sessionStorage.redirect;
         delete sessionStorage.redirect;
         if (redirect && redirect !== location.href) {

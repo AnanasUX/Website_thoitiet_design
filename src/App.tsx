@@ -5634,13 +5634,20 @@ const getPreviouslyAcquiredLocation = (): PreviouslyAcquiredLocation | null => {
 };
 
 export default function App() {
+  const isTungKinh = typeof window !== "undefined" && (
+    window.location.pathname.toLowerCase().includes("tung-kinh") || 
+    window.location.pathname.toLowerCase().includes("tungkinh")
+  );
+
+  useEffect(() => {
+    if (isTungKinh) {
+      window.location.replace("/tung-kinh/index.html" + window.location.search + window.location.hash);
+    }
+  }, [isTungKinh]);
+
   const [isAdminView, setIsAdminView] = useState(() => {
     if (typeof window !== "undefined") {
       const p = window.location.pathname.toLowerCase();
-      if (p.includes("tung-kinh") || p.includes("tungkinh")) {
-        window.location.replace("/tung-kinh/");
-        return false;
-      }
       const s = window.location.search.toLowerCase();
       const h = window.location.hash.toLowerCase();
       return p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin");
@@ -5651,6 +5658,10 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const p = window.location.pathname.toLowerCase();
+      if (p.includes("tung-kinh") || p.includes("tungkinh")) {
+        window.location.replace("/tung-kinh/index.html" + window.location.search + window.location.hash);
+        return;
+      }
       const s = window.location.search.toLowerCase();
       const h = window.location.hash.toLowerCase();
       setIsAdminView(p.includes("admin") || s.includes("admin") || s.includes("view=admin") || h.includes("admin"));
@@ -5668,6 +5679,16 @@ export default function App() {
     setIsAdminView(false);
     window.history.pushState(null, "", "/");
   }, []);
+
+  if (isTungKinh) {
+    return (
+      <div className="fixed inset-0 bg-[#090401] flex flex-col items-center justify-center text-amber-200 z-[9999]">
+        <div className="w-10 h-10 border-3 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="font-serif text-base font-bold text-amber-100">Đang chuyển đến Chùa An Nhiên...</p>
+        <p className="text-[11px] text-amber-300/70 mt-1">Hệ thống tu tập &amp; tụng kinh trực tuyến</p>
+      </div>
+    );
+  }
 
   if (isAdminView) {
     return <AdminBoard onBackToSite={handleBackToSite} />;
