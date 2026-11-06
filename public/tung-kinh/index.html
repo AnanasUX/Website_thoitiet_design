@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
   <!-- MODERN UI DESIGN STYLESHEET (COMPILED WITH TAILWIND V4 & LANDSCAPE ENGINE) -->
-  <link rel="stylesheet" href="css/modern-ui.css?v=mw4snejn">
+  <link rel="stylesheet" href="css/modern-ui.css?v=mw5a3jbb">
 
   <!-- REALTIME & LIVEKIT SFU WEBRTC LIBRARIES -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -51,10 +51,9 @@
     window.SANCTUARY_CLIENT_ID = 'phattu_' + Math.random().toString(36).substring(2, 8) + '_' + Date.now().toString(36).slice(-4);
     try {
       if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('chua_an_nhien_cid', window.SANCTUARY_CLIENT_ID);
-      var saved = (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('chua_an_nhien_user_profile'));
-      if (saved) {
-        window.currentUserProfile = JSON.parse(saved);
-      }
+      var saved = (typeof localStorage !== 'undefined' && localStorage.getItem('chua_an_nhien_user_profile'))
+        || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('chua_an_nhien_user_profile'));
+      if (saved) window.currentUserProfile = JSON.parse(saved);
     } catch (_) {}
 
     // Initialize 24 sanctuary seats (cushions) to sync with Supabase Realtime
@@ -76,38 +75,8 @@
       };
     });
 
-    if (!window.currentUserProfile) {
-      var SAMPLE_NAMES = [
-        { name: 'Tuệ Phúc', dharma: 'Minh Tâm', gender: 'monk' },
-        { name: 'Diệu Hoa', dharma: 'Diệu Hoa', gender: 'female' },
-        { name: 'Phúc Thiện', dharma: 'Phúc Thiện', gender: 'monk' },
-        { name: 'Tâm An', dharma: 'Tịnh Tâm', gender: 'monk' },
-        { name: 'Diệu Tâm', dharma: 'Diệu Tâm', gender: 'female' },
-        { name: 'Thiện Duyên', dharma: 'Thiện Duyên', gender: 'monk' },
-        { name: 'Tuệ Lâm', dharma: 'Tuệ Lâm', gender: 'female' },
-        { name: 'Đăng Quang', dharma: 'Chân Quang', gender: 'monk' }
-      ];
-      var sample = SAMPLE_NAMES[Math.floor(Math.random() * SAMPLE_NAMES.length)];
-      var AVAILABLE_INIT_SEATS = [1, 3, 4, 5, 6, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20];
-      var randomSeat = AVAILABLE_INIT_SEATS[Math.floor(Math.random() * AVAILABLE_INIT_SEATS.length)];
-      window.currentUserProfile = {
-        registered: true,
-        fullName: sample.name,
-        dharmaName: sample.dharma,
-        clientIp: '113.161.x.x',
-        hometown: 'Việt Nam',
-        meritScore: 165,
-        assignedSeatNo: randomSeat,
-        avatarType: sample.gender,
-        wish: 'Cầu quốc thái dân an, gia đạo ấm êm và tâm hồn thanh tịnh'
-      };
-      try {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.setItem('chua_an_nhien_user_profile', JSON.stringify(window.currentUserProfile));
-        }
-        localStorage.setItem('chua_an_nhien_user_profile', JSON.stringify(window.currentUserProfile));
-      } catch (_) {}
-    }
+    // Do not create a fake profile. The React onboarding gate collects the
+    // required information on the first browser visit and persists it locally.
 
     if (window.currentUserProfile && window.currentUserProfile.assignedSeatNo) {
       var initSeat = window.sanctuarySeats.find(function(s) { return s.seatNo === window.currentUserProfile.assignedSeatNo; });
@@ -168,14 +137,14 @@
   </script>
 
   <!-- DHARMA WISDOM & ORACLES -->
-  <script src="js/dharma-wisdom.js?v=mw4snejn"></script>
+  <script src="js/dharma-wisdom.js?v=mw5a3jbb"></script>
 
   <!-- REAL-TIME & WEBRTC CALLING ENGINE -->
-  <script src="js/supabase-sanctuary.js?v=mw4snejn"></script>
-  <script src="js/room-chat.js?v=mw4snejn"></script>
+  <script src="js/supabase-sanctuary.js?v=mw5a3jbb"></script>
+  <script src="js/room-chat.js?v=mw5a3jbb"></script>
 
   <!-- STANDALONE BUNDLE (THREE.JS 3D TEMPLE SCENE, DOCK, PANELS, AUDIO) -->
-  <script type="module" src="js/app.bundle.js?v=mw4snejn"></script>
+  <script type="module" src="js/app.bundle.js?v=mw5a3jbb"></script>
 
   <script>
     window.addEventListener('load', async () => {
