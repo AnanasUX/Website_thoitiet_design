@@ -1,5 +1,35 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.59.0 (2026-11-07) - Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (https://anx.io.vn/), Tự Động Hóa Vệ Sinh Mô Tả Spam Rác Tiếng Nga Telegram Bot & Đồng Bộ Phát Hành (REQ-091)
+
+### 1. Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (REQ-091)
+- **Phục Hồi Hệ Thống Tokens & Typography Chuẩn Mực**:
+  + Thẻ Hero Thời Tiết, Thẻ Giá Vàng Phú Quý, Thẻ Lịch Google và toàn bộ Skeletons khôi phục chuẩn `lg:h-[400px] lg:justify-between`.
+  + Cột Thời Tiết Desktop khôi phục `w-[420px] shrink-0`, nhiệt độ `text-[64px] sm:text-[72px]`.
+  + Biến Design System chuẩn trong `src/index.css`: `--page-padding: clamp(16px, 4vw, 32px)`, `--section-gap: clamp(28px, 3.5vw, 56px)`, `--card-padding: clamp(16px, 2vw, 24px)`, `--grid-gap: clamp(12px, 2vw, 24px)`, `--card-radius: 24px`, `--header-height: clamp(56px, 6vw, 70px)`.
+  + Tỷ lệ typography: `--font-body: clamp(14.5px, 1vw, 15.5px)`, `--font-h1: clamp(28px, 3vw, 48px)`.
+  + Thanh YouTube: `p-3`, dải danh mục Tin Tức: `py-3 mt-[-12px]`.
+
+### 2. Tự Động Hóa Dọn Sạch Spam Rác Tiếng Nga Telegram Bot (`quan-ly-tien-phong`)
+- Tích hợp hàm `ensure_clean_bot_description()` trong `quan-ly-tien-phong/main.py` tự động gọi Telegram Bot API `setMyDescription` và `setMyShortDescription` khôi phục mô tả chính thức và triệt tiêu sạch sẽ link spam tiếng Nga `@panteleikosen131ser`.
+- Cung cấp tài liệu quy trình thao tác chuẩn xác trên `@BotFather` cho người dùng (`/mybots` -> `Edit Description`, `/revoke` token nếu bị lộ).
+
+### 3. Khắc Phục Triệt Để Cảnh Báo Lỗi GPS & Triệt Tiêu Re-Loading Khi Đã Có Gmail
+- Tự động lấy tọa độ thực tế khi quyền GPS đã cấp (`granted`), chủ động yêu cầu quyền khi chưa cấp (`prompt`), và triệt tiêu 100% banner cảnh báo lỗi giả lập khi thiết bị PC timeout/fallback sang IP.
+- Khóa cứng `isUiLoading = false` khi `userRole.email` hoặc dữ liệu ban đầu đã nạp, triệt tiêu 100% hiện tượng màn hình bị mờ hoặc chớp giật skeleton trong quá trình đồng bộ ngầm định kỳ 90s.
+
+### 4. Cơ Chế Service Worker Cập Nhật Ngay Tức Thì (Instant Cache Invalidation)
+- Cập nhật bộ lắng nghe `controllerchange` trong `index.html` tự động kích hoạt `window.location.reload()` tức thì khi có Service Worker mới được kích hoạt (trừ khi đang xem video Shorts).
+
+### 5. Bảo Toàn Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)
+- Duy trì 100% mã nguồn tĩnh `public/tung-kinh/index.html` của Chùa An Nhiên không can thiệp.
+
+### 6. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn thành 100% trong 2.15s.
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+- `python -m unittest discover tests -v`: 22/22 unit tests backend Telegram PASS (100%).
+
 ## Phiên bản 1.58.0 (2026-11-07) - Tinh Chỉnh Tỷ Lệ Bố Cục Responsive Chuẩn Mực Triệt Tiêu Cảm Giác "Bị Phóng To" Trên Mọi Màn Hình Desktop & Laptop (REQ-090)
 
 ### 1. Triệt Tiêu Hiện Tượng Phóng To & Dồn Ứ Tiêu Đề (REQ-090)

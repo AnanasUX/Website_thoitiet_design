@@ -93,11 +93,14 @@
 | REQ-087 | PROMPT-20261107-01 | Tách bạch hoàn toàn luồng HTML và cấu hình độc lập giữa trang chủ https://anx.io.vn/ và Chùa An Nhiên https://anx.io.vn/tung-kinh/, triệt tiêu mọi can thiệp fetch/document.write và overlay chiếm dụng DOM | P0 | Architecture / HTML Routing | TC-020 | PASS | index.html, App.tsx, testwebsite.mjs | Loại bỏ document.write và isTungKinh overlay, mỗi trang tuân thủ cấu hình HTML độc lập |
 | REQ-088 | PROMPT-20261107-01 | Tối ưu độ tinh gọn và tỷ lệ hiển thị Desktop Layout tránh phình to: Điều chỉnh chiều cao thẻ card hero/vàng/lịch h-[360px], dải header clamp(52-62px), cột thời tiết linh hoạt w-[360-410px] đưa tin tức lên trên màn hình (above-the-fold) | P1 | UI/UX / Desktop Layout | TC-014, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs:TC-014 | Giảm chiều cao khối ~100px, responsive width, loại bỏ cảm giác phóng to trên laptop Windows scaling 125-150% |
 | REQ-089 | PROMPT-20261107-02 | Hoàn trả giao diện trang tin tức https://anx.io.vn/ về đúng thiết kế Responsive chuẩn mực nguyên bản (lg:h-[400px], w-[420px], header 70px) và bảo toàn trang https://anx.io.vn/tung-kinh/ hiển thị thông tin độc lập như hiện tại | P0 | UI/UX / Responsive & Dual-Domain | TC-014, TC-020, TC-024 | PASS | App.tsx, index.css, testwebsite.mjs | Khôi phục thiết kế responsive chuẩn gốc, duy trì trang Tụng Kinh độc lập 100% |
+| REQ-090 | PROMPT-20261107-03 | Tinh chỉnh tỷ lệ bố cục responsive chuẩn mực triệt tiêu cảm giác bị phóng to trên Desktop/Laptop | P1 | Desktop Layout | TC-014, TC-024 | PASS | testwebsite.mjs:TC-014 | min-h-[280px] lg:h-[300px], w-[320-390px] |
+| REQ-091 | PROMPT-20261107-04 | Khôi phục toàn diện bố cục responsive chuẩn mực cho trang tin tức https://anx.io.vn/, tự động hóa vệ sinh mô tả spam rác tiếng Nga Telegram Bot và phát hành đồng bộ | P0 | Layout, Telegram Bot & Release | TC-014, TC-020, TC-024 | PASS | testwebsite.mjs, test_system_integrity.py | Phục hồi thiết kế canonical, ensure_clean_bot_description trong main.py, 47/47 E2E PASS |
 
 ## Prompt intake log
 
 | Prompt ID | Date | Original prompt location/reference | Requirements created/updated | Conflicts | Reviewer |
 |---|---|---|---|---|---|
+| PROMPT-20261107-04 | 2026-11-07 | Tin nhắn người dùng kèm 4 ảnh: [1] Telegram spam tiếng Nga, [2] GPS warning & loading Gmail, [3] Ảnh giao diện 09:03, [4] Ảnh giao diện 10:01 | REQ-091 | None | Lead System Architect |
 | PROMPT-20261012-01 | 2026-10-12 | Yêu cầu tích hợp module thời tiết và dự báo hàng giờ | REQ-016 | None | Approved |
 | PROMPT-20261012-02 | 2026-10-12 | Yêu cầu bảng giá thị trường tài chính thời gian thực | REQ-017 | None | Approved |
 | PROMPT-20261013-01 | 2026-10-13 | Yêu cầu trình phát Shorts: bật tiếng, overlay chặn youtube, ẩn controls 5s | REQ-009, REQ-010, REQ-011 | Resolved | Approved |
@@ -753,3 +756,36 @@
      - `npm run build`: Hoàn tất không lỗi.
      - `npm run test:logic`: 462/462 logic tests PASS.
      - `npm run testwebsite`: 47/47 E2E tests PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-091)
+
+- **MÃ YÊU CẦU**: `REQ-091`
+- **Tiêu Đề**: Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (https://anx.io.vn/), Tự Động Hóa Vệ Sinh Mô Tả Spam Rác Tiếng Nga Telegram Bot và Đồng Bộ Phát Hành GitHub Pages
+- **Nguồn Prompt**: `PROMPT-20261107-04`: Người dùng gửi 4 ảnh bằng chứng: [1] Telegram spam tiếng Nga (@panteleikosen131ser), [2] Modal GPS & hiện tượng re-loading khi có Gmail, [3] Ảnh màn hình 09:03, [4] Ảnh màn hình 10:01
+- **Phân Hệ**: DesktopLayout, WeatherSection, MarketSection, CalendarSection, Service Worker Precache, Telegram Bot Profile (`src/App.tsx`, `src/index.css`, `index.html`, `quan-ly-tien-phong/main.py`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Gốc (Canonical Responsive Layout) Cho Trang Tin Tức (`https://anx.io.vn/`)*:
+     - Phục hồi hệ thống Design System tokens trong `src/index.css`: `--page-padding: clamp(16px, 4vw, 32px);`, `--section-gap: clamp(28px, 3.5vw, 56px);`, `--card-padding: clamp(16px, 2vw, 24px);`, `--grid-gap: clamp(12px, 2vw, 24px);`, `--card-radius: 24px;`, `--header-height: clamp(56px, 6vw, 70px);`.
+     - Phục hồi tỷ lệ typography: `--font-body: clamp(14.5px, 1vw, 15.5px);`, `--font-h1: clamp(28px, 3vw, 48px);`, `--font-h2: clamp(24px, 2.2vw, 36px);`,...
+     - Phục hồi chiều rộng cột Thời Tiết `w-[420px]` shrink-0 trên Desktop.
+     - Phục hồi chiều cao các khối chính `lg:h-[400px] lg:justify-between` cho Hero Thời Tiết (nhiệt độ `text-[64px] sm:text-[72px]`), Giá Vàng Phú Quý, Lịch Google và các Skeleton tương ứng.
+     - Phục hồi khoảng cách đệm `p-3` cho thanh Kênh YouTube và `py-3 mt-[-12px]` cho dải danh mục Tin Tức Mới Nhất LIVE.
+  2. *Bảo Toàn Độc Lập 100% Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+     - Giữ nguyên toàn bộ cấu hình, tài nguyên tĩnh và giao diện tu tập Phật giáo độc lập của `public/tung-kinh/index.html`.
+     - Không can thiệp qua lại giữa hai ứng dụng.
+  3. *Tự Động Hóa Dọn Sạch Mô Tả Spam Rác Tiếng Nga Cho Telegram Bot (`quan-ly-tien-phong`)*:
+     - Tích hợp hàm `ensure_clean_bot_description()` trong `main.py` tự động gọi Telegram Bot API `setMyDescription` và `setMyShortDescription` khôi phục mô tả chính thức và triệt tiêu sạch sẽ link spam tiếng Nga `@panteleikosen131ser`.
+     - Cung cấp quy trình thao tác chuẩn xác trên `@BotFather` cho người dùng (`/mybots` -> `Edit Description`, `/revoke` token nếu bị lộ).
+  4. *Khắc Phục Triệt Để Cảnh Báo Lỗi GPS & Triệt Tiêu Re-Loading Khi Đã Có Gmail*:
+     - Tự động lấy tọa độ thực tế khi quyền GPS đã cấp (`granted`), chủ động yêu cầu quyền khi chưa cấp (`prompt`), và triệt tiêu 100% banner cảnh báo lỗi giả lập khi thiết bị PC timeout/fallback sang IP.
+     - Khóa cứng `isUiLoading = false` khi `userRole.email` hoặc dữ liệu ban đầu đã nạp, triệt tiêu 100% hiện tượng màn hình bị mờ hoặc chớp giật skeleton trong quá trình đồng bộ ngầm định kỳ 90s.
+  5. *Cơ Chế Service Worker Cập Nhật Ngay Tức Thì (Instant Cache Invalidation)*:
+     - Cập nhật bộ lắng nghe `controllerchange` trong `index.html` tự động kích hoạt `window.location.reload()` tức thì khi có Service Worker mới được kích hoạt (trừ khi đang xem video Shorts).
+  6. *Đạt 100% Bộ Kiểm Thử*:
+     - `npm run build`: Hoàn tất không lỗi.
+     - `npm run test:logic`: 462/462 logic tests PASS (100%).
+     - `npm run testwebsite`: 47/47 E2E tests PASS (RELEASE GATE: PASSED).
+     - `python -m unittest discover tests -v`: 22/22 unit tests PASS (100%).

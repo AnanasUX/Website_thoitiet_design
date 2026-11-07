@@ -1378,3 +1378,44 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn tất trong 2.14s, 0 lỗi biên dịch.
 - `npm run test:logic`: 462/462 logic tests PASS (100%).
 - `npm run testwebsite`: 47/47 ca kiểm thử thực tế đa màn hình PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### ADR-052: Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (https://anx.io.vn/), Tự Động Hóa Vệ Sinh Mô Tả Spam Rác Tiếng Nga Telegram Bot và Phát Hành Đồng Bộ (REQ-091)
+- **Ngày**: 2026-11-07
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng gửi 4 ảnh chụp bằng chứng:
+  1. Ảnh Telegram Bot Quản Lý (`@QuanLyTienPhongBot`) bị hiển thị đoạn mô tả rác tiếng Nga `⚡ Срочные уведомления! ... @panteleikosen131ser` trong khung "What can this bot do?".
+  2. Ảnh Modal "Chọn vị trí thời tiết" hiển thị banner cảnh báo vàng `Không thể lấy tọa độ GPS tự động. Không thể lấy tọa độ GPS của thiết bị...` và phản ánh tình trạng thi thoảng đang sử dụng bị re-loading lại toàn trang dù đã có tài khoản Gmail.
+  3. Ảnh giao diện lúc 09:03.
+  4. Ảnh giao diện lúc 10:01 phản ánh giao diện chưa khôi phục như cũ trên `https://anx.io.vn/`.
+- Nguyên nhân cốt lõi:
+  + Telegram bot description bị can thiệp qua API `setMyDescription` từ kẻ xấu vào ngày 6/11.
+  + Giao diện trên `https://anx.io.vn/` chưa được commit & push lên GitHub, dẫn đến GitHub Pages chưa triển khai bản cập nhật mới, cộng thêm Service Worker trình duyệt đệm cache cũ.
+  + Việc thử nghiệm thu nhỏ thẻ card hero trước đó làm mất tỷ lệ thiết kế Responsive chuẩn mực mà người dùng đã phê duyệt.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Khôi Phục Thiết Kế Canonical Cho Trang Tin Tức (`https://anx.io.vn/`)**:
+   - Phục hồi các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và Skeletons về `lg:h-[400px] lg:justify-between`.
+   - Cột Thời Tiết Desktop khôi phục `w-[420px] shrink-0`, nhiệt độ `text-[64px] sm:text-[72px]`.
+   - Phục hồi Design tokens trong `src/index.css`: `--page-padding: clamp(16px, 4vw, 32px);`, `--section-gap: clamp(28px, 3.5vw, 56px);`, `--card-padding: clamp(16px, 2vw, 24px);`, `--grid-gap: clamp(12px, 2vw, 24px);`, `--card-radius: 24px;`, `--header-height: clamp(56px, 6vw, 70px);`.
+2. **Bảo Toàn Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)**:
+   - Duy trì 100% mã nguồn tĩnh `public/tung-kinh/index.html` của Chùa An Nhiên không can thiệp.
+3. **Tự Động Hóa Dọn Sạch Spam Rác Tiếng Nga Telegram Bot**:
+   - Tích hợp hàm `ensure_clean_bot_description()` trong `quan-ly-tien-phong/main.py` tự động gọi Telegram API xóa sạch nội dung spam và khôi phục mô tả chính thức mỗi khi khởi chạy.
+   - Hướng dẫn chi tiết cách reset qua `@BotFather` và thu hồi token (`/revoke`) nếu bị lộ.
+4. **Triệt Tiêu Cảnh Báo GPS & Chống Re-loading Toàn Trang Khi Có Gmail**:
+   - Tự động lấy GPS khi quyền đã cấp, không hiển thị bất kỳ banner lỗi nào khi PC fallback sang IP.
+   - Giữ nguyên trạng thái `isUiLoading = false` khi `userRole.email` hoặc dữ liệu ban đầu đã có, làm mới dữ liệu nền 90s âm thầm tuyệt đối không chớp giật UI.
+5. **Cơ Chế Service Worker Tải Lại Ngay Tức Thì**:
+   - Cập nhật `index.html` lắng nghe `controllerchange` gọi `window.location.reload()` tức thì giúp người dùng nhận ngay bản build mới khi truy cập.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Hoàn tất không lỗi trong 2.15s.
+- `npm run test:logic`: 462/462 logic tests PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử thực tế đa màn hình PASS (RELEASE GATE: PASSED).
+- `python -m unittest discover tests -v`: 22/22 backend tests PASS (100%).

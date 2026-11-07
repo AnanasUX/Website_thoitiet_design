@@ -2,9 +2,9 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.58.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-090
-- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
+- **Phiên bản**: `1.59.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-091
+- **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: Cập nhật ensure_clean_bot_description
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
   + ✅ **Kiểm thử toàn diện 14 luồng Bot Telegram (`test_all_telegram_commands.py`)**: 14/14 tests PASS (100% OK).
@@ -18,6 +18,27 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+20. **[REQ-091] Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (https://anx.io.vn/), Tự Động Hóa Vệ Sinh Mô Tả Spam Rác Tiếng Nga Telegram Bot & Đồng Bộ Phát Hành**:
+    - *Khôi phục 100% tỷ lệ bố cục và Design Tokens chuẩn mực (`src/index.css` & `src/App.tsx`)*:
+      + Phục hồi chiều cao `lg:h-[400px] lg:justify-between` cho Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và Skeletons.
+      + Cột Thời Tiết Desktop khôi phục `w-[420px] shrink-0`, nhiệt độ `text-[64px] sm:text-[72px]`.
+      + Phục hồi Design Tokens: `--page-padding: clamp(16px, 4vw, 32px)`, `--section-gap: clamp(28px, 3.5vw, 56px)`, `--card-padding: clamp(16px, 2vw, 24px)`, `--grid-gap: clamp(12px, 2vw, 24px)`, `--card-radius: 24px`, `--header-height: clamp(56px, 6vw, 70px)`.
+      + Thanh YouTube padding `p-3`, dải danh mục `py-3 mt-[-12px]`.
+    - *Bảo toàn 100% độc lập phân hệ Tụng Kinh (`public/tung-kinh/index.html`)*:
+      + Chạy tĩnh độc lập trên `https://anx.io.vn/tung-kinh/`, không can thiệp luồng HTML hay DOM giữa hai hệ thống.
+    - *Tự động hóa vệ sinh mô tả Telegram Bot (`quan-ly-tien-phong`)*:
+      + Tích hợp hàm `ensure_clean_bot_description()` trong `main.py` tự động xóa sạch link spam tiếng Nga `@panteleikosen131ser` và khôi phục mô tả chính thức mỗi khi khởi chạy.
+    - *Khắc phục triệt để cảnh báo GPS & Chống re-loading khi có Gmail*:
+      + Tự động lấy GPS khi quyền đã cấp, không bao giờ hiện cảnh báo lỗi khi thiết bị PC timeout/fallback sang IP.
+      + Khóa cứng `isUiLoading = false` khi có `userRole.email` hoặc dữ liệu ban đầu, làm mới dữ liệu nền ngầm không chớp giật UI.
+    - *Service Worker cập nhật tức thì*:
+      + `index.html` tự động kích hoạt `window.location.reload()` ngay khi Service Worker mới được kích hoạt.
+    - *Nghiệm thu thực tế*:
+      + `npm run build`: Hoàn thành 100% trong 2.15s.
+      + `npm run test:logic`: 462/462 PASS (100%).
+      + `npm run testwebsite`: 47/47 PASS (RELEASE GATE: PASSED).
+      + `python -m unittest discover tests -v`: 22/22 PASS (100%).
 
 19. **[REQ-090] Tinh Chỉnh Tỷ Lệ Bố Cục Responsive Chuẩn Mực Triệt Tiêu Cảm Giác "Bị Phóng To" Trên Mọi Màn Hình Desktop & Laptop**:
     - *Triệt tiêu hiện tượng dồn ứ khối tiêu đề (Above-The-Fold Bloat)*:

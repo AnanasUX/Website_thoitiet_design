@@ -672,10 +672,10 @@ function WeatherSection({
   if (isLoading && !WEATHER) return <WeatherSectionSkeleton />;
 
   return (
-    <div className={`flex flex-col gap-3.5 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
+    <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
       {/* Hero card - Modern Atmospheric Glass Card with Animated Mesh Gradient & Dynamic Weather Animation */}
       <div
-        className={`relative flex flex-col gap-3 items-start overflow-hidden p-4 xl:p-5 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between border ${
+        className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border ${
           darkMode ? 'hero-mesh-gradient-dark border-white/10' : 'hero-mesh-gradient-light border-white/20'
         }`}
       >
@@ -710,7 +710,7 @@ function WeatherSection({
           <button
             type="button"
             onClick={onOpenLocationSelector}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border text-white font-medium text-[12px] shadow-xs cursor-pointer transition-all group active:scale-95 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border text-white font-medium text-[12.5px] shadow-xs cursor-pointer transition-all group active:scale-95 ${
               darkMode
                 ? 'bg-white/[0.08] hover:bg-white/[0.14] border-white/[0.12]'
                 : 'bg-white/20 hover:bg-white/30 border-white/30'
@@ -724,7 +724,7 @@ function WeatherSection({
             </span>
             <span className="opacity-60">·</span>
             <span>{WEATHER.time}</span>
-            <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ml-0.5 ${
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 ${
               darkMode ? 'bg-blue-500/25 text-blue-200 border border-blue-400/30' : 'bg-white/25 text-white'
             }`}>
               {isManualLocation ? "Đã chọn" : "Tự động"}
@@ -732,20 +732,20 @@ function WeatherSection({
           </button>
         </div>
 
-        <div className="flex flex-col gap-0.5 items-start w-full z-10">
-          <p className="font-black leading-none text-[38px] xl:text-[46px] 2xl:text-[54px] text-white tracking-tighter drop-shadow-md">
+        <div className="flex flex-col gap-1 items-start w-full z-10">
+          <p className="font-black leading-none text-[64px] sm:text-[72px] text-white tracking-tighter drop-shadow-md">
             {WEATHER.temp}
           </p>
-          <p className="font-bold text-[14px] xl:text-[15.5px] text-white flex items-center gap-1.5 drop-shadow-xs">
-            <span className="inline-block animate-bounce text-xl" style={{ animationDuration: '3s' }}>{conditionEmoji}</span>
+          <p className="font-bold text-[18px] text-white flex items-center gap-2 drop-shadow-xs">
+            <span className="inline-block animate-bounce text-2xl" style={{ animationDuration: '3s' }}>{conditionEmoji}</span>
             <span>{WEATHER.conditionLabel}</span>
           </p>
-          <p className="font-medium text-[12px] text-white/85">
+          <p className="font-medium text-[13.5px] text-white/85">
             Cảm nhận {WEATHER.feelsLike}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 w-full text-[12px] z-10">
+        <div className="grid grid-cols-2 gap-2.5 w-full text-[13px] z-10">
           {[
             { label: "💨 Gió", value: WEATHER.wind },
             { label: "💧 Độ ẩm", value: WEATHER.humidity },
@@ -754,14 +754,14 @@ function WeatherSection({
           ].map((stat, idx) => (
             <div
               key={idx}
-              className={`flex flex-col gap-0.5 items-start min-w-0 overflow-hidden p-2 xl:p-2.5 rounded-xl backdrop-blur-md transition-all duration-300 shadow-2xs border ${
+              className={`flex flex-col gap-1 items-start min-w-0 overflow-hidden p-3 rounded-2xl backdrop-blur-md transition-all duration-300 shadow-2xs border ${
                 darkMode
                   ? 'bg-white/[0.06] hover:bg-white/[0.1] border-white/[0.08]'
                   : 'bg-white/15 hover:bg-white/25 border-white/25'
               }`}
             >
-              <p className={`font-medium text-[11px] whitespace-nowrap ${darkMode ? 'text-slate-300' : 'text-white/85'}`}>{stat.label}</p>
-              <p className="font-bold leading-tight text-white text-[13px] xl:text-[14px]">{stat.value}</p>
+              <p className={`font-medium text-[11.5px] whitespace-nowrap ${darkMode ? 'text-slate-300' : 'text-white/85'}`}>{stat.label}</p>
+              <p className="font-bold leading-5 text-white text-[14.5px]">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -3218,10 +3218,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       <div 
         className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto"
-        style={{ paddingTop: '8px', paddingLeft: '0px', paddingRight: '0px' }}
+        style={{ paddingTop: '10px', paddingLeft: '0px', paddingRight: '0px' }}
       >
         {/* Weather column */}
-        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[320px] xl:w-[350px] 2xl:w-[390px]">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
@@ -3240,21 +3240,21 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn (Đẩy kênh đăng ký ra giao diện chính) */}
       {userRole && userRole.email && (
-        <div className="w-full bg-white dark:bg-[#151921] border border-[#e3e7ef] dark:border-white/[0.08] rounded-[var(--card-radius)] px-3.5 py-1.5 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+        <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
               </svg>
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-[12.5px] text-[#182033] dark:text-[#f8fafc] truncate">Kênh YouTube đã kết nối của bạn</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[9.5px]">
+                <span className="font-bold text-[13px] text-[#182033] truncate">Kênh YouTube đã kết nối của bạn</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[10px]">
                   {userRole.youtubeSubscriptions?.length || 0} kênh
                 </span>
               </div>
-              <span className="text-[10.5px] text-[#5f687b] dark:text-[#94a3b8] truncate">
+              <span className="text-[11px] text-[#5f687b] truncate">
                 Tài khoản: {userRole.name || userRole.email} • Tự động đồng bộ và phát video mới nhất
               </span>
             </div>
@@ -3262,30 +3262,30 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onOpenShorts && onOpenShorts('subscribed')}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11.5px] shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               <span>Xem video từ kênh đăng ký</span>
-              <span className="text-[9.5px]">▶</span>
+              <span className="text-[10px]">▶</span>
             </button>
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-1.5 mt-[-4px]">
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center shrink-0">
-          <p className="font-semibold leading-[24px] text-[#182033] text-[16px] xl:text-[17px]">
+          <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
             Tin Tức Mới Nhất
           </p>
-          <div className="bg-[#ff7917] flex items-center px-2 py-0.5 rounded-full shadow-xs shrink-0">
-            <p className="font-bold text-[10.5px] text-white">LIVE</p>
+          <div className="bg-[#ff7917] flex items-center px-2.5 py-0.5 rounded-full shadow-xs shrink-0">
+            <p className="font-bold text-[11px] text-white">LIVE</p>
           </div>
         </div>
         {/* Menu scroll danh mục trên PC theo đúng yêu cầu */}
-        <div className="flex overflow-x-auto gap-1.5 items-center max-w-[872px] scrollbar-hide py-0.5">
+        <div className="flex overflow-x-auto gap-2 items-center max-w-[872px] scrollbar-hide py-1">
           {NEWS_CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory && setActiveCategory(cat)}
-              className={`shrink-0 whitespace-nowrap px-3 py-1 rounded-full font-bold text-[12px] xl:text-[12.5px] transition-all duration-200 cursor-pointer ${
+              className={`shrink-0 whitespace-nowrap px-4 py-1.5 rounded-full font-bold text-[13px] transition-all duration-200 cursor-pointer ${
                 activeCategory === cat
                   ? 'bg-[#2563ff] text-white font-bold shadow-md shadow-blue-500/30 scale-[1.02]'
                   : 'bg-white dark:bg-[#151921] text-[#4e5b6d] dark:text-[#94a3b8] border border-[#d8dbdf] dark:border-white/10 hover:border-[#2563ff] hover:text-[#2563ff] shadow-2xs'
@@ -3300,44 +3300,44 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           {((isFetchingCategory || isLoading) && (!featured || newsFeed.length === 0)) ? <NewsSkeleton /> : (<>
           {/* Featured feed card - Modern Editorial Magazine Card */}
           {featured && (
-            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-3 items-start overflow-hidden p-4 xl:p-5 rounded-2xl shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
+            <div data-testid="news-card" onClick={() => onArticleClick && onArticleClick(featured)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col gap-3.5 items-start overflow-hidden p-5 rounded-3xl shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
             >
-              <div className="h-[180px] sm:h-[210px] relative rounded-xl w-full overflow-hidden bg-slate-100 dark:bg-[#1c222d]">
+              <div className="h-[210px] sm:h-[240px] relative rounded-2xl w-full overflow-hidden bg-slate-100 dark:bg-[#1c222d]">
                 <img alt="" className="absolute inset-0 max-w-none object-cover size-full group-hover:scale-105 transition-transform duration-700 ease-out" referrerPolicy="no-referrer" src={featured.img} loading="eager" fetchPriority="high" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else if (!el.src.includes('unsplash.com')) { el.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400&auto=format&fit=crop&q=70"; } }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
-                <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#2563ff] to-[#5715d1] text-white text-[10px] font-black uppercase tracking-wider shadow-md">
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#2563ff] to-[#5715d1] text-white text-[10.5px] font-black uppercase tracking-wider shadow-md">
                   <span>🔥</span>
                   <span>NỔI BẬT</span>
                 </div>
                 {(featured.isVideo || featured.link?.includes('/video/') || featured.link?.includes('video.') || featured.isShort) && (
-                  <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/75 text-white text-[10.5px] font-bold backdrop-blur-md shadow-md">
+                  <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 text-white text-[11px] font-bold backdrop-blur-md shadow-md">
                     <svg className="size-3 fill-current text-red-500" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                     <span>{featured.isShort ? '⚡ Short' : '▶ Video'}</span>
-                    {featured.pubDate && <span className="opacity-90 font-normal text-[9.5px]">({formatArticleDate(featured.pubDate)})</span>}
+                    {featured.pubDate && <span className="opacity-90 font-normal text-[10px]">({formatArticleDate(featured.pubDate)})</span>}
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 items-center w-full flex-wrap">
-                <div className="size-6 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
+              <div className="flex gap-2.5 items-center w-full flex-wrap">
+                <div className="size-7 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shrink-0">
                   <img alt="" className="size-full object-cover" referrerPolicy="no-referrer" src={featured.logo || featured.img} loading="lazy" decoding="async" data-fallback={featured.fallbackImg || ""} onError={(e) => { const el = e.currentTarget as HTMLImageElement; if (el.src !== el.dataset.fallback && el.dataset.fallback) { el.src = el.dataset.fallback; } else { el.src = "https://www.google.com/s2/favicons?domain=vnexpress.net&sz=128"; } }} />
                 </div>
-                <span className="font-bold text-[#ff315f] text-[12px]">{featured.src}</span>
+                <span className="font-bold text-[#ff315f] text-[12.5px]">{featured.src}</span>
                 <span className="text-slate-400">·</span>
-                <span className="font-normal text-[#5f687b] dark:text-slate-400 text-[11.5px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</span>
+                <span className="font-normal text-[#5f687b] dark:text-slate-400 text-[12px]">{featured.pubDate ? formatArticleDate(featured.pubDate) : WEATHER.time}</span>
                 <span className="text-slate-400">·</span>
-                <span className="text-[11px] text-[#5f687b] dark:text-slate-400 font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
+                <span className="text-[11.5px] text-[#5f687b] dark:text-slate-400 font-medium">⏱️ {getReadingTime(featured.body || featured.author)}</span>
                 {getArticleFreshness(featured.pubDate).isFresh && (
-                  <span className="ml-auto bg-[#25caac]/10 dark:bg-[#25caac]/20 text-[#0f8b73] dark:text-[#25caac] border border-[#25caac]/30 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs">
+                  <span className="ml-auto bg-[#25caac]/10 dark:bg-[#25caac]/20 text-[#0f8b73] dark:text-[#25caac] border border-[#25caac]/30 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold flex items-center gap-1 shadow-2xs">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Mới cập nhật
                   </span>
                 )}
               </div>
-              <h3 className="font-black text-[#0c0f12] dark:text-[#f8fafc] text-[16px] sm:text-[18px] leading-snug group-hover:text-[#2563ff] dark:group-hover:text-[#3b82f6] transition-colors w-full line-clamp-2">
+              <h3 className="font-black text-[#0c0f12] dark:text-[#f8fafc] text-[18px] sm:text-[20px] leading-snug group-hover:text-[#2563ff] dark:group-hover:text-[#3b82f6] transition-colors w-full line-clamp-2">
                 {featured.author}
               </h3>
               {featured.body && (
-                <p className="font-normal text-[#4e5b6d] dark:text-[#94a3b8] text-[13px] leading-relaxed line-clamp-2">{featured.body}</p>
+                <p className="font-normal text-[#4e5b6d] dark:text-[#94a3b8] text-[14px] leading-relaxed line-clamp-2">{featured.body}</p>
               )}
             </div>
           )}
@@ -4152,16 +4152,16 @@ function SkeletonBox({ className }: { className?: string }) {
 function WeatherSectionSkeleton() {
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex flex-col gap-3 p-4 xl:p-5 rounded-2xl min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
+      <div className="flex flex-col gap-4 p-6 rounded-2xl lg:h-[400px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
         <SkeletonBox className="w-32 h-4 bg-white/30 rounded-xl" />
-        <div className="flex flex-col gap-1.5">
-          <SkeletonBox className="w-32 h-10 bg-white/30 rounded-xl" />
-          <SkeletonBox className="w-24 h-4 bg-white/30 rounded-xl" />
-          <SkeletonBox className="w-20 h-3 bg-white/20 rounded-xl" />
+        <div className="flex flex-col gap-2">
+          <SkeletonBox className="w-40 h-14 bg-white/30 rounded-xl" />
+          <SkeletonBox className="w-28 h-5 bg-white/30 rounded-xl" />
+          <SkeletonBox className="w-24 h-4 bg-white/20 rounded-xl" />
         </div>
         <div className="grid grid-cols-2 gap-2 w-full">
           {[1,2,3,4].map(i => (
-            <SkeletonBox key={i} className="h-10 bg-white/20 rounded-xl" />
+            <SkeletonBox key={i} className="h-14 bg-white/20 rounded-xl" />
           ))}
         </div>
       </div>
@@ -4171,23 +4171,23 @@ function WeatherSectionSkeleton() {
 
 function MarketSectionSkeleton() {
   return (
-    <div className="w-full flex flex-col gap-2.5 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between">
+    <div className="w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] lg:h-[400px]">
       <div className="flex items-center justify-between w-full mb-1">
         <SkeletonBox className="w-36 h-6" />
         <SkeletonBox className="w-12 h-5 rounded-full" />
       </div>
       <div className="grid grid-cols-3 gap-2 w-full mt-1">
         {[1,2,3].map(i => (
-          <div key={i} className="flex flex-col gap-1.5 p-2 xl:p-2.5 border border-[#e3e7ef] rounded-xl bg-[#f8fafc]">
-            <SkeletonBox className="w-full h-3.5" />
-            <SkeletonBox className="w-3/4 h-3.5" />
+          <div key={i} className="flex flex-col gap-2 p-3 border border-[#e3e7ef] rounded-xl bg-[#f8fafc]">
+            <SkeletonBox className="w-full h-4" />
+            <SkeletonBox className="w-3/4 h-4" />
             <SkeletonBox className="w-1/2 h-3" />
             <SkeletonBox className="w-1/2 h-3" />
           </div>
         ))}
       </div>
-      <div className="w-full mt-2 bg-[#f8fafc] border border-[#e3e7ef] rounded-xl p-2 flex flex-col gap-2">
-        <SkeletonBox className="w-full h-[55px] rounded-xl" />
+      <div className="w-full mt-4 bg-[#f8fafc] border border-[#e3e7ef] rounded-xl p-3 flex flex-col gap-2">
+        <SkeletonBox className="w-full h-[65px] rounded-xl" />
         <div className="flex justify-between mt-1">
           {[1,2,3,4,5,6,7].map(i => <SkeletonBox key={i} className="w-6 h-3" />)}
         </div>
@@ -4198,7 +4198,7 @@ function MarketSectionSkeleton() {
 
 function CalendarSectionSkeleton() {
   return (
-    <div className="w-full min-h-[280px] bg-white dark:bg-[#151921] p-4 xl:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[300px] 2xl:h-[340px] lg:justify-between">
+    <div className="w-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[400px]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-2">
           <SkeletonBox className="w-28 h-5" />
@@ -4527,30 +4527,30 @@ function CalendarSection({
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   return (
-    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[280px] bg-white dark:bg-[#151921] p-4 xl:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[300px] 2xl:h-[340px] lg:justify-between" style={{ fontFamily: 'inherit' }}>
+    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="font-semibold text-[#182033] dark:text-[#f8fafc] text-[14px] xl:text-[15px]">{monthNames[month]}, {year}</h2>
-          <p className="text-[#5f687b] dark:text-[#94a3b8] text-[10.5px] truncate max-w-[160px]" title={userEmail}>{userEmail}</p>
+          <h2 className="font-semibold text-[#182033] dark:text-[#f8fafc] text-[15px]">{monthNames[month]}, {year}</h2>
+          <p className="text-[#5f687b] dark:text-[#94a3b8] text-[11px] truncate max-w-[160px]" title={userEmail}>{userEmail}</p>
         </div>
         <div className="flex gap-1 items-center">
           {loadingEvents && (
             <div className="w-3 h-3 rounded-full border-2 border-[#3a7bd5] border-t-transparent animate-spin mr-1"></div>
           )}
-          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month - 1, 1)); }} className="p-1 hover:bg-[#f4f6fa] dark:hover:bg-[#1a202c] rounded-lg text-[#5f687b] dark:text-[#94a3b8] transition-colors" title="Tháng trước">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month - 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] dark:hover:bg-[#1a202c] rounded-lg text-[#5f687b] dark:text-[#94a3b8] transition-colors" title="Tháng trước">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month + 1, 1)); }} className="p-1 hover:bg-[#f4f6fa] dark:hover:bg-[#1a202c] rounded-lg text-[#5f687b] dark:text-[#94a3b8] transition-colors" title="Tháng sau">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          <button onClick={() => { setActiveTooltipDay(null); setCurrentDate(new Date(year, month + 1, 1)); }} className="p-1.5 hover:bg-[#f4f6fa] dark:hover:bg-[#1a202c] rounded-lg text-[#5f687b] dark:text-[#94a3b8] transition-colors" title="Tháng sau">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
       </div>
 
       {/* Day-of-week header */}
-      <div className="grid grid-cols-7 gap-0.5 text-center mb-0.5">
+      <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
         {['T2','T3','T4','T5','T6','T7','CN'].map(d => (
-          <div key={d} className="text-[#94a3b8] dark:text-slate-400 text-[10.5px] font-semibold py-0.5">{d}</div>
+          <div key={d} className="text-[#94a3b8] dark:text-slate-400 text-[11px] font-semibold py-1">{d}</div>
         ))}
       </div>
 
@@ -4569,7 +4569,7 @@ function CalendarSection({
                      setActiveTooltipDay(activeTooltipDay === day ? null : day);
                    }
                  }}
-                 className={`relative flex flex-col items-center justify-center rounded-lg min-h-[26px] xl:min-h-[30px] transition-colors group
+                 className={`relative flex flex-col items-center justify-center rounded-lg min-h-[36px] transition-colors group
               ${day ? 'cursor-pointer hover:bg-[#f4f6fa] dark:hover:bg-[#1c222d]' : ''}
               ${isToday ? 'bg-[#3a7bd5] hover:bg-[#2b68c2] font-bold text-white' : ''}
             `}>
@@ -4761,7 +4761,7 @@ function MarketSection() {
   if (loading && goldData.length === 0) return <MarketSectionSkeleton />;
 
   return (
-    <div className={`w-full flex flex-col gap-2.5 bg-white dark:bg-[#151921] p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] transition-opacity duration-700 ease-in-out min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between opacity-100`}>
+    <div className={`w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between opacity-100`}>
       <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-bold leading-[26px] text-[#182033] text-[length:var(--font-h4)]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">

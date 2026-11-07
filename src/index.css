@@ -34,24 +34,24 @@
   --almond-body: #4e5b6d;
   --almond-muted: #7c8792;
 
-  --font-body: clamp(13.5px, 0.9vw, 14.5px);
-  --font-small: clamp(11.5px, 0.8vw, 12.5px);
-  --font-caption: clamp(10.5px, 0.75vw, 11.5px);
-  --font-button: clamp(12.5px, 0.9vw, 14px);
-  --font-label: clamp(11.5px, 0.8vw, 12.5px);
-  --font-h1: clamp(24px, 2.4vw, 36px);
-  --font-h2: clamp(20px, 1.8vw, 28px);
-  --font-h3: clamp(17px, 1.4vw, 22px);
-  --font-h4: clamp(15px, 1.1vw, 18px);
-  --font-h5: clamp(14px, 1vw, 16px);
-  --font-h6: clamp(13px, 0.9vw, 15px);
+  --font-body: clamp(14.5px, 1vw, 15.5px);
+  --font-small: clamp(12.5px, 0.9vw, 13.5px);
+  --font-caption: clamp(11.5px, 0.8vw, 12.5px);
+  --font-button: clamp(13.5px, 1vw, 15px);
+  --font-label: clamp(12.5px, 0.9vw, 13.5px);
+  --font-h1: clamp(28px, 3vw, 48px);
+  --font-h2: clamp(24px, 2.2vw, 36px);
+  --font-h3: clamp(20px, 1.7vw, 28px);
+  --font-h4: clamp(18px, 1.3vw, 22px);
+  --font-h5: clamp(16px, 1.2vw, 20px);
+  --font-h6: clamp(15px, 1vw, 18px);
 
-  --page-padding: clamp(12px, 2.5vw, 24px);
-  --section-gap: clamp(12px, 1.6vw, 20px);
-  --card-padding: clamp(12px, 1.4vw, 18px);
-  --grid-gap: clamp(10px, 1.2vw, 16px);
-  --card-radius: 20px;
-  --header-height: clamp(50px, 4.5vw, 58px);
+  --page-padding: clamp(16px, 4vw, 32px);
+  --section-gap: clamp(28px, 3.5vw, 56px);
+  --card-padding: clamp(16px, 2vw, 24px);
+  --grid-gap: clamp(12px, 2vw, 24px);
+  --card-radius: 24px;
+  --header-height: clamp(56px, 6vw, 70px);
 
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
