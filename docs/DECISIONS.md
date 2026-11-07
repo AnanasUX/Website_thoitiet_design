@@ -1344,3 +1344,37 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn thành trong 3.47s, 0 lỗi biên dịch.
 - `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
 - `npm run testwebsite`: 47/47 ca kiểm thử thực tế đạt 100% PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-051: Tinh Chỉnh Tỷ Lệ Bố Cục Responsive Chuẩn Mực Triệt Tiêu Cảm Giác "Bị Phóng To" Trên Mọi Màn Hình Desktop & Laptop (REQ-090)
+- **Ngày**: 2026-11-07
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng gửi ảnh chụp màn hình kích thước `1024 x 453` (`media_1794020495623_5aeaac59.jpg`) và phản hồi: *"Trang vẫn bị phóng to lên kiểm tra lại"*.
+- Phân tích nguyên nhân:
+  + Màn hình máy tính xách tay (1366x768, 1440x900 hoặc 1920x1080 với Windows Display Scale 125%/150%) có chiều cao khung nhìn trình duyệt thực tế hữu dụng chỉ khoảng 450px–600px.
+  + Với các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google bị cố định cứng `lg:h-[400px]`, cộng thêm Header (~70px), Live Ticker (~38px), thanh YouTube (~65px) và dải danh mục (~50px), tổng chiều cao các khối tiêu đề vượt quá 650px.
+  + Toàn bộ màn hình đầu tiên bị các khối này choán hết, đẩy danh sách bài báo xuống dưới đáy, khiến người dùng có cảm giác trang web bị "phóng to quá khổ" (oversized / magnified bloat).
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Tinh Chỉnh Chiều Cao Tỷ Lệ Co Giãn Linh Hoạt**:
+   - `src/App.tsx`: Chuyển `lg:h-[400px]` thành `min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between` cho Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và toàn bộ Skeletons.
+   - Tiết kiệm hơn 100px chiều cao, cho phép bài viết Nổi Bật (Featured) xuất hiện ngay trong tầm mắt đầu tiên (above the fold).
+2. **Co Giãn Cột Thời Tiết Responsive**:
+   - Chuyển `w-[420px]` cứng sang `w-[320px] xl:w-[350px] 2xl:w-[390px]`, mở rộng không gian ngang cho cột Tin tức và Giá vàng.
+3. **Cân Đối Typography & Padding**:
+   - Nhiệt độ thời tiết: `text-[38px] xl:text-[46px] 2xl:text-[54px]` thay vì `text-[64px]/text-[72px]`.
+   - Grid thời tiết: đệm `p-2 xl:p-2.5`.
+   - Thanh YouTube: padding `px-3.5 py-1.5`.
+   - Thanh danh mục: `py-1.5 mt-[-4px]`, nút danh mục `px-3 py-1 text-[12px] xl:text-[12.5px]`.
+   - Token hệ thống `src/index.css`: `--header-height: clamp(50px, 4.5vw, 58px)`, `--section-gap: clamp(12px, 1.6vw, 20px)`, `--card-padding: clamp(12px, 1.4vw, 18px)`, `--grid-gap: clamp(10px, 1.2vw, 16px)`.
+4. **Bảo Toàn Phân Hệ Tụng Kinh Độc Lập**:
+   - Giữ nguyên 100% trang Chùa An Nhiên tại `public/tung-kinh/index.html`.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Hoàn tất trong 2.14s, 0 lỗi biên dịch.
+- `npm run test:logic`: 462/462 logic tests PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử thực tế đa màn hình PASS (RELEASE GATE: PASSED).

@@ -731,3 +731,25 @@
      - `npm run build`: Thành công 100% (3.47s).
      - `npm run test:logic`: 462/462 logic tests PASS.
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện PASS (RELEASE GATE: PASSED).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-090)
+
+- **MÃ YÊU CẦU**: `REQ-090`
+- **Tiêu Đề**: Tinh Chỉnh Tỷ Lệ Bố Cục Responsive Chuẩn Mực Triệt Tiêu Cảm Giác "Bị Phóng To" Trên Mọi Màn Hình Desktop & Laptop
+- **Nguồn Prompt**: `PROMPT-20261107-03`: *"Trang vẫn bị phóng to lên kiểm tra lại"* kèm ảnh chụp màn hình `media_1794020495623_5aeaac59.jpg`
+- **Phân Hệ**: DesktopLayout, WeatherSection, MarketSection, CalendarSection, Design Tokens (`src/index.css`, `src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu Hiện Tượng Phóng To / Quá Khổ Trực Quan (Above-The-Fold Bloat)*:
+     - Chuyển đổi chiều cao các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và Skeletons từ 400px cố định sang tỷ lệ co giãn linh hoạt: `min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between`.
+     - Cột Thời Tiết Desktop: Cấu hình co giãn linh hoạt `w-[320px] xl:w-[350px] 2xl:w-[390px]` thay vì cố định cứng `w-[420px]`, giải phóng hơn 70px bề ngang cho các cột nội dung.
+     - Cân đối tỷ lệ typography: Nhiệt độ thời tiết co giãn `text-[38px] xl:text-[46px] 2xl:text-[54px]` thay vì `text-[64px]/text-[72px]`, lưới thông số thời tiết đệm gọn `p-2 xl:p-2.5`.
+     - Tinh chỉnh khoảng cách lề và padding thanh điều hướng: Header cao `clamp(50px, 4.5vw, 58px)`, thanh YouTube `px-3.5 py-1.5`, thanh danh mục `py-1.5 mt-[-4px]`.
+     - Thẻ bài báo Nổi Bật (Featured) và danh mục tin tức xuất hiện mượt mà ngay trong khung nhìn đầu tiên (above the fold) trên màn hình 1366x768, 1440x900 và 1920x1080 (kể cả khi bật Windows Display Scaling 125%/150%).
+  2. *Bảo Toàn Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+     - Giữ nguyên 100% mã nguồn tĩnh và giao diện Phật giáo của `public/tung-kinh/index.html`.
+  3. *Đạt 100% Bộ Kiểm Thử*:
+     - `npm run build`: Hoàn tất không lỗi.
+     - `npm run test:logic`: 462/462 logic tests PASS.
+     - `npm run testwebsite`: 47/47 E2E tests PASS (RELEASE GATE: PASSED).

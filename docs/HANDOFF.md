@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.57.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-089
+- **Phiên bản**: `1.58.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-090
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
@@ -18,6 +18,20 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+19. **[REQ-090] Tinh Chỉnh Tỷ Lệ Bố Cục Responsive Chuẩn Mực Triệt Tiêu Cảm Giác "Bị Phóng To" Trên Mọi Màn Hình Desktop & Laptop**:
+    - *Triệt tiêu hiện tượng dồn ứ khối tiêu đề (Above-The-Fold Bloat)*:
+      + Chuyển đổi chiều cao các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và toàn bộ Skeletons từ `400px` cố định sang tỷ lệ co giãn linh hoạt: `min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between`.
+      + Cột Thời Tiết Desktop: Cấu hình co giãn linh hoạt `w-[320px] xl:w-[350px] 2xl:w-[390px]` thay vì cố định cứng `w-[420px]`, giải phóng hơn 70px bề ngang cho các cột nội dung.
+      + Cân đối tỷ lệ typography: Nhiệt độ thời tiết co giãn `text-[38px] xl:text-[46px] 2xl:text-[54px]` thay vì `text-[64px]/text-[72px]`, lưới thông số thời tiết đệm gọn `p-2 xl:p-2.5`.
+      + Tinh chỉnh khoảng cách lề và padding thanh điều hướng: Header cao `clamp(50px, 4.5vw, 58px)`, thanh YouTube `px-3.5 py-1.5`, thanh danh mục `py-1.5 mt-[-4px]`.
+      + Thẻ bài báo Nổi Bật (Featured) và danh mục tin tức xuất hiện mượt mà ngay trong khung nhìn đầu tiên (above the fold) trên màn hình 1366x768, 1440x900 và 1920x1080 (kể cả khi bật Windows Display Scaling 125%/150%).
+    - *Bảo Toàn Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+      + Giữ nguyên 100% mã nguồn tĩnh và giao diện Phật giáo của `public/tung-kinh/index.html`.
+    - *Bảo Toàn 100% Bộ Kiểm Thử & Nghiệm Thu*:
+      + `npm run build`: Hoàn tất không lỗi (2.14s).
+      + `npm run test:logic`: 462/462 logic tests PASS.
+      + `npm run testwebsite`: 47/47 E2E tests PASS (RELEASE GATE: PASSED).
 
 18. **[REQ-089] Hoàn Trả Giao Diện Trang Tin Tức Về Bố Cục Responsive Chuẩn Mực & Duy Trì Trang Tụng Kinh Độc Lập Hiện Tại**:
     - *Khôi phục thiết kế Responsive nguyên bản cho trang tin tức (`https://anx.io.vn/`)*:

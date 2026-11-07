@@ -1,5 +1,28 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.58.0 (2026-11-07) - Tinh Chỉnh Tỷ Lệ Bố Cục Responsive Chuẩn Mực Triệt Tiêu Cảm Giác "Bị Phóng To" Trên Mọi Màn Hình Desktop & Laptop (REQ-090)
+
+### 1. Triệt Tiêu Hiện Tượng Phóng To & Dồn Ứ Tiêu Đề (REQ-090)
+- **Tỷ Lệ Chiều Cao Co Giãn Linh Hoạt**:
+  + Thay thế chiều cao cứng `lg:h-[400px]` thành `min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between` cho Thẻ Hero Thời Tiết, Thẻ Giá Vàng Phú Quý, Thẻ Lịch Google và toàn bộ Skeletons.
+  + Tiết kiệm hơn 100px chiều cao cho màn hình Desktop/Laptop, bảo đảm bài viết Nổi Bật (Featured) và danh mục tin tức xuất hiện ngay trong khung nhìn đầu tiên (above the fold) mà không cần cuộn trang.
+- **Co Giãn Cột Thời Tiết Responsive**:
+  + Cấu hình chiều rộng cột thời tiết `w-[320px] xl:w-[350px] 2xl:w-[390px]` thay vì cố định cứng `w-[420px]`, giải phóng hơn 70px bề ngang cho các cột nội dung.
+- **Cân Đối Tỷ Lệ Typography & Padding**:
+  + Nhiệt độ thời tiết: `text-[38px] xl:text-[46px] 2xl:text-[54px]` thay vì `text-[64px]/text-[72px]`.
+  + Grid thời tiết: đệm `p-2 xl:p-2.5`.
+  + Thanh YouTube: padding `px-3.5 py-1.5`.
+  + Thanh danh mục: `py-1.5 mt-[-4px]`, nút danh mục `px-3 py-1 text-[12px] xl:text-[12.5px]`.
+  + Token hệ thống `src/index.css`: `--header-height: clamp(50px, 4.5vw, 58px)`, `--section-gap: clamp(12px, 1.6vw, 20px)`, `--card-padding: clamp(12px, 1.4vw, 18px)`, `--grid-gap: clamp(10px, 1.2vw, 16px)`.
+
+### 2. Bảo Toàn Độc Lập Phân Hệ Tụng Kinh
+- Giữ nguyên 100% mã nguồn tĩnh và giao diện Phật giáo của `public/tung-kinh/index.html`.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn thành 100% trong 2.14s.
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.57.0 (2026-11-07) - Hoàn Trả Giao Diện Trang Tin Tức Về Bố Cục Responsive Chuẩn Mực & Duy Trì Trang Tụng Kinh Độc Lập (REQ-089)
 
 ### 1. Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Gốc Cho Trang Tin Tức (REQ-089)
