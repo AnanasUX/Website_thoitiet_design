@@ -1,5 +1,29 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.56.0 (2026-11-07) - Tách Bạch Luồng HTML Hai Hệ Thống & Tối Ưu Bố Cục Desktop Tinh Gọn Tránh Phình To (REQ-087, REQ-088)
+
+### 1. Tách Bạch Tuyệt Đối Luồng HTML Giữa Hai Ứng Dụng (REQ-087)
+- **Loại bỏ việc clobbering / ghi đè DOM**:
+  + Gỡ bỏ hoàn toàn khối mã `fetch('/tung-kinh/index.html') + document.write(html)` trong `index.html`. Mỗi trang chạy hoàn toàn độc lập theo đúng cấu hình và tệp HTML của mình (`index.html` cho trang chủ và `public/tung-kinh/index.html` cho Chùa An Nhiên).
+  + Loại bỏ biến `isTungKinh` và khối full-screen blackout spinner overlay trong `src/App.tsx`. Ứng dụng React trang chủ không can thiệp vào trang Tụng Kinh; liên kết trong menu tài khoản và chân trang hoạt động theo thẻ `<a>` chuẩn của trình duyệt.
+  + `public/404.html` duy trì cơ chế SPA redirect fallback sạch sẽ sang `/tung-kinh/index.html`.
+
+### 2. Tối Ưu Bố Cục Desktop Tinh Gọn & Đưa Tin Tức Lên Màn Hình Đầu (REQ-088)
+- **Làm rõ nguyên nhân giao diện bị phóng to**:
+  + Tỷ lệ hiển thị Windows Display Scaling (125%/150%) hoặc trình duyệt Chrome zoom > 100%. Phím tắt `Ctrl + 0` đưa zoom về 100% chuẩn mực.
+  + Dồn ứ chiều cao các khối tiêu đề (Above-The-Fold Bloat) vượt quá 600px - 700px, đẩy toàn bộ tin tức xuống dưới đáy màn hình laptop.
+- **Tinh chỉnh tỷ lệ hiển thị & kích thước**:
+  + Giảm chiều cao các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google từ `lg:h-[400px]` xuống `lg:h-[360px] 2xl:h-[390px]`, tiết kiệm trực tiếp 40-50px chiều cao.
+  + Thu gọn Header `--header-height: clamp(52px, 4.5vw, 62px)` (giảm từ 70px) và khoảng cách `--section-gap: clamp(20px, 2.5vw, 36px)`.
+  + Tối ưu chiều rộng cột Thời Tiết sang responsive `w-[360px] xl:w-[380px] 2xl:w-[410px]` (trước đây cố định 420px), giải phóng không gian cho cột tin tức trên màn hình 1280px-1440px.
+  + Thu gọn thanh Kênh YouTube Đã Đăng Ký Của Bạn (`px-3.5 py-2`, font chữ 12.5px), tiết kiệm ~15px chiều cao lãng phí.
+  + Tổng cộng tiết kiệm > 100px chiều dọc, đưa thẻ tin tức nổi bật và danh mục hiển thị ngay trên màn hình đầu tiên (above the fold) mà không cần cuộn chuột.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn tất thành công 100% trong 631ms.
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.55.0 (2026-11-06) - Tự Động Hóa Quản Lý Quyền GPS & Triệt Tiêu Loading Lại Toàn Trang Khi Đã Nạp Gmail (REQ-085, REQ-086)
 
 ### 1. Tự Động Hóa Quản Lý Quyền GPS & Định Vị Khí Tượng Liền Mạch (REQ-085)

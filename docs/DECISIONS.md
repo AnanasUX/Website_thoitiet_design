@@ -1261,3 +1261,57 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn thành xuất sắc trong 729ms, 0 lỗi TypeScript, 0 lỗi đóng gói.
 - `npm run test:logic`: 462/462 assertions đạt 100% PASS.
 - `npm run testwebsite`: Thực thi 47/47 ca kiểm thử toàn diện thực tế đạt **PASS (100%)**, vượt qua cổng kiểm duyệt phát hành (**RELEASE GATE: PASSED**).
+
+
+---
+
+### ADR-049: Tách Bạch Hoàn Toàn Luồng HTML Hai Hệ Thống & Tối Ưu Bố Cục Desktop Tinh Gọn Tránh Phình To (REQ-087, REQ-088)
+- **Ngày**: 2026-11-07
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+1. **Yêu Cầu Tách Bạch Luồng HTML Hai Trang Độc Lập**:
+   - Người dùng phản ánh rõ ràng: *"https://anx.io.vn/" và https://anx.io.vn/tung-kinh/ khác nhau hoàn thoàn về giao diện không thể giống nhau được nên không cần xử lý luồng html giống nhau trang nào cấu hình như nào thì sẽ như vậy*.
+   - Phân tích mã nguồn trước đây: Trong `index.html`, có đoạn mã `fetch('/tung-kinh/index.html')` và gọi `document.write(html)` để ghi đè DOM của trang chủ. Đồng thời trong `src/App.tsx`, có kiểm tra `isTungKinh` và dựng một màn hình đen `isTungKinh` overlay loading che khuất toàn bộ ứng dụng React.
+   - Hậu quả: Việc xử lý ép luồng HTML chung khiến hai ứng dụng can thiệp lẫn nhau không cần thiết, làm rối luồng tải tài nguyên và gây phản trực giác.
+
+2. **Hiện Tượng Giao Diện Bị "Phóng To" (media_1794017052521_3654a020.jpg)**:
+   - Người dùng gửi ảnh chụp màn hình kèm câu hỏi: *"Tại sao giao diện lại bị phóng to thế này"*.
+   - Phân tích nguyên nhân gốc rễ:
+     + **Yếu tố tỷ lệ hiển thị màn hình (Display Scaling & Browser Zoom)**: Ảnh chụp có kích thước khung nội dung `1024 x 544`. Trên laptop phổ thông (1366x768 hoặc 1080p), Windows tự động áp dụng tỷ lệ Scale 125% hoặc 150%, hoặc trình duyệt Chrome bị phóng to zoom > 100%. Khi đó các biến `clamp()` và pixel cố định bị kéo dãn tối đa.
+     + **Dồn ứ các khối tiêu đề (Above-The-Fold Bloat)**:
+       * Thẻ Hero Thời Tiết: cố định chiều cao `lg:h-[400px]`.
+       * Thẻ Giá Vàng Phú Quý: cố định chiều cao `lg:h-[400px]`.
+       * Thẻ Lịch Google: cố định chiều cao `lg:h-[400px]`.
+       * Thanh Kênh YouTube Đã Đăng Ký Của Bạn: chiếm thêm ~70px.
+       * Thanh Header Top Bar: `clamp(56px, 6vw, 70px)`.
+       * Dải danh mục Tin Tức Mới Nhất: chiếm thêm ~55px.
+     + Tổng chiều cao các khối tiêu đề vượt quá 600px - 700px! Khi người dùng mở website trên laptop, toàn bộ màn hình đầu tiên bị các khối widget chiếm trọn, đẩy toàn bộ danh sách tin tức xuống bên dưới không nhìn thấy được, tạo cảm giác giao diện bị "phóng to", chật chội và choán hết tầm nhìn.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Tách Bạch Tuyệt Đối Luồng HTML Giữa Hai Ứng Dụng (REQ-087)**:
+   - Loại bỏ hoàn toàn khối `fetch + document.write` trong `index.html`. `index.html` chỉ giữ lại duy nhất mã khôi phục GitHub Pages SPA redirect chuẩn mực.
+   - Loại bỏ hoàn toàn biến `isTungKinh` và khối full-screen blackout spinner overlay trong `src/App.tsx`.
+   - Mỗi phân hệ chạy độc lập theo đúng cấu hình tĩnh của mình:
+     + `https://anx.io.vn/`: Phục vụ bởi `index.html` của trang Thời Tiết & Tin Tức.
+     + `https://anx.io.vn/tung-kinh/`: Phục vụ bởi `public/tung-kinh/index.html` của Chùa An Nhiên, với `<base href="/tung-kinh/">`, CSS và JS riêng biệt.
+     + Chuyển trang qua lại thông qua thẻ `<a href="/tung-kinh/">` chuẩn của trình duyệt.
+     + `public/404.html` duy trì cơ chế SPA redirect fallback sạch sẽ.
+
+2. **Tối Ưu Bố Cục Desktop Tinh Gọn Tránh Phình To (REQ-088)**:
+   - **Giảm chiều cao các thẻ Hero**: Tinh chỉnh chiều cao `WeatherSection`, `MarketSection`, `CalendarSection` từ `lg:h-[400px]` xuống `lg:h-[360px] 2xl:h-[390px]`, tiết kiệm trực tiếp 40px - 50px chiều cao.
+   - **Thu gọn thanh Header & khoảng cách lưới**:
+     + `--header-height`: Giảm từ `clamp(56px, 6vw, 70px)` xuống `clamp(52px, 4.5vw, 62px)`.
+     + `--section-gap`: Giảm từ `clamp(28px, 3.5vw, 56px)` xuống `clamp(20px, 2.5vw, 36px)`.
+     + `--card-padding`: Giảm từ `clamp(16px, 2vw, 24px)` xuống `clamp(14px, 1.5vw, 20px)`.
+     + `--card-radius`: Đồng bộ 20px tinh tế, thanh thoát.
+   - **Tối ưu chiều rộng cột thời tiết**: Chuyển từ `w-[420px]` cố định cứng sang responsive `w-[360px] xl:w-[380px] 2xl:w-[410px]`. Trên màn hình laptop 1280px-1440px, việc này giải phóng ~60px chiều ngang cho cột Tin tức và Giá vàng + Lịch Google.
+   - **Tinh giản thanh Kênh YouTube**: Padding `px-3.5 py-2`, font chữ `text-[12.5px]`, giảm ~15px chiều cao lãng phí.
+   - **Kết quả tổng thể**: Tiết kiệm hơn **100px chiều dọc**, đưa thẻ tin tức nổi bật và danh mục tin tức LIVE hiển thị ngay trong màn hình đầu tiên (above the fold) mà người dùng không cần phải cuộn chuột.
+   - **Hướng dẫn phím tắt**: Giải thích rõ ràng nguyên nhân phóng to do Display Scaling của Windows (125%/150%) và hướng dẫn phím tắt `Ctrl + 0` để đưa zoom trình duyệt về 100% chuẩn mực.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Hoàn thành xuất sắc trong 631ms, 0 lỗi TypeScript, 0 lỗi đóng gói.
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: Thực thi toàn bộ 47/47 ca kiểm thử thực tế đạt **PASS (100%)**, vượt qua cổng kiểm duyệt phát hành (**RELEASE GATE: PASSED**).

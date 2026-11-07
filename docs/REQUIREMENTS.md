@@ -90,6 +90,8 @@
 | REQ-084 | PROMPT-20261104-01 | Tích hợp ứng dụng Tụng Kinh (Chùa An Nhiên - tungkinh) trực tiếp vào website chung tên miền https://anx.io.vn/tung-kinh, cấu hình base routing, đồng bộ asset audio/js/css, bổ sung nút điều hướng quay về trang chủ và xử lý SPA 404 rewrite | P0 | Domain Integration / Tụng Kinh | TC-020, TC-028 | PASS | public/tung-kinh/, App.tsx, 404.html | Tích hợp toàn diện Tụng Kinh chạy mượt mà tại https://anx.io.vn/tung-kinh chung 1 domain anx.io.vn không xung đột |
 | REQ-085 | PROMPT-20261106-01 | Tự động hóa quản lý quyền GPS & định vị khí tượng liền mạch: Chủ động yêu cầu cấp quyền khi chưa cấp (state === 'prompt'), tự động lấy tọa độ thực tế khi đã cấp quyền (state === 'granted') và triệt tiêu 100% banner cảnh báo lỗi giả lập ("Không thể lấy tọa độ GPS tự động") khi thiết bị timeout/không có chip GPS | P0 | Weather / Geolocation Permissions | TC-016, TC-020 | PASS | App.tsx, testwebsite.mjs:TC-016 | Permissions API query, tự động lấy khi granted, suppress non-denial GPS error banners, 47/47 E2E PASS |
 | REQ-086 | PROMPT-20261106-01 | Khắc phục triệt để hiện tượng loading lại toàn trang khi đã nạp tài khoản Gmail (userRole.email) hoặc khi đã có dữ liệu ban đầu: Triệt tiêu isLoading khi làm mới nền định kỳ 90s, window focus, loại bỏ mờ giao diện (opacity-50 blur-[2px]) và đồng bộ ngầm ổn định tuyệt đối | P0 | Auth / Zero-Flicker Background Sync | TC-020, TC-025 | PASS | App.tsx, testwebsite.mjs:TC-020, TC-025 | isUiLoading guard, background refresh không setApiStatus loading, Calendar initialLoaded cache, 47/47 E2E PASS |
+| REQ-087 | PROMPT-20261107-01 | Tách bạch hoàn toàn luồng HTML và cấu hình độc lập giữa trang chủ https://anx.io.vn/ và Chùa An Nhiên https://anx.io.vn/tung-kinh/, triệt tiêu mọi can thiệp fetch/document.write và overlay chiếm dụng DOM | P0 | Architecture / HTML Routing | TC-020 | PASS | index.html, App.tsx, testwebsite.mjs | Loại bỏ document.write và isTungKinh overlay, mỗi trang tuân thủ cấu hình HTML độc lập |
+| REQ-088 | PROMPT-20261107-01 | Tối ưu độ tinh gọn và tỷ lệ hiển thị Desktop Layout tránh phình to: Điều chỉnh chiều cao thẻ card hero/vàng/lịch h-[360px], dải header clamp(52-62px), cột thời tiết linh hoạt w-[360-410px] đưa tin tức lên trên màn hình (above-the-fold) | P1 | UI/UX / Desktop Layout | TC-014, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs:TC-014 | Giảm chiều cao khối ~100px, responsive width, loại bỏ cảm giác phóng to trên laptop Windows scaling 125-150% |
 
 ## Prompt intake log
 
@@ -664,3 +666,44 @@
      - `npm run build`: 0 lỗi biên dịch (729ms).
      - `npm run test:logic`: 462/462 assertions đạt chuẩn 100% PASS.
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-087 & REQ-088)
+
+- **Mã Yêu Cầu**: REQ-087
+- **Tiêu Đề**: Tách Bạch Hoàn Toàn Luồng HTML & Cấu Hình Độc Lập Cho Hai Hệ Thống (Decoupled HTML Pipelines & Standalone Subpath Architecture)
+- **Nguồn Prompt**: PROMPT-20261107-01: 'https://anx.io.vn/' và https://anx.io.vn/tung-kinh/ khác nhau hoàn thoàn về giao diện không thể giống nhau được nên không cần xử lý luồng html giống nhau trang nào cấu hình như nào thì sẽ như vậy
+- **Phân Hệ**: Kiến Trúc Web Tĩnh, Điều Hướng HTML, Router & GitHub Pages (index.html, src/App.tsx, public/404.html)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Cách Ly Tuyệt Đối Luồng HTML*:
+     - Loại bỏ hoàn toàn khối mã JavaScript fetch('/tung-kinh/index.html') + document.write(html) trong index.html. Mỗi trang chạy hoàn toàn độc lập với tệp HTML và cấu hình riêng biệt của mình.
+     - index.html của trang chủ Thời Tiết & Tin Tức (https://anx.io.vn/) nạp ứng dụng React 19 + Tailwind CSS v4 chuẩn mực.
+     - public/tung-kinh/index.html của Chùa An Nhiên (https://anx.io.vn/tung-kinh/) nạp giao diện tu tập trực tuyến riêng biệt cùng CSS modern-ui.css và script client.bundle.js.
+  2. *Triệt Tiêu Mọi Can Thiệp DOM / Overlay Phía React*:
+     - Loại bỏ biến isTungKinh và khối overlay màu đen (isTungKinh full-screen blackout spinner) trong src/App.tsx.
+     - Ứng dụng React trang chủ không can thiệp vào định tuyến hay giao diện của phân hệ Tụng Kinh; liên kết trong menu tài khoản và footer hoạt động theo thẻ <a> chuẩn của trình duyệt.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - npm run build: Thành công 100% trong 631ms.
+     - npm run test:logic: 462/462 assertions PASS.
+     - npm run testwebsite: 47/47 ca kiểm thử thực tế PASS (RELEASE GATE: PASSED).
+
+- **Mã Yêu Cầu**: REQ-088
+- **Tiêu Đề**: Tối Ưu Độ Tinh Gọn, Chiều Cao Khối & Tỷ Lệ Hiển Thị Cho Desktop Layout (Compact Responsive Layout, Anti-Bloat Viewport Above-The-Fold)
+- **Nguồn Prompt**: PROMPT-20261107-01: 'Tại sao giao diện lại bị phóng to thế này' (kèm ảnh chụp màn hình media_1794017052521_3654a020.jpg thể hiện các khối thời tiết, vàng, lịch, kênh chiếm trọn chiều cao màn hình laptop).
+- **Phân Hệ**: Bố Cục Desktop, Thiết Kế Công Thái Học & Design System (src/index.css, src/App.tsx)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Làm Rõ & Khắc Phục Nguyên Nhân Giao Diện Trông Bị 'Phóng To'*:
+     - *Yếu tố màn hình*: Trên laptop độ phân giải 1366x768 hoặc 1920x1080, Windows mặc định cài đặt Display Scale 125% hoặc 150%, hoặc trình duyệt Chrome bị zoom > 100%. Phím tắt Ctrl + 0 lập tức đưa zoom trình duyệt về chuẩn 100%.
+     - *Dồn ứ chiều cao khối tiêu đề (Above-The-Fold Bloat)*: Trước đây các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google cố định chiều cao 400px, cộng thêm thanh YouTube banner (70px) và Header (70px) khiến chiều cao tổng cộng vượt quá 600px, đẩy toàn bộ danh sách tin tức xuống dưới đáy màn hình.
+  2. *Tinh Chỉnh Tỷ Lệ Hiển Thị Bố Cục Desktop*:
+     - Header: Giảm chiều cao xuống clamp(52px, 4.5vw, 62px) (trước đây là clamp(56px, 6vw, 70px)).
+     - Chiều cao các thẻ chính: Tinh chỉnh lg:h-[360px] 2xl:h-[390px] cho Hero Thời Tiết, Giá Vàng và Lịch Google (tiết kiệm 40-50px chiều cao).
+     - Cột Thời Tiết Desktop: Cấu hình responsive w-[360px] xl:w-[380px] 2xl:w-[410px] thay vì cố định cứng w-[420px], tạo khoảng thở rộng rãi cho các cột nội dung tin tức trên màn hình 1280px-1440px.
+     - Thanh Kênh YouTube: Thu gọn padding px-3.5 py-2 và font chữ text-[12.5px], giảm ~15px chiều cao lãng phí.
+     - Tiết kiệm tổng cộng > 100px không gian chiều dọc, đưa thẻ tin tức nổi bật và danh mục hiển thị ngay trên màn hình đầu tiên (above the fold) mà không cần phải cuộn chuột.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - npm run build: Thành công 100% (631ms).
+     - npm run test:logic: 462/462 logic tests PASS.
+     - npm run testwebsite: 47/47 ca kiểm thử toàn diện PASS (RELEASE GATE: PASSED).

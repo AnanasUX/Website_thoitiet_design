@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.55.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-085, REQ-086
+- **Phiên bản**: `1.56.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-087, REQ-088
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
@@ -18,6 +18,22 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+17. **[REQ-088] Tối Ưu Độ Tinh Gọn, Chiều Cao Khối & Tỷ Lệ Hiển Thị Cho Bố Cục Desktop Tránh Phình To (Compact Responsive Layout, Anti-Bloat Viewport Above-The-Fold)**:
+    - *Giải quyết triệt để cảm giác giao diện bị phóng to*: Phân tích và làm rõ hai yếu tố:
+      + Yếu tố phần cứng/trình duyệt: Tỷ lệ Windows Display Scaling (125%/150%) hoặc Chrome browser zoom > 100%. Phím tắt `Ctrl + 0` đưa zoom về 100% tức thì.
+      + Yếu tố bố cục khối tiêu đề dồn ứ (Above-The-Fold Bloat): Các khối Hero thời tiết, giá vàng, lịch Google cố định 400px khiến màn hình bị chiếm trọn không thấy tin tức.
+    - *Tinh chỉnh kích thước & khoảng cách*:
+      + Thẻ Hero thời tiết, Giá Vàng, Lịch Google: Điều chỉnh từ `lg:h-[400px]` xuống `lg:h-[360px] 2xl:h-[390px]`, tiết kiệm trực tiếp 40px - 50px chiều cao.
+      + Thanh Header: Giảm từ `clamp(56px, 6vw, 70px)` xuống `clamp(52px, 4.5vw, 62px)`.
+      + Cột Thời Tiết: Chuyển sang kích thước responsive `w-[360px] xl:w-[380px] 2xl:w-[410px]` thay vì cố định cứng 420px, tạo khoảng thở cho màn hình laptop 1280px-1440px.
+      + Thanh Kênh YouTube: Thu gọn padding `px-3.5 py-2` và font chữ `text-[12.5px]`, giảm ~15px chiều cao lãng phí.
+      + Tiết kiệm tổng cộng > 100px chiều dọc, đưa thẻ tin tức nổi bật và danh mục hiển thị ngay trên màn hình đầu tiên (above the fold) mà không cần phải cuộn chuột.
+
+16. **[REQ-087] Tách Bạch Hoàn Toàn Luồng HTML & Cấu Hình Độc Lập Cho Hai Hệ Thống (Decoupled HTML Pipelines & Standalone Subpath Architecture)**:
+    - *Cách ly tuyệt đối luồng HTML giữa hai ứng dụng*: Loại bỏ hoàn toàn khối mã `fetch('/tung-kinh/index.html') + document.write(html)` trong `index.html`. Mỗi trang chạy hoàn toàn độc lập theo đúng cấu hình và tệp HTML của mình (`index.html` cho trang chủ và `public/tung-kinh/index.html` cho Chùa An Nhiên).
+    - *Triệt tiêu mọi can thiệp DOM / Overlay*: Loại bỏ cờ `isTungKinh` và khối full-screen blackout spinner overlay trong `src/App.tsx`. Ứng dụng React không can thiệp vào trang Tụng Kinh; liên kết trong menu tài khoản và footer chuyển sang thẻ `<a>` chuẩn của trình duyệt.
+    - *Định tuyến tĩnh chuẩn mực*: `public/404.html` duy trì cơ chế SPA redirect fallback sạch sẽ sang `/tung-kinh/index.html`.
 
 15. **[REQ-086] Khắc Phục Triệt Để Hiện Tượng Re-Loading Toàn Trang Khi Đã Nạp Tài Khoản Gmail (Zero-Flicker Background Sync & UI Stability)**:
     - *Bảo vệ trạng thái giao diện khi có Gmail hoặc dữ liệu ban đầu*: Tính toán `isUiLoading = (apiStatus === 'loading') && !liveData && !userRole?.email`. Khi đã có Gmail hoặc đã có dữ liệu thời tiết ban đầu, `isLoading` truyền vào `MobileLayout`, `TabletLayout`, `DesktopLayout` luôn luôn bằng `false`.
