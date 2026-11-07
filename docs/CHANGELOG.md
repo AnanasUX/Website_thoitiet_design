@@ -1,5 +1,25 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.57.0 (2026-11-07) - Hoàn Trả Giao Diện Trang Tin Tức Về Bố Cục Responsive Chuẩn Mực & Duy Trì Trang Tụng Kinh Độc Lập (REQ-089)
+
+### 1. Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Gốc Cho Trang Tin Tức (REQ-089)
+- **Hệ thống Token Thiết Kế Responsive**:
+  + Khôi phục các biến chuẩn trong `src/index.css`: `--page-padding: clamp(16px, 4vw, 32px)`, `--section-gap: clamp(28px, 3.5vw, 56px)`, `--card-padding: clamp(16px, 2vw, 24px)`, `--grid-gap: clamp(12px, 2vw, 24px)`, `--card-radius: 24px`, `--header-height: clamp(56px, 6vw, 70px)`.
+- **Kích Thước Thẻ Khối Desktop**:
+  + Chiều rộng cột Thời Tiết khôi phục `w-[420px]` shrink-0.
+  + Chiều cao thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và Skeleton khôi phục chuẩn `lg:h-[400px]`.
+  + Thanh Kênh YouTube Đã Đăng Ký khôi phục padding `p-3`, icon 14x14 và dải danh mục Tin Tức Mới Nhất LIVE `py-3 mt-[-12px]`.
+
+### 2. Bảo Toàn Trang Tụng Kinh Hiển Thị Đầy Đủ Thông Tin Độc Lập
+- **Chùa An Nhiên (`https://anx.io.vn/tung-kinh/`)**:
+  + Giữ nguyên 100% giao diện, dữ liệu, 24 bồ đoàn, Web Audio buffer chuông mõ, LiveKit SFU và CSS độc lập.
+  + Không can thiệp luồng HTML hay clobbering DOM giữa hai hệ thống.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn thành 100% trong 3.47s.
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện đạt PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.56.0 (2026-11-07) - Tách Bạch Luồng HTML Hai Hệ Thống & Tối Ưu Bố Cục Desktop Tinh Gọn Tránh Phình To (REQ-087, REQ-088)
 
 ### 1. Tách Bạch Tuyệt Đối Luồng HTML Giữa Hai Ứng Dụng (REQ-087)

@@ -1315,3 +1315,32 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Hoàn thành xuất sắc trong 631ms, 0 lỗi TypeScript, 0 lỗi đóng gói.
 - `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
 - `npm run testwebsite`: Thực thi toàn bộ 47/47 ca kiểm thử thực tế đạt **PASS (100%)**, vượt qua cổng kiểm duyệt phát hành (**RELEASE GATE: PASSED**).
+
+
+---
+
+### ADR-050: Hoàn Trả Giao Diện Trang Tin Tức Về Bố Cục Responsive Chuẩn Mực & Duy Trì Trang Tụng Kinh Độc Lập Hiện Tại (REQ-089)
+- **Ngày**: 2026-11-07
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Sau khi kiểm thử việc tối ưu thu nhỏ chiều cao cho Desktop Layout, người dùng đưa ra chỉ đạo rõ ràng: *"Với trang tin tức trở lại giao diện như trước đó là responsive, còn trang 'https://anx.io.vn/tung-kinh/' hiển thị thông tin như hiện tại"*.
+- Quyết định: Hoàn trả các token và kích thước giao diện trang tin tức (`https://anx.io.vn/`) về đúng chuẩn thiết kế Responsive ban đầu theo mong muốn của người dùng; đồng thời bảo đảm phân hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`) giữ nguyên tính năng và hiển thị độc lập như hiện tại.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Khôi Phục Token Thiết Kế & Kích Thước Trang Tin Tức**:
+   - `src/index.css`: Đưa các biến `--page-padding`, `--section-gap`, `--card-padding`, `--grid-gap`, `--card-radius: 24px`, `--header-height: clamp(56px, 6vw, 70px)` về giá trị chuẩn responsive nguyên bản.
+   - `src/App.tsx`:
+     + Khôi phục chiều rộng cột thời tiết `w-[420px]` shrink-0 trên Desktop.
+     + Khôi phục chiều cao các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và Skeleton về chuẩn `lg:h-[400px]`.
+     + Khôi phục thanh Kênh YouTube về padding `p-3`, icon 14x14 và font chữ ban đầu.
+     + Khôi phục dải danh mục sticky về `py-3 mt-[-12px]`.
+2. **Duy Trì Phân Hệ Tụng Kinh Hoạt Động Độc Lập Như Hiện Tại**:
+   - `public/tung-kinh/index.html` duy trì hiển thị đầy đủ thông tin: Chùa An Nhiên, 24 bồ đoàn, Web Audio buffer, LiveKit SFU, nút Home điều hướng trang chủ.
+   - Không can thiệp hay clobbering DOM giữa hai hệ thống.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Hoàn thành trong 3.47s, 0 lỗi biên dịch.
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử thực tế đạt 100% PASS (RELEASE GATE: PASSED).

@@ -46,12 +46,12 @@
   --font-h5: clamp(16px, 1.2vw, 20px);
   --font-h6: clamp(15px, 1vw, 18px);
 
-  --page-padding: clamp(14px, 3.5vw, 28px);
-  --section-gap: clamp(20px, 2.5vw, 36px);
-  --card-padding: clamp(14px, 1.5vw, 20px);
-  --grid-gap: clamp(12px, 1.8vw, 20px);
-  --card-radius: 20px;
-  --header-height: clamp(52px, 4.5vw, 62px);
+  --page-padding: clamp(16px, 4vw, 32px);
+  --section-gap: clamp(28px, 3.5vw, 56px);
+  --card-padding: clamp(16px, 2vw, 24px);
+  --grid-gap: clamp(12px, 2vw, 24px);
+  --card-radius: 24px;
+  --header-height: clamp(56px, 6vw, 70px);
 
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);

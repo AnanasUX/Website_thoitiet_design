@@ -675,7 +675,7 @@ function WeatherSection({
     <div className={`flex flex-col gap-4 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
       {/* Hero card - Modern Atmospheric Glass Card with Animated Mesh Gradient & Dynamic Weather Animation */}
       <div
-        className={`relative flex flex-col gap-4 items-start overflow-hidden p-5 sm:p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[360px] 2xl:h-[390px] lg:justify-between border ${
+        className={`relative flex flex-col gap-4 items-start overflow-hidden p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] lg:h-[400px] lg:justify-between border ${
           darkMode ? 'hero-mesh-gradient-dark border-white/10' : 'hero-mesh-gradient-light border-white/20'
         }`}
       >
@@ -3220,8 +3220,8 @@ function DesktopLayout({ activeCategory, setActiveCategory,
         className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto"
         style={{ paddingTop: '10px', paddingLeft: '0px', paddingRight: '0px' }}
       >
-        {/* Weather column - Compact & responsive width */}
-        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[360px] xl:w-[380px] 2xl:w-[410px]">
+        {/* Weather column */}
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
@@ -3240,21 +3240,21 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       {/* Thanh Kênh YouTube Đã Đăng Ký Của Bạn (Đẩy kênh đăng ký ra giao diện chính) */}
       {userRole && userRole.email && (
-        <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] px-3.5 py-2 shadow-2xs flex items-center justify-between gap-2.5 flex-wrap">
+        <div className="w-full bg-white border border-[#e3e7ef] rounded-[var(--card-radius)] p-3 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
               </svg>
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-[12.5px] text-[#182033] truncate">Kênh YouTube đã kết nối của bạn</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[9.5px]">
+                <span className="font-bold text-[13px] text-[#182033] truncate">Kênh YouTube đã kết nối của bạn</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-red-100 text-red-600 font-extrabold text-[10px]">
                   {userRole.youtubeSubscriptions?.length || 0} kênh
                 </span>
               </div>
-              <span className="text-[10.5px] text-[#5f687b] truncate">
+              <span className="text-[11px] text-[#5f687b] truncate">
                 Tài khoản: {userRole.name || userRole.email} • Tự động đồng bộ và phát video mới nhất
               </span>
             </div>
@@ -3262,15 +3262,15 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => onOpenShorts && onOpenShorts('subscribed')}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11.5px] shadow-xs active:scale-95 transition-all cursor-pointer"
             >
               <span>Xem video từ kênh đăng ký</span>
-              <span className="text-[9px]">▶</span>
+              <span className="text-[10px]">▶</span>
             </button>
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-2 mt-[-8px]">
+      <div className="flex items-center justify-between w-full mb-1 sticky top-[var(--header-height)] bg-[#f4f6fa] z-[90] py-3 mt-[-12px]">
         <div className="flex gap-[10px] items-center shrink-0">
           <p className="font-semibold leading-[26px] text-[#182033] text-[18px]">
             Tin Tức Mới Nhất
@@ -4152,7 +4152,7 @@ function SkeletonBox({ className }: { className?: string }) {
 function WeatherSectionSkeleton() {
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex flex-col gap-4 p-5 sm:p-6 rounded-2xl lg:h-[360px] 2xl:h-[390px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
+      <div className="flex flex-col gap-4 p-6 rounded-2xl lg:h-[400px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
         <SkeletonBox className="w-32 h-4 bg-white/30 rounded-xl" />
         <div className="flex flex-col gap-2">
           <SkeletonBox className="w-40 h-14 bg-white/30 rounded-xl" />
@@ -4171,7 +4171,7 @@ function WeatherSectionSkeleton() {
 
 function MarketSectionSkeleton() {
   return (
-    <div className="w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] lg:h-[360px] 2xl:h-[390px]">
+    <div className="w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] lg:h-[400px]">
       <div className="flex items-center justify-between w-full mb-1">
         <SkeletonBox className="w-36 h-6" />
         <SkeletonBox className="w-12 h-5 rounded-full" />
@@ -4198,7 +4198,7 @@ function MarketSectionSkeleton() {
 
 function CalendarSectionSkeleton() {
   return (
-    <div className="w-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[360px] 2xl:h-[390px]">
+    <div className="w-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[400px]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-2">
           <SkeletonBox className="w-28 h-5" />
@@ -4527,7 +4527,7 @@ function CalendarSection({
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   return (
-    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] bg-white dark:bg-[#151921] p-4 sm:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[360px] 2xl:h-[390px]" style={{ fontFamily: 'inherit' }}>
+    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[300px] bg-white dark:bg-[#151921] p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[400px]" style={{ fontFamily: 'inherit' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
@@ -4761,7 +4761,7 @@ function MarketSection() {
   if (loading && goldData.length === 0) return <MarketSectionSkeleton />;
 
   return (
-    <div className={`w-full flex flex-col gap-2.5 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[360px] 2xl:h-[390px] lg:justify-between opacity-100`}>
+    <div className={`w-full flex flex-col gap-3 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] transition-opacity duration-700 ease-in-out lg:h-[400px] lg:justify-between opacity-100`}>
       <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-bold leading-[26px] text-[#182033] text-[length:var(--font-h4)]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">

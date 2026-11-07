@@ -92,6 +92,7 @@
 | REQ-086 | PROMPT-20261106-01 | Khắc phục triệt để hiện tượng loading lại toàn trang khi đã nạp tài khoản Gmail (userRole.email) hoặc khi đã có dữ liệu ban đầu: Triệt tiêu isLoading khi làm mới nền định kỳ 90s, window focus, loại bỏ mờ giao diện (opacity-50 blur-[2px]) và đồng bộ ngầm ổn định tuyệt đối | P0 | Auth / Zero-Flicker Background Sync | TC-020, TC-025 | PASS | App.tsx, testwebsite.mjs:TC-020, TC-025 | isUiLoading guard, background refresh không setApiStatus loading, Calendar initialLoaded cache, 47/47 E2E PASS |
 | REQ-087 | PROMPT-20261107-01 | Tách bạch hoàn toàn luồng HTML và cấu hình độc lập giữa trang chủ https://anx.io.vn/ và Chùa An Nhiên https://anx.io.vn/tung-kinh/, triệt tiêu mọi can thiệp fetch/document.write và overlay chiếm dụng DOM | P0 | Architecture / HTML Routing | TC-020 | PASS | index.html, App.tsx, testwebsite.mjs | Loại bỏ document.write và isTungKinh overlay, mỗi trang tuân thủ cấu hình HTML độc lập |
 | REQ-088 | PROMPT-20261107-01 | Tối ưu độ tinh gọn và tỷ lệ hiển thị Desktop Layout tránh phình to: Điều chỉnh chiều cao thẻ card hero/vàng/lịch h-[360px], dải header clamp(52-62px), cột thời tiết linh hoạt w-[360-410px] đưa tin tức lên trên màn hình (above-the-fold) | P1 | UI/UX / Desktop Layout | TC-014, TC-024 | PASS | index.css, App.tsx, testwebsite.mjs:TC-014 | Giảm chiều cao khối ~100px, responsive width, loại bỏ cảm giác phóng to trên laptop Windows scaling 125-150% |
+| REQ-089 | PROMPT-20261107-02 | Hoàn trả giao diện trang tin tức https://anx.io.vn/ về đúng thiết kế Responsive chuẩn mực nguyên bản (lg:h-[400px], w-[420px], header 70px) và bảo toàn trang https://anx.io.vn/tung-kinh/ hiển thị thông tin độc lập như hiện tại | P0 | UI/UX / Responsive & Dual-Domain | TC-014, TC-020, TC-024 | PASS | App.tsx, index.css, testwebsite.mjs | Khôi phục thiết kế responsive chuẩn gốc, duy trì trang Tụng Kinh độc lập 100% |
 
 ## Prompt intake log
 
@@ -707,3 +708,26 @@
      - npm run build: Thành công 100% (631ms).
      - npm run test:logic: 462/462 logic tests PASS.
      - npm run testwebsite: 47/47 ca kiểm thử toàn diện PASS (RELEASE GATE: PASSED).
+
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-089)
+
+- **Mã Yêu Cầu**: `REQ-089`
+- **Tiêu Đề**: Hoàn Trả Giao Diện Trang Tin Tức Về Bố Cục Responsive Chuẩn Mực & Duy Trì Trang Tụng Kinh Hiển Thị Độc Lập
+- **Nguồn Prompt**: `PROMPT-20261107-02`: *"Với trang tin tức trở lại giao diện như trước đó là responsive, còn trang 'https://anx.io.vn/tung-kinh/' hiển thị thông tin như hiện tại"*
+- **Phân Hệ**: Giao Diện Trang Chủ Thời Tiết & Tin Tức, Design Tokens, Phân Hệ Tụng Kinh (`src/index.css`, `src/App.tsx`, `public/tung-kinh/`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Gốc Cho Trang Tin Tức*:
+     - Phục hồi các token thiết kế chuẩn trong `src/index.css`: `--page-padding: clamp(16px, 4vw, 32px);`, `--section-gap: clamp(28px, 3.5vw, 56px);`, `--card-padding: clamp(16px, 2vw, 24px);`, `--grid-gap: clamp(12px, 2vw, 24px);`, `--card-radius: 24px;`, `--header-height: clamp(56px, 6vw, 70px);`.
+     - Phục hồi chiều rộng cột Thời Tiết `w-[420px]` shrink-0 trên Desktop.
+     - Phục hồi chiều cao các khối chính: `lg:h-[400px]` cho Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và các Skeleton tương ứng.
+     - Phục hồi khoảng cách đệm `p-3` cho thanh Kênh YouTube và `py-3 mt-[-12px]` cho dải danh mục Tin Tức Mới Nhất LIVE.
+  2. *Bảo Toàn Trang Tụng Kinh Hiển Thị Đầy Đủ Thông Tin Như Hiện Tại*:
+     - Giữ nguyên toàn bộ cấu hình, dữ liệu, CSS và kịch bản độc lập của Chùa An Nhiên tại `https://anx.io.vn/tung-kinh/` (`public/tung-kinh/index.html`).
+     - Tuyệt đối không can thiệp luồng HTML hay can thiệp DOM lẫn nhau giữa hai ứng dụng.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Thành công 100% (3.47s).
+     - `npm run test:logic`: 462/462 logic tests PASS.
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện PASS (RELEASE GATE: PASSED).

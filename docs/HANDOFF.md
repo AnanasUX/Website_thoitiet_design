@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.56.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-087, REQ-088
+- **Phiên bản**: `1.57.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-089
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: `cdaf9fb` (`feat(gemini): upgrade model to gemini-3.8-flash, handle deprecation, and add built-in integrated smart AI fallback`)
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
@@ -18,6 +18,16 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+18. **[REQ-089] Hoàn Trả Giao Diện Trang Tin Tức Về Bố Cục Responsive Chuẩn Mực & Duy Trì Trang Tụng Kinh Độc Lập Hiện Tại**:
+    - *Khôi phục thiết kế Responsive nguyên bản cho trang tin tức (`https://anx.io.vn/`)*:
+      + Phục hồi hệ thống Design System tokens trong `src/index.css`: `--page-padding: clamp(16px, 4vw, 32px)`, `--section-gap: clamp(28px, 3.5vw, 56px)`, `--card-padding: clamp(16px, 2vw, 24px)`, `--grid-gap: clamp(12px, 2vw, 24px)`, `--card-radius: 24px`, `--header-height: clamp(56px, 6vw, 70px)`.
+      + Phục hồi chiều rộng cột thời tiết Desktop `w-[420px]` shrink-0.
+      + Phục hồi chiều cao các khối chính `lg:h-[400px]` cho Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và các Skeleton loading.
+      + Phục hồi thanh Kênh YouTube padding `p-3`, icon 14x14 và dải danh mục Tin Tức Mới Nhất LIVE `py-3 mt-[-12px]`.
+    - *Bảo toàn phân hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+      + Giữ nguyên 100% thông tin, giao diện tu tập, bồ đoàn 24 vị trí, Web Audio buffer và định tuyến tĩnh độc lập của Chùa An Nhiên.
+      + Không can thiệp luồng HTML hay chiếm dụng DOM giữa hai hệ thống.
 
 17. **[REQ-088] Tối Ưu Độ Tinh Gọn, Chiều Cao Khối & Tỷ Lệ Hiển Thị Cho Bố Cục Desktop Tránh Phình To (Compact Responsive Layout, Anti-Bloat Viewport Above-The-Fold)**:
     - *Giải quyết triệt để cảm giác giao diện bị phóng to*: Phân tích và làm rõ hai yếu tố:
