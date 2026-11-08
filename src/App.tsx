@@ -675,7 +675,7 @@ function WeatherSection({
     <div className={`flex flex-col gap-3.5 w-full transition-opacity duration-700 ease-in-out opacity-100`}>
       {/* Hero card - Modern Atmospheric Glass Card with Animated Mesh Gradient & Dynamic Weather Animation */}
       <div
-        className={`relative flex flex-col gap-3 items-start overflow-hidden p-4 xl:p-5 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between border ${
+        className={`relative flex flex-col gap-3 items-start overflow-hidden p-5 xl:p-6 rounded-3xl shadow-[0_12px_36px_-6px_rgba(37,99,235,0.3)] w-full transition-all duration-500 hover:scale-[1.01] min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between border ${
           darkMode ? 'hero-mesh-gradient-dark border-white/10' : 'hero-mesh-gradient-light border-white/20'
         }`}
       >
@@ -733,14 +733,14 @@ function WeatherSection({
         </div>
 
         <div className="flex flex-col gap-0.5 items-start w-full z-10">
-          <p className="font-black leading-none text-[38px] xl:text-[46px] 2xl:text-[54px] text-white tracking-tighter drop-shadow-md">
+          <p className="font-black leading-none text-[50px] xl:text-[58px] 2xl:text-[66px] text-white tracking-tighter drop-shadow-md">
             {WEATHER.temp}
           </p>
-          <p className="font-bold text-[14px] xl:text-[15.5px] text-white flex items-center gap-1.5 drop-shadow-xs">
+          <p className="font-bold text-[15px] xl:text-[16px] text-white flex items-center gap-1.5 drop-shadow-xs">
             <span className="inline-block animate-bounce text-xl" style={{ animationDuration: '3s' }}>{conditionEmoji}</span>
             <span>{WEATHER.conditionLabel}</span>
           </p>
-          <p className="font-medium text-[12px] text-white/85">
+          <p className="font-medium text-[13px] text-white/85">
             Cảm nhận {WEATHER.feelsLike}
           </p>
         </div>
@@ -754,14 +754,14 @@ function WeatherSection({
           ].map((stat, idx) => (
             <div
               key={idx}
-              className={`flex flex-col gap-0.5 items-start min-w-0 overflow-hidden p-2 xl:p-2.5 rounded-xl backdrop-blur-md transition-all duration-300 shadow-2xs border ${
+              className={`flex flex-col gap-0.5 items-start min-w-0 overflow-hidden p-2.5 xl:p-3 rounded-2xl backdrop-blur-md transition-all duration-300 shadow-2xs border ${
                 darkMode
                   ? 'bg-white/[0.06] hover:bg-white/[0.1] border-white/[0.08]'
                   : 'bg-white/15 hover:bg-white/25 border-white/25'
               }`}
             >
               <p className={`font-medium text-[11px] whitespace-nowrap ${darkMode ? 'text-slate-300' : 'text-white/85'}`}>{stat.label}</p>
-              <p className="font-bold leading-tight text-white text-[13px] xl:text-[14px]">{stat.value}</p>
+              <p className="font-bold leading-tight text-white text-[13.5px] xl:text-[14.5px]">{stat.value}</p>
             </div>
           ))}
         </div>
@@ -850,7 +850,7 @@ function WeatherSection({
       <div className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden p-4 rounded-3xl text-[13px] w-full shadow-xs transition-colors duration-250">
         {/* Flood Section */}
         <p className="font-bold text-[#0c0f12] dark:text-[#f8fafc] whitespace-nowrap mb-2 uppercase">
-          BẢNG ĐIỂM ĐEN NGẬP ÚNG (Hà Nội)
+          BẢNG ĐIỂM ĐEN NGẬP ÚNG ({WEATHER.location || 'Hà Nội'})
         </p>
         <div className="flex flex-col gap-0 w-full mb-1">
           {showFlood && floodItems && floodItems.length > 0 ? (
@@ -3218,10 +3218,10 @@ function DesktopLayout({ activeCategory, setActiveCategory,
 
       <div 
         className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto"
-        style={{ paddingTop: '8px', paddingLeft: '0px', paddingRight: '0px' }}
+        style={{ paddingTop: '10px' }}
       >
         {/* Weather column */}
-        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[320px] xl:w-[350px] 2xl:w-[390px]">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[350px] xl:w-[380px] 2xl:w-[410px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
@@ -3958,7 +3958,7 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
           ))}
           <span className="flex items-center gap-2 text-[#0055D4] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
-             Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
+             Thời tiết hôm nay: {WEATHER.temp}, {WEATHER.conditionLabel || WEATHER.condition}
           </span>
           <span className="flex items-center gap-2 text-[#10b981] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
@@ -3973,7 +3973,7 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
           ))}
           <span className="flex items-center gap-2 text-[#0055D4] font-semibold cursor-pointer">
              <span className="w-1.5 h-1.5 rounded-full bg-[#0055D4]"></span>
-             Thời tiết hôm nay: {WEATHER.temp}°, {WEATHER.condition}
+             Thời tiết hôm nay: {WEATHER.temp}, {WEATHER.conditionLabel || WEATHER.condition}
           </span>
         </div>
       </div>
@@ -4152,7 +4152,7 @@ function SkeletonBox({ className }: { className?: string }) {
 function WeatherSectionSkeleton() {
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex flex-col gap-3 p-4 xl:p-5 rounded-2xl min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
+      <div className="flex flex-col gap-3 p-5 xl:p-6 rounded-3xl min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between" style={{ background: 'linear-gradient(21deg, #c7d2e8 0%, #b8c3dc 50%, #c7d2e8 100%)' }}>
         <SkeletonBox className="w-32 h-4 bg-white/30 rounded-xl" />
         <div className="flex flex-col gap-1.5">
           <SkeletonBox className="w-32 h-10 bg-white/30 rounded-xl" />
@@ -4171,7 +4171,7 @@ function WeatherSectionSkeleton() {
 
 function MarketSectionSkeleton() {
   return (
-    <div className="w-full flex flex-col gap-2.5 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between">
+    <div className="w-full flex flex-col gap-2.5 bg-white p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between">
       <div className="flex items-center justify-between w-full mb-1">
         <SkeletonBox className="w-36 h-6" />
         <SkeletonBox className="w-12 h-5 rounded-full" />
@@ -4198,7 +4198,7 @@ function MarketSectionSkeleton() {
 
 function CalendarSectionSkeleton() {
   return (
-    <div className="w-full min-h-[280px] bg-white dark:bg-[#151921] p-4 xl:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[300px] 2xl:h-[340px] lg:justify-between">
+    <div className="w-full min-h-[340px] bg-white dark:bg-[#151921] p-4 xl:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between">
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-2">
           <SkeletonBox className="w-28 h-5" />
@@ -4527,7 +4527,7 @@ function CalendarSection({
   const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 
   return (
-    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[280px] bg-white dark:bg-[#151921] p-4 xl:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[300px] 2xl:h-[340px] lg:justify-between" style={{ fontFamily: 'inherit' }}>
+    <div onClick={() => setActiveTooltipDay(null)} className="w-full h-full min-h-[340px] bg-white dark:bg-[#151921] p-4 xl:p-5 rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] flex flex-col lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between" style={{ fontFamily: 'inherit' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-1.5">
         <div>
@@ -4569,7 +4569,7 @@ function CalendarSection({
                      setActiveTooltipDay(activeTooltipDay === day ? null : day);
                    }
                  }}
-                 className={`relative flex flex-col items-center justify-center rounded-lg min-h-[26px] xl:min-h-[30px] transition-colors group
+                 className={`relative flex flex-col items-center justify-center rounded-lg min-h-[30px] xl:min-h-[34px] transition-colors group
               ${day ? 'cursor-pointer hover:bg-[#f4f6fa] dark:hover:bg-[#1c222d]' : ''}
               ${isToday ? 'bg-[#3a7bd5] hover:bg-[#2b68c2] font-bold text-white' : ''}
             `}>
@@ -4761,7 +4761,7 @@ function MarketSection() {
   if (loading && goldData.length === 0) return <MarketSectionSkeleton />;
 
   return (
-    <div className={`w-full flex flex-col gap-2.5 bg-white dark:bg-[#151921] p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] transition-opacity duration-700 ease-in-out min-h-[280px] lg:h-[300px] 2xl:h-[340px] lg:justify-between opacity-100`}>
+    <div className={`w-full flex flex-col gap-2.5 bg-white dark:bg-[#151921] p-[var(--card-padding)] rounded-[var(--card-radius)] shadow-[0px_4px_12px_0px_rgba(23,33,51,0.06)] border border-[#e3e7ef] dark:border-white/[0.08] transition-opacity duration-700 ease-in-out min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between opacity-100`}>
       <div className="flex items-center justify-between w-full mb-1">
         <h2 className="font-bold leading-[26px] text-[#182033] text-[length:var(--font-h4)]">Giá vàng Phú Quý</h2>
         <div className="bg-[#fff4e5] px-2 py-0.5 rounded-full flex items-center shrink-0">
@@ -7691,10 +7691,10 @@ useEffect(() => {
             <div className="md:hidden w-full">
               <MobileLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={isUiLoading} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
             </div>
-            <div className="hidden md:block xl:hidden w-full">
+            <div className="hidden md:block lg:hidden w-full">
               <TabletLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={isUiLoading} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
             </div>
-            <div className="hidden xl:block w-full">
+            <div className="hidden lg:block w-full">
               <DesktopLayout activeCategory={activeCategory} setActiveCategory={setActiveCategory} condKey={condKey} liveData={liveData} liveNews={liveNews} isFetchingCategory={isFetchingCategory} isLoading={isUiLoading} darkMode={darkMode} setDarkMode={setDarkMode} liveOverrides={liveOverrides} onArticleClick={handleArticleSelect} userRole={userRole} onLoginSuccess={setUserRole} onLogout={handleLogout} onTokenExpired={handleTokenExpired} onRelogin={handleRelogin} onTokenUpdated={handleTokenUpdated} onOpenShorts={handleOpenShorts} onOpenLocationSelector={() => setShowLocationModal(true)} onOpenQRModal={handleOpenQRModal} isManualLocation={isManualLocation} />
             </div>
           </>
