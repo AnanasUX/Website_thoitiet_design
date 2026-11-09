@@ -1419,3 +1419,47 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run test:logic`: 462/462 logic tests PASS (100%).
 - `npm run testwebsite`: 47/47 ca kiểm thử thực tế đa màn hình PASS (RELEASE GATE: PASSED).
 - `python -m unittest discover tests -v`: 22/22 backend tests PASS (100%).
+
+---
+
+### ADR-053: Chuẩn Hóa Bố Cục Desktop Max-Width 1200px và Căn Lề Đồng Bộ Ticker, Body, Footer (REQ-092)
+- **Ngày**: 2026-11-09
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Sau khi khôi phục thiết kế canonical ở bản phát hành REQ-091, bố cục trên các màn hình máy tính để bàn có độ phân giải cao (1440p, 4K hoặc 1080p full width) bị hiện tượng phân tán:
+  + Dải tin nóng chạy chữ (`LiveNewsTicker`) tràn hết 100% chiều ngang mép trái-phải, trong khi khối nội dung chính và footer chưa có giới hạn `max-width` đồng bộ, dẫn đến mắt người dùng phải đảo quá xa khi đọc thông tin.
+  + Thẻ card hero ở chiều cao 400px cố định trên một số màn hình laptop chiếm nhiều diện tích cuộn đầu trang.
+- Yêu cầu đặt ra: "Kiểm tra code mới này có gì cập nhật mới bổ sung việc và sắp xếp lại UI cho hợp lý như trước" — Cần chuẩn hóa toàn diện bố cục Desktop về lưới căn giữa 1200px thanh thoát, đồng bộ căn lề mép thẳng đứng giữa Header, Ticker, Nội dung chính và Footer, đồng thời cân đối tỷ lệ chiều cao các thẻ card (340px - 400px) tạo nhịp điệu thị giác hài hòa nhất.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Chuẩn Hóa Lưới Căn Giữa Max-Width 1200px Cho Mọi Phân Hệ Desktop**:
+   - `Header`: Giới hạn `max-w-[1200px] mx-auto` cho cả `DesktopLayout` và `TabletLayout`.
+   - `LiveNewsTicker`: Bọc dải tin nóng chạy chữ trong container con `w-full max-w-[1200px] mx-auto flex items-center h-full px-[var(--page-padding)]`.
+   - `Main Content Grid Row`: Áp dụng `w-full max-w-[1200px] mx-auto`.
+   - `Site Footer`: Nội dung chân trang áp dụng `w-full max-w-[1200px] mx-auto`.
+   - Tạo nên trục thẳng hàng hoàn mỹ dọc mép trái và mép phải từ đỉnh trang đến chân trang trên mọi màn hình.
+2. **Cân Đối Tỷ Lệ Chiều Cao Thẻ Card Hài Hòa (Balanced Proportions)**:
+   - Thẻ Hero Thời Tiết, Thẻ Giá Vàng Phú Quý, Thẻ Lịch Google và toàn bộ Skeletons: Cấu hình `min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between`.
+   - Cột Thời Tiết Desktop: `w-[320px] xl:w-[340px] shrink-0`.
+   - Cỡ chữ nhiệt độ: `text-[48px] xl:text-[54px] font-black`.
+   - Đảm bảo thẻ bài báo Nổi Bật (Featured) và dải danh mục Tin Tức Mới Nhất LIVE nằm gọn gàng ngay trong tầm mắt đầu tiên (above the fold).
+3. **Cập Nhật Design Tokens Tinh Tế (`src/index.css`)**:
+   - `--page-padding: clamp(16px, 2.5vw, 32px);`
+   - `--section-gap: clamp(16px, 2vw, 28px);`
+   - `--card-padding: clamp(16px, 1.6vw, 22px);`
+   - `--grid-gap: clamp(12px, 1.5vw, 20px);`
+   - `--card-radius: 22px;`
+   - `--header-height: clamp(54px, 5vw, 64px);`
+4. **Mở Rộng Điểm Ngắt Kích Hoạt Desktop Cho Màn Hình >= 1024px (`lg`)**:
+   - Chuyển `hidden xl:block` sang `hidden lg:block w-full`, mở rộng trải nghiệm bố cục đầy đủ cho các thiết bị màn hình laptop 1024px - 1280px.
+   - Cập nhật selector kiểm thử Playwright trong `scripts/test-ux-flows.mjs` hỗ trợ cả `.hidden.lg\\:block` và fallback.
+5. **Bảo Toàn 100% Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)**:
+   - Toàn bộ giao diện tu tập Phật giáo và tài nguyên của Chùa An Nhiên tại `public/tung-kinh/index.html` được giữ nguyên vẹn 100%.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Hoàn tất không lỗi trong 3.46s.
+- `npm run test:logic`: 462/462 logic tests PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
+- Toàn bộ ma trận truy vết và giao diện trực quan đạt tiêu chuẩn xuất xưởng.

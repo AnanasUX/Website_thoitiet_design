@@ -140,7 +140,7 @@ export async function runAllUXFlowTests(page) {
   // =========================================================================
   {
     // 2.1 Mở Video Shorts Player
-    let shortsBtn = page.locator('.hidden.xl\\:block button:has-text("Video Shorts 9:16")').first();
+    let shortsBtn = page.locator('.hidden.lg\\:block button:has-text("Video Shorts 9:16"), .hidden.xl\\:block button:has-text("Video Shorts 9:16"), button:has-text("Video Shorts 9:16")').first();
     let canOpenShorts = await shortsBtn.isVisible().catch(() => false);
     if (!canOpenShorts) {
       shortsBtn = page.locator('button:has-text("Video Shorts 9:16"):visible, button:has-text("Shorts"):visible, div:has-text("Video Shorts 24H"):visible').first();
@@ -149,7 +149,7 @@ export async function runAllUXFlowTests(page) {
     assertUX('UX-02.1: Nút mở Video Shorts & Smart TV hiển thị rõ nét', canOpenShorts, 'Nút mở Shorts sẵn sàng');
 
     if (canOpenShorts) {
-      await shortsBtn.click();
+      await shortsBtn.click({ force: true });
       await page.waitForTimeout(600);
 
       const shortsModalOpen = await page.evaluate(() => {

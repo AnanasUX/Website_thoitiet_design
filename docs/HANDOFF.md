@@ -2,8 +2,8 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.59.0`
-- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: Cập nhật REQ-091
+- **Phiên bản**: `1.60.0`
+- **Commit gần nhất Frontend (`Website_thoitiet_design`)**: d8239e0 feat(layout): co gon max-width desktop ve 1200px va can le dong bo ticker footer (kèm REQ-092)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: Cập nhật ensure_clean_bot_description
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
   + ✅ **Kiểm thử tính toàn vẹn hệ thống Telegram & REST API (`python -m unittest discover tests -v`)**: 22/22 tests PASS (100% OK).
@@ -18,6 +18,26 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+21. **[REQ-092] Chuẩn Hóa Bố Cục Desktop Max-Width 1200px, Đồng Bộ Căn Lề Ticker-Footer & Tối Ưu Tỷ Lệ Hiển Thị Linh Hoạt (Anti-Bloat)**:
+    - *Đồng bộ bố cục căn giữa chuẩn max-width 1200px*:
+      + Thiết lập `max-w-[1200px] mx-auto` đồng trục cho Header, dải tin nóng chạy chữ `LiveNewsTicker`, lưới nội dung chính `DesktopLayout` và chân trang `Site Footer`.
+      + Triệt tiêu hoàn toàn sự xô lệch mép căn lề giữa các khối trên màn hình Full HD (1080p), 2K và 4K.
+    - *Tỷ lệ hiển thị hài hòa, chống dồn ứ tiêu đề (Anti-Bloat)*:
+      + Chiều cao thẻ Hero Thời Tiết, Thẻ Giá Vàng Phú Quý, Thẻ Lịch Google và Skeletons co giãn cân đối: `min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between`.
+      + Cột Thời Tiết Desktop: `w-[320px] xl:w-[340px] shrink-0`.
+      + Cỡ chữ nhiệt độ thời tiết: `text-[48px] xl:text-[54px] font-black`.
+      + Thanh YouTube: padding `px-3.5 py-1.5`, dải danh mục `py-1.5 mt-[-4px]` đưa bài viết Nổi Bật (Featured) vào ngay màn hình đầu tiên (above the fold).
+    - *Design Tokens tinh tế (`src/index.css`)*:
+      + `--page-padding: clamp(16px, 2.5vw, 32px);`, `--section-gap: clamp(16px, 2vw, 28px);`, `--card-padding: clamp(16px, 1.6vw, 22px);`, `--grid-gap: clamp(12px, 1.5vw, 20px);`, `--card-radius: 22px;`, `--header-height: clamp(54px, 5vw, 64px);`.
+    - *Khung kích hoạt DesktopLayout linh hoạt*:
+      + Mở rộng cho màn hình `>= 1024px` (`hidden lg:block w-full`) và hoàn thiện selector kiểm thử trong `scripts/test-ux-flows.mjs`.
+    - *Bảo toàn 100% độc lập phân hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+      + Giữ nguyên 100% mã nguồn tĩnh `public/tung-kinh/index.html` của Chùa An Nhiên không can thiệp.
+    - *Nghiệm thu thực tế*:
+      + `npm run build`: Hoàn thành 100% trong 3.46s.
+      + `npm run test:logic`: 462/462 assertions PASS (100%).
+      + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
 
 20. **[REQ-091] Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (https://anx.io.vn/), Tự Động Hóa Vệ Sinh Mô Tả Spam Rác Tiếng Nga Telegram Bot & Đồng Bộ Phát Hành**:
     - *Khôi phục 100% tỷ lệ bố cục và Design Tokens chuẩn mực (`src/index.css` & `src/App.tsx`)*:

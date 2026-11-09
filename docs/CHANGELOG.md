@@ -1,5 +1,40 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.60.0 (2026-11-09) - Chuẩn Hóa Bố Cục Desktop Max-Width 1200px, Đồng Bộ Căn Lề Ticker-Footer & Tối Ưu Tỷ Lệ Hiển Thị Linh Hoạt (REQ-092)
+
+### 1. Đồng Bộ Bố Cục Lưới Căn Giữa Max-Width 1200px
+- Giới hạn `max-w-[1200px] mx-auto` được áp dụng đồng bộ trên toàn bộ các thành phần chính:
+  + Header Desktop & Tablet: Căn giữa nội dung thanh điều hướng, căn lề thẳng hàng tuyệt đối với nội dung bên dưới.
+  + Dải tin nóng chạy chữ (`LiveNewsTicker`): Căn giữa trong container `max-w-[1200px] mx-auto`, triệt tiêu hoàn toàn tình trạng chữ chạy tràn sang 2 góc màn hình lớn.
+  + Lưới nội dung chính (Main Content Grid Row): Khung chứa cột Thời tiết, Giá vàng, Lịch Google và Dòng tin tức đạt chuẩn `max-w-[1200px] mx-auto`.
+  + Chân trang (`Site Footer`): Nội dung bản quyền và nút QA Dashboard căn giữa đồng trục `max-w-[1200px] mx-auto`.
+
+### 2. Tối Ưu Tỷ Lệ Chiều Cao & Khắc Phục Hiện Tượng Phóng To (Anti-Bloat Proportions)
+- Chiều cao các thẻ Hero Thời Tiết, Giá Vàng Phú Quý, Lịch Google và Skeletons co giãn hài hòa theo khung: `min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between`.
+- Cột Thời Tiết Desktop được cân bằng lại `w-[320px] xl:w-[340px] shrink-0` thay vì chiếm dụng quá nhiều diện tích.
+- Typography nhiệt độ thời tiết: `text-[48px] xl:text-[54px] font-black`.
+- Đảm bảo thẻ bài viết Nổi Bật (Featured) và dải tab danh mục Tin Tức Mới Nhất LIVE xuất hiện rõ nét ngay trong khung nhìn đầu tiên (above the fold) trên mọi độ phân giải.
+
+### 3. Tinh Chỉnh Design System Tokens (`src/index.css`)
+- `--page-padding: clamp(16px, 2.5vw, 32px)`
+- `--section-gap: clamp(16px, 2vw, 28px)`
+- `--card-padding: clamp(16px, 1.6vw, 22px)`
+- `--grid-gap: clamp(12px, 1.5vw, 20px)`
+- `--card-radius: 22px`
+- `--header-height: clamp(54px, 5vw, 64px)`
+
+### 4. Mở Rộng Điểm Ngắt Kích Hoạt Layout Desktop & Khắc Phục Selector Test
+- Chuyển điểm ngắt hiển thị `DesktopLayout` từ `xl` (1280px) sang `lg` (1024px) giúp người dùng trên máy tính bảng xoay ngang và laptop nhỏ có trải nghiệm desktop trọn vẹn.
+- Cập nhật selector kiểm thử Playwright trong `scripts/test-ux-flows.mjs` bảo đảm kiểm thử thông suốt 100%.
+
+### 5. Bảo Toàn Độc Lập 100% Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)
+- Duy trì 100% mã nguồn tĩnh `public/tung-kinh/index.html` của Chùa An Nhiên không can thiệp.
+
+### 6. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Thành công 100% (3.46s).
+- `npm run test:logic`: 462/462 assertions logic đạt 100% PASS.
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế đạt PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.59.0 (2026-11-07) - Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (https://anx.io.vn/), Tự Động Hóa Vệ Sinh Mô Tả Spam Rác Tiếng Nga Telegram Bot & Đồng Bộ Phát Hành (REQ-091)
 
 ### 1. Khôi Phục Toàn Diện Bố Cục Responsive Chuẩn Mực Cho Trang Tin Tức (REQ-091)

@@ -95,11 +95,13 @@
 | REQ-089 | PROMPT-20261107-02 | Hoàn trả giao diện trang tin tức https://anx.io.vn/ về đúng thiết kế Responsive chuẩn mực nguyên bản (lg:h-[400px], w-[420px], header 70px) và bảo toàn trang https://anx.io.vn/tung-kinh/ hiển thị thông tin độc lập như hiện tại | P0 | UI/UX / Responsive & Dual-Domain | TC-014, TC-020, TC-024 | PASS | App.tsx, index.css, testwebsite.mjs | Khôi phục thiết kế responsive chuẩn gốc, duy trì trang Tụng Kinh độc lập 100% |
 | REQ-090 | PROMPT-20261107-03 | Tinh chỉnh tỷ lệ bố cục responsive chuẩn mực triệt tiêu cảm giác bị phóng to trên Desktop/Laptop | P1 | Desktop Layout | TC-014, TC-024 | PASS | testwebsite.mjs:TC-014 | min-h-[280px] lg:h-[300px], w-[320-390px] |
 | REQ-091 | PROMPT-20261107-04 | Khôi phục toàn diện bố cục responsive chuẩn mực cho trang tin tức https://anx.io.vn/, tự động hóa vệ sinh mô tả spam rác tiếng Nga Telegram Bot và phát hành đồng bộ | P0 | Layout, Telegram Bot & Release | TC-014, TC-020, TC-024 | PASS | testwebsite.mjs, test_system_integrity.py | Phục hồi thiết kế canonical, ensure_clean_bot_description trong main.py, 47/47 E2E PASS |
+| REQ-092 | PROMPT-20261109-01 | Chuẩn hóa bố cục Desktop max-width 1200px, đồng bộ căn lề Ticker, Body, Footer & tối ưu tỷ lệ hiển thị linh hoạt (Anti-Bloat) | P0 | Desktop Layout & Grid Alignment | TC-014, TC-020, TC-024 | PASS | App.tsx, index.css, test-ux-flows.mjs, testwebsite.mjs | Cố định max-w-[1200px] mx-auto đồng bộ Header, Ticker, Main Grid và Footer; thẻ card cao h-[340-400px]; cột thời tiết w-[320-340px]; nhiệt độ text-[48-54px]; 47/47 E2E tests PASS |
 
 ## Prompt intake log
 
 | Prompt ID | Date | Original prompt location/reference | Requirements created/updated | Conflicts | Reviewer |
 |---|---|---|---|---|---|
+| PROMPT-20261109-01 | 2026-11-09 | Kiểm tra code mới này có gì cập nhật mới bổ sung việc và sắp xếp lại UI cho hợp lý như trước | REQ-092 | None | Lead System Architect |
 | PROMPT-20261107-04 | 2026-11-07 | Tin nhắn người dùng kèm 4 ảnh: [1] Telegram spam tiếng Nga, [2] GPS warning & loading Gmail, [3] Ảnh giao diện 09:03, [4] Ảnh giao diện 10:01 | REQ-091 | None | Lead System Architect |
 | PROMPT-20261012-01 | 2026-10-12 | Yêu cầu tích hợp module thời tiết và dự báo hàng giờ | REQ-016 | None | Approved |
 | PROMPT-20261012-02 | 2026-10-12 | Yêu cầu bảng giá thị trường tài chính thời gian thực | REQ-017 | None | Approved |
@@ -789,3 +791,32 @@
      - `npm run test:logic`: 462/462 logic tests PASS (100%).
      - `npm run testwebsite`: 47/47 E2E tests PASS (RELEASE GATE: PASSED).
      - `python -m unittest discover tests -v`: 22/22 unit tests PASS (100%).
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-092)
+
+- **MÃ YÊU CẦU**: `REQ-092`
+- **Tiêu Đề**: Chuẩn Hóa Bố Cục Desktop Max-Width 1200px, Đồng Bộ Căn Lề Ticker-Footer & Tối Ưu Tỷ Lệ Hiển Thị Linh Hoạt (Anti-Bloat)
+- **Nguồn Prompt**: `PROMPT-20261109-01`: *"Kiểm tra code mới này có gì cập nhật mới bổ sung việc và sắp xếp lại UI cho hợp lý như trước"*
+- **Phân Hệ**: DesktopLayout, LiveNewsTicker, Site Footer, Header, Design Tokens (`src/App.tsx`, `src/index.css`, `scripts/test-ux-flows.mjs`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Đồng Bộ Giới Hạn Chiều Rộng Căn Giữa 1200px (1200px Max-Width Grid Alignment)*:
+     - Header Desktop (`DesktopLayout`), Header Tablet (`TabletLayout`), Dải tin nóng chạy chữ (`LiveNewsTicker`), Khung chứa nội dung chính (Main Content Grid Row) và Chân trang (`Site Footer`) đồng bộ sử dụng lớp `max-w-[1200px] mx-auto`.
+     - Triệt tiêu hoàn toàn hiện tượng lệch lề hai bên mép giữa thanh tin nóng, nội dung chính và footer trên mọi độ phân giải màn hình từ Full HD (1920x1080), 2K (2560x1440) đến 4K (3840x2160).
+  2. *Tỷ Lệ Chiều Cao Thẻ Card Hài Hòa & Chống Dồn Ứ Tiêu Đề (Balanced Responsive Proportions)*:
+     - Thẻ Hero Thời Tiết, Thẻ Giá Vàng Phú Quý, Thẻ Lịch Google và toàn bộ Skeleton tương ứng co giãn cân đối trong dải: `min-h-[340px] lg:h-[360px] xl:h-[380px] 2xl:h-[400px] lg:justify-between`.
+     - Cột Thời Tiết Desktop: `w-[320px] xl:w-[340px] shrink-0`.
+     - Nhiệt độ thời tiết typography: `text-[48px] xl:text-[54px] font-black`.
+     - Thanh Kênh YouTube: padding đệm gọn `px-3.5 py-1.5`, dải danh mục `py-1.5 mt-[-4px]` bảo đảm các bài báo Nổi Bật (Featured) hiển thị trực tiếp ngay trong khung nhìn đầu tiên (above the fold).
+  3. *Hệ Thống Design Tokens Tinh Gọn (`src/index.css`)*:
+     - `--page-padding: clamp(16px, 2.5vw, 32px);`, `--section-gap: clamp(16px, 2vw, 28px);`, `--card-padding: clamp(16px, 1.6vw, 22px);`, `--grid-gap: clamp(12px, 1.5vw, 20px);`, `--card-radius: 22px;`, `--header-height: clamp(54px, 5vw, 64px);`.
+  4. *Khung Kích Hoạt Layout Desktop Linh Hoạt*:
+     - Kích hoạt `DesktopLayout` từ điểm ngắt `lg` (`hidden lg:block w-full`) thay vì cứng `xl:block`, tối ưu hiển thị cho cả laptop phổ thông 1366x768 và 1440x900.
+     - Cập nhật bộ chọn kiểm thử tương thích trong `scripts/test-ux-flows.mjs`.
+  5. *Bảo Toàn Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+     - Giữ nguyên 100% trang `public/tung-kinh/index.html` độc lập, không can thiệp luồng mã hay DOM.
+  6. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Hoàn tất không lỗi trong 3.46s.
+     - `npm run test:logic`: 462/462 logic tests PASS (100%).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện PASS (100% PASS, 0 FAIL) — RELEASE GATE: PASSED.
