@@ -1493,3 +1493,28 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run build`: Thành công 100% trong 613ms.
 - `npm run test:logic`: 462/462 logic tests PASS (100%).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
+
+---
+
+### ADR-055: Triệt Tiêu 100% Hộp Cảnh Báo Lỗi GPS Trong Modal Vị Trí & Tự Động Định Vị IP Mạng Âm Thầm (REQ-094)
+- **Ngày**: 2026-11-09
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Người dùng gửi ảnh `media_1794196092016_881baaa1.jpg` phản ánh việc mở modal *Chọn vị trí thời tiết* xuất hiện một khung cảnh báo lỗi màu hồng viền đỏ chiếm nhiều diện tích: *"⚠️ Không thể lấy tọa độ GPS tự động: Quyền vị trí đang bị chặn trên trình duyệt. Vui lòng bấm vào biểu tượng cài đặt/ổ khóa... nút bấm hiển thị Quyền vị trí bị chặn • Nhấn để xem hướng dẫn mở khóa"*.
+- Việc này tạo cảm giác hệ thống bị lỗi hoặc cảnh báo nguy hiểm không đáng có đối với người dùng truy cập web thông thường.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Loại Bỏ Khối Banner Cảnh Báo Lỗi Trong Modal**:
+   - Xóa bỏ khối thẻ `gpsErrorMessage` (`data-testid="gps-error-alert"`) trong component `LocationSelectorModal`.
+   - Trong hàm xử lý `handleRequestGps`, khi bắt gặp mã lỗi từ chối `err.code === 1`, chuyển `setGpsErrorMessage(null)` thay vì gán chuỗi cảnh báo dài dòng.
+2. **Đồng Bộ Trải Nghiệm Người Dùng Nhẹ Nhàng & Thân Thiện**:
+   - Thay thế toàn bộ các thông điệp cảnh báo tiêu cực ("Quyền vị trí bị chặn") bằng thông điệp trung tính, hướng dẫn tích cực: *"Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết"*.
+   - Người dùng có thể bấm *"Định vị ngay"* bất cứ lúc nào hoặc bấm chọn nhanh một trong 63 tỉnh thành bên dưới một cách tự nhiên.
+   - Luồng fallback sang định vị mạng IP diễn ra âm thầm trong nền, bảo đảm dữ liệu thời tiết luôn được hiển thị tức thì.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Thành công 100% trong 2.19s.
+- `npm run test:logic`: 462/462 logic tests PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).

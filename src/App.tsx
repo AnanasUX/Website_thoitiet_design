@@ -3724,23 +3724,6 @@ function LocationSelectorModal({
           </div>
         )}
 
-        {/* Cảnh báo khi GPS bị từ chối hoặc lỗi */}
-        {gpsErrorMessage && (
-          <div className="mx-4 mt-3 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-[12.5px] text-rose-900 dark:text-rose-200 animate-fadeIn" data-testid="gps-error-alert">
-            <div className="flex items-start gap-2.5">
-              <span className="text-lg shrink-0 mt-0.5">⚠️</span>
-              <div className="flex-1">
-                <p className="font-semibold text-rose-700 dark:text-rose-300">Không thể lấy tọa độ GPS tự động</p>
-                <p className="text-[12px] text-rose-600 dark:text-rose-400 mt-0.5 leading-relaxed">{gpsErrorMessage}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 italic">Gợi ý: Bạn có thể chọn nhanh địa phương của mình trong danh sách bên dưới.</p>
-              </div>
-              {onClearGpsError && (
-                <button type="button" onClick={onClearGpsError} className="text-slate-400 hover:text-slate-600 text-sm p-1 cursor-pointer">✕</button>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* GPS Quick Action Card */}
         <div className="p-4 border-b border-slate-100 dark:border-white/[0.06] bg-slate-50/50 dark:bg-[#1c222d]/50">
           <button
@@ -3759,8 +3742,6 @@ function LocationSelectorModal({
                 <p className="text-[11px] text-blue-100 opacity-90">
                   {gpsPermissionStatus === 'granted'
                     ? "Đã cấp quyền GPS • Tự động nhận diện khu vực của bạn"
-                    : gpsPermissionStatus === 'denied'
-                    ? "Quyền vị trí bị chặn • Nhấn để xem hướng dẫn mở khóa"
                     : "Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết"}
                 </p>
               </div>
@@ -3770,8 +3751,6 @@ function LocationSelectorModal({
                 ? "Đang xử lý..."
                 : gpsPermissionStatus === 'granted'
                 ? "✓ Đã cấp quyền"
-                : gpsPermissionStatus === 'prompt'
-                ? "Cấp quyền GPS"
                 : (isManualLocation ? "Bật tự động" : "Định vị ngay")}
             </span>
           </button>
@@ -5833,7 +5812,7 @@ function MainSiteApp({ onOpenAdmin }: { onOpenAdmin: () => void }) {
         if (err.code === 1) {
           setIsGpsLocating(false);
           setGpsPermissionState('denied');
-          setGpsErrorMessage("Quyền vị trí đang bị chặn trên trình duyệt. Vui lòng bấm vào biểu tượng cài đặt/ổ khóa 🔒 trên thanh địa chỉ trình duyệt, chọn 'Cho phép' quyền Vị trí và bấm lại nút này, hoặc chọn nhanh địa phương bên dưới.");
+          setGpsErrorMessage(null);
           setLocationSource('ip');
           if (fallbackToIpRef.current) fallbackToIpRef.current();
           return;

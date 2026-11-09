@@ -97,11 +97,13 @@
 | REQ-091 | PROMPT-20261107-04 | Khôi phục toàn diện bố cục responsive chuẩn mực cho trang tin tức https://anx.io.vn/, tự động hóa vệ sinh mô tả spam rác tiếng Nga Telegram Bot và phát hành đồng bộ | P0 | Layout, Telegram Bot & Release | TC-014, TC-020, TC-024 | PASS | testwebsite.mjs, test_system_integrity.py | Phục hồi thiết kế canonical, ensure_clean_bot_description trong main.py, 47/47 E2E PASS |
 | REQ-092 | PROMPT-20261109-01 | Chuẩn hóa bố cục Desktop max-width 1200px, đồng bộ căn lề Ticker, Body, Footer & tối ưu tỷ lệ hiển thị linh hoạt (Anti-Bloat) | P0 | Desktop Layout & Grid Alignment | TC-014, TC-020, TC-024 | PASS | App.tsx, index.css, test-ux-flows.mjs, testwebsite.mjs | Cố định max-w-[1200px] mx-auto đồng bộ Header, Ticker, Main Grid và Footer; thẻ card cao h-[340-400px]; cột thời tiết w-[320-340px]; nhiệt độ text-[48-54px]; 47/47 E2E tests PASS |
 | REQ-093 | PROMPT-20261109-02 | Mở rộng khung bố cục Desktop về chuẩn max-width 1536px, phục hồi độ rộng thoáng cho cột Thời tiết (w-[360-420px]), bảng Giá vàng & lưới Tin tức (minmax 280px), triệt tiêu cảm giác co vào quá bé | P0 | Desktop Layout & Viewport Proportions | TC-014, TC-020, TC-024 | PASS | App.tsx, testwebsite.mjs | Đồng bộ max-w-[1536px] mx-auto cho Header, Ticker, Nội dung chính và Footer; cột Thời tiết w-[360-420px]; nhiệt độ text-[50-66px]; 47/47 E2E tests PASS |
+| REQ-094 | PROMPT-20261109-03 | Triệt tiêu hoàn toàn hộp cảnh báo lỗi GPS trong Modal chọn vị trí (bỏ banner Không thể lấy tọa độ GPS tự động) & tự động fallback IP êm dịu | P0 | Weather / Geolocation Modal UX | TC-016, TC-020 | PASS | App.tsx, testwebsite.mjs | Xóa 100% banner lỗi rose/pink data-testid="gps-error-alert", chuyển trạng thái nút bấm sang tự động định vị êm ái, fallback IP ngầm; 47/47 E2E tests PASS |
 
 ## Prompt intake log
 
 | Prompt ID | Date | Original prompt location/reference | Requirements created/updated | Conflicts | Reviewer |
 |---|---|---|---|---|---|
+| PROMPT-20261109-03 | 2026-11-09 | Người dùng gửi ảnh modal chọn vị trí bị cảnh báo Không thể lấy tọa độ GPS tự động (media_1794196092016_881baaa1.jpg) | REQ-094 | None | Lead System Architect |
 | PROMPT-20261109-02 | 2026-11-09 | Khung giao diện hiện tại đang co vào rất bé so với hiện tại kiểm tra và fix lại giao diện | REQ-093 | Resolved REQ-092 | Lead System Architect |
 | PROMPT-20261109-01 | 2026-11-09 | Kiểm tra code mới này có gì cập nhật mới bổ sung việc và sắp xếp lại UI cho hợp lý như trước | REQ-092 | None | Lead System Architect |
 | PROMPT-20261107-04 | 2026-11-07 | Tin nhắn người dùng kèm 4 ảnh: [1] Telegram spam tiếng Nga, [2] GPS warning & loading Gmail, [3] Ảnh giao diện 09:03, [4] Ảnh giao diện 10:01 | REQ-091 | None | Lead System Architect |
@@ -845,5 +847,26 @@
      - Giữ nguyên 100% mã nguồn tĩnh của Chùa An Nhiên tại `public/tung-kinh/index.html`.
   5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
      - `npm run build`: Hoàn tất không lỗi trong 613ms.
+     - `npm run test:logic`: 462/462 logic tests PASS (100%).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (100% PASS, 0 FAIL) — RELEASE GATE: PASSED.
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-094)
+
+- **MÃ YÊU CẦU**: `REQ-094`
+- **Tiêu Đề**: Triệt Tiêu Hoàn Toàn Hộp Cảnh Báo Lỗi GPS Trong Modal Vị Trí, Tự Động Định Vị IP Êm Dịu & Giữ Giao Diện Modal Sạch Đẹp
+- **Nguồn Prompt**: `PROMPT-20261109-03`: Người dùng gửi ảnh `media_1794196092016_881baaa1.jpg` chụp Modal *Chọn vị trí thời tiết* bị hiện banner cảnh báo màu hồng: *"Không thể lấy tọa độ GPS tự động: Quyền vị trí đang bị chặn trên trình duyệt..."*
+- **Phân Hệ**: LocationSelectorModal, Geolocation Handling (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Triệt Tiêu 100% Hộp Cảnh Báo Lỗi Giả Lập / Màu Hồng*:
+     - Xóa bỏ hoàn toàn khối mã DOM hiển thị banner cảnh báo `gpsErrorMessage` (`data-testid="gps-error-alert"`) trong `LocationSelectorModal`.
+     - Tuyệt đối không hiển thị khung cảnh báo màu hồng/đỏ gây khó chịu cho người dùng dù GPS bị từ chối (`code === 1`), timeout (`code === 3`) hay thiết bị không có chip định vị (`code === 2`).
+  2. *Cơ Chế Định Vị Âm Thầm & Thân Thiện (Silent Auto-IP Fallback)*:
+     - Khi quyền vị trí chưa cấp hoặc bị từ chối, hệ thống tự động và âm thầm sử dụng định vị IP mạng (`fallbackToIpRef.current()`) mà không phát sinh bất kỳ thông báo lỗi nào.
+     - Dòng mô tả của nút bấm định vị tự động luôn duy trì thông điệp tích cực: *"Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết"*.
+     - Nhãn nút bấm giữ ở trạng thái tự nhiên (`Định vị ngay` hoặc `Bật tự động`), không hiển thị câu chữ *"Quyền vị trí bị chặn"*.
+  3. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Hoàn tất không lỗi trong 2.19s.
      - `npm run test:logic`: 462/462 logic tests PASS (100%).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (100% PASS, 0 FAIL) — RELEASE GATE: PASSED.

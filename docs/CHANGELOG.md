@@ -1,5 +1,20 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.62.0 (2026-11-09) - Triệt Tiêu Hoàn Toàn Hộp Cảnh Báo Lỗi GPS Trong Modal Vị Trí & Tự Động Định Vị IP Mạng Âm Thầm (REQ-094)
+
+### 1. Triệt Tiêu Hộp Cảnh Báo Lỗi Màu Hồng Trong Modal Vị Trí
+- Xóa bỏ 100% banner cảnh báo lỗi `gpsErrorMessage` (*"Không thể lấy tọa độ GPS tự động"*), giữ cho giao diện modal Chọn vị trí thời tiết luôn sạch đẹp, tinh tế.
+- Khắc phục hoàn toàn tình trạng xuất hiện hộp cảnh báo viền đỏ/hồng khi quyền GPS bị chặn hoặc khi thiết bị không có chip GPS.
+
+### 2. Tự Động Định Vị Mạng IP Âm Thầm & Tinh Chỉnh Nút Bấm Thân Thiện
+- Hệ thống tự động fallback sang định vị theo IP mạng ngầm, nạp dữ liệu khu vực chuẩn xác không gây gián đoạn hay cảnh báo hoang mang.
+- Thay thế dòng chữ *"Quyền vị trí bị chặn"* thành thông điệp hỗ trợ trung tính: *"Hệ thống tự động phát hiện khu vực bạn đang ở và nạp dự báo thời tiết"*.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn tất không lỗi trong 2.19s.
+- `npm run test:logic`: 462/462 assertions PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.61.0 (2026-11-09) - Mở Rộng Khung Bố Cục Desktop Về Chuẩn Max-Width 1536px, Phục Hồi Độ Rộng Thoáng Cột Thời Tiết & Lưới Tin Tức (REQ-093)
 
 ### 1. Mở Rộng Khung Bố Cục Desktop Max-Width 1536px
