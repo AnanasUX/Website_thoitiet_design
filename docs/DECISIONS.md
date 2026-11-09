@@ -1463,3 +1463,33 @@ Sau khi tích hợp hiệu ứng chuyển động CSS Morphing Gradients, ngư�
 - `npm run test:logic`: 462/462 logic tests PASS (100%).
 - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
 - Toàn bộ ma trận truy vết và giao diện trực quan đạt tiêu chuẩn xuất xưởng.
+
+---
+
+### ADR-054: Mở Rộng Khung Bố Cục Desktop Về Chuẩn Max-Width 1536px, Phục Hồi Độ Rộng Thoáng Cột Thời Tiết & Lưới Tin Tức (REQ-093)
+- **Ngày**: 2026-11-09
+- **Tác Giả**: Google DeepMind Agentic Pair Programmer (Antigravity)
+- **Trạng Thái**: Đã Duyệt & Triển Khai Thực Tế
+
+#### 1. Bối Cảnh & Vấn Đề Kỹ Thuật
+- Sau khi thử nghiệm giới hạn `max-w-[1200px]` ở commit `d8239e0`, người dùng phản hồi kèm ảnh chụp màn hình (`media_1794192475650_969dcfd2.jpg`) chỉ rõ: *"Khung giao diện hiện tại đang co vào rất bé so với hiện tại kiểm tra và fix lại giao diện"*.
+- Trên các màn hình máy tính để bàn và laptop hiện đại (độ phân giải 1920x1080, 2K hoặc 4K), khung 1200px chỉ chiếm ~60% màn hình, để lộ khoảng trống xám/trắng khổng lồ ở hai bên mép.
+- Cột Thời tiết bị bóp xuống 320px, thẻ bài viết tin tức bị bóp xuống 250px khiến giao diện trở nên chật chội, chữ bị ngắt dòng và mất đi vẻ thoáng đãng, sang trọng vốn có.
+
+#### 2. Giải Pháp Kiến Trúc & Triển Khai
+1. **Mở Rộng Giới Hạn Chiều Rộng Về Chuẩn 1536px (Tailwind 2xl Grid)**:
+   - Header Desktop (`DesktopLayout`), Header Tablet (`TabletLayout`), Dải tin nóng (`LiveNewsTicker`), Khung nội dung chính (`Main Content Grid Row`) và Chân trang (`Site Footer`) đồng bộ cấu hình `max-w-[1536px] mx-auto`.
+   - Giúp giao diện chiếm trọn ~80-85% màn hình Desktop Full HD / 2K, tỷ lệ lề hai bên thanh thoát và vừa vặn hoàn hảo.
+2. **Cân Bằng Lại Kích Thước Cột Thời Tiết & Typography**:
+   - Cột Thời Tiết Desktop: `w-[360px] xl:w-[390px] 2xl:w-[420px] shrink-0`.
+   - Cỡ chữ nhiệt độ thời tiết: `text-[50px] xl:text-[58px] 2xl:text-[66px] font-black`.
+3. **Mở Rộng Không Gian Hiển Thị Cho Bảng Giá Vàng, Lịch & Lưới Tin Tức**:
+   - Thẻ Giá Vàng Phú Quý (`flex-[5]`) và Lịch Google (`flex-[3]`) có đủ độ rộng để hiển thị bảng số liệu rõ ràng.
+   - Thẻ bài báo trong tin tức: `grid-cols-[repeat(auto-fit,minmax(280px,1fr))]`.
+4. **Bảo Toàn 100% Độc Lập Phân Hệ Tụng Kinh**:
+   - Duy trì nguyên vẹn giao diện tu tập Phật giáo của Chùa An Nhiên tại `public/tung-kinh/index.html`.
+
+#### 3. Bằng Chứng Nghiệm Thu Thực Tế
+- `npm run build`: Thành công 100% trong 613ms.
+- `npm run test:logic`: 462/462 logic tests PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).

@@ -1,5 +1,21 @@
 # Lịch Sử Thay Đổi Dự Án (Changelog)
 
+## Phiên bản 1.61.0 (2026-11-09) - Mở Rộng Khung Bố Cục Desktop Về Chuẩn Max-Width 1536px, Phục Hồi Độ Rộng Thoáng Cột Thời Tiết & Lưới Tin Tức (REQ-093)
+
+### 1. Mở Rộng Khung Bố Cục Desktop Max-Width 1536px
+- Loại bỏ giới hạn co hẹp `max-w-[1200px]`, đồng bộ nâng lên `max-w-[1536px] mx-auto` cho toàn bộ hệ thống: Header Desktop, Tablet, LiveNewsTicker, Main Grid và Site Footer.
+- Khắc phục triệt để hiện tượng khung giao diện bị co vào rất bé, loại bỏ khoảng trắng dư thừa hai bên trên màn hình Full HD (1920x1080), 2K và 4K.
+
+### 2. Phục Hồi Không Gian Thoáng Đãng Cho Cột Thời Tiết & Lưới Tin Tức
+- Cột Thời Tiết Desktop mở rộng: `w-[360px] xl:w-[390px] 2xl:w-[420px] shrink-0`.
+- Cỡ chữ nhiệt độ thời tiết: `text-[50px] xl:text-[58px] 2xl:text-[66px] font-black`.
+- Lưới bài viết tin tức: `grid-cols-[repeat(auto-fit,minmax(280px,1fr))]`.
+
+### 3. Kết Quả Nghiệm Thu & Kiểm Thử
+- `npm run build`: Hoàn thành 100% trong 613ms.
+- `npm run test:logic`: 462/462 assertions PASS (100%).
+- `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
+
 ## Phiên bản 1.60.0 (2026-11-09) - Chuẩn Hóa Bố Cục Desktop Max-Width 1200px, Đồng Bộ Căn Lề Ticker-Footer & Tối Ưu Tỷ Lệ Hiển Thị Linh Hoạt (REQ-092)
 
 ### 1. Đồng Bộ Bố Cục Lưới Căn Giữa Max-Width 1200px

@@ -17,7 +17,7 @@
 | **TC-011** | Tự động ẩn controls sau 5 giây không tương tác | REQ-011 | P2 (Trung bình) | Timer Logic Assertion | ✅ PASS |
 | **TC-012** | Thanh tác giả (Byline Bar) chuẩn báo chính thống: Avatar tròn nhỏ dưới tiêu đề | REQ-012 | P0 (Bắt buộc) | Automated DOM & Class Check | ✅ PASS |
 | **TC-013** | Tiền loại bỏ khối tác giả, triệt tiêu phóng to avatar tác giả trong thân bài | REQ-013 | P0 (Bắt buộc) | Automated Parser & Image Filter | ✅ PASS |
-| **TC-014** | Bố cục Desktop: Khung chính có padding-top 10px, padding-left/right 0px, max-w 1200px | REQ-014, REQ-092 | P0 (Bắt buộc) | Automated Style Assertion | ✅ PASS |
+| **TC-014** | Bố cục Desktop: Khung chính có padding-top 10px, padding-left/right 0px, max-w 1200px | REQ-014, REQ-092, REQ-093 | P0 (Bắt buộc) | Automated Style Assertion | ✅ PASS |
 | **TC-015** | Dải nút danh mục tin tức trên Desktop mở rộng tối đa 872px (`max-w-[872px]`) | REQ-015 | P1 (Cao) | Automated Style Assertion | ✅ PASS |
 | **TC-016** | Dữ liệu thời tiết hiện tại & Biểu đồ dự báo hàng giờ SVG spline mượt mà | REQ-016 | P1 (Cao) | Component Render Assertion | ✅ PASS |
 | **TC-017** | Bảng giá thị trường (Giá vàng SJC/Doji, Ngoại tệ Vietcombank, Xăng dầu) | REQ-017 | P1 (Cao) | Data Ingestion Assertion | ✅ PASS |

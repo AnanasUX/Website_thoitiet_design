@@ -2,7 +2,7 @@
 
 ## 1. THÔNG TIN PHIÊN BẢN & MÃ NGUỒN
 - **Nhánh Git**: `main`
-- **Phiên bản**: `1.60.0`
+- **Phiên bản**: `1.61.0`
 - **Commit gần nhất Frontend (`Website_thoitiet_design`)**: d8239e0 feat(layout): co gon max-width desktop ve 1200px va can le dong bo ticker footer (kèm REQ-092)
 - **Commit gần nhất Telegram Bot (`quan-ly-tien-phong`)**: Cập nhật ensure_clean_bot_description
 - **Kết quả Kiểm Thử Toàn Diện Hệ Thống (Frontend Website, Backend Bot Telegram, An Ninh Mạng API, Hầm Mã Hóa AES-256-GCM, VieNeu-TTS v3 Turbo)**:
@@ -18,6 +18,20 @@
 ---
 
 ## 2. TỔNG HỢP CÁC TÍNH NĂNG ĐÃ HOÀN TẤT & ĐỐI CHIẾU REQ
+
+22. **[REQ-093] Mở Rộng Khung Bố Cục Desktop Về Chuẩn Max-Width 1536px, Phục Hồi Độ Rộng Thoáng Cho Cột Thời Tiết, Bảng Giá Vàng & Lưới Tin Tức, Triệt Tiêu Cảm Giác Co Vào Quá Bé**:
+    - *Mở rộng giới hạn chiều rộng chuẩn 1536px (2xl Screen Expansion)*:
+      + Header Desktop, Tablet, LiveNewsTicker, Khung nội dung chính và Site Footer đồng bộ `max-w-[1536px] mx-auto`.
+      + Triệt tiêu hoàn toàn khoảng trống khổng lồ thừa ở hai mép trái-phải trên màn hình Full HD, 2K và 4K.
+    - *Phục hồi không gian cột thời tiết và kích thước chữ*:
+      + Cột Thời Tiết Desktop mở rộng: `w-[360px] xl:w-[390px] 2xl:w-[420px] shrink-0`.
+      + Nhiệt độ thời tiết: `text-[50px] xl:text-[58px] 2xl:text-[66px] font-black`.
+    - *Lưới tin tức thoáng đãng*:
+      + Lưới thẻ bài viết: `minmax(280px, 1fr)` giúp các thẻ tin tức cân đối và không bị ép nhỏ.
+    - *Nghiệm thu thực tế*:
+      + `npm run build`: Hoàn tất không lỗi trong 613ms.
+      + `npm run test:logic`: 462/462 assertions PASS (100%).
+      + `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (RELEASE GATE: PASSED).
 
 21. **[REQ-092] Chuẩn Hóa Bố Cục Desktop Max-Width 1200px, Đồng Bộ Căn Lề Ticker-Footer & Tối Ưu Tỷ Lệ Hiển Thị Linh Hoạt (Anti-Bloat)**:
     - *Đồng bộ bố cục căn giữa chuẩn max-width 1200px*:

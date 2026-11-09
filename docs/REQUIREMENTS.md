@@ -96,11 +96,13 @@
 | REQ-090 | PROMPT-20261107-03 | Tinh chỉnh tỷ lệ bố cục responsive chuẩn mực triệt tiêu cảm giác bị phóng to trên Desktop/Laptop | P1 | Desktop Layout | TC-014, TC-024 | PASS | testwebsite.mjs:TC-014 | min-h-[280px] lg:h-[300px], w-[320-390px] |
 | REQ-091 | PROMPT-20261107-04 | Khôi phục toàn diện bố cục responsive chuẩn mực cho trang tin tức https://anx.io.vn/, tự động hóa vệ sinh mô tả spam rác tiếng Nga Telegram Bot và phát hành đồng bộ | P0 | Layout, Telegram Bot & Release | TC-014, TC-020, TC-024 | PASS | testwebsite.mjs, test_system_integrity.py | Phục hồi thiết kế canonical, ensure_clean_bot_description trong main.py, 47/47 E2E PASS |
 | REQ-092 | PROMPT-20261109-01 | Chuẩn hóa bố cục Desktop max-width 1200px, đồng bộ căn lề Ticker, Body, Footer & tối ưu tỷ lệ hiển thị linh hoạt (Anti-Bloat) | P0 | Desktop Layout & Grid Alignment | TC-014, TC-020, TC-024 | PASS | App.tsx, index.css, test-ux-flows.mjs, testwebsite.mjs | Cố định max-w-[1200px] mx-auto đồng bộ Header, Ticker, Main Grid và Footer; thẻ card cao h-[340-400px]; cột thời tiết w-[320-340px]; nhiệt độ text-[48-54px]; 47/47 E2E tests PASS |
+| REQ-093 | PROMPT-20261109-02 | Mở rộng khung bố cục Desktop về chuẩn max-width 1536px, phục hồi độ rộng thoáng cho cột Thời tiết (w-[360-420px]), bảng Giá vàng & lưới Tin tức (minmax 280px), triệt tiêu cảm giác co vào quá bé | P0 | Desktop Layout & Viewport Proportions | TC-014, TC-020, TC-024 | PASS | App.tsx, testwebsite.mjs | Đồng bộ max-w-[1536px] mx-auto cho Header, Ticker, Nội dung chính và Footer; cột Thời tiết w-[360-420px]; nhiệt độ text-[50-66px]; 47/47 E2E tests PASS |
 
 ## Prompt intake log
 
 | Prompt ID | Date | Original prompt location/reference | Requirements created/updated | Conflicts | Reviewer |
 |---|---|---|---|---|---|
+| PROMPT-20261109-02 | 2026-11-09 | Khung giao diện hiện tại đang co vào rất bé so với hiện tại kiểm tra và fix lại giao diện | REQ-093 | Resolved REQ-092 | Lead System Architect |
 | PROMPT-20261109-01 | 2026-11-09 | Kiểm tra code mới này có gì cập nhật mới bổ sung việc và sắp xếp lại UI cho hợp lý như trước | REQ-092 | None | Lead System Architect |
 | PROMPT-20261107-04 | 2026-11-07 | Tin nhắn người dùng kèm 4 ảnh: [1] Telegram spam tiếng Nga, [2] GPS warning & loading Gmail, [3] Ảnh giao diện 09:03, [4] Ảnh giao diện 10:01 | REQ-091 | None | Lead System Architect |
 | PROMPT-20261012-01 | 2026-10-12 | Yêu cầu tích hợp module thời tiết và dự báo hàng giờ | REQ-016 | None | Approved |
@@ -820,3 +822,28 @@
      - `npm run build`: Hoàn tất không lỗi trong 3.46s.
      - `npm run test:logic`: 462/462 logic tests PASS (100%).
      - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện PASS (100% PASS, 0 FAIL) — RELEASE GATE: PASSED.
+
+---
+
+### Danh Sách Chi Tiết Yêu Cầu Kỹ Thuật (REQ-093)
+
+- **MÃ YÊU CẦU**: `REQ-093`
+- **Tiêu Đề**: Mở Rộng Khung Bố Cục Desktop Về Chuẩn Max-Width 1536px, Phục Hồi Độ Rộng Thoáng Cho Cột Thời Tiết, Bảng Giá Vàng & Lưới Tin Tức, Triệt Tiêu Cảm Giác Co Vào Quá Bé
+- **Nguồn Prompt**: `PROMPT-20261109-02`: *"Khung giao diện hiện tại đang co vào rất bé so với hiện tại kiểm tra và fix lại giao diện"* kèm ảnh chụp màn hình `media_1794192475650_969dcfd2.jpg`
+- **Phân Hệ**: DesktopLayout, TabletLayout, LiveNewsTicker, Site Footer, WeatherSection, NewsGrid (`src/App.tsx`)
+- **Tiêu Chí Nghiệm Thu**:
+  1. *Giải Phóng Giới Hạn Chiều Rộng Về Chuẩn 1536px (2xl Screen Expansion)*:
+     - Header Desktop (`DesktopLayout`), Header Tablet (`TabletLayout`), Dải tin nóng chạy chữ (`LiveNewsTicker`), Khung nội dung chính (`Main Content Grid Row`) và Chân trang (`Site Footer`) đồng bộ mở rộng từ `max-w-[1200px]` lên `max-w-[1536px] mx-auto`.
+     - Loại bỏ hoàn toàn khoảng trống khổng lồ lãng phí ở hai bên mép trên màn hình Full HD (1920x1080), 2K và 4K.
+  2. *Phục Hồi Độ Rộng Thoáng Cho Cột Thời Tiết & Typography*:
+     - Cột Thời Tiết Desktop mở rộng: `w-[360px] xl:w-[390px] 2xl:w-[420px] shrink-0` thay vì bị bóp hẹp 320px.
+     - Cỡ chữ nhiệt độ thời tiết: `text-[50px] xl:text-[58px] 2xl:text-[66px] font-black` hiển thị sắc nét, nổi bật.
+  3. *Mở Rộng Không Gian Bảng Giá Vàng, Lịch Google & Lưới Tin Tức*:
+     - Bảng Giá Vàng Phú Quý (`flex-[5]`) và Lịch Google (`flex-[3]`) có đủ không gian hiển thị rộng rãi, không bị chen chúc.
+     - Lưới thẻ bài viết tin tức: chuyển từ `minmax(250px, 1fr)` sang `minmax(280px, 1fr)`, các thẻ tin tức cân đối, thoáng đãng và dễ đọc.
+  4. *Bảo Toàn Độc Lập Phân Hệ Tụng Kinh (`https://anx.io.vn/tung-kinh/`)*:
+     - Giữ nguyên 100% mã nguồn tĩnh của Chùa An Nhiên tại `public/tung-kinh/index.html`.
+  5. *Đạt 100% Bộ Kiểm Thử & Nghiệm Thu*:
+     - `npm run build`: Hoàn tất không lỗi trong 613ms.
+     - `npm run test:logic`: 462/462 logic tests PASS (100%).
+     - `npm run testwebsite`: 47/47 ca kiểm thử toàn diện thực tế PASS (100% PASS, 0 FAIL) — RELEASE GATE: PASSED.

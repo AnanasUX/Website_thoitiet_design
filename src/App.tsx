@@ -733,7 +733,7 @@ function WeatherSection({
         </div>
 
         <div className="flex flex-col gap-0.5 items-start w-full z-10">
-          <p className="font-black leading-none text-[48px] xl:text-[54px] text-white tracking-tighter drop-shadow-md">
+          <p className="font-black leading-none text-[50px] xl:text-[58px] 2xl:text-[66px] text-white tracking-tighter drop-shadow-md">
             {WEATHER.temp}
           </p>
           <p className="font-bold text-[15px] xl:text-[16px] text-white flex items-center gap-1.5 drop-shadow-xs">
@@ -2878,7 +2878,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
   return (
     <div className="bg-transparent flex flex-col items-start w-full relative z-10">
-      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100] transition-colors">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100] transition-colors">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent">Anx.</span>
           <button
@@ -2936,7 +2936,7 @@ function TabletLayout({ activeCategory, setActiveCategory,
 
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
-      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto">
+      <div className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto">
         {/* Weather column */}
         <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[calc(50%-10px)] max-w-[560px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
@@ -3147,7 +3147,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
   return (
     <div className="bg-transparent flex flex-col items-start w-full relative z-10">
-      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1200px] mx-auto sticky top-0 z-[100] transition-colors">
+      <div className="bg-white/80 dark:bg-[#151921]/80 backdrop-blur-xl border-b border-[#e3e7ef]/80 dark:border-white/10 shadow-2xs flex h-[var(--header-height)] items-center justify-between px-[var(--page-padding)] w-full shrink-0 max-w-[1536px] mx-auto sticky top-0 z-[100] transition-colors">
         <div className="flex gap-[var(--grid-gap)] items-center">
           <div className="flex items-center gap-2 group cursor-pointer">
             <span className="font-black text-[22px] tracking-tight bg-gradient-to-r from-[#2563ff] via-[#5715d1] to-[#ff7917] bg-clip-text text-transparent group-hover:opacity-90 transition-opacity">Anx.</span>
@@ -3217,11 +3217,11 @@ function DesktopLayout({ activeCategory, setActiveCategory,
       <LiveNewsTicker news={newsFeed} liveData={liveData} condKey={condKey} />
 
       <div 
-        className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1200px] mx-auto"
+        className="flex gap-[var(--grid-gap)] items-start px-[var(--page-padding)] py-[var(--section-gap)] w-full max-w-[1536px] mx-auto"
         style={{ paddingTop: '10px' }}
       >
         {/* Weather column */}
-        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[320px] xl:w-[340px]">
+        <div className="flex flex-col gap-[var(--grid-gap)] items-start shrink-0 w-[360px] xl:w-[390px] 2xl:w-[420px]">
           <WeatherSection compact isLoading={isLoading} condKey={condKey} liveData={liveData} liveOverrides={liveOverrides} darkMode={darkMode} onArticleClick={onArticleClick} onOpenLocationSelector={onOpenLocationSelector} isManualLocation={isManualLocation} />
         </div>
 
@@ -3343,7 +3343,7 @@ function DesktopLayout({ activeCategory, setActiveCategory,
           )}
 
           {/* News grid */}
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-[var(--grid-gap)] w-full">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-[var(--grid-gap)] w-full">
               {cleanGrid.map((item, i) => (
                 <div key={i} data-testid="news-card" onClick={() => onArticleClick && onArticleClick(item)}  className="bg-white dark:bg-[#151921] border border-[#e2e4e8] dark:border-white/[0.08] flex flex-col items-start overflow-hidden rounded-2xl shadow-sm hover:-translate-y-1.5 hover:shadow-md hover:border-[#2563ff]/40 dark:hover:border-[#2563ff]/50 transition-all duration-300 w-full no-underline group cursor-pointer"
                 >
@@ -3940,7 +3940,7 @@ function LiveNewsTicker({ news, liveData, condKey }: { news: LiveNewsItem[], liv
 
   return (
     <div className="w-full bg-white/85 dark:bg-[#151921]/90 backdrop-blur-md text-[#182033] dark:text-white flex items-center h-[34px] overflow-hidden border-b border-[#e3e7ef] dark:border-white/10 z-20 shrink-0 select-none shadow-2xs">
-      <div className="w-full max-w-[1200px] mx-auto flex items-center h-full px-[var(--page-padding)]">
+      <div className="w-full max-w-[1536px] mx-auto flex items-center h-full px-[var(--page-padding)]">
         <div className="relative overflow-hidden bg-gradient-to-r from-[#ff315f] to-[#f97316] text-white font-extrabold text-[11px] px-3.5 py-1 flex items-center justify-center shrink-0 z-10 h-full tracking-wider uppercase shadow-xs">
           <span className="absolute inset-0 bg-white/25 animate-shimmer-sweep pointer-events-none" />
           <span className="relative flex size-2 mr-1.5">
@@ -7755,7 +7755,7 @@ useEffect(() => {
 
       {/* Site Footer */}
       <footer className="w-full border-t border-[#e3e7ef] bg-white py-4 px-[var(--page-padding)] text-[12px] text-[#94a3b8]">
-        <div className="w-full max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="w-full max-w-[1536px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© 2026 <span className="font-semibold text-[#5f687b]">Anx.</span> — Thời tiết &amp; Tin tức</p>
           <div className="flex items-center gap-4">
             {isUserAdminQA(userRole) && (
