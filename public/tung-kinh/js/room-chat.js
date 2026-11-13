@@ -25,6 +25,8 @@
   const queryRoom = new URLSearchParams(window.location.search).get('room');
 
   const RTC_CONFIG = {
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require',
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
@@ -47,6 +49,16 @@
         urls: 'turn:standard.relay.metered.ca:443?transport=tcp',
         username: '006c71be68b5e4aa453a4e9b',
         credential: 'k0V+V21o0x0xV7fW'
+      },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp',
+          'turns:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
       }
     ],
     iceCandidatePoolSize: 10
@@ -2146,7 +2158,7 @@
     }
   }
 
-  function attachCurrentTracksToPC(pc) {
+  async function attachCurrentTracksToPC(pc) {
     if (!pc) return;
 
     const activeStream = zaloMediaStream || state.stream;
@@ -2154,6 +2166,7 @@
     const videoTrack = zaloMediaStream ? zaloMediaStream.getVideoTracks()[0] : null;
 
     const transceivers = (typeof pc.getTransceivers === 'function') ? pc.getTransceivers() : [];
+    const senders = (typeof pc.getSenders === 'function') ? pc.getSenders() : [];
 
     // 1. Audio track binding & transceiver direction
     if (audioTrack) {
@@ -2166,15 +2179,14 @@
           try { audioTransceiver.direction = 'sendrecv'; } catch (_) {}
         }
         if (audioTransceiver.sender && audioTransceiver.sender.track !== audioTrack) {
-          try { audioTransceiver.sender.replaceTrack(audioTrack); } catch (_) {}
+          try { await audioTransceiver.sender.replaceTrack(audioTrack); } catch (_) {}
         }
       } else {
-        const senders = (typeof pc.getSenders === 'function') ? pc.getSenders() : [];
         const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
         if (!audioSender) {
-          try { pc.addTrack(audioTrack, activeStream); } catch (_) {}
+          try { pc.addTrack(audioTrack, activeStream || new MediaStream([audioTrack])); } catch (_) {}
         } else if (audioSender.track !== audioTrack) {
-          try { audioSender.replaceTrack(audioTrack); } catch (_) {}
+          try { await audioSender.replaceTrack(audioTrack); } catch (_) {}
         }
       }
     }
@@ -2190,15 +2202,14 @@
           try { videoTransceiver.direction = 'sendrecv'; } catch (_) {}
         }
         if (videoTransceiver.sender && videoTransceiver.sender.track !== videoTrack) {
-          try { videoTransceiver.sender.replaceTrack(videoTrack); } catch (_) {}
+          try { await videoTransceiver.sender.replaceTrack(videoTrack); } catch (_) {}
         }
       } else {
-        const senders = (typeof pc.getSenders === 'function') ? pc.getSenders() : [];
         const videoSender = senders.find(s => s.track && s.track.kind === 'video');
         if (!videoSender) {
-          try { pc.addTrack(videoTrack, zaloMediaStream); } catch (_) {}
+          try { pc.addTrack(videoTrack, zaloMediaStream || new MediaStream([videoTrack])); } catch (_) {}
         } else if (videoSender.track !== videoTrack) {
-          try { videoSender.replaceTrack(videoTrack); } catch (_) {}
+          try { await videoSender.replaceTrack(videoTrack); } catch (_) {}
         }
       }
     }
@@ -2225,12 +2236,13 @@
       // 2. Video Track: rendered in video elements with muted=true (MANDATORY FOR MOBILE AUTOPLAY)
       if (event.track.kind === 'video') {
         const videoStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+        const existing = activeCallParticipants.get(peerId) || {};
         const member = state.members.get(peerId);
         addOrUpdateCallParticipant(peerId, {
           id: peerId,
-          name: member ? member.name : (peerId.slice(0, 8)),
-          dharma: member ? member.dharma : 'Tịnh Tâm',
-          location: member ? member.location : 'Việt Nam',
+          name: (member && member.name) || existing.name || (peerId.slice(0, 8)),
+          dharma: (member && member.dharma) || existing.dharma || 'Tịnh Tâm',
+          location: (member && member.location) || existing.location || 'Việt Nam',
           isLocal: false,
           stream: videoStream,
           hasVideo: true,
@@ -2249,12 +2261,19 @@
           remoteVideo.setAttribute('playsinline', '');
           remoteVideo.setAttribute('webkit-playsinline', '');
           remoteVideo.setAttribute('autoplay', '');
-          remoteVideo.play().catch(e => console.warn('[VideoPlay Error]', e));
+          const tryPlay = () => {
+            remoteVideo.play().catch(e => console.warn('[VideoPlay Error]', e));
+          };
+          remoteVideo.onloadedmetadata = tryPlay;
+          tryPlay();
         }
         if (stripVideo) {
           stripVideo.srcObject = videoStream;
           stripVideo.muted = true;
+          stripVideo.defaultMuted = true;
           stripVideo.playsInline = true;
+          stripVideo.setAttribute('playsinline', '');
+          stripVideo.setAttribute('webkit-playsinline', '');
           stripVideo.play().catch(() => {});
         }
         if (avatarFallback) {
@@ -2262,8 +2281,10 @@
         }
 
         event.track.onunmute = () => {
+          console.log('[ZaloVideoCall] Remote video track unmuted from peer:', peerId);
           if (avatarFallback) avatarFallback.classList.add('hidden');
           if (remoteVideo) remoteVideo.play().catch(() => {});
+          addOrUpdateCallParticipant(peerId, { hasVideo: true });
         };
 
         renderZaloVideoGrid();
@@ -2327,7 +2348,7 @@
     if (!peerId || peerId === myId()) return;
     try {
       const pc = getOrCreatePeerConnection(peerId);
-      attachCurrentTracksToPC(pc);
+      await attachCurrentTracksToPC(pc);
 
       if (isOfferInitiator) {
         if (pc._negotiating || pc.signalingState !== 'stable') {
@@ -2648,8 +2669,8 @@
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
             await flushPendingIceCandidates(payload.senderId, pc);
 
-            // Now attach local tracks to the established transceivers
-            attachCurrentTracksToPC(pc);
+            // Now attach local tracks to the established transceivers AND await completion
+            await attachCurrentTracksToPC(pc);
 
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
@@ -3201,8 +3222,11 @@
             remoteVideo.srcObject = remotePeer.stream;
           }
           remoteVideo.muted = true;
-          remoteVideo.setAttribute('playsinline', 'true');
-          remoteVideo.setAttribute('autoplay', 'true');
+          remoteVideo.defaultMuted = true;
+          remoteVideo.playsInline = true;
+          remoteVideo.setAttribute('playsinline', '');
+          remoteVideo.setAttribute('webkit-playsinline', '');
+          remoteVideo.setAttribute('autoplay', '');
           remoteVideo.play().catch(() => {});
           if (avatarFallback) {
             avatarFallback.classList.toggle('hidden', hasVideoTrack);
@@ -3264,6 +3288,12 @@
           try { p.livekitTrack.attach(vEl); } catch (_) { if (p.stream && vEl.srcObject !== p.stream) vEl.srcObject = p.stream; }
         } else if (p.stream && vEl.srcObject !== p.stream) {
           vEl.srcObject = p.stream;
+          vEl.muted = true;
+          vEl.defaultMuted = true;
+          vEl.playsInline = true;
+          vEl.setAttribute('playsinline', '');
+          vEl.setAttribute('webkit-playsinline', '');
+          vEl.setAttribute('autoplay', '');
           vEl.play().catch(() => {});
         }
       }
@@ -3803,9 +3833,10 @@
       location: callData.callerLocation || callData.location || 'Việt Nam'
     }, false);
 
-    // 2. In WebRTC Mesh mode, pre-initialize peer connection (tracks attach upon offer receipt)
+    // 2. In WebRTC Mesh mode, pre-initialize peer connection and attach local tracks before offer arrives
     if (activeCallEngine === 'webrtc') {
-      getOrCreatePeerConnection(callData.senderId);
+      const pc = getOrCreatePeerConnection(callData.senderId);
+      await attachCurrentTracksToPC(pc);
     }
 
     // 3. Notify room that we accepted & joined
@@ -3824,7 +3855,7 @@
     updateActiveCallStrip(true, callData.callerName || 'Đạo Hữu');
   }
 
-  function handleRemoteAcceptedVideoCall(payload) {
+  async function handleRemoteAcceptedVideoCall(payload) {
     if (payload.senderId && payload.senderId !== myId()) {
       addOrUpdateCallParticipant(payload.senderId, {
         id: payload.senderId,
@@ -3835,7 +3866,7 @@
       });
 
       if (activeCallEngine === 'webrtc') {
-        connectVideoPeer(payload.senderId, true);
+        await connectVideoPeer(payload.senderId, true);
       }
     }
 
@@ -3848,7 +3879,7 @@
     }
   }
 
-  function handleRemoteParticipantJoined(payload) {
+  async function handleRemoteParticipantJoined(payload) {
     if (payload.senderId === myId()) return;
     addOrUpdateCallParticipant(payload.senderId, {
       id: payload.senderId,
@@ -3861,7 +3892,7 @@
     if (activeCallEngine === 'webrtc') {
       const pc = state.peerConnections.get(payload.senderId);
       if (!pc || (pc.connectionState !== 'connected' && pc.signalingState === 'stable')) {
-        connectVideoPeer(payload.senderId, true);
+        await connectVideoPeer(payload.senderId, true);
       }
     }
 
@@ -4057,7 +4088,9 @@
       activeCallEngine = 'webrtc';
       const engineBadge = document.getElementById('zalo-call-engine-badge');
       if (engineBadge) engineBadge.textContent = 'WebRTC P2P HD';
-      state.peerConnections.forEach(pc => attachCurrentTracksToPC(pc));
+      for (const pc of state.peerConnections.values()) {
+        await attachCurrentTracksToPC(pc);
+      }
     }
 
     // Broadcast Video Call Offer via Supabase/Realtime if initiator
@@ -4224,7 +4257,9 @@
           if (icon) icon.textContent = '📹';
           if (label) label.textContent = 'Camera';
           addOrUpdateCallParticipant(myId(), { hasVideo: true, stream: zaloMediaStream });
-          state.peerConnections.forEach(pc => attachCurrentTracksToPC(pc));
+          for (const pc of state.peerConnections.values()) {
+            await attachCurrentTracksToPC(pc);
+          }
           return;
         }
       } catch (camErr) {
@@ -4274,13 +4309,8 @@
       addOrUpdateCallParticipant(myId(), { stream: newStream, hasVideo: true });
 
       // Update WebRTC senders
-      const newVideoTrack = newStream.getVideoTracks()[0];
-      if (newVideoTrack) {
-        state.peerConnections.forEach(pc => {
-          const senders = pc.getSenders();
-          const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-          if (videoSender) videoSender.replaceTrack(newVideoTrack).catch(() => {});
-        });
+      for (const pc of state.peerConnections.values()) {
+        await attachCurrentTracksToPC(pc);
       }
     } catch (e) {
       console.warn('[ZaloVideoCall] switchCamera error:', e);
